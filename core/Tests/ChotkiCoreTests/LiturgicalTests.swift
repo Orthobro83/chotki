@@ -154,7 +154,7 @@ struct LiturgicalServiceTests {
         let service = LiturgicalService(
             store: store,
             client: OrthocalClient(http: fetcher, host: "https://orthocal.info"),
-            jurisdiction: Jurisdiction(name: "Test", reckoning: reckoning)
+            jurisdiction: Jurisdiction(name: "Test", reckoning: reckoning, tradition: .russian)
         )
         return (service, store)
     }
@@ -192,7 +192,7 @@ struct LiturgicalServiceTests {
         let offlineService = LiturgicalService(
             store: InMemoryStore(),
             client: OrthocalClient(http: offlineFetcher),
-            jurisdiction: Jurisdiction(name: "Test", reckoning: .julian)
+            jurisdiction: Jurisdiction(name: "Test", reckoning: .julian, tradition: .russian)
         )
         let fetched = await offlineService.refresh(from: d(2026, 8, 19), days: 3)
         #expect(fetched == 0)
@@ -227,13 +227,13 @@ struct LiturgicalServiceTests {
         let service = LiturgicalService(
             store: store,
             client: OrthocalClient(http: fetcher),
-            jurisdiction: Jurisdiction(name: "Old", reckoning: .julian)
+            jurisdiction: Jurisdiction(name: "Old", reckoning: .julian, tradition: .russian)
         )
         await service.refresh(from: d(2027, 1, 13), days: 1)
         #expect(!service.isFastDay(d(2027, 1, 13)), "fast-free on the Old Calendar")
 
         try service.setJurisdiction(
-            Jurisdiction(name: "New", reckoning: .revisedJulian), around: d(2027, 1, 13)
+            Jurisdiction(name: "New", reckoning: .revisedJulian, tradition: .greek), around: d(2027, 1, 13)
         )
         await service.refresh(from: d(2027, 1, 13), days: 1)
         #expect(service.isFastDay(d(2027, 1, 13)), "a fast on the New Calendar")
@@ -241,7 +241,7 @@ struct LiturgicalServiceTests {
         // Switching back costs no request: the Julian day was kept.
         let before = fetcher.requestCount
         try service.setJurisdiction(
-            Jurisdiction(name: "Old", reckoning: .julian), around: d(2027, 1, 13)
+            Jurisdiction(name: "Old", reckoning: .julian, tradition: .russian), around: d(2027, 1, 13)
         )
         #expect(!service.isFastDay(d(2027, 1, 13)))
         #expect(fetcher.requestCount == before, "no refetch needed to switch back")

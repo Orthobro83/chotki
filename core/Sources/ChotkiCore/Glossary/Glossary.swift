@@ -46,6 +46,25 @@ public struct Glossary: Sendable {
 
     public func entry(slug: String) -> GlossaryEntry? { bySlug[slug] }
 
+    /// A glossary scoped to one tradition. Universal terms are always kept;
+    /// tradition-specific ones appear only for the traditions they belong to.
+    ///
+    /// Cross-references are pruned to what survives, so the education pane can
+    /// never link to an entry the reader cannot open.
+    public func scoped(to tradition: Tradition) -> Glossary {
+        let kept = entries.filter { $0.appliesTo(tradition) }
+        let keptSlugs = Set(kept.map(\.slug))
+        return Glossary(entries: kept.map { entry in
+            GlossaryEntry(
+                slug: entry.slug, term: entry.term, aliases: entry.aliases,
+                pronunciation: entry.pronunciation, short: entry.short, full: entry.full,
+                category: entry.category,
+                related: entry.related.filter { keptSlugs.contains($0) },
+                traditions: entry.traditions
+            )
+        })
+    }
+
     public func entry(forTerm term: String) -> GlossaryEntry? {
         byNeedle[term.lowercased()].flatMap { bySlug[$0] }
     }

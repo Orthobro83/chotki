@@ -30,31 +30,57 @@ public enum Reckoning: String, Sendable, Hashable, Codable, CaseIterable {
     }
 }
 
-/// The church a person belongs to. Every date-aware surface reads through this,
-/// so changing jurisdiction is one setting and no other code reacts.
+/// The church a person belongs to.
+///
+/// Carries three things: which calendar it reckons fixed feasts by, which
+/// practice family it belongs to, and what that family customarily expects.
+/// Every date-aware and practice-aware surface reads through this, so choosing
+/// a church is one setting.
 public struct Jurisdiction: Sendable, Hashable, Codable {
     public var name: String
     public var reckoning: Reckoning
+    public var tradition: Tradition
+    /// Defaults to the customary profile for the tradition, and can be adjusted
+    /// — a parish sometimes differs from its jurisdiction's norm.
+    public var practice: PracticeProfile
 
-    public init(name: String, reckoning: Reckoning) {
+    public init(name: String, reckoning: Reckoning, tradition: Tradition, practice: PracticeProfile? = nil) {
         self.name = name
         self.reckoning = reckoning
+        self.tradition = tradition
+        self.practice = practice ?? .customary(for: tradition)
     }
 
-    public static let `default` = Jurisdiction(name: "Old Calendar", reckoning: .julian)
+    /// True when this jurisdiction's practice has been adjusted away from its
+    /// tradition's norm — a parish sometimes differs, and the app should show
+    /// what was actually set rather than what the tradition usually does.
+    public var confessionNormDiffersFromTradition: Bool {
+        practice.confession != PracticeProfile.customary(for: tradition).confession
+    }
 
-    /// Offered in settings. The list is not exhaustive and the reckoning can be
-    /// set directly — a parish sometimes differs from its jurisdiction's norm,
-    /// so this is a convenience, never an authority.
-    public static let common: [Jurisdiction] = [
-        Jurisdiction(name: "Russian / ROCOR", reckoning: .julian),
-        Jurisdiction(name: "Serbian", reckoning: .julian),
-        Jurisdiction(name: "Georgian", reckoning: .julian),
-        Jurisdiction(name: "Jerusalem", reckoning: .julian),
-        Jurisdiction(name: "Greek", reckoning: .revisedJulian),
-        Jurisdiction(name: "Romanian", reckoning: .revisedJulian),
-        Jurisdiction(name: "Antiochian", reckoning: .revisedJulian),
-        Jurisdiction(name: "Bulgarian", reckoning: .revisedJulian),
-        Jurisdiction(name: "OCA", reckoning: .revisedJulian)
+    public static let `default` = Jurisdiction(
+        name: "Russian Orthodox Church Outside Russia", reckoning: .julian, tradition: .russian
+    )
+
+    /// Offered in settings. Reckoning and practice can still be set directly:
+    /// a parish sometimes differs from its jurisdiction's norm, so this is a
+    /// starting point, never an authority.
+    public static let known: [Jurisdiction] = [
+        Jurisdiction(name: "Russian Orthodox Church Outside Russia", reckoning: .julian, tradition: .russian),
+        Jurisdiction(name: "Moscow Patriarchate", reckoning: .julian, tradition: .russian),
+        Jurisdiction(name: "Serbian Orthodox Church", reckoning: .julian, tradition: .serbian),
+        Jurisdiction(name: "Georgian Orthodox Church", reckoning: .julian, tradition: .georgian),
+        Jurisdiction(name: "Patriarchate of Jerusalem", reckoning: .julian, tradition: .greek),
+        Jurisdiction(name: "Polish Orthodox Church", reckoning: .julian, tradition: .russian),
+        Jurisdiction(name: "Orthodox Church in America", reckoning: .revisedJulian, tradition: .russian),
+        Jurisdiction(name: "Greek Orthodox Archdiocese", reckoning: .revisedJulian, tradition: .greek),
+        Jurisdiction(name: "Ecumenical Patriarchate", reckoning: .revisedJulian, tradition: .greek),
+        Jurisdiction(name: "Antiochian Orthodox Archdiocese", reckoning: .revisedJulian, tradition: .antiochian),
+        Jurisdiction(name: "Romanian Orthodox Church", reckoning: .revisedJulian, tradition: .romanian),
+        Jurisdiction(name: "Bulgarian Orthodox Church", reckoning: .revisedJulian, tradition: .bulgarian),
+        Jurisdiction(name: "Ukrainian Orthodox Church (OCU)", reckoning: .revisedJulian, tradition: .russian),
+        Jurisdiction(name: "Church of Greece", reckoning: .revisedJulian, tradition: .greek),
+        Jurisdiction(name: "Church of Cyprus", reckoning: .revisedJulian, tradition: .greek),
+        Jurisdiction(name: "Albanian Orthodox Church", reckoning: .revisedJulian, tradition: .greek)
     ]
 }

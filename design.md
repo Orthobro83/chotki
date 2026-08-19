@@ -60,6 +60,23 @@ Content is bundled, not fetched: it must work offline and must not change under 
 
 > **The glossary content needs review by a priest.** It was written to be accurate and introductory, but it is not authoritative, practice varies between jurisdictions, and anything touching fasting or preparation for communion should come from a priest rather than from software. Entries say so where it matters.
 
+## Jurisdiction — calendar and practice are separate axes
+
+A person chooses their church, and the app reflects that church's customs. Two independent properties come out of that choice:
+
+- **Reckoning** — Julian or Revised Julian. Decides which civil date carries which fixed feast.
+- **Tradition** — Russian, Greek, Antiochian, Romanian, Serbian, Bulgarian, Georgian. Decides terminology and customary practice.
+
+They do not track together, which is why they are separate types. The OCA is Russian in tradition but New Calendar in reckoning; the Patriarchate of Jerusalem is Greek in tradition but Old Calendar. Collapsing them into one setting would get both wrong.
+
+Each tradition carries a `PracticeProfile` describing what is customary — most importantly how confession relates to communion, which is the difference newcomers trip over most. Russian and Serbian usage expects confession before each communion; Greek and Antiochian usage generally does not. That is a genuine difference between traditions, not a difference in strictness.
+
+Three constraints on anything built from this:
+
+- **Descriptive, never prescriptive.** The app reports what is customary and names who to ask. It never tells anyone what they must do. Every practice note is tested to acknowledge variation or point to a priest, and tested to contain no instruction language.
+- **A jurisdiction's practice is overridable.** A parish sometimes differs from its jurisdiction's norm, so the profile is a starting point and the app shows what was actually set.
+- **The glossary is scoped.** Terms specific to one tradition are shown only to that tradition — a Greek reader is not told about the Kursk Root Icon as though it were common to all Orthodoxy. Cross-references are pruned when scoping, so the education pane can never link to an entry the reader cannot open.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
