@@ -16,6 +16,7 @@ The rule is expected to be built up piecemeal over a long period, with tasks arr
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
 - macOS 13+ first (MenuBarExtra requires it). Swift 6.1.2. Windows and Linux planned.
 - Xcode is NOT installed and is NOT needed. Command Line Tools SDK 15.5 compiles SwiftUI + UserNotifications cleanly (verified 2026-08-19 with a MenuBarExtra probe target). Build with SwiftPM, assemble the .app bundle by script, sign ad-hoc.
+- Repository: https://github.com/Orthobro83/chotki — public, MIT, branch `main`. Personal context lives in `context.local.md`, which is gitignored and must never be committed.
 - Liturgical data source: `orthocal.info` — free public JSON API, no key. `/api/julian/YYYY/M/D/` for Old Calendar, `/api/gregorian/YYYY/M/D/` for New. Returns tone, commemorations, feast level, fast level, abstentions, and full scripture passage text. It is the only network call the app makes.
 
 ## Calendar facts (settled 2026-08-19, worth not re-deriving)

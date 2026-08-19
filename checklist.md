@@ -13,10 +13,10 @@ Marked **[manual]** where a step needs a human — a decision, a system permissi
 - [x] Verify SwiftUI + UserNotifications compile against Command Line Tools only. Confirmed 2026-08-19, SDK 15.5, MenuBarExtra probe built clean. Xcode not needed.
 - [x] Verify orthocal.info is reachable and returns usable JSON for both reckonings. Confirmed 2026-08-19.
 - [x] Choose project location and split personal context out of the repo.
-- [ ] **[manual]** `brew install gh`, then `gh auth login`.
-- [ ] **[manual]** Set git identity — `git config --global user.name` and `user.email`.
+- [x] `brew install gh` (2.97.0), `gh auth login`. Done 2026-08-19.
+- [x] Git identity set repo-locally. Done 2026-08-19.
 - [ ] **[manual]** Confirm which reckoning your parish keeps. Julian is the default, so for most Orthodox this is confirmation rather than a change.
-- [ ] `git init`, first commit, push to GitHub.
+- [x] `git init`, first commit, pushed to https://github.com/Orthobro83/chotki (public, MIT). Done 2026-08-19.
 
 ## Phase 1 — Foundations, and two spikes
 
