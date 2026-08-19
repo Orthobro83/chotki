@@ -11,6 +11,22 @@ A calendar app tells you what is scheduled. It does not tell you what you actual
 
 The rule is expected to be built up piecemeal over a long period, with tasks arriving from other people. Nothing may assume a fixed or complete set of tasks.
 
+## Tone — a hard constraint
+
+The app is **encouraging, never shaming.** This is a product requirement, not a styling preference, and it outranks any later idea that would make the tracking "more motivating".
+
+Concretely, and non-negotiably:
+
+- No red for a missed rule, no "failed", no ✗, no warning iconography anywhere in the progress surfaces.
+- Never shame a broken streak. A streak ending is reported neutrally or not at all; it is never the headline.
+- Never compare the user against a past better self ("down from 94%"), against a target, or against anyone else.
+- Missing something is reported as information, not as a verdict: which rule, which days, whether there is a pattern worth noticing.
+- The prose summary leads. The number is secondary and can be hidden entirely in settings.
+- Pausing a rule is a first-class, unpenalised action. Taking less on is a legitimate outcome, not a failure state.
+- No guilt-based notification copy. A reminder says what is due, never how long it has been outstanding.
+
+If a future change makes the app feel more like a habit-streak tracker, that change is wrong regardless of how well it tests.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
@@ -50,7 +66,7 @@ The rule is expected to be built up piecemeal over a long period, with tasks arr
 - 2026-08-19 — Tasks carry a LIST of activation periods, not an on/off flag. This one structure gives enable-later, pause-without-penalty, resume, and seasonal rules for free.
 - 2026-08-19 — Pausing excludes those days from scoring (`skipped`), never counts them as missed. Deleting archives and preserves history. Nothing the user actually did is ever destroyed.
 - 2026-08-19 — Scoring counts only occurrences whose due time has passed AND that fall inside an activation period. Weighted to the last 30 days; older days decay but never vanish. `completedLate` scores partial, not zero.
-- 2026-08-19 — The progress report leads with prose, then the figure. A setting hides the number entirely. No red, no "failed", no broken-streak shaming. This is a deliberate constraint — see `context.local.md`.
+- 2026-08-19 — The progress report leads with prose, then the figure. A setting hides the number entirely. Reaffirmed 2026-08-19: encouraging, never shaming. See the Tone section above, which is binding.
 - 2026-08-19 — Untimed tasks nag hourly, bounded by quiet hours (default 21:30–06:30) and a cap of four, then go quiet and land in the report.
 - 2026-08-19 — Notifications carry mark-complete and snooze actions. Completing from the banner matters more for adherence than the score does. Linux notification daemons vary in action support, so the UI must degrade to a plain notification without losing the reminder.
 - 2026-08-19 — Store all-day dates as calendar dates, never timestamps. A timestamp shifts a day under DST and the bug surfaces months later.

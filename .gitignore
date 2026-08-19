@@ -13,5 +13,8 @@ DerivedData/
 dist/
 *.app/
 
+# spike logs
+*.log
+
 # macos
 .DS_Store

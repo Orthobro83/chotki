@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # The point of this job is not the tests. It is proving that core/ builds on a
+  # non-Apple platform, so the portability rule fails loudly the day it is broken
+  # rather than a year from now when the port starts.
+  core-linux:
+    name: core — Linux
+    runs-on: ubuntu-latest
+    container: swift:6.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: swift build --package-path core
+      - name: Test
+        run: swift test --package-path core
+
+  core-macos:
+    name: core — macOS
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: swift build --package-path core
+      - name: Test
+        run: swift test --package-path core
+
+  # Mechanical enforcement of the architecture decision. A reviewer will not
+  # reliably catch an Apple-only import; this will.
+  portability-guard:
+    name: core stays portable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: core/ must not import Apple-only frameworks
+        run: |
+          if grep -rnE '^ *import +(AppKit|SwiftUI|UIKit|Cocoa|UserNotifications|ServiceManagement|CoreGraphics|Quartz|ObjectiveC)\b' core/Sources core/Tests; then
+            echo "::error::core/ must import Foundation and SQLite only — see design.md"
+            exit 1
+          fi
+          echo "core/ imports are portable"
+
+  macos-app:
+    name: macOS app bundle
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and sign the bundle
+        run: ./macos/build-app.sh release
+      - name: Verify signature
+        run: codesign --verify --verbose=2 macos/dist/Chotki.app
