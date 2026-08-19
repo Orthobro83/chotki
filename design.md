@@ -105,6 +105,17 @@ Settled in Phase 6, and enforced by tests:
 - A streak steps over stood-down days rather than breaking on them, and is stated as a fact ("25 in a row"), never as something at risk.
 - The prose names a weekday pattern only when every slip shares one and there is more than one slip. Otherwise it is noise dressed as insight.
 
+## Taking a rule on must never be a no-op
+
+A rule tied to the church calendar produces no due days while its observance is `shown` rather than `observed` — and `shown` is the default. Taking on the Wednesday and Friday fast therefore added a rule that could never appear, with nothing said about why.
+
+Two rules follow, both tested:
+
+- Taking on a rule that depends on an observance **turns that observance on**, and says so in a notice. Taking a rule on is a statement of intent; adding something that silently does nothing is worse than refusing.
+- The library says so **before** the click too, so the change is never a surprise.
+
+A test asserts that every liturgical template declares its `requiredTrigger`, so a new one cannot be added that quietly does nothing.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

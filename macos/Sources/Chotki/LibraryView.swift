@@ -65,6 +65,14 @@ struct TemplateRow: View {
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
+                if let trigger = template.requiredTrigger,
+                   !model.settings.observances.setting(for: trigger).drivesRules,
+                   !taken {
+                    Text("Taking this on will start observing \(ObservanceSettings.name(for: trigger)).")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.goldDim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if let note = template.note {
                     Text(note)
                         .font(.system(size: 11))

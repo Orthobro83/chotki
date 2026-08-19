@@ -96,22 +96,22 @@ struct EntryRow: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            Button { model.toggleKept(entry) } label: {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(entry.isKept ? Theme.gold : .clear)
-                    RoundedRectangle(cornerRadius: 3)
-                        .stroke(entry.isKept ? Theme.gold : Theme.faint, lineWidth: 1)
-                    if entry.isKept {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(Theme.ground)
-                    }
+            // Indicator only. The whole row is the target — a 14pt box is a
+            // mean thing to ask someone to hit, and an unchecked box drawn with
+            // a clear fill is not hit-testable at all: only its 1pt outline was
+            // clickable, which is why this appeared to do nothing.
+            ZStack {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(entry.isKept ? Theme.gold : Color.clear)
+                RoundedRectangle(cornerRadius: 3)
+                    .stroke(entry.isKept ? Theme.gold : (hovering ? Theme.muted : Theme.faint), lineWidth: 1)
+                if entry.isKept {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(Theme.ground)
                 }
-                .frame(width: 14, height: 14)
             }
-            .buttonStyle(.plain)
-            .help(entry.isKept ? "Mark as not kept" : "Mark as kept")
+            .frame(width: 14, height: 14)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.rule.title)
@@ -142,7 +142,10 @@ struct EntryRow: View {
         }
         .padding(.horizontal, 4).padding(.vertical, 5)
         .rowBackground(hovering)
+        .contentShape(Rectangle())
+        .onTapGesture { model.toggleKept(entry) }
         .onHover { hovering = $0 }
+        .help(entry.isKept ? "Click to mark as not kept" : "Click to mark as kept")
         .contextMenu {
             Button(entry.isKept ? "Mark as not kept" : "Mark as kept") { model.toggleKept(entry) }
             Button("Stand down for today") {

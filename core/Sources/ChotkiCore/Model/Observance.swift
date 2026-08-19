@@ -43,6 +43,21 @@ public struct ObservanceSettings: Sendable, Hashable, Codable {
     /// A calendar with no church annotation at all.
     public static let plain = ObservanceSettings(fasting: .hidden, feasts: .hidden)
 
+    /// What the interface calls the thing that must be observed.
+    public static func name(for trigger: LiturgicalTrigger) -> String {
+        switch trigger {
+        case .fastDay, .season: return "fasting"
+        case .greatFeast: return "feasts"
+        }
+    }
+
+    public mutating func observe(_ trigger: LiturgicalTrigger) {
+        switch trigger {
+        case .fastDay, .season: fasting = .observed
+        case .greatFeast: feasts = .observed
+        }
+    }
+
     public func setting(for trigger: LiturgicalTrigger) -> Observance {
         switch trigger {
         case .fastDay, .season: return fasting

@@ -37,6 +37,23 @@ struct RootView: View {
                     .frame(maxHeight: .infinity, alignment: .top)
             }
 
+            if let notice = model.notice {
+                Divider().overlay(Theme.line)
+                HStack(alignment: .top, spacing: 8) {
+                    Text(notice)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.parchmentDim)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 4)
+                    Button { model.notice = nil } label: {
+                        Image(systemName: "xmark").font(.system(size: 9))
+                    }
+                    .buttonStyle(.plain).foregroundStyle(Theme.faint)
+                }
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(Theme.panel)
+            }
+
             if let error = model.loadError {
                 Divider().overlay(Theme.line)
                 Text(error)

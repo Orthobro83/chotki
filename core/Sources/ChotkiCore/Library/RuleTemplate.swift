@@ -33,6 +33,16 @@ public struct RuleTemplate: Sendable, Hashable, Identifiable {
         self.traditions = traditions; self.glossarySlugs = glossarySlugs
     }
 
+    /// The observance this rule needs before it will ever come due.
+    ///
+    /// A `.liturgical` rule produces nothing while its observance is merely
+    /// shown, so taking one on without turning the observance on is a silent
+    /// no-op. Callers use this to avoid that.
+    public var requiredTrigger: LiturgicalTrigger? {
+        if case .liturgical(let trigger) = recurrence { return trigger }
+        return nil
+    }
+
     public func appliesTo(_ tradition: Tradition) -> Bool {
         traditions.isEmpty || traditions.contains(tradition)
     }

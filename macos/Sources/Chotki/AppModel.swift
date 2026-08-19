@@ -25,13 +25,15 @@ final class AppModel: ObservableObject {
     @Published var visibleMonth: CalendarDate
     @Published var screen: Screen = .main
     @Published private(set) var loadError: String?
+    /// A neutral note, not an error. Cleared when the popover reopens.
+    @Published var notice: String?
     /// Set by the app delegate. The model asks for a window; it does not know
     /// what a window is.
     var openDetachedReport: (() -> Void)?
 
     let store: any Store
     let liturgical: LiturgicalService
-    private let storage = SettingsStorage()
+    private let storage: SettingsStorage
     private let notifier: any Notifier
     private let launchAtLogin: any LaunchAtLogin
     private var driver: ReminderDriver?
@@ -40,11 +42,18 @@ final class AppModel: ObservableObject {
 
     // MARK: setup
 
-    init(store: any Store, notifier: any Notifier, launchAtLogin: any LaunchAtLogin) {
+    init(
+        store: any Store,
+        notifier: any Notifier,
+        launchAtLogin: any LaunchAtLogin,
+        storage: SettingsStorage = SettingsStorage(),
+        startsReminders: Bool = true
+    ) {
         self.store = store
         self.notifier = notifier
         self.launchAtLogin = launchAtLogin
-        let loaded = SettingsStorage().load()
+        self.storage = storage
+        let loaded = storage.load()
         self.settings = loaded
         self.liturgical = LiturgicalService(store: store, jurisdiction: loaded.jurisdiction)
         let now = CalendarDate(Date(), in: .current)
@@ -52,7 +61,7 @@ final class AppModel: ObservableObject {
         self.visibleMonth = now
 
         reload()
-        startDriver()
+        if startsReminders { startDriver() }
         listenForActions()
         Task { await refreshLiturgical() }
     }
@@ -174,7 +183,19 @@ final class AppModel: ObservableObject {
             let rule = template.makeRule(source: "the library")
             try store.save(rule)
             try store.save(Activation(ruleID: rule.id, from: today))
-            reload()
+
+            // A rule tied to the church calendar never comes due while its
+            // observance is merely shown. Taking one on is a clear statement of
+            // intent, so turn the observance on rather than adding a rule that
+            // silently does nothing — and say that it happened.
+            if let trigger = template.requiredTrigger,
+               !settings.observances.setting(for: trigger).drivesRules {
+                let name = ObservanceSettings.name(for: trigger)
+                update { $0.observances.observe(trigger) }
+                notice = "\(template.title) is on your rule, and \(name) is now being observed. You can change that in settings."
+            } else {
+                reload()
+            }
         } catch {
             loadError = "Could not add that rule. \(error)"
         }

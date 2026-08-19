@@ -54,6 +54,10 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v5
+      # The interface layer holds real behaviour, and two of the first bugs
+      # found by hand lived here rather than in core.
+      - name: Test
+        run: swift test --package-path macos
       - name: Build and sign the bundle
         run: ./macos/build-app.sh release
       - name: Verify signature

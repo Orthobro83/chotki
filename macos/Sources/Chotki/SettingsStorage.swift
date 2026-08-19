@@ -11,6 +11,11 @@ struct SettingsStorage {
 
     init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
+    /// A throwaway suite, so tests never touch the user's real preferences.
+    static func ephemeral() -> SettingsStorage {
+        SettingsStorage(defaults: UserDefaults(suiteName: "chotki.test.\(UUID().uuidString)")!)
+    }
+
     func load() -> AppSettings {
         guard let data = defaults.data(forKey: key) else { return .default }
         do {
