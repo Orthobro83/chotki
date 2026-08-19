@@ -44,6 +44,22 @@ Two consequences for the interface:
 - **Fasting is reported, never prescribed.** The app says "the calendar marks this as a strict fast", not "do not eat meat, fish, dairy". It is describing the church calendar, not issuing dietary instruction to someone whose doctor or priest may have said otherwise. The abstention list from orthocal is displayed as what the day is, never as what the user must do.
 - **No justification is ever requested.** The setting is three options with no explanatory prompt, no "why?", and no disclosure of a medical reason. Changing it is not an event the app comments on.
 
+## Education — the app teaches as it goes
+
+The calendar this app displays is full of language a newcomer cannot decode: "Major Feast of the Theotokos", "Leavetaking of the Nativity", "Tone 2", "Ven.", "Fish, Wine and Oil are Allowed". Looking each one up elsewhere breaks the thing you were doing.
+
+So any explained term appearing anywhere in the interface is tappable, and opens an **Education** pane that explains it. Every term is also indexed there, browsable by category and searchable, so the pane works as a reference in its own right rather than only as a destination.
+
+Mechanically this is `Glossary.scan(_:)` in core, which finds known terms in arbitrary text. Three properties make it usable rather than noisy:
+
+- **Longest match wins** — "Great Feast" is one term, not "Feast" inside it.
+- **Word boundaries are required** — otherwise "Fast" lights up inside "Breakfast".
+- **Matches never overlap**, and are returned in reading order.
+
+Content is bundled, not fetched: it must work offline and must not change under the reader. Entries carry a one-line summary for inline display, a fuller explanation for the pane, aliases (the calendar prints "Ven." where a reader would search "venerable"), optional pronunciation, and cross-references, which are tested to resolve so the pane can never present a dead link.
+
+> **The glossary content needs review by a priest.** It was written to be accurate and introductory, but it is not authoritative, practice varies between jurisdictions, and anything touching fasting or preparation for communion should come from a priest rather than from software. Entries say so where it matters.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
@@ -81,6 +97,7 @@ Two consequences for the interface:
 - 2026-08-19 — Named `chotki` (the prayer rope).
 - 2026-08-19 — Default reckoning is Julian, on adherent numbers rather than on any one jurisdiction. Fully configurable.
 - 2026-08-19 — Jurisdiction is a setting `{ name, reckoning, endpoint }`; every date-aware surface reads through it. Switching invalidates the cache and refetches; no other code reacts.
+- 2026-08-19 — Explained terms are tappable everywhere they appear, opening an indexed, searchable Education pane. Bundled and offline. See the Education section above.
 - 2026-08-19 — Fasting and feasts are each independently `hidden` / `shown` / `observed`, defaulting to `shown`. See the Observance section above, which is binding for the same reasons the Tone section is.
 - 2026-08-19 — Nothing ships switched on. Bundled rules are a library taken from one at a time. First launch invites two or three, not twelve.
 - 2026-08-19 — Enabling a template COPIES it into the user's rule. It does not stay linked. A rule written from scratch is structurally identical to one taken from the library.

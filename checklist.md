@@ -82,6 +82,16 @@ Proof: **met 2026-08-19.** 13 Jan 2027 decodes fast-free (Leavetaking of the Nat
 
 Proof: a simulated month of ticks produces the right notifications at the right moments, on Linux, with no desktop present.
 
+## Phase 4b — Education (core done, interface pending)
+
+- [x] `GlossaryEntry`, `Glossary` index, category browsing, ranked search. 49 entries covering everything the app displays. Done 2026-08-19.
+- [x] `Glossary.scan` — longest-match, word-boundary, non-overlapping term detection over arbitrary text. Done 2026-08-19.
+- [x] Cross-references tested to resolve, so the pane can never show a dead link. Done 2026-08-19.
+- [ ] Education pane: slides over from wherever a term was tapped, with a way back.
+- [ ] Browse by category and search within the pane.
+- [ ] Terms rendered as tappable in the reading tab, the calendar, and the day's fast description.
+- [ ] **[manual]** Have a priest read the glossary content. It is introductory, not authoritative.
+
 ## Phase 5 — macOS interface
 
 - [ ] Popover, 380–420pt, three-tab chrome.
