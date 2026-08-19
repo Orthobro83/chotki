@@ -27,6 +27,23 @@ Concretely, and non-negotiably:
 
 If a future change makes the app feel more like a habit-streak tracker, that change is wrong regardless of how well it tests.
 
+## Observance — participation is never assumed
+
+Fasting and feast-keeping are each settable to one of three states, independently:
+
+- **hidden** — absent from the calendar entirely; it looks like an ordinary calendar
+- **shown** — annotated on the calendar as information, and nothing more: no task, no reminder, never scored
+- **observed** — part of the rule; liturgical recurrences fire and are scored
+
+The default for both is **shown**, not observed. The app begins by telling you what the day is; taking something on is always a deliberate act.
+
+This exists because people arrive with real constraints. A health condition can make fasting unsafe. Someone with no parish within reach cannot attend a Liturgy on a great feast. Neither is a failure, and the app must not be capable of representing it as one — so an observance that is not `observed` produces no due days at all, which means it cannot be missed and cannot reach the score. Standing an observance down is structurally identical to pausing a rule.
+
+Two consequences for the interface:
+
+- **Fasting is reported, never prescribed.** The app says "the calendar marks this as a strict fast", not "do not eat meat, fish, dairy". It is describing the church calendar, not issuing dietary instruction to someone whose doctor or priest may have said otherwise. The abstention list from orthocal is displayed as what the day is, never as what the user must do.
+- **No justification is ever requested.** The setting is three options with no explanatory prompt, no "why?", and no disclosure of a medical reason. Changing it is not an event the app comments on.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
@@ -62,6 +79,7 @@ If a future change makes the app feel more like a habit-streak tracker, that cha
 - 2026-08-19 — Named `chotki` (the prayer rope).
 - 2026-08-19 — Default reckoning is Julian, on adherent numbers rather than on any one jurisdiction. Fully configurable.
 - 2026-08-19 — Jurisdiction is a setting `{ name, reckoning, endpoint }`; every date-aware surface reads through it. Switching invalidates the cache and refetches; no other code reacts.
+- 2026-08-19 — Fasting and feasts are each independently `hidden` / `shown` / `observed`, defaulting to `shown`. See the Observance section above, which is binding for the same reasons the Tone section is.
 - 2026-08-19 — Nothing ships switched on. Bundled rules are a library taken from one at a time. First launch invites two or three, not twelve.
 - 2026-08-19 — Enabling a template COPIES it into the user's rule. It does not stay linked. A rule written from scratch is structurally identical to one taken from the library.
 - 2026-08-19 — Every rule carries an optional `note` and `source` — who suggested it and why. Rules arrive from other people over months; their origin matters later.

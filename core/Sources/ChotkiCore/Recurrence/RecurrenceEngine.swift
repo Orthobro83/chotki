@@ -8,9 +8,14 @@ import Foundation
 public struct RecurrenceEngine: Sendable {
 
     private let liturgical: any LiturgicalDayProvider
+    private let observances: ObservanceSettings
 
-    public init(liturgical: any LiturgicalDayProvider = NoLiturgicalData()) {
+    public init(
+        liturgical: any LiturgicalDayProvider = NoLiturgicalData(),
+        observances: ObservanceSettings = .default
+    ) {
         self.liturgical = liturgical
+        self.observances = observances
     }
 
     /// Days the recurrence pattern alone would produce, ignoring activations.
@@ -67,6 +72,11 @@ public struct RecurrenceEngine: Sendable {
             }
 
         case .liturgical(let trigger):
+            // An observance that is merely shown, or hidden, never produces a
+            // due day — so it can never be missed, and can never be scored.
+            // Standing one down is therefore identical to pausing: the days
+            // leave the record rather than counting against anyone.
+            guard observances.setting(for: trigger).drivesRules else { return false }
             switch trigger {
             case .fastDay: return liturgical.isFastDay(date)
             case .greatFeast: return liturgical.isGreatFeast(date)

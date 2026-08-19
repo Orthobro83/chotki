@@ -61,7 +61,8 @@ Proof: **met 2026-08-19.** 51 tests green on macOS and Linux.
 - [ ] orthocal client for both endpoints, using Foundation networking only.
 - [ ] 14-day prefetch into `LiturgicalDay`, background refresh.
 - [ ] Cache-first reads. Offline fallback shows cached content marked as cached — never a spinner, never an error where text should be.
-- [ ] Liturgical recurrence types: fast days, seasons, great feasts.
+- [x] Liturgical recurrence types: fast days, seasons, great feasts — gated on `ObservanceSettings`, done 2026-08-19 in Phase 2.
+- [ ] Resolve the `LiturgicalDayProvider` stub against real orthocal data.
 - [ ] Cache invalidation on jurisdiction change.
 - [ ] Tests run against recorded fixtures, not the live API, so CI is offline and deterministic.
 
@@ -86,6 +87,8 @@ Proof: a simulated month of ticks produces the right notifications at the right 
 - [ ] Today's list with completion.
 - [ ] Add and edit sheets, including note and source fields.
 - [ ] Rule library with per-rule toggles, grouped by category, nothing on by default.
+- [ ] Observance settings: fasting and feasts each hidden / shown / observed, three plain options with no justification prompt.
+- [ ] Fasting shown as description, never instruction — "the calendar marks this as a strict fast", never "do not eat…".
 - [ ] Right-click quick menu.
 - [ ] Optional old-style date line.
 - [ ] macOS `Notifier` implementation wired to the core scheduler.
