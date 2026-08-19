@@ -104,18 +104,20 @@ Proof: **met 2026-08-19.** A simulated August produces 31 morning reminders, 5 S
 
 ## Phase 5 — macOS interface
 
-- [ ] Popover, 380–420pt, three-tab chrome.
-- [ ] Month grid with fast and feast shading, today marked.
-- [ ] Today's list with completion.
-- [ ] Add and edit sheets, including note and source fields.
-- [ ] Rule library with per-rule toggles, grouped by category, nothing on by default.
-- [ ] Observance settings: fasting and feasts each hidden / shown / observed, three plain options with no justification prompt.
-- [ ] Fasting shown as description, never instruction — "the calendar marks this as a strict fast", never "do not eat…".
-- [ ] Right-click quick menu.
-- [ ] Optional old-style date line.
-- [ ] macOS `Notifier` implementation wired to the core scheduler.
+- [x] Popover at 400pt, three-tab chrome. Done 2026-08-19.
+- [x] Month grid with fast, feast and Sunday shading, today marked. Done 2026-08-19.
+- [x] Day list with completion, timed rules above untimed. Done 2026-08-19.
+- [x] Add and edit as in-popover screens (not sheets — see design.md), with note and source fields. Done 2026-08-19.
+- [x] Rule library, 24 templates grouped by category, nothing on by default, scoped by tradition. Done 2026-08-19.
+- [x] Observance settings, three plain options, no justification prompt. Done 2026-08-19.
+- [x] Fasting described, never prescribed — "the calendar marks this as…", plus "customarily set aside". Done 2026-08-19.
+- [x] Right-click quick menu on an `NSStatusItem`: mark the next rule kept, silence reminders, open, quit. Done 2026-08-19.
+- [x] Optional old-style date line under the month name. Done 2026-08-19.
+- [x] `ReminderDriver` ticks the core scheduler in process and drives `MacNotifier`; banner actions route back to the model. Done 2026-08-19.
 
-Proof: a rule can be taken on, kept, edited, paused, and resumed entirely through the interface; completing from a banner clears the pending reminders.
+Proof: **partly met 2026-08-19.** The interface builds, runs, and renders correctly offscreen against real cached liturgical data — verified for the rule tab, library and settings. Two Phase 5 bugs were found and fixed this way: Sunday shading depended on the liturgical cache being loaded, and the render harness lost data by copying the database without its WAL.
+
+**Still to do — [manual]:** an interactive walkthrough. Take a rule on, keep it, edit it, pause it, resume it, and confirm a banner action clears the pending reminders. Controls could not be verified by rendering, because `ImageRenderer` does not draw AppKit-backed pickers and toggles.
 
 ## Phase 6 — Core + interface: progress
 

@@ -644,6 +644,37 @@ extension Glossary {
             congregation asks forgiveness of one another individually before the fast begins.
             """,
             category: .calendar, related: ["great-lent", "vespers"]
+        ),
+
+        GlossaryEntry(
+            slug: "abstention", term: "Abstention", aliases: ["abstentions", "what is abstained from"],
+            short: "The foods a given fast day sets aside — meat, fish, dairy, eggs, wine and oil.",
+            full: """
+            The church calendar marks each fast day with what is customarily set aside. The strictest \
+            days list all six: meat, fish, dairy, eggs, wine and oil. Lesser days relax some of them, \
+            so a feast falling in a fast may allow fish, wine and oil.
+
+            "Wine" and "oil" are older categories covering alcohol and cooking oil generally rather \
+            than those two items alone.
+
+            This is what the calendar marks, not an instruction. What any individual keeps is \
+            settled with a priest, and health, work and circumstance are ordinary reasons for it to \
+            look different.
+            """,
+            category: .fasting, related: ["wednesday-friday-fast", "fast-free", "great-lent"]
+        ),
+
+        GlossaryEntry(
+            slug: "synaxarion", term: "Synaxarion", pronunciation: "sin-ak-SAR-ee-on",
+            short: "The collection of saints' lives, and the account read for the day's commemoration.",
+            full: """
+            The book of saints' lives arranged by the day they are commemorated, and by extension the \
+            short life read at Matins for whoever is remembered today.
+
+            Reading the day's life is a common part of a rule, and it is how most people gradually \
+            learn who the saints are — one at a time, on their own day, rather than all at once.
+            """,
+            category: .saints, related: ["matins", "patron-saint", "wonderworker"]
         )
     ]
 }
