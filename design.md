@@ -140,6 +140,21 @@ Bundled rather than fetched: there is no reliable free API for patristic texts, 
 
 Each passage names its work so the attribution can be checked. They await a priest's review before the app is used by anyone but its author.
 
+## Settings live in the store
+
+Not in `UserDefaults`. They were, and they were **not persisting at all** — the preferences domain never existed, so every setting reverted on the next launch. The visible symptom was a fast rule that vanished: taking it on turned fasting to `observed`, that setting was lost, and the rule went back to being unable to come due.
+
+They now sit in the database beside the data, which is what the design said all along: what someone has chosen travels with their record, survives a move between machines, and is carried in a backup. Anything left in the old location is migrated once.
+
+Two repairs run on load, because a stored flag can be wrong about the world:
+
+- **A stranded rule turns its observance back on.** A rule on the calendar whose observance is not observed can never come due — it is on the list and invisible. That can happen to a rule taken on before this was handled, or restored from an older backup.
+- **Someone with rules has plainly been here before**, whatever `hasCompletedFirstRun` says, so they are not shown the first-run screen.
+
+## Reminders do not fire in a burst
+
+A reminder more than fifteen minutes past its moment is marked handled and stays quiet. Without this, launching in the afternoon — or a rule becoming due mid-day, which is exactly what happens when an observance is turned on — fires every earlier reminder for the day at once.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

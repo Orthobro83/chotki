@@ -210,3 +210,79 @@ struct SQLiteStoreTests {
         #expect(try third.rules(includeArchived: true).isEmpty, "reopening does not wipe or fail")
     }
 }
+
+@Suite("Settings persistence")
+struct SettingsPersistenceTests {
+
+    @Test("settings survive storage", arguments: StoreKind.allCases)
+    func roundTrip(kind: StoreKind) throws {
+        let store = try kind.make()
+        #expect(try store.loadSettings() == nil, "nothing stored yet")
+
+        var settings = AppSettings.default
+        settings.observances.fasting = .observed
+        settings.hasCompletedFirstRun = true
+        settings.jurisdiction = Jurisdiction(name: "Greek", reckoning: .revisedJulian, tradition: .greek)
+        try store.saveSettings(settings)
+
+        #expect(try store.loadSettings() == settings)
+    }
+
+    @Test("saving twice updates rather than duplicating", arguments: StoreKind.allCases)
+    func saveIsIdempotent(kind: StoreKind) throws {
+        let store = try kind.make()
+        var settings = AppSettings.default
+        try store.saveSettings(settings)
+        settings.showOldStyleDates = true
+        try store.saveSettings(settings)
+        #expect(try store.loadSettings()?.showOldStyleDates == true)
+    }
+
+    // The failure this replaces: settings lived in UserDefaults and were not
+    // persisting at all, so an observance turned on by taking a rule on was
+    // lost on the next launch and the rule silently vanished.
+    @Test("settings survive closing and reopening the database")
+    func survivesReopen() throws {
+        let path = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotki-settings-\(UUID().uuidString).sqlite").path
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        do {
+            let store = try SQLiteStore(path: path)
+            var settings = AppSettings.default
+            settings.observances.fasting = .observed
+            try store.saveSettings(settings)
+        }
+        let reopened = try SQLiteStore(path: path)
+        #expect(try reopened.loadSettings()?.observances.fasting == .observed)
+    }
+
+    @Test("a backup carries settings", arguments: StoreKind.allCases)
+    func backupIncludesSettings(kind: StoreKind) throws {
+        let source = try kind.make()
+        var settings = AppSettings.default
+        settings.observances.feasts = .observed
+        settings.showOldStyleDates = true
+        try source.saveSettings(settings)
+
+        let restored = try kind.make()
+        try restored.importJSON(try source.exportJSON())
+        #expect(try restored.loadSettings()?.observances.feasts == .observed)
+        #expect(try restored.loadSettings()?.showOldStyleDates == true)
+    }
+
+    @Test("a backup written before settings moved here still restores")
+    func olderBackupWithoutSettings() throws {
+        let json = """
+        {"version":1,"exportedAt":"2026-08-19T12:00:00Z","rules":[],"activations":[],"occurrences":[]}
+        """
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let backup = try decoder.decode(Backup.self, from: Data(json.utf8))
+        #expect(backup.settings == nil)
+
+        let store = InMemoryStore()
+        try store.importBackup(backup)
+        #expect(try store.loadSettings() == nil)
+    }
+}

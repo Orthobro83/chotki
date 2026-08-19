@@ -23,7 +23,7 @@ private func makeModel() throws -> AppModel {
         store: InMemoryStore(),
         notifier: SilentNotifier(),
         launchAtLogin: NoLaunchAtLogin(),
-        storage: .ephemeral(),
+        storage: .none(),
         startsReminders: false
     )
 }
@@ -292,5 +292,71 @@ struct TermTextTests {
         for text in samples {
             #expect(String(TermText.link(text, in: glossary).characters) == text)
         }
+    }
+}
+
+/// The failure this covers: a rule tied to the church calendar sat on the list
+/// while its observance was not being observed, so it could never come due and
+/// simply did not appear. That could happen to a rule taken on before this was
+/// handled, or restored from an older backup.
+@Suite("Repairing stranded rules")
+@MainActor
+struct ObservanceReconciliationTests {
+
+    private struct AlwaysFasting: LiturgicalDayProvider {
+        func isFastDay(_ date: CalendarDate) -> Bool { true }
+        func isGreatFeast(_ date: CalendarDate) -> Bool { false }
+        func season(_ date: CalendarDate) -> FastingSeason? { nil }
+    }
+
+    @Test("a fast rule already on the list turns fasting back on at load")
+    func repairsOnLoad() throws {
+        let store = InMemoryStore()
+
+        // A rule saved directly, as an older build would have left it: on the
+        // list, with fasting merely shown.
+        let rule = Rule(title: "The Wednesday and Friday fast", recurrence: .liturgical(.fastDay))
+        try store.save(rule)
+        try store.save(Activation(ruleID: rule.id, from: CalendarDate(Date(), in: .current)))
+        try store.saveSettings(AppSettings.default)
+        #expect(try store.loadSettings()?.observances.fasting == .shown)
+
+        let model = AppModel(
+            store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
+            storage: .none(), startsReminders: false
+        )
+
+        #expect(model.settings.observances.fasting == .observed,
+                "a rule that can never come due is worse than a changed setting")
+        #expect(try store.loadSettings()?.observances.fasting == .observed, "and it is written down")
+    }
+
+    @Test("a paused fast rule does not force the observance on")
+    func pausedRulesAreLeftAlone() throws {
+        let store = InMemoryStore()
+        let rule = Rule(title: "Great Lent", recurrence: .liturgical(.season(.greatLent)))
+        try store.save(rule)
+        let today = CalendarDate(Date(), in: .current)
+        // Closed activation: the rule is stood down.
+        try store.save(Activation(ruleID: rule.id, from: today.adding(days: -10), to: today.adding(days: -1)))
+        try store.saveSettings(AppSettings.default)
+
+        let model = AppModel(
+            store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
+            storage: .none(), startsReminders: false
+        )
+        #expect(model.settings.observances.fasting == .shown,
+                "nothing is stranded, so nothing needs changing")
+    }
+
+    @Test("settings chosen in the app are written to the store")
+    func settingsPersist() throws {
+        let store = InMemoryStore()
+        let model = AppModel(
+            store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
+            storage: .none(), startsReminders: false
+        )
+        model.update { $0.showOldStyleDates = true }
+        #expect(try store.loadSettings()?.showOldStyleDates == true)
     }
 }

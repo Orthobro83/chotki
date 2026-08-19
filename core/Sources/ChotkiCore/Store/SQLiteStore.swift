@@ -173,6 +173,20 @@ public final class SQLiteStore: Store, @unchecked Sendable {
                 INSERT INTO schema_version (version) VALUES (3);
                 """)
         }
+
+        if current < 4 {
+            // Settings, kept beside the data. They were previously in
+            // UserDefaults, where they were not persisting at all — and where
+            // they would not have travelled with a backup or to another
+            // platform even if they had.
+            try exec("""
+                CREATE TABLE app_settings (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    payload TEXT NOT NULL
+                );
+                INSERT INTO schema_version (version) VALUES (4);
+                """)
+        }
     }
 
     // MARK: liturgical cache
@@ -376,6 +390,26 @@ public final class SQLiteStore: Store, @unchecked Sendable {
                                   completedAt: decode(text(s, 4)),
                                   movedTo: text(s, 5).flatMap(CalendarDate.init(iso:)))
             }
+        }
+    }
+
+    // MARK: settings
+
+    public func loadSettings() throws -> AppSettings? {
+        try locked {
+            let rows: [AppSettings] = try query("SELECT payload FROM app_settings WHERE id = 1;", []) { s in
+                try decodeJSON(AppSettings.self, text(s, 0))
+            }
+            return rows.first
+        }
+    }
+
+    public func saveSettings(_ settings: AppSettings) throws {
+        try locked {
+            try run("""
+                INSERT INTO app_settings (id, payload) VALUES (1, ?)
+                ON CONFLICT(id) DO UPDATE SET payload = excluded.payload;
+                """, [try encodeJSON(settings)])
         }
     }
 

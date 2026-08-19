@@ -30,6 +30,12 @@ public protocol Store: Sendable {
     func liturgicalDays(reckoning: Reckoning, from: CalendarDate, through: CalendarDate) throws -> [LiturgicalDay]
     /// Passing nil clears every reckoning.
     func clearLiturgicalCache(reckoning: Reckoning?) throws
+
+    /// Settings live beside the data rather than in a platform preferences
+    /// system, so what someone has chosen travels with their record, survives a
+    /// move between machines, and is included in a backup.
+    func loadSettings() throws -> AppSettings?
+    func saveSettings(_ settings: AppSettings) throws
 }
 
 public extension Store {
@@ -51,12 +57,18 @@ public struct Backup: Sendable, Codable {
     public var rules: [Rule]
     public var activations: [Activation]
     public var occurrences: [Occurrence]
+    /// Optional, so a backup written before settings moved here still restores.
+    public var settings: AppSettings?
 
-    public init(exportedAt: Date = Date(), rules: [Rule], activations: [Activation], occurrences: [Occurrence]) {
+    public init(
+        exportedAt: Date = Date(), rules: [Rule], activations: [Activation],
+        occurrences: [Occurrence], settings: AppSettings? = nil
+    ) {
         self.exportedAt = exportedAt
         self.rules = rules
         self.activations = activations
         self.occurrences = occurrences
+        self.settings = settings
     }
 }
 
@@ -66,7 +78,8 @@ public extension Store {
             exportedAt: now,
             rules: try rules(includeArchived: true),
             activations: try activations(ruleID: nil),
-            occurrences: try occurrences(ruleID: nil, from: nil, through: nil)
+            occurrences: try occurrences(ruleID: nil, from: nil, through: nil),
+            settings: try loadSettings()
         )
     }
 
@@ -81,6 +94,7 @@ public extension Store {
         for rule in backup.rules { try save(rule) }
         for activation in backup.activations { try save(activation) }
         for occurrence in backup.occurrences { try save(occurrence) }
+        if let settings = backup.settings { try saveSettings(settings) }
     }
 
     func importJSON(_ data: Data) throws {

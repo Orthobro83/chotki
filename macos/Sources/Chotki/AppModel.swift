@@ -58,7 +58,10 @@ final class AppModel: ObservableObject {
         self.notifier = notifier
         self.launchAtLogin = launchAtLogin
         self.storage = storage
-        let loaded = storage.load()
+        // Settings live in the store. Anything left in the old preferences
+        // location is carried across once and then ignored.
+        let loaded = (try? store.loadSettings()) ?? storage.migratedSettings() ?? .default
+        try? store.saveSettings(loaded)
         self.settings = loaded
         self.liturgical = LiturgicalService(store: store, jurisdiction: loaded.jurisdiction)
         let now = CalendarDate(Date(), in: .current)
@@ -97,7 +100,40 @@ final class AppModel: ObservableObject {
         } catch {
             loadError = "Could not read your rules. \(error)"
         }
+        reconcileObservances()
+        reconcileFirstRun()
         rearmReminders()
+    }
+
+    /// A rule on the calendar that depends on an observance which is not being
+    /// observed can never come due — it is on the list and invisible. That can
+    /// happen to a rule taken on before this was handled, or to one restored
+    /// from an older backup, so it is repaired here rather than only at the
+    /// moment of taking on.
+    private func reconcileObservances() {
+        var wanted: [LiturgicalTrigger] = []
+        for rule in rules where !rule.isArchived {
+            guard case .liturgical(let trigger) = rule.recurrence else { continue }
+            guard activations.contains(where: { $0.ruleID == rule.id && $0.isOpen }) else { continue }
+            guard !settings.observances.setting(for: trigger).drivesRules else { continue }
+            wanted.append(trigger)
+        }
+        guard !wanted.isEmpty else { return }
+
+        var updated = settings
+        for trigger in wanted { updated.observances.observe(trigger) }
+        settings = updated
+        try? store.saveSettings(updated)
+    }
+
+    /// Someone who already has rules has plainly been here before, whatever the
+    /// stored flag says. Showing them the first-run screen would be absurd.
+    private func reconcileFirstRun() {
+        guard !settings.hasCompletedFirstRun, !rules.isEmpty else { return }
+        var updated = settings
+        updated.hasCompletedFirstRun = true
+        settings = updated
+        try? store.saveSettings(updated)
     }
 
     func refreshLiturgical() async {
@@ -254,7 +290,11 @@ final class AppModel: ObservableObject {
         change(&updated)
         let jurisdictionChanged = updated.jurisdiction != settings.jurisdiction
         settings = updated
-        storage.save(updated)
+        do {
+            try store.saveSettings(updated)
+        } catch {
+            loadError = "Could not save that setting. \(error)"
+        }
 
         if jurisdictionChanged {
             try? liturgical.setJurisdiction(updated.jurisdiction, around: today)

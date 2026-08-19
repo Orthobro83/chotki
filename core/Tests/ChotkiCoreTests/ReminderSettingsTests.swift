@@ -233,10 +233,12 @@ struct SchemaMigrationTests {
 
     private func makeLegacyDatabase(at path: String) throws {
         let store = try SQLiteStore(path: path)
-        // Wind the recorded version back and drop the column added at v3,
-        // leaving the file looking exactly as version 2 left it.
+        // Wind the file back to exactly what version 2 left behind. Every
+        // later migration must be undone, not just the next one — otherwise
+        // this stops testing the upgrade the moment a version 4 is added.
         try store.exec("ALTER TABLE rule DROP COLUMN reminders;")
-        try store.exec("DELETE FROM schema_version WHERE version = 3;")
+        try store.exec("DROP TABLE IF EXISTS app_settings;")
+        try store.exec("DELETE FROM schema_version WHERE version > 2;")
     }
 
     @Test("a version 2 database upgrades in place without losing rules")

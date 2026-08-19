@@ -11,25 +11,20 @@ struct SettingsStorage {
 
     init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
-    /// A throwaway suite, so tests never touch the user's real preferences.
-    static func ephemeral() -> SettingsStorage {
-        SettingsStorage(defaults: UserDefaults(suiteName: "chotki.test.\(UUID().uuidString)")!)
+    /// Nothing to migrate. Tests keep settings in their in-memory store, so no
+    /// preferences file is created at all.
+    static func none() -> SettingsStorage {
+        SettingsStorage(defaults: UserDefaults(suiteName: "chotki.migration.none")!)
     }
 
-    func load() -> AppSettings {
-        guard let data = defaults.data(forKey: key) else { return .default }
-        do {
-            return try JSONDecoder().decode(AppSettings.self, from: data)
-        } catch {
-            // A settings file we cannot read must not lose someone's rules.
-            // Fall back to defaults and carry on.
-            return .default
-        }
-    }
-
-    func save(_ settings: AppSettings) {
-        guard let data = try? JSONEncoder().encode(settings) else { return }
-        defaults.set(data, forKey: key)
+    /// Reads anything left over from when settings lived here, once, so an
+    /// existing install does not lose its choices. Settings now live in the
+    /// store: preferences were not persisting reliably, and would not have
+    /// travelled with a backup or to another platform even if they had.
+    func migratedSettings() -> AppSettings? {
+        guard let data = defaults.data(forKey: key) else { return nil }
+        defer { defaults.removeObject(forKey: key) }
+        return try? JSONDecoder().decode(AppSettings.self, from: data)
     }
 }
 

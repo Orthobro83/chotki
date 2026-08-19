@@ -9,6 +9,7 @@ public final class InMemoryStore: Store, @unchecked Sendable {
     private var activationByID: [UUID: Activation] = [:]
     /// Keyed by rule and day: at most one deviation per rule per day.
     private var occurrenceByKey: [String: Occurrence] = [:]
+    private var storedSettings: AppSettings?
     /// Keyed by civil date and reckoning — never by the reported date.
     private var liturgicalByKey: [String: LiturgicalDay] = [:]
 
@@ -78,6 +79,14 @@ public final class InMemoryStore: Store, @unchecked Sendable {
             guard let reckoning else { liturgicalByKey.removeAll(); return }
             liturgicalByKey = liturgicalByKey.filter { $0.value.reckoning != reckoning }
         }
+    }
+
+    public func loadSettings() throws -> AppSettings? {
+        locked { storedSettings }
+    }
+
+    public func saveSettings(_ settings: AppSettings) throws {
+        locked { storedSettings = settings }
     }
 
     public func occurrences(

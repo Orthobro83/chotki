@@ -73,6 +73,12 @@ enum RenderMode {
             ("Jesus prayer — 50 knots", nil),
             ("Evening prayers", TimeOfDay(hour: 21, minute: 30))
         ]
+        // With this set, the copy is used exactly as it is — no sample rules —
+        // so the real state can be inspected.
+        if ProcessInfo.processInfo.environment["CHOTKI_RENDER_LIVE"] == "1" {
+            return store
+        }
+
         for (title, time) in seeds {
             let rule = Rule(title: title, recurrence: .daily, timeOfDay: time)
             try store.save(rule)

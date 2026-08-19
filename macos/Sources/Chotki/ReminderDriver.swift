@@ -20,6 +20,9 @@ final class ReminderDriver {
     private var snoozedUntil: [String: Date] = [:]
     private var lastDay: CalendarDate?
 
+    /// How late a reminder may be and still be worth showing.
+    private static let staleAfter: TimeInterval = 15 * 60
+
     init(notifier: any Notifier, plan: @escaping () -> [PlannedNotification]) {
         self.notifier = notifier
         self.plan = plan
@@ -78,6 +81,16 @@ final class ReminderDriver {
         for notification in planned {
             guard !fired.contains(notification.id) else { continue }
             guard notification.fireAt <= now else { continue }
+
+            // A reminder is only useful near its time. Without this, launching
+            // at four in the afternoon — or a rule becoming due mid-day, as
+            // happens when an observance is turned on — fires every earlier
+            // reminder for today at once, in a burst. Those moments have
+            // passed; mark them handled and stay quiet.
+            guard now.timeIntervalSince(notification.fireAt) <= ReminderDriver.staleAfter else {
+                fired.insert(notification.id)
+                continue
+            }
 
             let key = PlannedNotification.occurrenceKey(
                 ruleID: notification.ruleID, date: notification.date
