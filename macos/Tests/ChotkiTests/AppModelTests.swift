@@ -186,3 +186,45 @@ struct PausingTests {
                 "standing down in the evening still counts today")
     }
 }
+
+/// Shared content navigates by setting `model.screen`, which is the popover's
+/// mechanism. The window has a sidebar instead and must translate every one of
+/// those requests — a screen it forgets is a button that silently does nothing
+/// there while working perfectly in the popover. That is exactly what happened
+/// to Add, Library, Terms, Settings and the edit pencil.
+@Suite("Window routing")
+@MainActor
+struct WindowRoutingTests {
+
+    @Test("every screen shared content can ask for lands somewhere")
+    func everyScreenIsHandled() {
+        let requests: [Screen] = [
+            .library, .settings, .glossary(nil), .glossary("pascha"),
+            .editor(nil), .editor(UUID())
+        ]
+        for screen in requests {
+            #expect(WindowRoute.route(for: screen) != .stay,
+                    "\(screen) would do nothing in the window")
+        }
+    }
+
+    @Test("only the main screen stays put")
+    func mainStays() {
+        #expect(WindowRoute.route(for: .main) == .stay)
+    }
+
+    @Test("each request lands in the right place")
+    func routesAreCorrect() {
+        #expect(WindowRoute.route(for: .library) == .section(.library))
+        #expect(WindowRoute.route(for: .settings) == .section(.settings))
+        #expect(WindowRoute.route(for: .glossary("pascha")) == .glossary("pascha"))
+        #expect(WindowRoute.route(for: .editor(nil)) == .editor(nil))
+    }
+
+    @Test("adding a rule opens the editor rather than being swallowed")
+    func addOpensEditor() {
+        #expect(WindowRoute.route(for: .editor(nil)) == .editor(nil))
+        let id = UUID()
+        #expect(WindowRoute.route(for: .editor(id)) == .editor(id))
+    }
+}

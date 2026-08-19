@@ -33,7 +33,7 @@ struct RootView: View {
                     .frame(maxHeight: .infinity, alignment: .top)
             case .editor(let ruleID):
                 Header(title: ruleID == nil ? "New rule" : "Edit rule") { model.screen = .main }
-                RuleEditorView(model: model, ruleID: ruleID)
+                RuleEditorView(model: model, ruleID: ruleID) { model.screen = .main }
                     .frame(maxHeight: .infinity, alignment: .top)
             }
 

@@ -26,9 +26,41 @@ enum MainSection: String, CaseIterable, Hashable {
 
 /// The full window. Same model, same content, given room — the month grid and
 /// the day's rules sit side by side instead of stacked in a column.
+/// Where a navigation request from shared content lands in the window.
+///
+/// Extracted from the view so it can be tested: shared content navigates by
+/// setting `model.screen`, which is the popover's mechanism, and a screen the
+/// window forgets to handle is a control that silently does nothing there while
+/// working perfectly in the popover.
+enum WindowRoute: Equatable {
+    case section(MainSection)
+    case editor(UUID?)
+    case glossary(String?)
+    /// Already where it needs to be.
+    case stay
+
+    static func route(for screen: Screen) -> WindowRoute {
+        switch screen {
+        case .main: return .stay
+        case .library: return .section(.library)
+        case .settings: return .section(.settings)
+        case .glossary(let slug): return .glossary(slug)
+        case .editor(let ruleID): return .editor(ruleID)
+        }
+    }
+}
+
+/// A rule being edited in the window, as a sheet.
+private struct EditorTarget: Identifiable {
+    let ruleID: UUID?
+    var id: String { ruleID?.uuidString ?? "new" }
+}
+
 struct MainWindowView: View {
     @ObservedObject var model: AppModel
     @State private var section: MainSection = .rule
+    @State private var editing: EditorTarget?
+    @State private var pendingSlug: String?
 
     var body: some View {
         NavigationSplitView {
@@ -45,6 +77,33 @@ struct MainWindowView: View {
                 .background(Theme.ground)
         }
         .navigationTitle(section.rawValue)
+        // Buttons inside shared content navigate by setting `model.screen`,
+        // which is the popover's mechanism. The window has a sidebar instead,
+        // so it translates those requests rather than ignoring them — without
+        // this, Add, Library, Terms, Settings and the edit pencil are all dead
+        // in the window while working perfectly in the popover.
+        .onReceive(model.$screen) { screen in
+            switch WindowRoute.route(for: screen) {
+            case .stay:
+                return
+            case .section(let target):
+                section = target
+            case .glossary(let slug):
+                pendingSlug = slug
+                section = .terms
+            case .editor(let ruleID):
+                editing = EditorTarget(ruleID: ruleID)
+            }
+            model.screen = .main
+        }
+        .sheet(item: $editing) { target in
+            VStack(spacing: 0) {
+                Header(title: target.ruleID == nil ? "New rule" : "Edit rule") { editing = nil }
+                RuleEditorView(model: model, ruleID: target.ruleID) { editing = nil }
+            }
+            .frame(width: 430, height: 580)
+            .background(Theme.ground)
+        }
     }
 
     @ViewBuilder private var detail: some View {
@@ -53,7 +112,11 @@ struct MainWindowView: View {
         case .reading: scrolling { ReadingViewContent(model: model) }
         case .progress: scrolling { ProgressTabViewContent(model: model) }
         case .library: scrolling { LibraryViewContent(model: model) }
-        case .terms: GlossaryView(model: model, initialSlug: nil)
+        case .terms:
+            // Re-created when a different term is requested, so the glossary
+            // seeds itself on the new slug.
+            GlossaryView(model: model, initialSlug: pendingSlug)
+                .id(pendingSlug ?? "all")
         case .settings: scrolling { SettingsViewContent(model: model) }
         }
     }

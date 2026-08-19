@@ -6,6 +6,9 @@ import ChotkiCore
 struct RuleEditorView: View {
     @ObservedObject var model: AppModel
     let ruleID: UUID?
+    /// How this editor goes away. The popover pops a screen; the window closes
+    /// a sheet. The editor should not need to know which.
+    let dismiss: () -> Void
 
     @State private var title = ""
     @State private var note = ""
@@ -198,16 +201,16 @@ struct RuleEditorView: View {
 
             if let rule = existing {
                 if model.isPaused(rule) {
-                    Button("Resume") { model.resume(rule); model.screen = .main }
+                    Button("Resume") { model.resume(rule); dismiss() }
                         .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Theme.muted)
                 } else {
-                    Button("Pause") { model.standDown(rule); model.screen = .main }
+                    Button("Pause") { model.standDown(rule); dismiss() }
                         .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Theme.muted)
                 }
                 Menu("Remove") {
-                    Button("Just this day") { model.delete(rule, scope: .thisDay); model.screen = .main }
-                    Button("This day and after") { model.delete(rule, scope: .thisAndFuture); model.screen = .main }
-                    Button("The whole rule") { model.delete(rule, scope: .wholeSeries); model.screen = .main }
+                    Button("Just this day") { model.delete(rule, scope: .thisDay); dismiss() }
+                    Button("This day and after") { model.delete(rule, scope: .thisAndFuture); dismiss() }
+                    Button("The whole rule") { model.delete(rule, scope: .wholeSeries); dismiss() }
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 84)
@@ -264,7 +267,7 @@ struct RuleEditorView: View {
         )
 
         model.save(rule, isNew: existing == nil)
-        model.screen = .main
+        dismiss()
     }
 
     private func shortName(_ day: Weekday) -> String {
