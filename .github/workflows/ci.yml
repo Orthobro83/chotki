@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build
         run: swift build --package-path core
       - name: Test
@@ -24,7 +24,7 @@ jobs:
     name: core — macOS
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build
         run: swift build --package-path core
       - name: Test
@@ -36,7 +36,7 @@ jobs:
     name: core stays portable
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: core/ must not import Apple-only frameworks
         run: |
           if grep -rnE '^ *import +(AppKit|SwiftUI|UIKit|Cocoa|UserNotifications|ServiceManagement|CoreGraphics|Quartz|ObjectiveC)\b' core/Sources core/Tests; then
@@ -49,7 +49,7 @@ jobs:
     name: macOS app bundle
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build and sign the bundle
         run: ./macos/build-app.sh release
       - name: Verify signature

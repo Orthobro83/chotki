@@ -22,16 +22,16 @@ Marked **[manual]** where a step needs a human — a decision, a system permissi
 
 Both spikes come first. Do not build on an unproven assumption.
 
-- [ ] SwiftPM workspace: `core/` package, `macos/` executable target depending on it.
-- [ ] Bundle-assembly script: `.app` structure, `Info.plist` with a stable bundle ID, `LSUIElement` true (no dock icon).
-- [ ] Ad-hoc code signing in the build script.
-- [ ] **SPIKE A:** notification with two actions fires from the ad-hoc-signed bundle and the actions call back. If this fails, stop and reconsider distribution before anything else is built.
-- [ ] **[manual]** Grant the notification permission prompt when it appears.
-- [ ] **SPIKE B:** GitHub Actions builds and tests `core/` on Linux. It has no tests yet — the point is that the toolchain, the package manifest, and SQLite linking all work on a non-Apple platform before there is anything to port.
-- [ ] Eight-pointed Orthodox cross as a template image. Menu bar item appears.
-- [ ] Launch at login via `SMAppService`, behind the `LaunchAtLogin` protocol.
+- [x] SwiftPM workspace: `core/` package, `macos/` executable depending on it. Done 2026-08-19.
+- [x] `macos/build-app.sh` — bundle, `Info.plist`, bundle ID `info.chotki.app`, `LSUIElement` true. Done 2026-08-19.
+- [x] Ad-hoc code signing, verified by `codesign --verify`. Done 2026-08-19.
+- [x] **SPIKE A PASSED** 2026-08-19. Authorization granted, notification delivered, and the "Mark complete" action called back through the core `Notifier` protocol. Ad-hoc signing is sufficient; no Developer ID needed for personal use.
+- [x] **[manual]** Notification permission granted. Done 2026-08-19.
+- [x] **SPIKE B PASSED** 2026-08-19. `core/` builds and tests on `swift:6.1` Linux in 43s. A `portability-guard` job greps `core/` for Apple-only imports and was verified to fail when an `import AppKit` was planted.
+- [x] Eight-pointed cross drawn programmatically as a template `NSImage` — no asset pipeline, correct inversion in dark menu bars. Done 2026-08-19.
+- [~] Launch at login implemented via `SMAppService` behind the core `LaunchAtLogin` protocol. **[manual]** Not yet exercised — click the toggle in the spike popover to confirm.
 
-Proof: icon appears and inverts with light/dark menu bar; a notification with working actions arrives; CI is green on both macOS and Linux.
+Proof: **met 2026-08-19.** All four CI jobs green (core-Linux, core-macOS, portability-guard, macOS app bundle). Notification with a working action round-tripped. Launch at login still to be exercised by hand.
 
 ## Phase 2 — Core: store and recurrence engine
 

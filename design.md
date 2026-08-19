@@ -31,6 +31,8 @@ If a future change makes the app feel more like a habit-streak tracker, that cha
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
 - macOS 13+ first (MenuBarExtra requires it). Swift 6.1.2. Windows and Linux planned.
+- Tests use **swift-testing** (`import Testing`), not XCTest. XCTest ships with Xcode and is absent from the Command Line Tools; swift-testing is present in both CLT and the Linux toolchain, so one framework covers every platform. Discovered 2026-08-19 when XCTest failed to resolve.
+- Ad-hoc signing is sufficient for notifications, including actions. Verified end to end 2026-08-19; no Developer ID required for personal use.
 - Xcode is NOT installed and is NOT needed. Command Line Tools SDK 15.5 compiles SwiftUI + UserNotifications cleanly (verified 2026-08-19 with a MenuBarExtra probe target). Build with SwiftPM, assemble the .app bundle by script, sign ad-hoc.
 - Repository: https://github.com/Orthobro83/chotki — public, MIT, branch `main`. Personal context lives in `context.local.md`, which is gitignored and must never be committed.
 - Liturgical data source: `orthocal.info` — free public JSON API, no key. `/api/julian/YYYY/M/D/` for Old Calendar, `/api/gregorian/YYYY/M/D/` for New. Returns tone, commemorations, feast level, fast level, abstentions, and full scripture passage text. It is the only network call the app makes.
