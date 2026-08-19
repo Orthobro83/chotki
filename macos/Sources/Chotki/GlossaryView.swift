@@ -8,6 +8,10 @@ struct GlossaryView: View {
 
     @State private var query = ""
     @State private var openSlug: String?
+    /// The incoming slug seeds the view once. Without this the back button
+    /// cleared `openSlug` only to fall straight back to `initialSlug`, so
+    /// "All terms" did nothing whenever you arrived from a term link.
+    @State private var hasSeeded = false
 
     private var glossary: Glossary {
         Glossary.shared.scoped(to: model.settings.jurisdiction.tradition)
@@ -23,7 +27,7 @@ struct GlossaryView: View {
             Rectangle().fill(Theme.lineSoft).frame(height: 1)
 
             ScrollView {
-                if let slug = openSlug ?? initialSlug, let entry = glossary.entry(slug: slug) {
+                if let slug = openSlug, let entry = glossary.entry(slug: slug) {
                     detail(entry)
                 } else {
                     list
@@ -32,7 +36,11 @@ struct GlossaryView: View {
             .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
         }
-        .onAppear { openSlug = initialSlug }
+        .onAppear {
+            guard !hasSeeded else { return }
+            hasSeeded = true
+            openSlug = initialSlug
+        }
     }
 
     private var matchingSlugs: Set<String> {

@@ -86,6 +86,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.environment["CHOTKI_OPEN_AT_LAUNCH"] == "1" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
                 self?.togglePopover()
+                // Activating the app could plausibly dismiss a transient
+                // popover. Check it is still up a moment later.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    guard let self else { return }
+                    let shown = self.popover?.isShown ?? false
+                    let key = self.popover?.contentViewController?.view.window?.isKeyWindow ?? false
+                    self.trace("after activation: shown=\(shown) keyWindow=\(key)")
+                }
             }
         }
     }
@@ -106,7 +114,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             model?.reload()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+            // An accessory app's popover does not become key on its own, so text
+            // fields silently swallow every keystroke — clicks work, typing does
+            // not. Activating first is what makes the search field usable.
+            NSApp.activate(ignoringOtherApps: true)
+            popover.contentViewController?.view.window?.makeKeyAndOrderFront(nil)
             trace("popover shown=\(popover.isShown) buttonWindow=\(button.window != nil) frame=\(button.window?.frame ?? .zero)")
         }
     }
