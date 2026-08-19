@@ -24,7 +24,8 @@ private func makeModel() throws -> AppModel {
         notifier: SilentNotifier(),
         launchAtLogin: NoLaunchAtLogin(),
         storage: .none(),
-        startsReminders: false
+        startsReminders: false,
+        writesBackups: false
     )
 }
 
@@ -323,7 +324,7 @@ struct ObservanceReconciliationTests {
 
         let model = AppModel(
             store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
-            storage: .none(), startsReminders: false
+            storage: .none(), startsReminders: false, writesBackups: false
         )
 
         #expect(model.settings.observances.fasting == .observed,
@@ -343,7 +344,7 @@ struct ObservanceReconciliationTests {
 
         let model = AppModel(
             store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
-            storage: .none(), startsReminders: false
+            storage: .none(), startsReminders: false, writesBackups: false
         )
         #expect(model.settings.observances.fasting == .shown,
                 "nothing is stranded, so nothing needs changing")
@@ -354,9 +355,140 @@ struct ObservanceReconciliationTests {
         let store = InMemoryStore()
         let model = AppModel(
             store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
-            storage: .none(), startsReminders: false
+            storage: .none(), startsReminders: false, writesBackups: false
         )
         model.update { $0.showOldStyleDates = true }
         #expect(try store.loadSettings()?.showOldStyleDates == true)
+    }
+}
+
+/// Records what was actually shown, so the driver can be observed without a
+/// desktop.
+private final class RecordingNotifier: Notifier, @unchecked Sendable {
+    private let lock = NSLock()
+    private var _shown: [String] = []
+    private var _cancelled: [String] = []
+
+    var shown: [String] {
+        lock.lock(); defer { lock.unlock() }
+        return _shown
+    }
+    var cancelled: [String] {
+        lock.lock(); defer { lock.unlock() }
+        return _cancelled
+    }
+
+    private func locked(_ body: () -> Void) {
+        lock.lock(); body(); lock.unlock()
+    }
+
+    var supportsActions: Bool { true }
+    func requestAuthorization() async throws -> Bool { true }
+    func show(_ request: NotificationRequest) async throws {
+        locked { _shown.append(request.id) }
+    }
+    func cancel(ids: [String]) async {
+        locked { _cancelled.append(contentsOf: ids) }
+    }
+    var actionEvents: AsyncStream<NotificationActionEvent> { AsyncStream { $0.finish() } }
+}
+
+/// The rollover runs once a day, which means in practice it never runs while
+/// anyone is watching. A mistake costs a whole day: either silence from
+/// midnight, or yesterday's reminders arriving again.
+@Suite("The day rollover")
+@MainActor
+struct ReminderDriverTests {
+
+    private func instant(_ date: CalendarDate, _ hour: Int) -> Date {
+        date.dueInstant(at: TimeOfDay(hour: hour, minute: 0)!, in: .current)!
+    }
+
+    private func reminder(_ date: CalendarDate, _ hour: Int, id: String) -> PlannedNotification {
+        PlannedNotification(
+            id: id, ruleID: UUID(), date: date, fireAt: instant(date, hour),
+            request: NotificationRequest(id: id, title: "Evening prayers", body: "At \(hour):00")
+        )
+    }
+
+    @Test("a reminder fires once, not on every tick")
+    func firesOnce() async {
+        let today = CalendarDate(Date(), in: .current)
+        let clock = FixedClock(instant(today, 9))
+        let notifier = RecordingNotifier()
+        let driver = ReminderDriver(notifier: notifier, clock: clock) {
+            [self.reminder(today, 9, id: "a")]
+        }
+
+        driver.tick()
+        driver.tick()
+        driver.tick()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(notifier.shown == ["a"], "three ticks, one notification")
+    }
+
+    @Test("crossing midnight lets the next day's reminders fire")
+    func rollover() async throws {
+        let today = CalendarDate(Date(), in: .current)
+        let tomorrow = today.adding(days: 1)
+        let clock = FixedClock(instant(today, 9))
+        let notifier = RecordingNotifier()
+
+        // The plan follows the clock, as the real one does.
+        let driver = ReminderDriver(notifier: notifier, clock: clock) { [clock] in
+            let day = CalendarDate(clock.now, in: .current)
+            return [self.reminder(day, 9, id: "rule:\(day.iso)")]
+        }
+
+        driver.tick()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(notifier.shown == ["rule:\(today.iso)"])
+
+        // Move to the same hour tomorrow.
+        clock.set(instant(tomorrow, 9))
+        driver.tick()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(notifier.shown == ["rule:\(today.iso)", "rule:\(tomorrow.iso)"],
+                "the new day must be able to remind")
+    }
+
+    // The fix that prompted this: turning an observance on mid-afternoon made
+    // several earlier reminders due at once.
+    @Test("reminders long past their moment stay quiet")
+    func stalePastRemindersDoNotFire() async {
+        let today = CalendarDate(Date(), in: .current)
+        let clock = FixedClock(instant(today, 16))
+        let notifier = RecordingNotifier()
+        let driver = ReminderDriver(notifier: notifier, clock: clock) {
+            [
+                self.reminder(today, 7, id: "morning"),
+                self.reminder(today, 12, id: "noon"),
+                self.reminder(today, 16, id: "now")
+            ]
+        }
+
+        driver.tick()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(notifier.shown == ["now"], "only the one whose moment has just come")
+    }
+
+    @Test("a reminder that leaves the plan is withdrawn")
+    func withdrawnWhenNoLongerPlanned() async {
+        let today = CalendarDate(Date(), in: .current)
+        let clock = FixedClock(instant(today, 9))
+        let notifier = RecordingNotifier()
+        var planned = [PlannedNotification]()
+        planned = [reminder(today, 9, id: "a")]
+
+        let driver = ReminderDriver(notifier: notifier, clock: clock) { planned }
+        driver.tick()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(notifier.shown == ["a"])
+
+        // The rule was kept, so it is no longer planned.
+        planned = []
+        driver.tick()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(notifier.cancelled == ["a"], "a delivered reminder must be taken back")
     }
 }

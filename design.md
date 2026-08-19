@@ -170,6 +170,19 @@ Never both at once. On the final knot the chime sounds alone.
 
 The synthesis lives in core as pure arithmetic and is tested without a sound card — that nothing clips, that it fades in rather than clicking, that it decays rather than holding, and that the tick stays subordinate to the bell. Only playback is platform-specific, and the tick uses several players in rotation because one restarted mid-sound cuts itself off, and a click that never arrives is worse than none when you are listening for it.
 
+## Keeping the record
+
+The value of this app is entirely cumulative: a year in, the database is the only copy of something that cannot be reconstructed. So there are three ways out of it.
+
+- **Automatic**, once a day on launch, to `Application Support › Chotki › backups`, keeping the last ten. It depends on nobody remembering anything.
+- **Export**, from settings, to anywhere.
+- **Restore**, from settings, which **merges** — nothing already present is removed. A restore that silently wiped a month of record would be far worse than a duplicate.
+
+Two guards, both learned the hard way:
+
+- **An empty backup is never written.** If the store failed to open, or this is a fresh install, an empty file is worthless and could replace a good one.
+- **Tests never write backups.** `AppModel` takes `writesBackups`, false in tests. The suite had already written a 0-rule backup into a real user's Application Support before this existed — the second time test code reached the real machine, after the preferences files. Anything a test constructs must be told not to touch the world.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

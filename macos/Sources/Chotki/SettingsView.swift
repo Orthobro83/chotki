@@ -1,4 +1,6 @@
 import SwiftUI
+import AppKit
+import UniformTypeIdentifiers
 import ChotkiCore
 
 struct SettingsViewContent: View {
@@ -51,6 +53,25 @@ struct SettingsViewContent: View {
                 set: { new in model.update { $0.tickEachKnot = new } }
             )
 
+            section("Your record")
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 10) {
+                    Button("Export a backup…") { exportBackup() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.gold)
+                    Button("Restore from a backup…") { importBackup() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.gold)
+                }
+                Text("A copy is also written automatically each day, in Application Support › Chotki › backups. Restoring merges into what is already here; nothing is removed.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.faint)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 4)
+
             section("General")
             toggleRow(
                 "Show in the Dock",
@@ -73,6 +94,32 @@ struct SettingsViewContent: View {
         }
         .padding(.bottom, 14)
     
+    }
+
+    // MARK: backup
+
+    private func exportBackup() {
+        let panel = NSSavePanel()
+        panel.title = "Export a backup"
+        panel.allowedContentTypes = [.json]
+        let stamp = ISO8601DateFormatter()
+        stamp.formatOptions = [.withFullDate]
+        panel.nameFieldStringValue = "chotki-\(stamp.string(from: Date())).json"
+        NSApp.activate(ignoringOtherApps: true)
+        if panel.runModal() == .OK, let url = panel.url {
+            model.exportBackup(to: url)
+        }
+    }
+
+    private func importBackup() {
+        let panel = NSOpenPanel()
+        panel.title = "Restore from a backup"
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        NSApp.activate(ignoringOtherApps: true)
+        if panel.runModal() == .OK, let url = panel.url {
+            model.importBackup(from: url)
+        }
     }
 
     // MARK: pieces

@@ -52,7 +52,8 @@ final class AppModel: ObservableObject {
         notifier: any Notifier,
         launchAtLogin: any LaunchAtLogin,
         storage: SettingsStorage = SettingsStorage(),
-        startsReminders: Bool = true
+        startsReminders: Bool = true,
+        writesBackups: Bool = true
     ) {
         self.store = store
         self.notifier = notifier
@@ -76,6 +77,7 @@ final class AppModel: ObservableObject {
         }
 
         reload()
+        if writesBackups { writeAutomaticBackup() }
         if startsReminders { startDriver() }
         listenForActions()
         Task { await refreshLiturgical() }
@@ -279,6 +281,64 @@ final class AppModel: ObservableObject {
             reload()
         } catch {
             loadError = "Could not apply that change. \(error)"
+        }
+    }
+
+    // MARK: keeping the record safe
+
+    /// Writes a dated JSON backup beside the database, keeping the last few.
+    ///
+    /// The value of this app is entirely cumulative — a year in, that database
+    /// is the only copy of something that cannot be reconstructed. An automatic
+    /// copy costs nothing and does not depend on anyone remembering.
+    func writeAutomaticBackup(keeping limit: Int = 10) {
+        do {
+            let directory = try StoreLocation.backupsDirectory()
+            let stamp = ISO8601DateFormatter()
+            stamp.formatOptions = [.withFullDate]
+            let name = "chotki-\(stamp.string(from: Date())).json"
+            let url = directory.appendingPathComponent(name)
+
+            // Never write an empty backup. If the store failed to open, or this
+            // is a fresh install, an empty file would be worthless — and worse,
+            // it could replace a good one.
+            guard try !store.rules(includeArchived: true).isEmpty else { return }
+
+            // One a day is plenty; do not rewrite it on every launch.
+            guard !FileManager.default.fileExists(atPath: url.path) else { return }
+            try store.exportJSON().write(to: url)
+
+            let existing = try FileManager.default
+                .contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+                .filter { $0.pathExtension == "json" }
+                .sorted { $0.lastPathComponent > $1.lastPathComponent }
+            for old in existing.dropFirst(limit) {
+                try? FileManager.default.removeItem(at: old)
+            }
+        } catch {
+            // A failed backup must never stop the app starting.
+        }
+    }
+
+    func exportBackup(to url: URL) {
+        do {
+            try store.exportJSON().write(to: url)
+            notice = "Backup written to \(url.lastPathComponent)."
+        } catch {
+            loadError = "Could not write that backup. \(error)"
+        }
+    }
+
+    /// Merges a backup in. Nothing already here is removed — a restore that
+    /// silently wiped a month of record would be far worse than a duplicate.
+    func importBackup(from url: URL) {
+        do {
+            try store.importJSON(try Data(contentsOf: url))
+            settings = (try? store.loadSettings()) ?? settings
+            reload()
+            notice = "Restored from \(url.lastPathComponent)."
+        } catch {
+            loadError = "Could not read that backup. \(error)"
         }
     }
 

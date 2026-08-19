@@ -12,6 +12,10 @@ final class ReminderDriver {
 
     private let notifier: any Notifier
     private let plan: () -> [PlannedNotification]
+    /// Injected so the day rollover can be tested. It runs once a day in real
+    /// life, which means in practice it never runs during development — and a
+    /// mistake there costs a whole day of either silence or repeats.
+    private let clock: any Clock
     private var timer: Timer?
 
     /// Reminders already delivered, so a tick never repeats one.
@@ -23,8 +27,13 @@ final class ReminderDriver {
     /// How late a reminder may be and still be worth showing.
     private static let staleAfter: TimeInterval = 15 * 60
 
-    init(notifier: any Notifier, plan: @escaping () -> [PlannedNotification]) {
+    init(
+        notifier: any Notifier,
+        clock: any Clock = SystemClock(),
+        plan: @escaping () -> [PlannedNotification]
+    ) {
         self.notifier = notifier
+        self.clock = clock
         self.plan = plan
     }
 
@@ -55,8 +64,8 @@ final class ReminderDriver {
         snoozedUntil[key] = Date().addingTimeInterval(interval)
     }
 
-    private func tick() {
-        let now = Date()
+    func tick() {
+        let now = clock.now
         let today = CalendarDate(now, in: .current)
 
         // A new day starts with a clean slate, and yesterday's silences lapse.

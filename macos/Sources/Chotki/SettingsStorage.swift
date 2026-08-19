@@ -29,6 +29,17 @@ struct SettingsStorage {
 }
 
 enum StoreLocation {
+    /// Where rolling automatic backups are kept, beside the database.
+    static func backupsDirectory() throws -> URL {
+        let base = try FileManager.default.url(
+            for: .applicationSupportDirectory, in: .userDomainMask,
+            appropriateFor: nil, create: true
+        )
+        .appendingPathComponent("Chotki/backups", isDirectory: true)
+        try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        return base
+    }
+
     /// ~/Library/Application Support/Chotki/chotki.sqlite
     static func databasePath() throws -> String {
         let base = try FileManager.default.url(
