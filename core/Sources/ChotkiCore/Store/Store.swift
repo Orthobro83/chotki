@@ -24,6 +24,12 @@ public protocol Store: Sendable {
     func occurrences(ruleID: UUID?, from: CalendarDate?, through: CalendarDate?) throws -> [Occurrence]
 
     func apply(_ plan: EditPlan) throws
+
+    func saveLiturgicalDay(_ day: LiturgicalDay) throws
+    func liturgicalDay(civilDate: CalendarDate, reckoning: Reckoning) throws -> LiturgicalDay?
+    func liturgicalDays(reckoning: Reckoning, from: CalendarDate, through: CalendarDate) throws -> [LiturgicalDay]
+    /// Passing nil clears every reckoning.
+    func clearLiturgicalCache(reckoning: Reckoning?) throws
 }
 
 public extension Store {

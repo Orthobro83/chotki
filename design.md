@@ -52,6 +52,8 @@ Two consequences for the interface:
 - Ad-hoc signing is sufficient for notifications, including actions. Verified end to end 2026-08-19; no Developer ID required for personal use.
 - Xcode is NOT installed and is NOT needed. Command Line Tools SDK 15.5 compiles SwiftUI + UserNotifications cleanly (verified 2026-08-19 with a MenuBarExtra probe target). Build with SwiftPM, assemble the .app bundle by script, sign ad-hoc.
 - Repository: https://github.com/Orthobro83/chotki — public, MIT, branch `main`. Personal context lives in `context.local.md`, which is gitignored and must never be committed.
+- orthocal's URL takes a **civil** date; the response body reports the date in the requested reckoning. `/api/julian/2027/1/13/` answers with year 2026, month 12, day 31. The cache is keyed on the civil date and the reported date is stored as data. Discovered 2026-08-19.
+- orthocal codes: `fast_level` 0 none, 1 Wednesday/Friday, 2 Great Lent, 3 Apostles, 4 Dormition, 5 Nativity. `fast_exception` 11 is Fast Free; other exceptions relax a fast rather than lifting it. `feast_level` 7 and 8 are the Major Feasts of the Theotokos and of the Lord — the Great Feasts; lower levels are ranked days.
 - Liturgical data source: `orthocal.info` — free public JSON API, no key. `/api/julian/YYYY/M/D/` for Old Calendar, `/api/gregorian/YYYY/M/D/` for New. Returns tone, commemorations, feast level, fast level, abstentions, and full scripture passage text. It is the only network call the app makes.
 
 ## Calendar facts (settled 2026-08-19, worth not re-deriving)

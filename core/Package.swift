@@ -17,6 +17,13 @@ let package = Package(
     targets: [
         .systemLibrary(name: "CSQLite", path: "Sources/CSQLite"),
         .target(name: "ChotkiCore", dependencies: ["CSQLite"]),
-        .testTarget(name: "ChotkiCoreTests", dependencies: ["ChotkiCore"])
+        .testTarget(
+            name: "ChotkiCoreTests",
+            dependencies: ["ChotkiCore"],
+            // Recorded orthocal responses. The liturgical suite runs entirely
+            // against these, so CI never makes a network request and the tests
+            // stay deterministic.
+            resources: [.copy("Fixtures")]
+        )
     ]
 )

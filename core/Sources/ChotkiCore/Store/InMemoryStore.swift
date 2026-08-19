@@ -9,6 +9,8 @@ public final class InMemoryStore: Store, @unchecked Sendable {
     private var activationByID: [UUID: Activation] = [:]
     /// Keyed by rule and day: at most one deviation per rule per day.
     private var occurrenceByKey: [String: Occurrence] = [:]
+    /// Keyed by civil date and reckoning — never by the reported date.
+    private var liturgicalByKey: [String: LiturgicalDay] = [:]
 
     public init() {}
 
@@ -51,6 +53,31 @@ public final class InMemoryStore: Store, @unchecked Sendable {
 
     public func save(_ occurrence: Occurrence) throws {
         locked { occurrenceByKey["\(occurrence.ruleID):\(occurrence.date.iso)"] = occurrence }
+    }
+
+    public func saveLiturgicalDay(_ day: LiturgicalDay) throws {
+        locked { liturgicalByKey["\(day.reckoning.rawValue):\(day.civilDate.iso)"] = day }
+    }
+
+    public func liturgicalDay(civilDate: CalendarDate, reckoning: Reckoning) throws -> LiturgicalDay? {
+        locked { liturgicalByKey["\(reckoning.rawValue):\(civilDate.iso)"] }
+    }
+
+    public func liturgicalDays(
+        reckoning: Reckoning, from: CalendarDate, through: CalendarDate
+    ) throws -> [LiturgicalDay] {
+        locked {
+            liturgicalByKey.values
+                .filter { $0.reckoning == reckoning && $0.civilDate >= from && $0.civilDate <= through }
+                .sorted { $0.civilDate < $1.civilDate }
+        }
+    }
+
+    public func clearLiturgicalCache(reckoning: Reckoning?) throws {
+        locked {
+            guard let reckoning else { liturgicalByKey.removeAll(); return }
+            liturgicalByKey = liturgicalByKey.filter { $0.value.reckoning != reckoning }
+        }
     }
 
     public func occurrences(

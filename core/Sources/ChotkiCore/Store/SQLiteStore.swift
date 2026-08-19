@@ -146,6 +146,69 @@ public final class SQLiteStore: Store, @unchecked Sendable {
                 INSERT INTO schema_version (version) VALUES (1);
                 """)
         }
+
+        if current < 2 {
+            // Keyed by CIVIL date. The API answers a civil request with the
+            // date in the requested reckoning, so keying on what it reports
+            // would misfile every Old Calendar day by thirteen days.
+            try exec("""
+                CREATE TABLE liturgical_day (
+                    civil_date TEXT NOT NULL,
+                    reckoning TEXT NOT NULL,
+                    payload TEXT NOT NULL,
+                    fetched_at TEXT NOT NULL,
+                    PRIMARY KEY (civil_date, reckoning)
+                );
+                INSERT INTO schema_version (version) VALUES (2);
+                """)
+        }
+    }
+
+    // MARK: liturgical cache
+
+    public func saveLiturgicalDay(_ day: LiturgicalDay) throws {
+        try locked {
+            guard let payload = try encodeJSON(day) else { throw StoreError.query("encode failed") }
+            try run("""
+                INSERT INTO liturgical_day (civil_date, reckoning, payload, fetched_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(civil_date, reckoning) DO UPDATE SET
+                    payload = excluded.payload, fetched_at = excluded.fetched_at;
+                """, [day.civilDate.iso, day.reckoning.rawValue, payload, encode(day.fetchedAt)])
+        }
+    }
+
+    public func liturgicalDay(civilDate: CalendarDate, reckoning: Reckoning) throws -> LiturgicalDay? {
+        try locked {
+            try query(
+                "SELECT payload FROM liturgical_day WHERE civil_date = ? AND reckoning = ?;",
+                [civilDate.iso, reckoning.rawValue]
+            ) { try decodeJSON(LiturgicalDay.self, text($0, 0)) }.first
+        }
+    }
+
+    public func liturgicalDays(
+        reckoning: Reckoning, from: CalendarDate, through: CalendarDate
+    ) throws -> [LiturgicalDay] {
+        try locked {
+            try query("""
+                SELECT payload FROM liturgical_day
+                WHERE reckoning = ? AND civil_date >= ? AND civil_date <= ?
+                ORDER BY civil_date;
+                """, [reckoning.rawValue, from.iso, through.iso]) {
+                try decodeJSON(LiturgicalDay.self, text($0, 0))
+            }
+        }
+    }
+
+    public func clearLiturgicalCache(reckoning: Reckoning?) throws {
+        try locked {
+            if let reckoning {
+                try run("DELETE FROM liturgical_day WHERE reckoning = ?;", [reckoning.rawValue])
+            } else {
+                try run("DELETE FROM liturgical_day;", [])
+            }
+        }
     }
 
     // MARK: coding helpers

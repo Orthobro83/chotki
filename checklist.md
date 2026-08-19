@@ -57,16 +57,18 @@ Proof: **met 2026-08-19.** 51 tests green on macOS and Linux.
 
 ## Phase 3 — Core: liturgical layer
 
-- [ ] `Jurisdiction` setting: name, reckoning, endpoint. Default Julian.
-- [ ] orthocal client for both endpoints, using Foundation networking only.
-- [ ] 14-day prefetch into `LiturgicalDay`, background refresh.
-- [ ] Cache-first reads. Offline fallback shows cached content marked as cached — never a spinner, never an error where text should be.
+- [x] `Jurisdiction` — name plus reckoning, defaulting to Julian, with a non-authoritative list of common jurisdictions. Done 2026-08-19.
+- [x] `OrthocalClient` behind an `HTTPFetching` seam, `FoundationNetworking` imported conditionally for Linux. Done 2026-08-19.
+- [x] `LiturgicalService.refresh` fetches the window and skips what is already held. Done 2026-08-19.
+- [x] Cache-first, with an in-memory snapshot so `LiturgicalDayProvider` stays **synchronous** — the recurrence engine never awaits. `refresh` never throws; failure sets `isOffline` for the interface to reflect. Done 2026-08-19.
 - [x] Liturgical recurrence types: fast days, seasons, great feasts — gated on `ObservanceSettings`, done 2026-08-19 in Phase 2.
-- [ ] Resolve the `LiturgicalDayProvider` stub against real orthocal data.
-- [ ] Cache invalidation on jurisdiction change.
-- [ ] Tests run against recorded fixtures, not the live API, so CI is offline and deterministic.
+- [x] `LiturgicalService` conforms to `LiturgicalDayProvider`, driving liturgical recurrences from cached data. Done 2026-08-19.
+- [x] **Improved on the plan:** switching re-targets rather than deleting. A cached Julian day stays a correct Julian day, so switching back costs no requests. `clearLiturgicalCache` remains for a manual refresh. Done 2026-08-19.
+- [x] Ten recorded fixtures in the test bundle. The suite makes no network request. Done 2026-08-19.
 
-Proof: correct fast level for 13 Jan 2027 under each reckoning (New = strict fast, Old = fast-free). Full function with the network off. Green on Linux.
+Proof: **met 2026-08-19.** 13 Jan 2027 decodes fast-free (Leavetaking of the Nativity) on the Old Calendar and a fast on the New. Offline refresh returns nothing, throws nothing, and cached days still answer. 71 tests green on macOS and Linux.
+
+> Discovered building this: the API takes a **civil** date in the URL but reports the date in the requested reckoning in the body — `/api/julian/2027/1/13/` answers with 31 December 2026. The cache is keyed on the civil date; keying on the reported date would misfile every Old Calendar day by thirteen days.
 
 ## Phase 4 — Core: scheduling
 
