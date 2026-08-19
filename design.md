@@ -155,6 +155,21 @@ Two repairs run on load, because a stored flag can be wrong about the world:
 
 A reminder more than fifteen minutes past its moment is marked handled and stays quiet. Without this, launching in the afternoon — or a rule becoming due mid-day, which is exactly what happens when an observance is turned on — fires every earlier reminder for the day at once.
 
+## The prayer rope chime
+
+Synthesised, not shipped. There is no audio file anywhere in the project, for the same reason there is no icon file: it cannot drift from the design, it needs no licence, and it works on any platform.
+
+A bell is not a sine wave. Its partials are **inharmonic** — hum at 0.5, prime at 1.0, tierce at 1.19, quint at 1.5, nominal at 2.0 — and each decays at its own rate, the high ones fastest. The tierce is the minor third that gives a bell its slightly mournful colour. Whole-number ratios alone would sound like an organ.
+
+Two sounds, deliberately unlike each other, because they are heard with the eyes closed:
+
+- **The chime** marks a completed knot: 587Hz, seven partials, ringing out over about two and a half seconds.
+- **The tick** only confirms a press landed: 1.6kHz, 50 milliseconds, quiet. Well above the bell and far shorter, so the two can never be mistaken.
+
+Never both at once. On the final knot the chime sounds alone.
+
+The synthesis lives in core as pure arithmetic and is tested without a sound card — that nothing clips, that it fades in rather than clicking, that it decays rather than holding, and that the tick stays subordinate to the bell. Only playback is platform-specific, and the tick uses several players in rotation because one restarted mid-sound cuts itself off, and a click that never arrives is worse than none when you are listening for it.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

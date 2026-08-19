@@ -149,7 +149,7 @@ Rendered check: the summary reads "Evening prayers slipped four times, all on Fr
 - [x] Cached-state marker on the reading tab. Done 2026-08-19.
 - [x] 36 bundled passages, all from the Ante-Nicene and Nicene & Post-Nicene Fathers series or early Desert Fathers translations, one per day by day-of-year. A test rejects any source naming a modern translation still in copyright. **[manual]** Attributions await a priest's review before the app goes beyond personal use. Done 2026-08-19.
 - [x] First-run onboarding offering three rules, with "start with nothing for now" as an equal option. Done 2026-08-19.
-- [x] Prayer rope: 33/50/100, click or space, one dot per knot. Counts and nothing else — no timing, no record, no score. Done 2026-08-19.
+- [x] Prayer rope: 33/50/100, click or space, one dot per knot, with a synthesised chime on completion and a soft click per knot. Counts and nothing else — no timing, no record, no score. Done 2026-08-19.
 - [ ] **[manual]** Walk a clean install end to end, from first launch to first kept rule.
 
 Proof: clean install to first kept rule, walked end to end.

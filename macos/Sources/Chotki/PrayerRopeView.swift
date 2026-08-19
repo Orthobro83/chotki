@@ -9,6 +9,7 @@ struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
     @State private var count = 0
     @State private var target = 33
+    @State private var sound = SoundPlayer()
     @FocusState private var focused: Bool
 
     private let targets = [33, 50, 100]
@@ -89,6 +90,15 @@ struct PrayerRopeView: View {
     }
 
     private func advance() {
-        count = min(count + 1, target)
+        guard count < target else { return }
+        count += 1
+
+        // The chime marks completion; the tick only confirms a press landed.
+        // Never both at once — with your eyes closed they would run together.
+        if count == target {
+            if model.settings.chimeOnCompletion { sound.playBell() }
+        } else if model.settings.tickEachKnot {
+            sound.playTick()
+        }
     }
 }

@@ -17,6 +17,11 @@ public struct AppSettings: Sendable, Hashable, Codable {
     /// Show a Dock icon and a full window as well as the menu bar item.
     /// The menu bar item is always present; this only adds the rest.
     public var showInDock: Bool
+    /// The chime when a knot of the prayer rope is complete.
+    public var chimeOnCompletion: Bool
+    /// A soft click as each knot passes, so a press is confirmed with your eyes
+    /// closed.
+    public var tickEachKnot: Bool
     /// Cleared once the first rules have been taken on.
     public var hasCompletedFirstRun: Bool
 
@@ -28,6 +33,8 @@ public struct AppSettings: Sendable, Hashable, Codable {
         showConsistencyNumber: Bool = true,
         launchAtLogin: Bool = false,
         showInDock: Bool = true,
+        chimeOnCompletion: Bool = true,
+        tickEachKnot: Bool = true,
         hasCompletedFirstRun: Bool = false
     ) {
         self.jurisdiction = jurisdiction
@@ -37,6 +44,8 @@ public struct AppSettings: Sendable, Hashable, Codable {
         self.showConsistencyNumber = showConsistencyNumber
         self.launchAtLogin = launchAtLogin
         self.showInDock = showInDock
+        self.chimeOnCompletion = chimeOnCompletion
+        self.tickEachKnot = tickEachKnot
         self.hasCompletedFirstRun = hasCompletedFirstRun
     }
 

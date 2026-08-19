@@ -37,6 +37,20 @@ struct SettingsViewContent: View {
             )
             leadPicker
 
+            section("Prayer rope")
+            toggleRow(
+                "Chime when a knot is complete",
+                help: nil,
+                isOn: model.settings.chimeOnCompletion,
+                set: { new in model.update { $0.chimeOnCompletion = new } }
+            )
+            toggleRow(
+                "Click on each knot",
+                help: "A soft click confirms a press landed, for praying with your eyes closed.",
+                isOn: model.settings.tickEachKnot,
+                set: { new in model.update { $0.tickEachKnot = new } }
+            )
+
             section("General")
             toggleRow(
                 "Show in the Dock",
