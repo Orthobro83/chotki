@@ -33,7 +33,7 @@ Both spikes come first. Do not build on an unproven assumption.
 
 Proof: **met in full 2026-08-19.** All four CI jobs green. Notification with a working action round-tripped. Launch at login registered and verified.
 
-> **Known issue, deferred to Phase 7.** The bundle is currently registered for launch-at-login from `/Volumes/2TB/...`. If the external drive is not mounted at login, the app will not start. The build output belongs in `/Applications` for daily use; the repo location is for development only.
+> **Resolved 2026-08-19.** `macos/install.sh` installs to `/Applications` and launches from there, and the app re-asserts its login item from wherever it is actually running — so moving it off the external drive fixes the registration by itself.
 
 ## Phase 2 — Core: store and recurrence engine
 
@@ -145,11 +145,11 @@ Rendered check: the summary reads "Evening prayers slipped four times, all on Fr
 
 ## Phase 7 — Reading tab and polish
 
-- [ ] Commemoration, tone, readings with passage text.
-- [ ] Cached-state marker.
-- [ ] Bundled public-domain patristic texts (Nicene & Post-Nicene Fathers), one per day.
-- [ ] First-run onboarding: pick two or three rules, not twelve.
-- [ ] Prayer rope counter — 33/50/100 presets, click or spacebar.
+- [x] Commemoration, tone, readings with passage text. Done 2026-08-19.
+- [x] Cached-state marker on the reading tab. Done 2026-08-19.
+- [x] 36 bundled passages, all from the Ante-Nicene and Nicene & Post-Nicene Fathers series or early Desert Fathers translations, one per day by day-of-year. A test rejects any source naming a modern translation still in copyright. **[manual]** Attributions await a priest's review before the app goes beyond personal use. Done 2026-08-19.
+- [x] First-run onboarding offering three rules, with "start with nothing for now" as an equal option. Done 2026-08-19.
+- [x] Prayer rope: 33/50/100, click or space, one dot per knot. Counts and nothing else — no timing, no record, no score. Done 2026-08-19.
 - [ ] **[manual]** Walk a clean install end to end, from first launch to first kept rule.
 
 Proof: clean install to first kept rule, walked end to end.

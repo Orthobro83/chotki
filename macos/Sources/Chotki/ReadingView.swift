@@ -64,6 +64,25 @@ struct ReadingViewContent: View {
                 }
             }
 
+            if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
+                Rectangle().fill(Theme.line).frame(height: 1)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("from the fathers")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.muted)
+                    Text(patristic.text)
+                        .font(.custom("Cardo", size: 14))
+                        .foregroundStyle(Theme.parchmentDim)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("\(patristic.author) · \(patristic.source)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.faint)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 10)
+            }
+
             Rectangle().fill(Theme.line).frame(height: 1)
             HStack {
                 Text("\(day.paschaDistance) days since Pascha")

@@ -13,6 +13,10 @@ struct RootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if !model.settings.hasCompletedFirstRun {
+                OnboardingView(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
+            } else {
             switch model.screen {
             case .main:
                 tabBar
@@ -35,6 +39,11 @@ struct RootView: View {
                 Header(title: ruleID == nil ? "New rule" : "Edit rule") { model.screen = .main }
                 RuleEditorView(model: model, ruleID: ruleID) { model.screen = .main }
                     .frame(maxHeight: .infinity, alignment: .top)
+            case .prayerRope:
+                Header(title: "Prayer rope") { model.screen = .main }
+                PrayerRopeView(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
+            }
             }
 
             if let notice = model.notice {

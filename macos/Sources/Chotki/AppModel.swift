@@ -10,6 +10,7 @@ enum Screen: Hashable {
     case settings
     case glossary(String?)
     case editor(UUID?)
+    case prayerRope
 }
 
 @MainActor
@@ -63,6 +64,13 @@ final class AppModel: ObservableObject {
         let now = CalendarDate(Date(), in: .current)
         self.selectedDate = now
         self.visibleMonth = now
+
+        // Registering is per-bundle-path. Moving the app — from the external
+        // drive to /Applications, say — leaves the setting on while the actual
+        // registration points at the old location, so re-assert it from here.
+        if loaded.launchAtLogin && !launchAtLogin.isEnabled {
+            try? launchAtLogin.setEnabled(true)
+        }
 
         reload()
         if startsReminders { startDriver() }

@@ -130,6 +130,16 @@ The model still knows nothing about windows: it exposes `openMainWindow` and `on
 
 A regular app needs a menu bar, and an Edit menu specifically — cut, copy, paste and select all reach a text field through the responder chain from those menu items, not from the field itself. Without it, editing shortcuts silently do nothing.
 
+## The bundled passages
+
+Thirty-six short passages from the Fathers, shown one a day beneath the scripture, chosen by day-of-year so the same day always gives the same passage.
+
+Bundled rather than fetched: there is no reliable free API for patristic texts, scraping one would be brittle, and a passage that fails to load is worse than a small set that always works.
+
+**Every source is public domain by construction** — the Ante-Nicene Fathers and Nicene and Post-Nicene Fathers series (1885–1900), and early translations of the Sayings of the Desert Fathers. Modern translations, the Philokalia especially, remain in copyright; a test rejects any source naming one, so the rule is enforced rather than remembered.
+
+Each passage names its work so the attribution can be checked. They await a priest's review before the app is used by anyone but its author.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

@@ -29,6 +29,9 @@ enum RenderMode {
             render(RootView(model: model), to: "\(prefix)-shell-settings.png")
             model.screen = .main
 
+            render(OnboardingView(model: model).background(Theme.ground), to: "\(prefix)-onboarding.png")
+            render(PrayerRopeView(model: model).background(Theme.ground), to: "\(prefix)-rope.png")
+
             render(ProgressTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-progress.png")
 
             render(RuleTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-rule.png")

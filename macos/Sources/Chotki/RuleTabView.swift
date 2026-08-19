@@ -80,6 +80,10 @@ struct DayPanel: View {
                 Label("Library", systemImage: "square.grid.2x2")
             }
             Spacer()
+            Button { model.screen = .prayerRope } label: {
+                Image(systemName: "circle.hexagonpath")
+            }
+            .help("Prayer rope")
             Button { model.screen = .glossary(nil) } label: {
                 Image(systemName: "text.book.closed")
             }
