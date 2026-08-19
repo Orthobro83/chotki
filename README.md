@@ -1,12 +1,14 @@
-# chotki
+# chotki (beta)
 
-A menu bar app for keeping an Orthodox prayer rule, and honestly measuring whether it is kept.
+A menu bar app for keeping an Orthodox routine, and honestly measuring whether it is kept.
 
 A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning prayer into a scoreboard.
 
+You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community (such as The Brotherhood of the Narrow Path, who inspired this app). 
+
 ## Status
 
-Design complete, no code yet. macOS first; Windows and Linux planned.
+Design complete, app in beta. macOS first; Windows and Linux planned.
 
 - [design.md](design.md) — data model, liturgical handling, scoring
 - [checklist.md](checklist.md) — build order, phase by phase
