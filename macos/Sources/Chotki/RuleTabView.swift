@@ -178,7 +178,7 @@ struct RuleTabView: View {
 
     var body: some View {
         ScrollView { RuleTabViewContent(model: model) }
-            .frame(maxHeight: 520)
+            .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
     }
 }

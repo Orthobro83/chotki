@@ -117,7 +117,7 @@ struct LibraryView: View {
 
     var body: some View {
         ScrollView { LibraryViewContent(model: model) }
-            .frame(maxHeight: 520)
+            .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
     }
 }

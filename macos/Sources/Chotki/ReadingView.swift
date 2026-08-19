@@ -12,7 +12,7 @@ struct ReadingView: View {
                 waiting
             }
         }
-        .frame(maxHeight: 520)
+        .frame(maxHeight: .infinity)
         .scrollContentBackgroundHidden()
     }
 

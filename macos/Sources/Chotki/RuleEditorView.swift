@@ -77,7 +77,7 @@ struct RuleEditorView: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
-        .frame(maxHeight: 520)
+        .frame(maxHeight: .infinity)
         .scrollContentBackgroundHidden()
         .onAppear(perform: load)
     }

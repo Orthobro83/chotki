@@ -58,8 +58,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let popover = NSPopover()
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: Theme.popoverWidth, height: 560)
-        popover.contentViewController = NSHostingController(rootView: RootView(model: model))
+        popover.contentSize = NSSize(width: Theme.popoverWidth, height: Theme.popoverHeight)
+
+        let hosting = NSHostingController(rootView: RootView(model: model))
+        // Without this the hosting controller reports SwiftUI's preferred size
+        // back to the popover, so a tab with little in it shrinks the window and
+        // every other tab is left scrolling inside a window that never grew back.
+        hosting.sizingOptions = []
+        popover.contentViewController = hosting
         self.popover = popover
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

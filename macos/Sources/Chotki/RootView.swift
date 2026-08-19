@@ -18,18 +18,23 @@ struct RootView: View {
                 tabBar
                 Divider().overlay(Theme.line)
                 content
+                    .frame(maxHeight: .infinity, alignment: .top)
             case .library:
                 Header(title: "Rule library") { model.screen = .main }
                 LibraryView(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
             case .settings:
                 Header(title: "Settings") { model.screen = .main }
                 SettingsView(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
             case .glossary(let slug):
                 Header(title: "Terms") { model.screen = .main }
                 GlossaryView(model: model, initialSlug: slug)
+                    .frame(maxHeight: .infinity, alignment: .top)
             case .editor(let ruleID):
                 Header(title: ruleID == nil ? "New rule" : "Edit rule") { model.screen = .main }
                 RuleEditorView(model: model, ruleID: ruleID)
+                    .frame(maxHeight: .infinity, alignment: .top)
             }
 
             if let error = model.loadError {
@@ -41,7 +46,7 @@ struct RootView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .frame(width: Theme.popoverWidth)
+        .frame(width: Theme.popoverWidth, height: Theme.popoverHeight)
         .background(Theme.ground)
     }
 
@@ -110,6 +115,7 @@ struct ProgressPlaceholderView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 24).padding(.vertical, 40)
+        .frame(maxHeight: .infinity)
+        .padding(.horizontal, 24)
     }
 }

@@ -25,6 +25,10 @@ enum Theme {
     static let ochre = Color(red: 0.651, green: 0.227, blue: 0.220)
 
     static let popoverWidth: CGFloat = 400
+    /// Fixed. The popover must not resize itself around whatever tab happens to
+    /// be showing — a short tab would shrink it and leave every other tab
+    /// scrolling inside a window that never grew back.
+    static let popoverHeight: CGFloat = 560
 }
 
 extension View {

@@ -22,6 +22,13 @@ enum RenderMode {
             // representative; the app does this asynchronously at launch.
             try? model.liturgical.loadSnapshot(around: model.today)
 
+            // The whole shell, to confirm it is a fixed size no matter which
+            // screen is showing.
+            render(RootView(model: model), to: "\(prefix)-shell-main.png")
+            model.screen = .settings
+            render(RootView(model: model), to: "\(prefix)-shell-settings.png")
+            model.screen = .main
+
             render(RuleTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-rule.png")
 
             render(LibraryViewContent(model: model).background(Theme.ground), to: "\(prefix)-library.png")
@@ -74,7 +81,7 @@ enum RenderMode {
         // A ScrollView needs a definite height to lay out; the real popover
         // gets one from its contentSize, so give the renderer the same.
         let renderer = ImageRenderer(
-            content: view.frame(width: Theme.popoverWidth, height: 620)
+            content: view.frame(width: Theme.popoverWidth, height: Theme.popoverHeight)
         )
         renderer.scale = 2
         guard let image = renderer.nsImage,

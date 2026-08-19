@@ -177,7 +177,7 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView { SettingsViewContent(model: model) }
-            .frame(maxHeight: 520)
+            .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
     }
 }

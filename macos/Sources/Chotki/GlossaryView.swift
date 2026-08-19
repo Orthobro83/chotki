@@ -29,7 +29,7 @@ struct GlossaryView: View {
                     list
                 }
             }
-            .frame(maxHeight: 470)
+            .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
         }
         .onAppear { openSlug = initialSlug }
