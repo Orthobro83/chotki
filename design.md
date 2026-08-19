@@ -77,6 +77,22 @@ Three constraints on anything built from this:
 - **A jurisdiction's practice is overridable.** A parish sometimes differs from its jurisdiction's norm, so the profile is a starting point and the app shows what was actually set.
 - **The glossary is scoped.** Terms specific to one tradition are shown only to that tradition — a Greek reader is not told about the Kursk Root Icon as though it were common to all Orthodoxy. Cross-references are pruned when scoping, so the education pane can never link to an entry the reader cannot open.
 
+## Reminders — silence is not standing down
+
+Notifications are controllable at two levels, and neither touches whether a rule is kept.
+
+- **Master switch.** `ReminderPolicy.notificationsEnabled` stops every reminder in the app.
+- **Per rule.** Each rule carries `RuleReminders { enabled, leads }`.
+
+The binding property: **turning reminders off changes nothing about whether a rule is due or how it is scored.** Someone who knows their own morning routine should be able to stop the buzzing without the app quietly deciding they have given the rule up. Standing a rule down is pausing it, which is a different action with a different meaning, and the two must never be conflated. This is tested directly.
+
+Lead times are chosen per rule, from: at the time, 10 minutes, 30 minutes, 1 hour, 2 hours, the evening before. A rule may carry **several** leads at once — an hour before to get ready, ten minutes before to actually leave — which is why each lead gets its own notification id, and why cancellation on completion covers every lead rather than only the next one.
+
+Two details that follow:
+
+- **The evening before** fires at a fixed 20:00 the previous day rather than at an offset, because for something you travel to, "the night before" is a time of day rather than a duration.
+- **Rules with no settings** fall back to the policy default rather than storing a copy, so changing the default moves every rule that never expressed a preference.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

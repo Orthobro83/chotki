@@ -14,6 +14,9 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     /// is reminded differently.
     public var timeOfDay: TimeOfDay?
     public var category: String?
+    /// Optional on purpose: a backup written before this existed decodes to nil
+    /// rather than failing, and `effectiveReminders` supplies the default.
+    public var reminders: RuleReminders?
     public var createdAt: Date
     /// Set when the rule is removed. Never deleted, so history survives.
     public var archivedAt: Date?
@@ -26,6 +29,7 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         recurrence: Recurrence,
         timeOfDay: TimeOfDay? = nil,
         category: String? = nil,
+        reminders: RuleReminders? = nil,
         createdAt: Date = Date(),
         archivedAt: Date? = nil
     ) {
@@ -36,11 +40,14 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         self.recurrence = recurrence
         self.timeOfDay = timeOfDay
         self.category = category
+        self.reminders = reminders
         self.createdAt = createdAt
         self.archivedAt = archivedAt
     }
 
     public var isArchived: Bool { archivedAt != nil }
+
+    public var effectiveReminders: RuleReminders { reminders ?? .default }
 }
 
 /// A stretch during which a rule is actually in force.

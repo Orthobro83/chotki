@@ -92,6 +92,16 @@ Proof: **met 2026-08-19.** A simulated August produces 31 morning reminders, 5 S
 - [ ] Terms rendered as tappable in the reading tab, the calendar, and the day's fast description.
 - [ ] **[manual]** Have a priest read the glossary content. It is introductory, not authoritative.
 
+## Phase 4c — Reminder controls (core done, interface pending)
+
+- [x] Master switch for notifications. Done 2026-08-19.
+- [x] Per-rule enable/disable, independent of whether the rule is scored. Done 2026-08-19.
+- [x] Lead times: at the time, 10 / 30 minutes, 1 / 2 hours, the evening before. Done 2026-08-19.
+- [x] Several leads on one rule, each with its own id; cancellation covers all of them. Done 2026-08-19.
+- [x] Schema migration v3, with the upgrade path tested against a database built as version 2. Done 2026-08-19.
+- [ ] Settings interface for the master switch and the default lead.
+- [ ] Per-rule reminder controls in the add and edit sheets.
+
 ## Phase 5 — macOS interface
 
 - [ ] Popover, 380–420pt, three-tab chrome.

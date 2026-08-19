@@ -14,11 +14,17 @@ public enum UntimedSpacing: String, Sendable, Hashable, Codable {
 
 /// When reminders fire, and how often.
 ///
+/// `notificationsEnabled` is the master switch. Turning it off stops every
+/// reminder and changes nothing else — rules stay due, and the score is
+/// untouched. Silence is not the same as standing down.
+///
 /// Tunable rather than hard-coded, because the right cadence is personal and
 /// because a policy that cannot be softened is a policy that nags.
 public struct ReminderPolicy: Sendable, Hashable, Codable {
-    /// How far ahead of a timed rule to give warning.
-    public var leadTime: TimeInterval
+    /// Master switch. Off means no reminder of any kind fires.
+    public var notificationsEnabled: Bool
+    /// Default warning for rules that do not set their own.
+    public var defaultLead: ReminderLead
     /// Gap between reminders for a rule with no clock time.
     public var untimedInterval: TimeInterval
     /// Most reminders in a day for one untimed rule. Zero means uncapped.
@@ -27,13 +33,15 @@ public struct ReminderPolicy: Sendable, Hashable, Codable {
     public var quietHours: QuietHours
 
     public init(
-        leadTime: TimeInterval = 10 * 60,
+        notificationsEnabled: Bool = true,
+        defaultLead: ReminderLead = .tenMinutes,
         untimedInterval: TimeInterval = 60 * 60,
         untimedCap: Int = 4,
         spacing: UntimedSpacing = .spreadAcrossDay,
         quietHours: QuietHours = .default
     ) {
-        self.leadTime = leadTime
+        self.notificationsEnabled = notificationsEnabled
+        self.defaultLead = defaultLead
         self.untimedInterval = untimedInterval
         self.untimedCap = untimedCap
         self.spacing = spacing
@@ -47,6 +55,9 @@ public struct ReminderPolicy: Sendable, Hashable, Codable {
 
     /// The literal original shape: hourly from the first waking hour.
     public static let hourly = ReminderPolicy(spacing: .hourly)
+
+    /// Everything silent. Rules remain due and scored exactly as before.
+    public static let silent = ReminderPolicy(notificationsEnabled: false)
 }
 
 /// A reminder the scheduler has decided should fire.

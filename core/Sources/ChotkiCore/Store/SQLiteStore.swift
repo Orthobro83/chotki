@@ -40,7 +40,9 @@ public final class SQLiteStore: Store, @unchecked Sendable {
 
     // MARK: raw helpers
 
-    private func exec(_ sql: String) throws {
+    /// Internal rather than private so tests can build a historical schema and
+    /// prove the migration path, which a fresh database never exercises.
+    func exec(_ sql: String) throws {
         var error: UnsafeMutablePointer<CChar>?
         guard sqlite3_exec(db, sql, nil, nil, &error) == SQLITE_OK else {
             let message = error.map { String(cString: $0) } ?? "unknown"
@@ -162,6 +164,15 @@ public final class SQLiteStore: Store, @unchecked Sendable {
                 INSERT INTO schema_version (version) VALUES (2);
                 """)
         }
+
+        if current < 3 {
+            // Per-rule reminder settings. Nullable, so rules written before this
+            // existed keep working and fall back to the default.
+            try exec("""
+                ALTER TABLE rule ADD COLUMN reminders TEXT;
+                INSERT INTO schema_version (version) VALUES (3);
+                """)
+        }
     }
 
     // MARK: liturgical cache
@@ -239,16 +250,18 @@ public final class SQLiteStore: Store, @unchecked Sendable {
     public func save(_ rule: Rule) throws {
         try locked {
             try run("""
-                INSERT INTO rule (id, title, note, source, recurrence, time_of_day, category, created_at, archived_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO rule (id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     title = excluded.title, note = excluded.note, source = excluded.source,
                     recurrence = excluded.recurrence, time_of_day = excluded.time_of_day,
-                    category = excluded.category, archived_at = excluded.archived_at;
+                    category = excluded.category, archived_at = excluded.archived_at,
+                    reminders = excluded.reminders;
                 """, [
                     rule.id.uuidString, rule.title, rule.note, rule.source,
                     try encodeJSON(rule.recurrence), try encodeJSON(rule.timeOfDay),
-                    rule.category, encode(rule.createdAt), encode(rule.archivedAt)
+                    rule.category, encode(rule.createdAt), encode(rule.archivedAt),
+                    try encodeJSON(rule.reminders)
                 ])
         }
     }
@@ -263,12 +276,14 @@ public final class SQLiteStore: Store, @unchecked Sendable {
             id: id, title: title, note: text(s, 2), source: text(s, 3),
             recurrence: recurrence,
             timeOfDay: try decodeJSON(TimeOfDay.self, text(s, 5)),
-            category: text(s, 6), createdAt: createdAt, archivedAt: decode(text(s, 8))
+            category: text(s, 6),
+            reminders: try decodeJSON(RuleReminders.self, text(s, 9)),
+            createdAt: createdAt, archivedAt: decode(text(s, 8))
         )
     }
 
     private static let ruleColumns =
-        "id, title, note, source, recurrence, time_of_day, category, created_at, archived_at"
+        "id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders"
 
     public func rule(id: UUID) throws -> Rule? {
         try locked {
