@@ -29,9 +29,11 @@ Both spikes come first. Do not build on an unproven assumption.
 - [x] **[manual]** Notification permission granted. Done 2026-08-19.
 - [x] **SPIKE B PASSED** 2026-08-19. `core/` builds and tests on `swift:6.1` Linux in 43s. A `portability-guard` job greps `core/` for Apple-only imports and was verified to fail when an `import AppKit` was planted.
 - [x] Eight-pointed cross drawn programmatically as a template `NSImage` — no asset pipeline, correct inversion in dark menu bars. Done 2026-08-19.
-- [~] Launch at login implemented via `SMAppService` behind the core `LaunchAtLogin` protocol. **[manual]** Not yet exercised — click the toggle in the spike popover to confirm.
+- [x] Launch at login via `SMAppService` behind the core `LaunchAtLogin` protocol. Verified 2026-08-19 — registered and confirmed in `sfltool dumpbtm` and login items.
 
-Proof: **met 2026-08-19.** All four CI jobs green (core-Linux, core-macOS, portability-guard, macOS app bundle). Notification with a working action round-tripped. Launch at login still to be exercised by hand.
+Proof: **met in full 2026-08-19.** All four CI jobs green. Notification with a working action round-tripped. Launch at login registered and verified.
+
+> **Known issue, deferred to Phase 7.** The bundle is currently registered for launch-at-login from `/Volumes/2TB/...`. If the external drive is not mounted at login, the app will not start. The build output belongs in `/Applications` for daily use; the repo location is for development only.
 
 ## Phase 2 — Core: store and recurrence engine
 
