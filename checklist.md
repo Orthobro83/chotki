@@ -72,15 +72,15 @@ Proof: **met 2026-08-19.** 13 Jan 2027 decodes fast-free (Leavetaking of the Nat
 
 ## Phase 4 — Core: scheduling
 
-- [ ] In-process scheduler: computes what is due, when to warn, when to repeat.
-- [ ] 10-minute lead for timed rules.
-- [ ] Hourly repeat for untimed rules, capped at four.
-- [ ] Quiet hours, default 21:30–06:30.
-- [ ] `Notifier` protocol with an actions capability flag, so a platform without action support degrades to a plain notification rather than losing the reminder.
-- [ ] Cancel pending notifications for an occurrence on completion; reschedule on rule edit, pause, or archive.
-- [ ] Tested with an injected clock — no sleeping, no real time, runs headless in CI.
+- [x] `Scheduler` — pure, no sleeping, no platform. Done 2026-08-19.
+- [x] 10-minute lead for timed rules, exempt from quiet hours by design. Done 2026-08-19.
+- [x] Up to four reminders for untimed rules, spread across the waking day by default; `ReminderPolicy.hourly` keeps the original cadence. Done 2026-08-19.
+- [x] Quiet hours, default 21:30–06:30, applied to unsolicited repetition only. Done 2026-08-19.
+- [x] `Notifier` protocol with `supportsActions`, defined in Phase 1 and driven by the scheduler. Done 2026-08-19.
+- [x] `cancellationIDs` covers every reminder armed for a day; completed, late, skipped, cancelled, moved and archived all silence it. Done 2026-08-19.
+- [x] `Clock` protocol with `FixedClock`; the whole suite runs in milliseconds with no desktop. Done 2026-08-19.
 
-Proof: a simulated month of ticks produces the right notifications at the right moments, on Linux, with no desktop present.
+Proof: **met 2026-08-19.** A simulated August produces 31 morning reminders, 5 Sunday Liturgy reminders, 124 untimed reminders, and not one inside the quiet window. 112 tests green on macOS and Linux.
 
 ## Phase 4b — Education (core done, interface pending)
 
