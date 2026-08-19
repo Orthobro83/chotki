@@ -1,19 +1,15 @@
 import SwiftUI
 import ChotkiCore
 
-struct ReadingView: View {
+struct ReadingViewContent: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ScrollView {
-            if let day = model.liturgical.cachedDay(for: model.selectedDate) {
-                content(day)
-            } else {
-                waiting
-            }
+        if let day = model.liturgical.cachedDay(for: model.selectedDate) {
+            content(day)
+        } else {
+            waiting
         }
-        .frame(maxHeight: .infinity)
-        .scrollContentBackgroundHidden()
     }
 
     private func content(_ day: LiturgicalDay) -> some View {
@@ -94,5 +90,17 @@ struct ReadingView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24).padding(.vertical, 40)
+    }
+}
+
+/// Scroll chrome only; content is `ReadingViewContent` so the window can lay it
+/// out differently and the renderer can draw it.
+struct ReadingView: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        ScrollView { ReadingViewContent(model: model) }
+            .frame(maxHeight: .infinity)
+            .scrollContentBackgroundHidden()
     }
 }

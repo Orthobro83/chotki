@@ -134,6 +134,15 @@ The Tone constraint is enforced by a test that renders six different shapes of r
 
 Rendered check: the summary reads "Evening prayers slipped four times, all on Fridays. Read the day's Gospel slipped once. Everything else held." with the figure secondary and the per-rule breakdown showing 25 of 25 for a rule with four stood-down days.
 
+## Phase 5b — A full app as well as a menu bar app
+
+- [x] `showInDock` setting, switching activation policy live. Done 2026-08-19.
+- [x] Main window with a sidebar; month grid beside the day's rules. Done 2026-08-19.
+- [x] Dock icon drawn programmatically, like the menu bar template image. Done 2026-08-19.
+- [x] Main menu including a working Edit menu. Done 2026-08-19.
+- [x] Dock icon reopen brings the window back. Done 2026-08-19.
+- [ ] **[manual]** Walk the window: sidebar sections, the wider Rule layout, and editing text with keyboard shortcuts.
+
 ## Phase 7 — Reading tab and polish
 
 - [ ] Commemoration, tone, readings with passage text.

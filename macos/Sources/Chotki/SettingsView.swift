@@ -39,6 +39,12 @@ struct SettingsViewContent: View {
 
             section("General")
             toggleRow(
+                "Show in the Dock",
+                help: "With this off, Chotki lives only in the menu bar. The menu bar icon is there either way.",
+                isOn: model.settings.showInDock,
+                set: { new in model.update { $0.showInDock = new } }
+            )
+            toggleRow(
                 "Open at login",
                 help: nil,
                 isOn: model.settings.launchAtLogin,

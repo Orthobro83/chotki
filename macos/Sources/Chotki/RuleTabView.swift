@@ -8,6 +8,19 @@ struct RuleTabViewContent: View {
         VStack(spacing: 0) {
             MonthGridView(model: model)
             Rectangle().fill(Theme.line).frame(height: 1)
+            DayPanel(model: model)
+        }
+    }
+}
+
+/// The selected day: what it is in the calendar, what is on the rule for it,
+/// and the actions. Shared by the popover and the window, which stack it
+/// differently but show the same thing.
+struct DayPanel: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        VStack(spacing: 0) {
             dayHeader
             entries
             Rectangle().fill(Theme.lineSoft).frame(height: 1)

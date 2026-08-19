@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var popover: NSPopover?
     private var model: AppModel?
     private let reportWindow = ReportWindowController()
+    private let mainWindow = MainWindowController()
 
     private func trace(_ line: String) {
         guard ProcessInfo.processInfo.environment["CHOTKI_TRACE"] == "1" else { return }
@@ -73,12 +74,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = hosting
         self.popover = popover
 
+        // The Dock icon and window are optional; the menu bar item is not.
+        applyDockPresence(model.settings.showInDock)
+        model.onDockPresenceChanged = { [weak self] show in
+            self?.applyDockPresence(show)
+        }
+        model.openMainWindow = { [weak self, weak model] in
+            guard let self, let model else { return }
+            self.mainWindow.show(model: model)
+        }
+        if model.settings.showInDock {
+            mainWindow.show(model: model)
+        }
+
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = CrossIcon.menuBarImage()
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked)
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         self.statusItem = item
+        trace("policy=\(NSApp.activationPolicy().rawValue) windows=\(NSApp.windows.count) dockIcon=\(NSApp.applicationIconImage != nil) mainMenu=\(NSApp.mainMenu != nil)")
         trace("status item created, button=\(item.button != nil), screens=\(NSScreen.screens.count)")
 
         // Development affordance: open the popover at launch so the interface
@@ -96,6 +111,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    /// Switches between a full app and a menu bar accessory, live.
+    private func applyDockPresence(_ show: Bool) {
+        NSApp.setActivationPolicy(show ? .regular : .accessory)
+        if show {
+            NSApp.applicationIconImage = CrossIcon.appIcon()
+            MainMenu.install()
+        } else {
+            NSApp.mainMenu = nil
+        }
+    }
+
+    /// Clicking the Dock icon brings the window back.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        if let model, model.settings.showInDock { mainWindow.show(model: model) }
+        return true
     }
 
     @objc private func statusItemClicked() {
@@ -154,6 +186,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         open.target = self
         menu.addItem(open)
 
+        if model.settings.showInDock {
+            let window = NSMenuItem(title: "Open window", action: #selector(openWindowFromMenu), keyEquivalent: "")
+            window.target = self
+            menu.addItem(window)
+        }
+
         let mute = NSMenuItem(
             title: model.settings.reminders.notificationsEnabled ? "Silence reminders" : "Turn reminders back on",
             action: #selector(toggleReminders), keyEquivalent: ""
@@ -178,6 +216,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openFromMenu() {
         togglePopover()
+    }
+
+    @objc private func openWindowFromMenu() {
+        guard let model else { return }
+        mainWindow.show(model: model)
     }
 
     @objc private func toggleReminders() {

@@ -14,6 +14,9 @@ public struct AppSettings: Sendable, Hashable, Codable {
     /// The consistency figure can be hidden entirely, leaving only the prose.
     public var showConsistencyNumber: Bool
     public var launchAtLogin: Bool
+    /// Show a Dock icon and a full window as well as the menu bar item.
+    /// The menu bar item is always present; this only adds the rest.
+    public var showInDock: Bool
     /// Cleared once the first rules have been taken on.
     public var hasCompletedFirstRun: Bool
 
@@ -24,6 +27,7 @@ public struct AppSettings: Sendable, Hashable, Codable {
         showOldStyleDates: Bool = false,
         showConsistencyNumber: Bool = true,
         launchAtLogin: Bool = false,
+        showInDock: Bool = true,
         hasCompletedFirstRun: Bool = false
     ) {
         self.jurisdiction = jurisdiction
@@ -32,6 +36,7 @@ public struct AppSettings: Sendable, Hashable, Codable {
         self.showOldStyleDates = showOldStyleDates
         self.showConsistencyNumber = showConsistencyNumber
         self.launchAtLogin = launchAtLogin
+        self.showInDock = showInDock
         self.hasCompletedFirstRun = hasCompletedFirstRun
     }
 

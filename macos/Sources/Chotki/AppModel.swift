@@ -30,6 +30,10 @@ final class AppModel: ObservableObject {
     /// Set by the app delegate. The model asks for a window; it does not know
     /// what a window is.
     var openDetachedReport: (() -> Void)?
+    var openMainWindow: (() -> Void)?
+    /// Called when the Dock setting changes, so the delegate can switch the
+    /// activation policy. The model still knows nothing about windows.
+    var onDockPresenceChanged: ((Bool) -> Void)?
 
     let store: any Store
     let liturgical: LiturgicalService
@@ -237,6 +241,7 @@ final class AppModel: ObservableObject {
     // MARK: settings
 
     func update(_ change: (inout AppSettings) -> Void) {
+        let settingsBeforeChange = settings
         var updated = settings
         change(&updated)
         let jurisdictionChanged = updated.jurisdiction != settings.jurisdiction
@@ -249,6 +254,9 @@ final class AppModel: ObservableObject {
         }
         if updated.launchAtLogin != launchAtLogin.isEnabled {
             try? launchAtLogin.setEnabled(updated.launchAtLogin)
+        }
+        if updated.showInDock != settingsBeforeChange.showInDock {
+            onDockPresenceChanged?(updated.showInDock)
         }
         reload()
     }

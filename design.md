@@ -116,6 +116,20 @@ Two rules follow, both tested:
 
 A test asserts that every liturgical template declares its `requiredTrigger`, so a new one cannot be added that quietly does nothing.
 
+## Two front doors
+
+Chotki is both a menu bar app and a full application, and the menu bar item is the one that is never optional.
+
+- **The menu bar popover** is the quick path: today's rules, mark something kept, the day's reading. Fixed 400×560.
+- **The window** is the roomy one, with a sidebar and the month grid beside the day's rules rather than stacked above them. It carries a Dock icon, and the same content laid out for the space.
+- **`showInDock`** switches between the two live, without relaunching: the activation policy moves between `.regular` and `.accessory`, and the Dock icon and menu bar are installed or torn down to match. With it off, the app is menu-bar-only exactly as before.
+
+Both surfaces share one `AppModel` and the same content views. The split of each screen into `XView` (scroll chrome) and `XViewContent` is what makes that possible — the window arranges the same content differently rather than duplicating it, and `DayPanel` is shared outright.
+
+The model still knows nothing about windows: it exposes `openMainWindow` and `onDockPresenceChanged` as closures the delegate fills in.
+
+A regular app needs a menu bar, and an Edit menu specifically — cut, copy, paste and select all reach a text field through the responder chain from those menu items, not from the field itself. Without it, editing shortcuts silently do nothing.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
