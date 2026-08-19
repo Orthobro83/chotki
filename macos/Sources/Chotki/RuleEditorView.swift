@@ -157,7 +157,7 @@ struct RuleEditorView: View {
                 }
                 .font(.system(size: 11))
             } else {
-                Text("Without a time it is simply due today, and reminders are spread across the day.")
+                Text("It runs all day, and reminders are spread across the waking hours.")
                     .font(.system(size: 10))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)

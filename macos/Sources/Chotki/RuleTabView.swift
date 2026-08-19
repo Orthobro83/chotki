@@ -146,7 +146,9 @@ struct EntryRow: View {
 
             Spacer(minLength: 6)
 
-            Text(entry.rule.timeOfDay.map(format) ?? "anytime")
+            // "all day" rather than "anytime": a fast is not optional, and
+            // "anytime" reads as though it were.
+            Text(entry.rule.timeOfDay.map(format) ?? "all day")
                 .font(.system(size: 11))
                 .foregroundStyle(entry.isKept ? Theme.faint : Theme.muted)
 

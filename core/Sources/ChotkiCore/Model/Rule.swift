@@ -10,7 +10,7 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     /// matters later.
     public var source: String?
     public var recurrence: Recurrence
-    /// nil means "anytime today" — the rule is due but has no clock time, and
+    /// nil means the rule runs all day — it is due, has no clock time, and
     /// is reminded differently.
     public var timeOfDay: TimeOfDay?
     public var category: String?
