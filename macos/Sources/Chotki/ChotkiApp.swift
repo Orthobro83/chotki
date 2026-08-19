@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var model: AppModel?
+    private let reportWindow = ReportWindowController()
 
     private func trace(_ line: String) {
         guard ProcessInfo.processInfo.environment["CHOTKI_TRACE"] == "1" else { return }
@@ -55,6 +56,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let model = AppModel(store: store, notifier: notifier, launchAtLogin: MacLaunchAtLogin())
         self.model = model
+        model.openDetachedReport = { [weak self, weak model] in
+            guard let self, let model else { return }
+            self.reportWindow.show(model: model)
+        }
 
         let popover = NSPopover()
         popover.behavior = .transient

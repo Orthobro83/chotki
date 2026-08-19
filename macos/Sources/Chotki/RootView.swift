@@ -76,7 +76,7 @@ struct RootView: View {
         switch tab {
         case .rule: RuleTabView(model: model)
         case .reading: ReadingView(model: model)
-        case .progress: ProgressPlaceholderView()
+        case .progress: ProgressTabView(model: model)
         }
     }
 }
@@ -103,19 +103,4 @@ struct Header: View {
     }
 }
 
-struct ProgressPlaceholderView: View {
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("Progress arrives in the next phase.")
-                .font(.system(size: 12))
-                .foregroundStyle(Theme.muted)
-            Text("It will lead with what you kept, in words, before any figure.")
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.faint)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(maxHeight: .infinity)
-        .padding(.horizontal, 24)
-    }
-}
+

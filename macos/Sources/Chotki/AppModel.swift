@@ -25,6 +25,9 @@ final class AppModel: ObservableObject {
     @Published var visibleMonth: CalendarDate
     @Published var screen: Screen = .main
     @Published private(set) var loadError: String?
+    /// Set by the app delegate. The model asks for a window; it does not know
+    /// what a window is.
+    var openDetachedReport: (() -> Void)?
 
     let store: any Store
     let liturgical: LiturgicalService
@@ -103,6 +106,15 @@ final class AppModel: ObservableObject {
             case (nil, nil): return a.rule.title < b.rule.title
             }
         }
+    }
+
+    /// The report over a trailing window. Recomputed on demand rather than
+    /// cached: it is cheap, and a stale figure would be worse than none.
+    func report(days: Int = 30) -> ProgressReport {
+        ScoringEngine(engine: engine, timeZone: .current).report(
+            rules: rules, activations: activations, occurrences: occurrences,
+            from: today.adding(days: -(days - 1)), through: today
+        )
     }
 
     func isPaused(_ rule: Rule) -> Bool {

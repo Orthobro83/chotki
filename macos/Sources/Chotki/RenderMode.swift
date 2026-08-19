@@ -29,6 +29,8 @@ enum RenderMode {
             render(RootView(model: model), to: "\(prefix)-shell-settings.png")
             model.screen = .main
 
+            render(ProgressTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-progress.png")
+
             render(RuleTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-rule.png")
 
             render(LibraryViewContent(model: model).background(Theme.ground), to: "\(prefix)-library.png")
@@ -60,18 +62,31 @@ enum RenderMode {
         let store = try SQLiteStore(path: temp.path)
 
         let today = CalendarDate(Date(), in: .current)
-        let seeds: [(String, Recurrence, TimeOfDay?, OccurrenceStatus?)] = [
-            ("Morning prayers", .daily, TimeOfDay(hour: 6, minute: 30), .completed),
-            ("Read the day's Gospel", .daily, TimeOfDay(hour: 12, minute: 0), nil),
-            ("Jesus prayer — 50 knots", .daily, nil, nil),
-            ("Evening prayers", .daily, TimeOfDay(hour: 21, minute: 30), nil)
+        let seeds: [(String, TimeOfDay?)] = [
+            ("Morning prayers", TimeOfDay(hour: 6, minute: 30)),
+            ("Read the day's Gospel", TimeOfDay(hour: 12, minute: 0)),
+            ("Jesus prayer — 50 knots", nil),
+            ("Evening prayers", TimeOfDay(hour: 21, minute: 30))
         ]
-        for (title, recurrence, time, status) in seeds {
-            let rule = Rule(title: title, recurrence: recurrence, timeOfDay: time)
+        for (title, time) in seeds {
+            let rule = Rule(title: title, recurrence: .daily, timeOfDay: time)
             try store.save(rule)
-            try store.save(Activation(ruleID: rule.id, from: today.adding(days: -30)))
-            if let status {
-                try store.save(Occurrence(ruleID: rule.id, date: today, status: status))
+            try store.save(Activation(ruleID: rule.id, from: today.adding(days: -40)))
+
+            // A believable history: mostly kept, evening prayers slipping on
+            // Fridays, one stretch stood down.
+            for offset in 1...40 {
+                let date = today.adding(days: -offset)
+                if title == "Evening prayers" && date.weekday == .friday { continue }
+                if title == "Jesus prayer — 50 knots" && offset >= 12 && offset <= 15 {
+                    try store.save(Occurrence(ruleID: rule.id, date: date, status: .skipped))
+                    continue
+                }
+                let status: OccurrenceStatus = (offset % 11 == 0) ? .completedLate : .completed
+                try store.save(Occurrence(ruleID: rule.id, date: date, status: status))
+            }
+            if title == "Morning prayers" {
+                try store.save(Occurrence(ruleID: rule.id, date: today, status: .completed))
             }
         }
         return store

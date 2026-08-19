@@ -93,6 +93,18 @@ Two details that follow:
 - **The evening before** fires at a fixed 20:00 the previous day rather than at an offset, because for something you travel to, "the night before" is a time of day rather than a duration.
 - **Rules with no settings** fall back to the policy default rather than storing a copy, so changing the default moves every rule that never expressed a preference.
 
+## Scoring, in practice
+
+Settled in Phase 6, and enforced by tests:
+
+- A day counts only once its moment has passed. A rule due at 21:30 is not missed at noon.
+- `completed` scores 1, `completedLate` scores 0.5 — it was still done. Missing scores 0.
+- `skipped`, `cancelled` and `moved` leave both sides of the ratio.
+- Days within 30 carry full weight; beyond that weight halves every 60 days. It never reaches zero, because what someone kept in the spring still happened.
+- Nothing due yet yields **no figure at all**, not a zero. A zero would be a lie.
+- A streak steps over stood-down days rather than breaking on them, and is stated as a fact ("25 in a row"), never as something at risk.
+- The prose names a weekday pattern only when every slip shares one and there is more than one slip. Otherwise it is noise dressed as insight.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

@@ -121,14 +121,18 @@ Proof: **partly met 2026-08-19.** The interface builds, runs, and renders correc
 
 ## Phase 6 — Core + interface: progress
 
-- [ ] Scoring over activation-intersected occurrences.
-- [ ] 30-day weighting with decay.
-- [ ] Per-rule streaks.
-- [ ] Prose summary generator — which rules slipped, on which weekdays, whether a pattern is visible.
-- [ ] Report view, detachable into a window.
-- [ ] Setting to hide the number and keep prose only.
+- [x] `ScoringEngine` over activation-intersected, elapsed occurrences. Done 2026-08-19.
+- [x] Full weight for 30 days, then halving every 60 — old days decay but never vanish. Done 2026-08-19.
+- [x] Per-rule streaks that step over stood-down days rather than breaking on them. Done 2026-08-19.
+- [x] `Prose` — names the rule, the count, and a weekday pattern when every slip shares one. Never invents a pattern from a single slip. Done 2026-08-19.
+- [x] Progress tab plus a detachable 90-day report window. Done 2026-08-19.
+- [x] Setting hides the figure; the prose remains. Done 2026-08-19.
 
-Proof: a paused stretch leaves the score unmoved; a rule enabled today reports no prior misses.
+Proof: **met 2026-08-19.** Both properties are tested directly, along with: a day still ahead is never counted as missed, nothing due yet yields no figure rather than a zero, keeping something late earns partial credit, and a recent slip weighs more than an old one without the old one vanishing.
+
+The Tone constraint is enforced by a test that renders six different shapes of report — nothing due, all kept, all late, all stood down, partial, sporadic — and asserts none of them contains failure, comparison, or shaming language.
+
+Rendered check: the summary reads "Evening prayers slipped four times, all on Fridays. Read the day's Gospel slipped once. Everything else held." with the figure secondary and the per-rule breakdown showing 25 of 25 for a rule with four stood-down days.
 
 ## Phase 7 — Reading tab and polish
 
