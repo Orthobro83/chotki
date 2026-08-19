@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>chotki — UI mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#0E0F13; --panel:#15161C; --panel-2:#1C1E26; --line:#2E2A20; --line-soft:#23252C;
+  --gold:#C9A227; --gold-dim:#8A7220; --parch:#E8DFCD; --parch-2:#D8CFBD;
+  --mute:#8A8578; --mute-2:#6E6A5E; --faint:#5A564C; --off:#3A362C;
+  --violet:#9A8FC4; --ochre:#A63A38;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--parch);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+  font-size:14px; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1100px; margin:0 auto; padding:56px 28px 90px}
+h1{font-family:"Cardo",Georgia,serif; font-weight:700; font-size:40px; margin:0 0 6px; letter-spacing:-.01em}
+.sub{color:var(--mute); margin:0 0 6px; font-size:16px}
+.stamp{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); letter-spacing:.14em; text-transform:uppercase}
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:26px; margin-top:44px; align-items:start}
+.cap{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); letter-spacing:.12em; text-transform:uppercase; margin:0 0 9px 3px}
+.pop{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+.tabs{display:flex; border-bottom:1px solid var(--line)}
+.tab{flex:1; text-align:center; padding:9px 0; font-size:12px; color:var(--mute)}
+.tab.on{color:var(--parch); box-shadow:inset 0 -2px 0 var(--gold)}
+.pad{padding:12px 14px}
+.hd{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px}
+.cal{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; font-size:11px; text-align:center}
+.cal div{padding:3px 0; color:var(--parch-2)}
+.dow{color:var(--mute-2) !important}
+.out{color:var(--faint) !important}
+.today{background:var(--gold); color:#2C2416 !important; border-radius:4px}
+.f-fast{color:var(--violet) !important}
+.f-feast{color:var(--gold) !important}
+.f-lit{color:var(--ochre) !important}
+.legend{display:flex; gap:11px; margin-top:9px; font-size:11px; color:var(--mute-2)}
+.task{display:flex; align-items:center; gap:9px; padding:5px 0}
+.box{width:14px; height:14px; border-radius:3px; border:1px solid #4A463C; flex:none}
+.box.done{background:var(--gold); border-color:var(--gold); color:#2C2416; font-size:10px; display:flex; align-items:center; justify-content:center}
+.t-name{font-size:12px; flex:1}
+.t-name.done{color:var(--mute-2); text-decoration:line-through}
+.t-time{font-size:11px; color:var(--mute)}
+.badge{font-size:11px; color:var(--violet); border:1px solid #4A4160; border-radius:4px; padding:1px 6px}
+.sep{border-top:1px solid var(--line); }
+.add{padding:10px 14px; font-size:12px; color:var(--gold); border-top:1px solid var(--line-soft)}
+.serif{font-family:"Cardo",Georgia,serif}
+.saint{font-family:"Cardo",Georgia,serif; font-size:16px; color:var(--gold); margin:7px 0 12px; line-height:1.35}
+.ref{font-size:11px; color:var(--mute); margin-bottom:4px}
+.passage{font-family:"Cardo",Georgia,serif; font-size:13.5px; color:var(--parch-2); line-height:1.65; margin-bottom:12px}
+.rule-line{height:1px; background:var(--line); margin:12px 0}
+.foot{display:flex; justify-content:space-between; font-size:11px; color:var(--mute-2)}
+.score{font-size:30px; color:var(--gold); font-variant-numeric:tabular-nums}
+.bars{display:flex; gap:2px; margin-top:11px}
+.bars span{flex:1; height:5px; border-radius:2px}
+.sw{width:26px; height:15px; border-radius:8px; position:relative; flex:none}
+.sw.on{background:var(--gold)}
+.sw.on::after{content:""; position:absolute; right:2px; top:2px; width:11px; height:11px; border-radius:50%; background:var(--panel)}
+.sw.off{background:#33302A}
+.sw.off::after{content:""; position:absolute; left:2px; top:2px; width:11px; height:11px; border-radius:50%; background:var(--mute-2)}
+.lib-h{padding:11px 14px 4px; font-size:11px; color:var(--mute); letter-spacing:.05em}
+.lib-row{display:flex; align-items:center; gap:10px; padding:7px 14px}
+.lib-row .n{font-size:12px; flex:1}
+.lib-row .n.off{color:var(--mute-2)}
+.lib-row .k{font-size:11px; color:var(--faint)}
+.track{display:flex; height:9px; border-radius:3px; overflow:hidden; margin-bottom:13px}
+.note{color:var(--mute); font-size:13px; line-height:1.6; margin-top:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="stamp">mockup · 2026-08-19</p>
+  <h1>chotki</h1>
+  <p class="sub">macOS menu bar app — the popover, at 400pt wide.</p>
+
+  <div class="grid">
+
+    <div>
+      <p class="cap">rule tab</p>
+      <div class="pop">
+        <div class="tabs"><div class="tab on">Rule</div><div class="tab">Reading</div><div class="tab">Progress</div></div>
+        <div class="pad">
+          <div class="hd"><span style="font-size:12px">August 2026</span><span style="font-size:11px;color:var(--mute)">tone 2</span></div>
+          <div class="cal">
+            <div class="dow">s</div><div class="dow">m</div><div class="dow">t</div><div class="dow">w</div><div class="dow">t</div><div class="dow">f</div><div class="dow">s</div>
+            <div class="out">26</div><div class="out">27</div><div class="out">28</div><div class="out">29</div><div class="out">30</div><div class="out">31</div><div>1</div>
+            <div class="f-lit">2</div><div>3</div><div>4</div><div class="f-fast">5</div><div class="f-feast">6</div><div class="f-fast">7</div><div>8</div>
+            <div class="f-lit">9</div><div>10</div><div>11</div><div class="f-fast">12</div><div>13</div><div class="f-fast">14</div><div class="f-feast">15</div>
+            <div class="f-lit">16</div><div>17</div><div>18</div><div class="today">19</div><div>20</div><div class="f-fast">21</div><div>22</div>
+            <div class="f-lit">23</div><div>24</div><div>25</div><div class="f-fast">26</div><div>27</div><div class="f-fast">28</div><div class="f-feast">29</div>
+          </div>
+          <div class="legend"><span style="color:var(--gold)">●</span>feast <span style="color:var(--violet)">●</span>fast <span style="color:var(--ochre)">●</span>liturgy</div>
+        </div>
+        <div class="pad sep">
+          <div class="hd"><span style="font-size:13px">Wednesday 19 August</span><span class="badge">strict fast</span></div>
+          <div class="task"><span class="box done">✓</span><span class="t-name done">Morning prayers</span><span class="t-time" style="color:var(--faint)">06:30</span></div>
+          <div class="task"><span class="box"></span><span class="t-name">Read the day's Gospel</span><span class="t-time">12:00</span></div>
+          <div class="task"><span class="box"></span><span class="t-name">Jesus prayer — 50 knots</span><span class="t-time">anytime</span></div>
+          <div class="task"><span class="box"></span><span class="t-name">Evening prayers</span><span class="t-time">21:30</span></div>
+        </div>
+        <div class="add">+ add to the rule</div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap">reading tab</p>
+      <div class="pop">
+        <div class="tabs"><div class="tab">Rule</div><div class="tab on">Reading</div><div class="tab">Progress</div></div>
+        <div class="pad" style="padding:14px">
+          <div style="font-size:11px;color:var(--mute)">wednesday of the 12th week after pentecost</div>
+          <div class="saint">Martyr Andrew Stratelates and Companions</div>
+          <div class="rule-line"></div>
+          <div class="ref">epistle · 2 Corinthians 6.11–16</div>
+          <div class="passage">O ye Corinthians, our mouth is open unto you, our heart is enlarged. Ye are not straitened in us…</div>
+          <div class="ref">gospel · Matthew 23.29–39</div>
+          <div class="rule-line"></div>
+          <div class="foot"><span>129 days since Pascha</span><span>cached · julian</span></div>
+        </div>
+      </div>
+
+      <p class="cap" style="margin-top:26px">progress tab</p>
+      <div class="pop">
+        <div class="pad" style="padding:14px">
+          <div style="display:flex;align-items:baseline;gap:8px"><span class="score">86%</span><span style="font-size:12px;color:var(--mute)">kept, last 30 days</span></div>
+          <div class="bars">
+            <span style="background:var(--gold)"></span><span style="background:var(--gold)"></span><span style="background:var(--off)"></span><span style="background:var(--gold)"></span><span style="background:var(--gold)"></span><span style="background:var(--gold)"></span><span style="background:var(--gold-dim)"></span><span style="background:var(--gold)"></span><span style="background:var(--gold)"></span><span style="background:var(--off)"></span><span style="background:var(--gold)"></span><span style="background:var(--gold)"></span><span style="background:var(--gold)"></span><span style="background:var(--gold)"></span>
+          </div>
+          <p class="note">Evening prayers slipped twice, both Fridays. Everything else held.</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap">settings · rule library</p>
+      <div class="pop">
+        <div class="lib-h">prayer</div>
+        <div class="lib-row"><span class="sw on"></span><span class="n">Morning prayers</span><span class="k">daily</span></div>
+        <div class="lib-row"><span class="sw on"></span><span class="n">Evening prayers</span><span class="k">daily</span></div>
+        <div class="lib-row"><span class="sw off"></span><span class="n off">Jesus prayer — 50 knots</span><span class="k">daily</span></div>
+        <div class="lib-h" style="border-top:1px solid var(--line-soft);margin-top:5px">fasting</div>
+        <div class="lib-row"><span class="sw on"></span><span class="n">Keep the Wed/Fri fast</span><span class="k">auto</span></div>
+        <div class="lib-row"><span class="sw off"></span><span class="n off">Great Lent — full rule</span><span class="k">seasonal</span></div>
+        <div class="lib-h" style="border-top:1px solid var(--line-soft);margin-top:5px">services</div>
+        <div class="lib-row"><span class="sw on"></span><span class="n">Sunday Liturgy</span><span class="k">weekly</span></div>
+        <div class="lib-row" style="padding-bottom:12px"><span class="sw off"></span><span class="n off">Saturday Vespers</span><span class="k">weekly</span></div>
+        <div class="add">+ write my own rule</div>
+      </div>
+
+      <p class="cap" style="margin-top:26px">what gets scored</p>
+      <div class="pop">
+        <div class="pad" style="padding:14px">
+          <div style="font-size:12px;margin-bottom:5px">Morning prayers</div>
+          <div class="track"><span style="flex:2;background:var(--line-soft)"></span><span style="flex:10;background:var(--gold)"></span></div>
+          <div style="font-size:12px;margin-bottom:5px">Evening prayers <span style="color:var(--mute)">· paused in May</span></div>
+          <div class="track"><span style="flex:2;background:var(--line-soft)"></span><span style="flex:3;background:var(--gold)"></span><span style="flex:2;background:var(--off)"></span><span style="flex:5;background:var(--gold)"></span></div>
+          <div style="font-size:12px;margin-bottom:5px">Great Lent rule <span style="color:var(--mute)">· seasonal</span></div>
+          <div class="track" style="margin-bottom:7px"><span style="flex:1;background:var(--line-soft)"></span><span style="flex:3;background:var(--violet)"></span><span style="flex:8;background:var(--line-soft)"></span></div>
+          <div class="foot" style="margin-bottom:12px"><span>jan</span><span>apr</span><span>aug</span><span>dec</span></div>
+          <div style="border-top:1px solid var(--line);padding-top:11px;display:grid;gap:6px;font-size:11px;color:var(--mute)">
+            <div><span style="display:inline-block;width:16px;height:7px;border-radius:2px;background:var(--gold);margin-right:8px"></span>counted — the rule was in force</div>
+            <div><span style="display:inline-block;width:16px;height:7px;border-radius:2px;background:var(--off);margin-right:8px"></span>paused — skipped, not missed</div>
+            <div><span style="display:inline-block;width:16px;height:7px;border-radius:2px;background:var(--line-soft);margin-right:8px"></span>never taken on</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

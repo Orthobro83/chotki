@@ -1,0 +1,396 @@
+<title>Chotki build plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F4F4F0; --raised:#FBFBF8; --ink:#1A1A17; --ink-soft:#55554E; --ink-faint:#8A8A80;
+  --rule:#DEDED6; --rubric:#A93A25; --rubric-bg:#F6EAE6; --rubric-rule:#E3C7BF;
+  --measure:66ch;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1A1916; --raised:#221F1A; --ink:#EAE7DC; --ink-soft:#A8A498; --ink-faint:#74705F;
+    --rule:#34322A; --rubric:#DE6A4E; --rubric-bg:#2A1E19; --rubric-rule:#4A342B;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1A1916; --raised:#221F1A; --ink:#EAE7DC; --ink-soft:#A8A498; --ink-faint:#74705F;
+  --rule:#34322A; --rubric:#DE6A4E; --rubric-bg:#2A1E19; --rubric-rule:#4A342B;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"Spectral",Georgia,"Times New Roman",serif; font-weight:400;
+  font-size:17px; line-height:1.72; margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:1020px; margin:0 auto; padding:64px 32px 120px}
+.masthead{border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:8px}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; font-weight:500;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint);
+}
+h1{
+  font-family:"Cardo",Georgia,serif; font-weight:700; font-size:clamp(44px,7vw,68px);
+  line-height:1.02; margin:14px 0 10px; letter-spacing:-.015em; text-wrap:balance;
+}
+.standfirst{font-size:20px; font-weight:300; color:var(--ink-soft); max-width:52ch; margin:0}
+.meta{
+  display:flex; flex-wrap:wrap; gap:28px; margin-top:26px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; color:var(--ink-faint);
+}
+.meta b{display:block; color:var(--ink-soft); font-weight:500; font-variant-numeric:tabular-nums}
+
+.row{
+  display:grid; grid-template-columns:186px minmax(0,1fr); gap:44px;
+  padding:44px 0; border-bottom:1px solid var(--rule); align-items:start;
+}
+.row:last-of-type{border-bottom:0}
+.aside{position:sticky; top:32px}
+.main{max-width:var(--measure)}
+h2{
+  font-family:"Cardo",Georgia,serif; font-weight:700; font-size:29px; line-height:1.15;
+  margin:0 0 4px; letter-spacing:-.01em; text-wrap:balance;
+}
+h3{
+  font-family:"Cardo",Georgia,serif; font-weight:700; font-size:19px;
+  margin:30px 0 6px; letter-spacing:.01em;
+}
+p{margin:0 0 15px}
+.main > p:last-child{margin-bottom:0}
+.rubric{
+  font-family:"Cardo",Georgia,serif; font-style:italic; font-size:16px; line-height:1.5;
+  color:var(--rubric); border-top:2px solid var(--rubric); padding-top:10px; margin:0;
+}
+.rubric + .rubric{border-top:1px solid var(--rubric-rule); margin-top:16px}
+.sect-no{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; font-weight:500;
+  letter-spacing:.18em; color:var(--ink-faint); display:block; margin-bottom:22px;
+}
+code,pre{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-ligatures:none}
+code{font-size:.87em; color:var(--ink); background:var(--rubric-bg); padding:1px 5px; border-radius:3px}
+pre{
+  background:var(--raised); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 18px; overflow-x:auto; font-size:13px; line-height:1.62;
+  color:var(--ink-soft); margin:16px 0 20px;
+}
+pre code{background:none; padding:0; font-size:inherit; color:inherit}
+pre b{color:var(--ink); font-weight:500}
+pre i{color:var(--rubric); font-style:normal}
+ul{margin:0 0 15px; padding-left:0; list-style:none}
+li{position:relative; padding-left:22px; margin-bottom:9px}
+li::before{
+  content:"·"; position:absolute; left:6px; top:-1px;
+  color:var(--rubric); font-weight:700; font-size:19px;
+}
+strong{font-weight:600}
+em{font-style:italic}
+.stage{display:grid; grid-template-columns:44px minmax(0,1fr); gap:18px; padding:20px 0; border-top:1px solid var(--rule)}
+.stage:first-of-type{border-top:0; padding-top:4px}
+.stage-no{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:13px; font-weight:500;
+  color:var(--ink-faint); padding-top:5px; font-variant-numeric:tabular-nums;
+}
+.stage h3{margin:0 0 4px}
+.stage p{margin:0 0 8px; font-size:16px}
+.proof{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; line-height:1.6;
+  color:var(--ink-faint); display:block;
+}
+.proof b{color:var(--rubric); font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-size:11px}
+.flag{
+  background:var(--rubric-bg); border-left:3px solid var(--rubric); border-radius:0;
+  padding:14px 18px; margin:18px 0; font-size:16px; color:var(--ink);
+}
+.flag p:last-child{margin-bottom:0}
+.q{border-top:1px solid var(--rule); padding:16px 0 4px}
+.q:first-of-type{border-top:0}
+.q h3{margin:0 0 4px}
+.q p{font-size:16px; color:var(--ink-soft); margin:0}
+.colophon{
+  margin-top:56px; padding-top:22px; border-top:2px solid var(--ink);
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; color:var(--ink-faint);
+}
+@media (max-width:820px){
+  .page{padding:44px 22px 80px}
+  .row{grid-template-columns:1fr; gap:20px; padding:34px 0}
+  .aside{position:static; order:2}
+  .main{order:1}
+  .rubric{border-top:1px solid var(--rubric-rule)}
+}
+</style>
+
+<div class="page">
+
+<header class="masthead">
+  <span class="eyebrow">Implementation plan · macOS menu bar app</span>
+  <h1>Chotki</h1>
+  <p class="standfirst">A rule of prayer, kept privately — and honestly measured, without turning into a scoreboard.</p>
+  <div class="meta">
+    <span><b>19 August 2026</b>drafted</span>
+    <span><b>Swift 6.1</b>portable core</span>
+    <span><b>macOS 13+</b>first, then Windows, Linux</span>
+    <span><b>Julian</b>default reckoning</span>
+    <span><b>8</b>phases</span>
+  </div>
+</header>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Named for the prayer rope. Everything lives in the vault at <em>projects/chotki</em>.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 0 — Ground already covered</span>
+    <h2>Three prerequisites, all resolved</h2>
+    <p><strong>Xcode is not required.</strong> A probe target using <code>MenuBarExtra</code> and <code>UserNotifications</code> compiles cleanly against the Command Line Tools SDK 15.5. We build with SwiftPM, assemble the <code>.app</code> bundle from a script, and sign ad-hoc. No 15GB download.</p>
+    <p><strong>The project has a home.</strong> <code>/Volumes/2TB/claude-vault/projects/chotki</code>, alongside <code>design.md</code>, <code>checklist.md</code> and <code>mockup.html</code>. Personal context lives in a gitignored file and never reaches the public repository.</p>
+    <p><strong>The port is planned for, not deferred blindly.</strong> macOS ships first with SwiftUI. Swift compiles on Windows and Linux; SwiftUI does not — so <code>core/</code> is a pure package importing only Foundation and SQLite, and the port becomes a UI rewrite rather than an app rewrite.</p>
+    <div class="flag">
+      <p><strong>Two unretired risks, both tested in Phase 1.</strong> That a notification with actions delivers from an ad-hoc-signed bundle. And that <code>core/</code> builds on Linux in CI — before there is anything to port, because portability that is never exercised is only ever intended.</p>
+    </div>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">The boundary is the whole strategy. Anything Apple-only inside <em>core</em> is a bug, not a shortcut.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 0b — Architecture</span>
+    <h2>One core, one interface per platform</h2>
+<pre><code><b>core/</b>            <i>Foundation + SQLite only — builds on all three</i>
+  Model/         <i>Rule, Activation, Occurrence, LiturgicalDay</i>
+  Recurrence/    <i>expansion, activation intersection, three-way edit</i>
+  Scoring/       <i>weighting, streaks, prose generation</i>
+  Liturgical/    <i>orthocal client, cache, jurisdiction</i>
+  Scheduling/    <i>in-process scheduler; Notifier protocol</i>
+  Platform/      <i>LaunchAtLogin, TrayPresenter protocols</i>
+
+<b>macos/</b>          <i>SwiftUI — the only Apple-specific code</i>
+<b>.github/</b>        <i>CI: build + test core on macOS AND Linux</i></code></pre>
+    <p>Scheduling lives in core rather than in the OS. The app is tray-resident and always running, so an in-process scheduler decides <em>when</em> and a thin platform notifier only <em>shows</em>. That is portable, and it tests headlessly against an injected clock with no desktop present.</p>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">These three govern every later decision. Where a trade-off is unclear, resolve it toward these.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 1 — Principles</span>
+    <h2>What the app must never do</h2>
+    <p><strong>Nothing is switched on by default.</strong> The bundled rules are a library you take from, one at a time. First launch invites you to pick two or three, not twelve.</p>
+    <p><strong>Nothing you did is ever destroyed.</strong> Pausing a rule excludes those days from scoring rather than counting them against you. Deleting archives. The record of what you actually kept is permanent.</p>
+    <p><strong>The reckoning is a setting, never an assumption.</strong> Jurisdiction is one value; every date-aware surface reads through it. Switching it changes no code.</p>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Occurrences are written only when a day deviates. An untouched day has no row — absence is the default state, not a record.</p>
+    <p class="rubric">Store all-day dates as calendar dates. A timestamp will shift a day under DST and the bug surfaces months later.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 2 — Data model</span>
+    <h2>Four tables, SQLite via GRDB</h2>
+<pre><code><b>Rule</b>
+  id, title, note, source            <i>— who suggested it, and why</i>
+  recurrence                         <i>— daily | weekly(days) | monthly(day)
+                                        | liturgical(season|fastDay|feast)</i>
+  timeOfDay: Time?                   <i>— nil means "anytime today"</i>
+  category, createdAt, archivedAt
+
+<b>Activation</b>                          <i>— many per rule; this is the pause mechanism</i>
+  ruleId, from: Date, to: Date?      <i>— nil `to` means currently in force</i>
+
+<b>Occurrence</b>                          <i>— written only on deviation from default</i>
+  ruleId, date: CalendarDate
+  status: completed | completedLate | skipped | moved | cancelled
+  completedAt: Date?
+
+<b>LiturgicalDay</b>                        <i>— cache, keyed by (date, reckoning)</i>
+  date, reckoning, fastLevel, fastException, abstentions
+  feastLevel, commemorations, readings, fetchedAt</code></pre>
+    <p>Everything else is computed. A day with no <code>Occurrence</code> row and a covering <code>Activation</code> is simply due — or, once its time has passed, missed.</p>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">This is the part that breaks if rushed. The three-way edit determines the schema; retrofitting it is a rewrite.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 3 — Recurrence and activation</span>
+    <h2>Expansion, and the three-way edit</h2>
+    <p>The engine expands rules into occurrences across a date range, intersected with activation periods. A day is scoreable only if some activation covers it.</p>
+    <p>Editing or deleting a repeating rule always asks three ways: <em>this day only</em> (writes an <code>Occurrence</code> exception), <em>this and future</em> (closes the current activation, opens a new one on the edited rule), <em>the whole series</em> (edits the rule in place). Deleting the series closes the activation and sets <code>archivedAt</code> — occurrences survive.</p>
+    <h3>Cases the tests must cover</h3>
+    <ul>
+      <li>Monthly on the 31st, in a 30-day month, and in February</li>
+      <li>The DST transitions in both directions — a 06:30 task must stay 06:30</li>
+      <li>29 February, and a rule created on it</li>
+      <li>A rule enabled today generating no history before its first activation</li>
+      <li>A paused stretch scoring as skipped, never as missed</li>
+    </ul>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">The default is Julian on adherent numbers, not on any one jurisdiction. Confirm it against your own.</p>
+    <p class="rubric">The app must never block on the network. A menu bar popover that spins is a menu bar popover you stop opening.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 4 — The liturgical layer</span>
+    <h2>Jurisdiction, and a fourteen-day cache</h2>
+    <p>The default reckoning is Julian, carried by roughly 110 million adherents — Russian, Serbian, Georgian, Jerusalem, Polish — against roughly 47 million on the Revised Julian calendar. The figures are soft, but the Russian Church alone outweighs every New Calendar church combined, so the ordering holds.</p>
+<pre><code><b>Jurisdiction</b>
+  name          <i>— "ROCOR", "Georgian", "Antiochian" …</i>
+  reckoning     <i>— .julian (default) | .revisedJulian</i>
+  endpoint      <i>— orthocal.info/api/{julian|gregorian}/</i></code></pre>
+    <p>A background task prefetches fourteen days ahead and writes to <code>LiturgicalDay</code>. Every read goes to cache first; the network is only ever a refill. Offline, the app shows what it has and marks the reading as cached — it never shows a spinner or an error where text should be.</p>
+    <p>From this layer the calendar gets fast and feast shading, rules get liturgical recurrence (fast days, seasons, great feasts), and the reading tab gets its content. Changing jurisdiction invalidates the cache and refetches; nothing else reacts.</p>
+    <h3>Old-style dates</h3>
+    <p>An optional secondary line — <em>19 August · 6 August o.s.</em> — so a parish bulletin and a wall calendar can be reconciled at a glance.</p>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Lead with the sentence, not the number. "Evening prayers slipped twice, both Fridays" is the part that changes anything.</p>
+    <p class="rubric">No red, no "failed", no broken-streak shaming. A setting hides the number entirely.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 5 — Scoring</span>
+    <h2>Weighted to the last thirty days</h2>
+    <ul>
+      <li>Only occurrences whose due time has passed are scored</li>
+      <li>Only days inside an activation period count at all</li>
+      <li><code>completedLate</code> scores partial, not zero</li>
+      <li><code>skipped</code> is excluded from both numerator and denominator</li>
+      <li>The last 30 days weigh heaviest; older days decay but never vanish</li>
+      <li>Per-rule streaks are tracked alongside the aggregate</li>
+    </ul>
+    <p>The report generates prose first — which rules slipped, on which weekdays, and whether a pattern is visible — then the figure, then the per-rule breakdown.</p>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Mark complete from the banner. This single affordance does more for adherence than the score does.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 6 — Notifications</span>
+    <h2>Ten minutes before, and a bounded nag</h2>
+    <p>Timed rules fire ten minutes ahead. Untimed rules repeat hourly until marked complete, subject to two limits: quiet hours (default 21:30–06:30) and a cap of four reminders, after which the rule goes quiet and lands in the report rather than buzzing all night.</p>
+    <p>Every notification carries two actions — <strong>mark complete</strong> and <strong>snooze an hour</strong>. Completion cancels all pending notifications for that occurrence immediately.</p>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Popover width 380–420pt. Anything wider stops feeling like a menu bar app.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 7 — Interface</span>
+    <h2>One popover, three tabs</h2>
+    <p>Left click opens the popover; right click gives a quick menu — mark the next task done, snooze, open progress, quit. The menu bar icon is an eight-pointed cross supplied as a <em>template</em> image so macOS inverts it correctly in both menu bar appearances.</p>
+    <p><strong>Rule</strong> holds the month grid and today's list. <strong>Reading</strong> holds the day's commemoration and scripture. <strong>Progress</strong> holds the report, which can also open detached into a proper window where a month grid and a percentage do not have to share 400 points of width.</p>
+    <p>Palette: deep charcoal ground, byzantine gold for the day and for completion, muted violet for fasting seasons, ochre red for liturgy days. Restraint is the point — ornament reads as kitsch at 12pt.</p>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Each phase ends in something runnable, and every core phase ends green on Linux too.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 8 — Build order</span>
+    <h2>Eight phases</h2>
+
+    <div class="stage"><div class="stage-no">01</div><div>
+      <h3>Foundations, and two spikes</h3>
+      <p>Workspace, bundle script, ad-hoc signing, template icon, launch at login. Then immediately: prove a notification with actions delivers, and prove <code>core/</code> builds and tests on Linux in CI.</p>
+      <span class="proof"><b>proof</b> green CI on macOS and Linux; a notification whose actions call back.</span>
+    </div></div>
+
+    <div class="stage"><div class="stage-no">02</div><div>
+      <h3>Core — store and recurrence</h3>
+      <p>Storage behind a repository protocol, the four tables, expansion across activation periods, the three-way edit, JSON export. No interface.</p>
+      <span class="proof"><b>proof</b> the DST, month-end and leap-day suite passes on both platforms.</span>
+    </div></div>
+
+    <div class="stage"><div class="stage-no">03</div><div>
+      <h3>Core — liturgical layer</h3>
+      <p>Jurisdiction, orthocal client for both reckonings, fourteen-day prefetch, cache, offline fallback, liturgical recurrence. Tests run against recorded fixtures so CI stays offline.</p>
+      <span class="proof"><b>proof</b> correct fast level for 13 Jan 2027 under each reckoning; full function with the network off.</span>
+    </div></div>
+
+    <div class="stage"><div class="stage-no">04</div><div>
+      <h3>Core — scheduling</h3>
+      <p>In-process scheduler, ten-minute lead, bounded hourly repeats, quiet hours, the <code>Notifier</code> protocol with an actions capability flag so a platform lacking them degrades rather than falls silent.</p>
+      <span class="proof"><b>proof</b> a simulated month of ticks fires correctly, headless, against an injected clock.</span>
+    </div></div>
+
+    <div class="stage"><div class="stage-no">05</div><div>
+      <h3>macOS interface</h3>
+      <p>Popover, tab chrome, month grid with fast and feast shading, today's list, add and edit sheets, the rule library, right-click menu, and the macOS notifier wired to the core scheduler.</p>
+      <span class="proof"><b>proof</b> a rule can be taken on, kept, edited, paused and resumed entirely through the interface.</span>
+    </div></div>
+
+    <div class="stage"><div class="stage-no">06</div><div>
+      <h3>Progress</h3>
+      <p>Scoring, weighting, streaks, the prose summary generator, the report view, and the setting that hides the number.</p>
+      <span class="proof"><b>proof</b> a paused stretch leaves the score unmoved; a rule enabled today reports no prior misses.</span>
+    </div></div>
+
+    <div class="stage"><div class="stage-no">07</div><div>
+      <h3>Reading tab and polish</h3>
+      <p>Commemoration, readings, cached-state marker, bundled patristic texts, first-run onboarding, prayer rope counter.</p>
+      <span class="proof"><b>proof</b> clean install to first kept rule, walked end to end.</span>
+    </div></div>
+
+    <div class="stage"><div class="stage-no">08</div><div>
+      <h3>The port</h3>
+      <p>Not scheduled — listed so the shape is known while macOS is built. Windows: WinUI tray, ICO, toast actions. Linux: StatusNotifierItem, libnotify, and a GNOME shell extension, which is a platform limitation no stack choice avoids.</p>
+      <span class="proof"><b>proof</b> everything in core reused unchanged. Anything that is not is a bug in the boundary.</span>
+    </div></div>
+
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Only the first of these needs an answer from outside the app.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 9 — Still open</span>
+    <h2>Three decisions</h2>
+    <div class="q"><h3>Which reckoning does your parish keep?</h3><p>Julian is the default on adherent numbers, so for most Orthodox this confirms rather than changes it. Still the one input the app cannot derive for itself.</p></div>
+    <div class="q"><h3>Quiet hours default</h3><p>21:30–06:30 unless morning prayers sit earlier, in which case the window should shift with them.</p></div>
+    <div class="q"><h3>Should feast days propose tasks?</h3><p>Agreed in principle — the question is whether a proposed Liturgy on a great feast appears automatically or waits behind a prompt.</p></div>
+  </div>
+</section>
+
+<section class="row">
+  <div class="aside">
+    <p class="rubric">Named so they are choices, not oversights.</p>
+  </div>
+  <div class="main">
+    <span class="sect-no">§ 10 — Out of scope</span>
+    <h2>Not in the first version</h2>
+    <ul>
+      <li>iCloud or cross-device sync — the store is local, backed up by JSON export</li>
+      <li>Any network call other than orthocal; no analytics, no account, no telemetry</li>
+      <li>A mobile companion</li>
+      <li>Notarisation and store distribution — ad-hoc signed</li>
+      <li>Multiple profiles or households</li>
+    </ul>
+  </div>
+</section>
+
+<p class="colophon">Chotki · implementation plan · drafted 19 August 2026 · liturgical data from orthocal.info · everything stored locally</p>
+
+</div>

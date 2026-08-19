@@ -1,0 +1,17 @@
+# personal context — never publish
+context.local.md
+*.local.md
+
+# swift / spm
+.build/
+.swiftpm/
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+
+# build output
+dist/
+*.app/
+
+# macos
+.DS_Store
