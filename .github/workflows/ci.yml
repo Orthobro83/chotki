@@ -15,6 +15,10 @@ jobs:
     container: swift:6.1
     steps:
       - uses: actions/checkout@v5
+      # core reaches SQLite through the C library rather than a Swift wrapper,
+      # so the Linux image needs its headers. macOS gets them from the SDK.
+      - name: Install SQLite headers
+        run: apt-get update && apt-get install -y libsqlite3-dev
       - name: Build
         run: swift build --package-path core
       - name: Test

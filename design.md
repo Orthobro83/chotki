@@ -54,7 +54,7 @@ If a future change makes the app feel more like a habit-streak tracker, that cha
 - 2026-08-19 — Core test suite runs on Linux in CI from Phase 2, before any Linux app exists. Portability that is not tested rots silently; this makes an Apple-only import fail loudly the day it is added.
 - 2026-08-19 — Platform services sit behind protocols DEFINED in core and IMPLEMENTED per platform: `Notifier` (show a notification, offer actions), `LaunchAtLogin`, `TrayPresenter`.
 - 2026-08-19 — Scheduling lives in core, not in the OS. The app is tray-resident and always running, so an in-process scheduler decides WHEN and the platform `Notifier` only SHOWS. This is portable, testable without a running desktop, and removes any dependency on `UNUserNotificationCenter` scheduling behaviour.
-- 2026-08-19 — GRDB is acceptable for the macOS build but sits behind a repository protocol, so the storage layer can be swapped if GRDB proves awkward on Windows.
+- 2026-08-19 — **Changed during Phase 2:** GRDB dropped in favour of the SQLite C API through a `systemLibrary` target. GRDB's Linux support is weaker than the portability rule this project enforces, so depending on it would have meant the CI guard policing a rule the dependency could not keep. sqlite3 is present on macOS, Linux and Windows alike, and the dependency count stays at zero. Storage still sits behind a `Store` protocol, with `InMemoryStore` and `SQLiteStore` both implementing it and both covered by the same test suite.
 - 2026-08-19 — No date FORMATTING in core. Core returns dates and values; presentation belongs to the UI layer, which differs per platform anyway.
 
 ### Product

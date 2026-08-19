@@ -39,21 +39,21 @@ Proof: **met in full 2026-08-19.** All four CI jobs green. Notification with a w
 
 No interface in this phase. Semantics first, and every line of it portable.
 
-- [ ] Storage behind a repository protocol. GRDB as the macOS implementation.
-- [ ] Migrations, the four tables from design.md.
-- [ ] Recurrence expansion across a date range, intersected with activation periods.
-- [ ] The three-way edit: this day only / this and future / whole series.
-- [ ] Pause and resume as activation-period operations.
-- [ ] JSON export for backup.
+- [x] Storage behind a `Store` protocol. `InMemoryStore` and `SQLiteStore` (raw SQLite C API — GRDB dropped, see design.md). Done 2026-08-19.
+- [x] Versioned migrations; `rule`, `activation`, `occurrence` tables with a `UNIQUE(rule_id, date)` constraint making one-deviation-per-day structural. `liturgical_day` lands in Phase 3. Done 2026-08-19.
+- [x] `RecurrenceEngine` — pure, deterministic, storage-free. Done 2026-08-19.
+- [x] `EditPlanner` returns an `EditPlan` of mutations, applied atomically by `SQLiteStore.apply`. Done 2026-08-19.
+- [x] Pause is inclusive of the day it happens; resume opens a fresh stretch and the gap is unscored. Done 2026-08-19.
+- [x] `exportJSON` / `importJSON`, round-trip tested across both stores. Done 2026-08-19.
 - [ ] Test suite covering:
-  - [ ] Monthly on the 31st, in a 30-day month, and in February
-  - [ ] Both DST transitions — a 06:30 task must stay 06:30
-  - [ ] 29 February, and a rule created on it
-  - [ ] A rule enabled today generating no history before its first activation
-  - [ ] A paused stretch scoring as skipped, never as missed
-- [ ] CI runs this suite on macOS AND Linux. Both must be green.
+  - [x] Monthly on the 31st clamps to the last day — all 12 months produce exactly one occurrence
+  - [x] Both DST transitions, every day of March/October/November, in three time zones. Nonexistent times refused rather than silently shifted
+  - [x] Leap day, including the full Gregorian century rule
+  - [x] A rule taken on today invents no history behind it
+  - [x] A paused stretch is absent from the due set entirely
+- [x] CI runs the suite on macOS and Linux. 51 tests. Done 2026-08-19.
 
-Proof: the suite passes on both platforms.
+Proof: **met 2026-08-19.** 51 tests green on macOS and Linux.
 
 ## Phase 3 — Core: liturgical layer
 
