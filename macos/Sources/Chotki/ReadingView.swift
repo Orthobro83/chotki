@@ -19,19 +19,18 @@ struct ReadingViewContent: View {
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.muted)
             }
-            Text(day.summaryTitle)
-                .font(.custom("Cardo", size: 16))
-                .foregroundStyle(Theme.gold)
+            TermText(model: model, text: day.summaryTitle, size: 16, serif: true, colour: Theme.gold)
                 .padding(.top, 6).padding(.bottom, 10)
-                .fixedSize(horizontal: false, vertical: true)
 
             if model.settings.observances.fasting.isVisible && day.isFast {
                 // Reported, never prescribed: what the calendar marks, plus what
                 // is customarily set aside — not an instruction to the reader.
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("The calendar marks this as \(day.fastDescription.lowercased()).")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.violet)
+                    TermText(
+                        model: model,
+                        text: "The calendar marks this as \(day.fastDescription.lowercased()).",
+                        size: 11, colour: Theme.violet
+                    )
                     if !day.abstentions.isEmpty {
                         Text("Customarily set aside: \(day.abstentions.joined(separator: ", ")).")
                             .font(.system(size: 11))

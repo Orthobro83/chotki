@@ -38,9 +38,10 @@ struct DayPanel: View {
                model.settings.observances.fasting.isVisible,
                day.isFast {
                 // Describing what the calendar marks, never instructing.
-                Text(day.fastLevelDescription.lowercased())
-                    .font(.system(size: 11))
-                    .foregroundStyle(Theme.violet)
+                TermText(
+                    model: model, text: day.fastLevelDescription.lowercased(),
+                    size: 11, colour: Theme.violet
+                )
                     .padding(.horizontal, 6).padding(.vertical, 1)
                     .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.violet.opacity(0.45)))
             }

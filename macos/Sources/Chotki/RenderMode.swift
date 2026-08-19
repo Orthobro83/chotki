@@ -29,6 +29,8 @@ enum RenderMode {
             render(RootView(model: model), to: "\(prefix)-shell-settings.png")
             model.screen = .main
 
+            render(ReadingViewContent(model: model).background(Theme.ground), to: "\(prefix)-reading.png")
+
             render(OnboardingView(model: model).background(Theme.ground), to: "\(prefix)-onboarding.png")
             render(PrayerRopeView(model: model).background(Theme.ground), to: "\(prefix)-rope.png")
 

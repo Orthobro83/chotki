@@ -45,7 +45,7 @@ No interface in this phase. Semantics first, and every line of it portable.
 - [x] `EditPlanner` returns an `EditPlan` of mutations, applied atomically by `SQLiteStore.apply`. Done 2026-08-19.
 - [x] Pause is inclusive of the day it happens; resume opens a fresh stretch and the gap is unscored. Done 2026-08-19.
 - [x] `exportJSON` / `importJSON`, round-trip tested across both stores. Done 2026-08-19.
-- [ ] Test suite covering:
+- [x] Test suite covering:
   - [x] Monthly on the 31st clamps to the last day — all 12 months produce exactly one occurrence
   - [x] Both DST transitions, every day of March/October/November, in three time zones. Nonexistent times refused rather than silently shifted
   - [x] Leap day, including the full Gregorian century rule
@@ -87,9 +87,9 @@ Proof: **met 2026-08-19.** A simulated August produces 31 morning reminders, 5 S
 - [x] `GlossaryEntry`, `Glossary` index, category browsing, ranked search. 49 entries covering everything the app displays. Done 2026-08-19.
 - [x] `Glossary.scan` — longest-match, word-boundary, non-overlapping term detection over arbitrary text. Done 2026-08-19.
 - [x] Cross-references tested to resolve, so the pane can never show a dead link. Done 2026-08-19.
-- [ ] Education pane: slides over from wherever a term was tapped, with a way back.
-- [ ] Browse by category and search within the pane.
-- [ ] Terms rendered as tappable in the reading tab, the calendar, and the day's fast description.
+- [x] Terms screen, reachable from anywhere a term appears, with a way back. Done 2026-08-19.
+- [x] Browse by category and search. Done 2026-08-19.
+- [x] `TermText` links terms in the commemoration and the fasting description. Applied to short text only — linking a whole scripture passage would make it harder to read, not easier. The index arithmetic is tested. Done 2026-08-19.
 - [ ] **[manual]** Have a priest read the glossary content. It is introductory, not authoritative.
 
 ## Phase 4c — Reminder controls (core done, interface pending)
@@ -99,8 +99,8 @@ Proof: **met 2026-08-19.** A simulated August produces 31 morning reminders, 5 S
 - [x] Lead times: at the time, 10 / 30 minutes, 1 / 2 hours, the evening before. Done 2026-08-19.
 - [x] Several leads on one rule, each with its own id; cancellation covers all of them. Done 2026-08-19.
 - [x] Schema migration v3, with the upgrade path tested against a database built as version 2. Done 2026-08-19.
-- [ ] Settings interface for the master switch and the default lead.
-- [ ] Per-rule reminder controls in the add and edit sheets.
+- [x] Settings interface for the master switch and the default lead. Done 2026-08-19.
+- [x] Per-rule reminder controls in the editor: on/off and multiple lead times. Done 2026-08-19.
 
 ## Phase 5 — macOS interface
 

@@ -231,3 +231,66 @@ struct WindowRoutingTests {
         #expect(WindowRoute.route(for: .editor(id)) == .editor(id))
     }
 }
+
+/// Mapping a String range onto an AttributedString index is the part of the
+/// term linking most likely to be subtly wrong — off by one and the wrong
+/// words get underlined.
+@Suite("Linking terms in running text")
+@MainActor
+struct TermTextTests {
+    let glossary = Glossary.shared
+
+    private func links(in text: String) -> [(String, URL)] {
+        let attributed = TermText.link(text, in: glossary)
+        var found: [(String, URL)] = []
+        for run in attributed.runs {
+            if let url = run.link {
+                found.append((String(attributed[run.range].characters), url))
+            }
+        }
+        return found
+    }
+
+    @Test("a known term is linked, and the link covers exactly that word")
+    func linksTheRightCharacters() {
+        // A real fasting description, as the reading tab produces it.
+        let found = links(in: "The calendar marks this as dormition fast — fish, wine and oil are allowed.")
+        #expect(found.count == 2, "the season and the dispensation are both terms")
+        for (word, url) in found {
+            #expect(url.scheme == "chotki-term")
+            #expect(!word.isEmpty)
+            #expect(!word.hasPrefix(" "), "the link starts mid-word: \(word)")
+            #expect(!word.hasSuffix(" "), "the link runs past the word: \(word)")
+        }
+    }
+
+    @Test("the linked text matches the term it points at")
+    func linkTargetsMatchTheirText() {
+        for (word, url) in links(in: "Pascha, the Theotokos, and Great Lent.") {
+            let slug = try! #require(url.host)
+            let entry = try! #require(glossary.entry(slug: slug))
+            let candidates = ([entry.term] + entry.aliases).map { $0.lowercased() }
+            #expect(candidates.contains(word.lowercased()),
+                    "\"\(word)\" was linked to \(slug), whose term is \"\(entry.term)\"")
+        }
+    }
+
+    @Test("text with nothing to link is returned unchanged")
+    func plainTextIsUntouched() {
+        let text = "Some ordinary sentence about nothing in particular."
+        #expect(links(in: text).isEmpty)
+        #expect(String(TermText.link(text, in: glossary).characters) == text)
+    }
+
+    @Test("linking never alters the text itself")
+    func textIsPreserved() {
+        let samples = [
+            "Martyr Andrew Stratelates and Companions",
+            "The calendar marks this as dormition fast — fish, wine and oil are allowed.",
+            "Wednesday of the 12th week after Pentecost"
+        ]
+        for text in samples {
+            #expect(String(TermText.link(text, in: glossary).characters) == text)
+        }
+    }
+}
