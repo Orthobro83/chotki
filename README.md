@@ -66,7 +66,7 @@ That is a fixed constraint rather than a style choice, and it is enforced by tes
 
 **Apple Silicon Macs only** for now (M1 and later), running macOS 13 or later. An Intel build needs a universal binary, which is coming.
 
-1. Download `Chotki.zip` from the [latest release](../../releases/latest) and unzip it.
+1. Download `Chotki.zip` from the [releases page](../../releases) and unzip it.
 2. Drag **Chotki.app** into your Applications folder.
 3. Open it. **macOS will refuse the first time** — this is expected, and is explained below.
 4. Go to **System Settings › Privacy & Security**, scroll down, and next to the message about Chotki click **Open Anyway**. Confirm.
