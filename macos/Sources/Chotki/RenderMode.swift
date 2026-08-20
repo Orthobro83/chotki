@@ -48,6 +48,16 @@ enum RenderMode {
                 to: "\(prefix)-window.png"
             )
 
+            // The cross alone, to judge the shape against the reference.
+            render(
+                OrthodoxCross()
+                    .fill(Theme.parchment)
+                    .frame(width: 300 * CrossGeometry.aspect, height: 300)
+                    .padding(40)
+                    .background(Theme.ground),
+                to: "\(prefix)-cross.png"
+            )
+
             // The mark on its own, large, to judge the shape.
             render(
                 RopeMark(size: 190).opacity(1).padding(30).background(Theme.ground),

@@ -1,76 +1,74 @@
 import AppKit
+import SwiftUI
 
-/// The eight-pointed cross, drawn rather than shipped as an asset.
+/// The cross as AppKit images: the menu bar item and the Dock icon.
 ///
-/// Drawn because a template image must be monochrome and crisp at 18pt in both
-/// menu bar appearances; generating it avoids an asset pipeline and any chance
-/// of shipping a non-template PNG that renders as a black smudge in dark mode.
+/// Both take their proportions from `CrossGeometry`, the same source the
+/// watermark and the rope mark use, so the four cannot drift apart. Drawn
+/// rather than shipped as assets — nothing to keep in step with the palette,
+/// and nothing to fall out of date.
 enum CrossIcon {
 
+    /// Fills the cross into `rect` of an already-flipped (top-down) context.
+    private static func fill(in rect: CGRect, colour: NSColor) {
+        let box = CrossGeometry.fitted(in: rect)
+        func x(_ u: CGFloat) -> CGFloat { box.minX + u * box.width }
+        func y(_ v: CGFloat) -> CGFloat { box.minY + v * box.height }
+
+        colour.setFill()
+        for (bx, by, bw, bh) in CrossGeometry.bars {
+            NSBezierPath(rect: NSRect(
+                x: x(bx), y: y(by), width: bw * box.width, height: bh * box.height
+            )).fill()
+        }
+
+        let f = CrossGeometry.footrest
+        let footrest = NSBezierPath()
+        footrest.move(to: NSPoint(x: x(f.leadingX), y: y(f.leadingY)))
+        footrest.line(to: NSPoint(x: x(f.trailingX), y: y(f.trailingY)))
+        footrest.line(to: NSPoint(x: x(f.trailingX), y: y(f.trailingY + f.thickness)))
+        footrest.line(to: NSPoint(x: x(f.leadingX), y: y(f.leadingY + f.thickness)))
+        footrest.close()
+        footrest.fill()
+    }
+
+    /// The menu bar item. A template image, so macOS inverts it correctly in
+    /// both light and dark menu bars.
     static func menuBarImage(height: CGFloat = 18) -> NSImage {
-        let size = NSSize(width: height * 14.0 / 18.0, height: height)
-        let image = NSImage(size: size, flipped: false) { _ in
-            let s = height / 18.0
-            let path = NSBezierPath()
-            path.lineWidth = 1.4 * s
-            path.lineCapStyle = .round
-
-            func line(_ x1: CGFloat, _ y1: CGFloat, _ x2: CGFloat, _ y2: CGFloat) {
-                path.move(to: NSPoint(x: x1 * s, y: y1 * s))
-                path.line(to: NSPoint(x: x2 * s, y: y2 * s))
-            }
-
-            line(7, 1.2, 7, 16.8)      // upright
-            line(4.6, 14.6, 9.4, 14.6) // titulus
-            line(1.6, 11.2, 12.4, 11.2) // main crossbar
-            line(3.4, 5.0, 10.6, 7.2)  // slanted footrest
-
-            NSColor.black.setStroke()
-            path.stroke()
+        let size = NSSize(width: (height * CrossGeometry.aspect).rounded(), height: height)
+        // Flipped, so the shared top-down geometry can be used directly.
+        let image = NSImage(size: size, flipped: true) { rect in
+            fill(in: rect, colour: .black)
             return true
         }
-        // Without this the icon does not invert in a dark menu bar.
         image.isTemplate = true
         return image
     }
-}
 
-extension CrossIcon {
-
-    /// The Dock icon: a gold cross on a dark ground.
-    ///
-    /// Drawn rather than shipped as an .icns for the same reason as the menu bar
-    /// image — no asset pipeline, and it cannot fall out of step with the
-    /// palette. Set on `NSApp.applicationIconImage` at launch.
+    /// The Dock icon: gold on a dark rounded square.
     static func appIcon(size: CGFloat = 512) -> NSImage {
-        NSImage(size: NSSize(width: size, height: size), flipped: false) { _ in
-            let s = size / 512.0
+        NSImage(size: NSSize(width: size, height: size), flipped: true) { _ in
             let ground = NSColor(red: 0.082, green: 0.086, blue: 0.110, alpha: 1)
             let gold = NSColor(red: 0.788, green: 0.635, blue: 0.153, alpha: 1)
+            let inset = size * 0.047
 
             NSBezierPath(
-                roundedRect: NSRect(x: 24 * s, y: 24 * s, width: 464 * s, height: 464 * s),
-                xRadius: 104 * s, yRadius: 104 * s
+                roundedRect: NSRect(
+                    x: inset, y: inset, width: size - inset * 2, height: size - inset * 2
+                ),
+                xRadius: size * 0.203, yRadius: size * 0.203
             ).addClip()
             ground.setFill()
             NSRect(origin: .zero, size: NSSize(width: size, height: size)).fill()
 
-            let path = NSBezierPath()
-            path.lineWidth = 26 * s
-            path.lineCapStyle = .round
-
-            func line(_ x1: CGFloat, _ y1: CGFloat, _ x2: CGFloat, _ y2: CGFloat) {
-                path.move(to: NSPoint(x: x1 * s, y: y1 * s))
-                path.line(to: NSPoint(x: x2 * s, y: y2 * s))
-            }
-
-            line(256, 96, 256, 416)      // upright
-            line(200, 372, 312, 372)     // titulus
-            line(140, 300, 372, 300)     // main crossbar
-            line(178, 178, 334, 222)     // slanted footrest
-
-            gold.setStroke()
-            path.stroke()
+            // Generous margin, so the cross does not crowd the rounded corners.
+            let margin = size * 0.20
+            fill(
+                in: CGRect(
+                    x: margin, y: margin, width: size - margin * 2, height: size - margin * 2
+                ),
+                colour: gold
+            )
             return true
         }
     }

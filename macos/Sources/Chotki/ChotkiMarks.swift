@@ -1,26 +1,68 @@
 import SwiftUI
 
-/// The eight-pointed cross, as a path rather than an image.
+/// The proportions of the eight-pointed cross, in one place.
 ///
-/// Same proportions as the menu bar icon, so the two cannot drift apart. Drawn
-/// with strokes rather than filled shapes, which keeps it legible at both the
-/// large faint size used as a watermark and the small one used in the mark.
-struct OrthodoxCross: Shape {
-    /// Drawn in a 14 × 18 space and scaled to fit.
-    func path(in rect: CGRect) -> Path {
-        let s = min(rect.width / 14, rect.height / 18)
-        let dx = rect.midX - 7 * s
-        let dy = rect.midY - 9 * s
+/// Taken from a reference drawing rather than invented, and expressed as
+/// fractions of a bounding box so the menu bar icon, the Dock icon, the
+/// watermark and the rope mark are all the same cross at different sizes.
+///
+/// Note the footrest: the viewer's **left** end is the raised one. That is the
+/// traditional orientation — it points to Paradise, for the thief crucified at
+/// Christ's right hand. An earlier version had it the other way round.
+enum CrossGeometry {
+    /// Width divided by height.
+    static let aspect: CGFloat = 748.0 / 1440.0
 
-        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
-            CGPoint(x: dx + x * s, y: dy + y * s)
-        }
+    /// Upright, titulus and crossbar, as fractions: (x, y, width, height).
+    static let bars: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
+        (0.402, 0.000, 0.201, 1.000),   // upright
+        (0.205, 0.101, 0.594, 0.097),   // titulus
+        (0.000, 0.299, 1.000, 0.097)    // crossbar
+    ]
+
+    /// The slanted footrest, as a parallelogram: leading and trailing x, the
+    /// y of the top edge at each end, and its thickness.
+    static let footrest = (
+        leadingX: CGFloat(0.209), trailingX: CGFloat(0.786),
+        leadingY: CGFloat(0.639), trailingY: CGFloat(0.792),
+        thickness: CGFloat(0.097)
+    )
+
+    /// The box the cross occupies inside `rect`, keeping its proportions.
+    static func fitted(in rect: CGRect) -> CGRect {
+        var width = rect.width
+        var height = rect.height
+        if width / height > aspect { width = height * aspect } else { height = width / aspect }
+        return CGRect(
+            x: rect.midX - width / 2, y: rect.midY - height / 2,
+            width: width, height: height
+        )
+    }
+}
+
+/// The eight-pointed cross as a filled shape.
+///
+/// Filled rather than stroked: at a watermark's opacity a stroked outline reads
+/// as a few stray lines, and a solid cross reads as a cross.
+struct OrthodoxCross: Shape {
+    func path(in rect: CGRect) -> Path {
+        let box = CrossGeometry.fitted(in: rect)
+        func x(_ u: CGFloat) -> CGFloat { box.minX + u * box.width }
+        func y(_ v: CGFloat) -> CGFloat { box.minY + v * box.height }
 
         var path = Path()
-        path.move(to: point(7, 1.2)); path.addLine(to: point(7, 16.8))       // upright
-        path.move(to: point(4.6, 3.4)); path.addLine(to: point(9.4, 3.4))    // titulus
-        path.move(to: point(1.6, 6.8)); path.addLine(to: point(12.4, 6.8))   // crossbar
-        path.move(to: point(3.4, 13.0)); path.addLine(to: point(10.6, 10.8)) // footrest
+        for (bx, by, bw, bh) in CrossGeometry.bars {
+            path.addRect(CGRect(
+                x: x(bx), y: y(by), width: bw * box.width, height: bh * box.height
+            ))
+        }
+
+        let f = CrossGeometry.footrest
+        path.move(to: CGPoint(x: x(f.leadingX), y: y(f.leadingY)))
+        path.addLine(to: CGPoint(x: x(f.trailingX), y: y(f.trailingY)))
+        path.addLine(to: CGPoint(x: x(f.trailingX), y: y(f.trailingY + f.thickness)))
+        path.addLine(to: CGPoint(x: x(f.leadingX), y: y(f.leadingY + f.thickness)))
+        path.closeSubpath()
         return path
     }
 }
@@ -33,8 +75,8 @@ struct CrossWatermark: View {
 
     var body: some View {
         OrthodoxCross()
-            .stroke(Theme.parchment, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-            .frame(width: height * 14 / 18, height: height)
+            .fill(Theme.parchment)
+            .frame(width: height * CrossGeometry.aspect, height: height)
             .opacity(0.07)
             .allowsHitTesting(false)
     }
@@ -77,16 +119,12 @@ struct RopeMark: View {
             // The cross, hanging below the loop.
             let crossHeight = size * 0.34
             let crossRect = CGRect(
-                x: centre.x - crossHeight * 14 / 18 / 2,
+                x: centre.x - crossHeight * CrossGeometry.aspect / 2,
                 y: centre.y + radius - knotRadius,
-                width: crossHeight * 14 / 18,
+                width: crossHeight * CrossGeometry.aspect,
                 height: crossHeight
             )
-            context.stroke(
-                OrthodoxCross().path(in: crossRect),
-                with: .color(Theme.gold),
-                style: StrokeStyle(lineWidth: max(1, size * 0.038), lineCap: .round)
-            )
+            context.fill(OrthodoxCross().path(in: crossRect), with: .color(Theme.gold))
         }
         .frame(width: size, height: size)
         .opacity(0.5)
