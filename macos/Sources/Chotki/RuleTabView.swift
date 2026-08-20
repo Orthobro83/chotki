@@ -39,7 +39,7 @@ struct DayPanel: View {
                day.isFast {
                 // Describing what the calendar marks, never instructing.
                 TermText(
-                    model: model, text: day.fastLevelDescription.lowercased(),
+                    model: model, text: day.fastLevelDescription,
                     size: 11, colour: Theme.violet
                 )
                     .padding(.horizontal, 6).padding(.vertical, 1)
@@ -206,8 +206,14 @@ struct RuleTabView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ScrollView { RuleTabViewContent(model: model) }
-            .frame(maxHeight: .infinity)
-            .scrollContentBackgroundHidden()
+        ZStack {
+            // Behind the rules rather than beside them, so a short list leaves
+            // something to rest on instead of a blank panel.
+            RuleBackdrop()
+
+            ScrollView { RuleTabViewContent(model: model) }
+                .scrollContentBackgroundHidden()
+        }
+        .frame(maxHeight: .infinity)
     }
 }

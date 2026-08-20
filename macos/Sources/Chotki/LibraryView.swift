@@ -22,6 +22,8 @@ struct LibraryViewContent: View {
                 .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 4)
 
             ForEach(library.byCategory(), id: \.0) { category, templates in
+                // The app's own labels are lowercase by design. Text that came
+                // from the calendar is never re-cased.
                 Text(category.displayName.lowercased())
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.muted)

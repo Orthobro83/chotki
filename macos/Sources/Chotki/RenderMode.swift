@@ -36,7 +36,20 @@ enum RenderMode {
 
             render(ProgressTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-progress.png")
 
-            render(RuleTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-rule.png")
+            // The mark on its own, large, to judge the shape.
+            render(
+                RopeMark(size: 190).opacity(1).padding(30).background(Theme.ground),
+                to: "\(prefix)-mark.png"
+            )
+
+            render(
+                ZStack {
+                    RuleBackdrop()
+                    RuleTabViewContent(model: model)
+                }
+                .background(Theme.ground),
+                to: "\(prefix)-rule.png"
+            )
 
             render(LibraryViewContent(model: model).background(Theme.ground), to: "\(prefix)-library.png")
             render(SettingsViewContent(model: model).background(Theme.ground), to: "\(prefix)-settings.png")

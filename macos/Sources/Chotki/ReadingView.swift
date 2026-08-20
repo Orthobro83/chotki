@@ -15,7 +15,10 @@ struct ReadingViewContent: View {
     private func content(_ day: LiturgicalDay) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if let title = day.title {
-                Text(title.lowercased())
+                // Never re-case text that came from the calendar. "Wednesday of
+                // the 12th week after Pentecost" is how the Church writes it,
+                // and lowercasing it made the app look careless.
+                Text(title)
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.muted)
             }
@@ -28,7 +31,7 @@ struct ReadingViewContent: View {
                 VStack(alignment: .leading, spacing: 3) {
                     TermText(
                         model: model,
-                        text: "The calendar marks this as \(day.fastDescription.lowercased()).",
+                        text: "The calendar marks this as \(day.fastDescription).",
                         size: 11, colour: Theme.violet
                     )
                     if !day.abstentions.isEmpty {
@@ -46,7 +49,7 @@ struct ReadingViewContent: View {
             ForEach(day.readings.indices, id: \.self) { index in
                 let reading = day.readings[index]
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(reading.source.lowercased()) · \(reading.display)")
+                    Text("\(reading.source) · \(reading.display)")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.muted)
                     if !reading.text.isEmpty {

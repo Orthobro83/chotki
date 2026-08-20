@@ -221,6 +221,21 @@ It is now `.weekly(days: [.wednesday, .friday])`, which is what it says, with th
 
 A test walks a full year for every template and asserts the count matches the promise: about 104 for the weekly fast, 365 for a daily rule, 52 for a weekly one.
 
+## Never re-case text that came from the calendar
+
+"Wednesday of the 12th week after Pentecost" is how the Church writes it. The reading tab was lowercasing it, along with "Vespers" and "Dormition Fast", and the result looked careless rather than styled.
+
+The rule: the app's **own** labels are lowercase by design — section headings, the legend, category names. Anything that arrived from orthocal is shown exactly as it came.
+
+## The marks
+
+Two drawn in code, like the icons, so nothing can drift from the palette and nothing needs an asset.
+
+- **A faint eight-pointed cross**, anchored to the bottom of the Rule tab where the panel would otherwise be blank. Centred, it struck through the calendar and read as stray lines; at the bottom it reads as a cross. Seven per cent opacity — noticed once, then never competing with the text.
+- **The rope mark**, small in the corner: a loop of knots with the cross hanging from it, which is what a chotki actually is and what the app is named for.
+
+Both live in `RuleBackdrop`, shared by the app and the offscreen renderer so the two draw the same thing.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.
