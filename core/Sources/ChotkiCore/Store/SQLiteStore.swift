@@ -393,6 +393,13 @@ public final class SQLiteStore: Store, @unchecked Sendable {
         }
     }
 
+    public func removeOccurrence(ruleID: UUID, date: CalendarDate) throws {
+        try locked {
+            try run("DELETE FROM occurrence WHERE rule_id = ? AND date = ?;",
+                    [ruleID.uuidString, date.iso])
+        }
+    }
+
     // MARK: settings
 
     public func loadSettings() throws -> AppSettings? {

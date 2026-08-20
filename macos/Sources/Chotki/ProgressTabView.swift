@@ -15,6 +15,11 @@ struct ProgressTabViewContent: View {
         let report = model.report()
 
         VStack(alignment: .leading, spacing: 0) {
+            Text("Your progress up to \(Format.longDate(model.progressThrough))")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.muted)
+                .padding(.bottom, 8)
+
             summary(report)
 
             if model.settings.showConsistencyNumber, let overall = report.overall {
@@ -60,7 +65,7 @@ struct ProgressTabViewContent: View {
                 Text("\(Int((overall * 100).rounded()))%")
                     .font(.system(size: 26))
                     .foregroundStyle(Theme.gold)
-                Text("kept, last 30 days")
+                Text("kept, over the 30 days to then")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.muted)
             }

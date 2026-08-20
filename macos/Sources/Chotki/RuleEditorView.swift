@@ -13,9 +13,7 @@ struct RuleEditorView: View {
     @State private var title = ""
     @State private var note = ""
     @State private var source = ""
-    @State private var kind: Kind = .daily
-    @State private var weekdays: Set<Weekday> = [.sunday]
-    @State private var monthDay = 1
+    @State private var form = RecurrenceForm()
     @State private var hasTime = false
     @State private var hour = 6
     @State private var minute = 30
@@ -23,13 +21,6 @@ struct RuleEditorView: View {
     @State private var leads: Set<ReminderLead> = [.tenMinutes]
     @State private var loaded = false
 
-    enum Kind: String, CaseIterable, Hashable {
-        case daily = "Every day"
-        case weekly = "Certain weekdays"
-        case monthly = "Once a month"
-        case fastDays = "Fast days"
-        case greatFeasts = "Great feasts"
-    }
 
     private var existing: Rule? {
         ruleID.flatMap { id in model.rules.first { $0.id == id } }
@@ -46,14 +37,16 @@ struct RuleEditorView: View {
                 }
 
                 field("How often?") {
-                    Picker("", selection: $kind) {
-                        ForEach(Kind.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    Picker("", selection: $form.kind) {
+                        ForEach(RecurrenceForm.Kind.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }
                     .labelsHidden().pickerStyle(.menu).font(.system(size: 11))
                 }
 
-                if kind == .weekly { weekdayPicker }
-                if kind == .monthly { monthDayPicker }
+                if form.kind == .weekly { weekdayPicker }
+                if form.kind == .monthly { monthDayPicker }
+                if form.kind == .season { seasonPicker }
+                if form.kind == .once { onceRow }
 
                 timeRow
                 remindersSection
@@ -105,15 +98,19 @@ struct RuleEditorView: View {
         HStack(spacing: 4) {
             ForEach(Weekday.allCases, id: \.self) { day in
                 Button {
-                    if weekdays.contains(day) { weekdays.remove(day) } else { weekdays.insert(day) }
+                    if form.weekdays.contains(day) {
+                        form.weekdays.remove(day)
+                    } else {
+                        form.weekdays.insert(day)
+                    }
                 } label: {
                     Text(shortName(day))
                         .font(.system(size: 11))
                         .frame(width: 30, height: 22)
-                        .foregroundStyle(weekdays.contains(day) ? Theme.ground : Theme.muted)
+                        .foregroundStyle(form.weekdays.contains(day) ? Theme.ground : Theme.muted)
                         .background {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(weekdays.contains(day) ? Theme.gold : Theme.panel)
+                                .fill(form.weekdays.contains(day) ? Theme.gold : Theme.panel)
                         }
                 }
                 .buttonStyle(.plain)
@@ -121,12 +118,33 @@ struct RuleEditorView: View {
         }
     }
 
+    private var seasonPicker: some View {
+        HStack {
+            Text("Which season")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.muted)
+            Picker("", selection: $form.season) {
+                Text("Great Lent").tag(FastingSeason.greatLent)
+                Text("Nativity Fast").tag(FastingSeason.nativityFast)
+                Text("Apostles' Fast").tag(FastingSeason.apostlesFast)
+                Text("Dormition Fast").tag(FastingSeason.dormitionFast)
+            }
+            .labelsHidden().frame(width: 150).font(.system(size: 11))
+        }
+    }
+
+    private var onceRow: some View {
+        Text(form.onceDate.map { "On \($0.iso)." } ?? "On the selected day.")
+            .font(.system(size: 11))
+            .foregroundStyle(Theme.faint)
+    }
+
     private var monthDayPicker: some View {
         HStack {
             Text("On day")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.muted)
-            Picker("", selection: $monthDay) {
+            Picker("", selection: $form.monthDay) {
                 ForEach(1...31, id: \.self) { Text("\($0)").tag($0) }
             }
             .labelsHidden().frame(width: 70).font(.system(size: 11))
@@ -228,13 +246,7 @@ struct RuleEditorView: View {
         title = rule.title
         note = rule.note ?? ""
         source = rule.source ?? ""
-        switch rule.recurrence {
-        case .daily, .once: kind = .daily
-        case .weekly(let days): kind = .weekly; weekdays = days
-        case .monthly(let day, _): kind = .monthly; monthDay = day
-        case .liturgical(let trigger):
-            kind = trigger == .greatFeast ? .greatFeasts : .fastDays
-        }
+        form = RecurrenceForm(rule.recurrence)
         if let time = rule.timeOfDay {
             hasTime = true; hour = time.hour; minute = time.minute
         }
@@ -246,14 +258,7 @@ struct RuleEditorView: View {
         let trimmed = title.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
 
-        let recurrence: Recurrence
-        switch kind {
-        case .daily: recurrence = .daily
-        case .weekly: recurrence = .weekly(days: weekdays.isEmpty ? [.sunday] : weekdays)
-        case .monthly: recurrence = .monthly(day: monthDay)
-        case .fastDays: recurrence = .liturgical(.fastDay)
-        case .greatFeasts: recurrence = .liturgical(.greatFeast)
-        }
+        let recurrence = form.recurrence(fallback: model.selectedDate)
 
         var rule = existing ?? Rule(title: trimmed, recurrence: recurrence)
         rule.title = trimmed

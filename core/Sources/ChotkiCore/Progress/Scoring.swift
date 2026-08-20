@@ -83,7 +83,6 @@ public struct ScoringEngine: Sendable {
             let due = engine.dueDates(
                 rule: rule, activations: activations, from: from, through: through
             )
-            .filter { hasElapsed($0, rule: rule, now: now, today: today) }
 
             guard !due.isEmpty else {
                 scores.append(RuleScore(
@@ -104,6 +103,15 @@ public struct ScoringEngine: Sendable {
 
             for date in due {
                 let status = byDate[date]?.status
+
+                // Elapsing decides whether an *absent* record is a miss. It has
+                // nothing to do with a day that was actually kept: marking an
+                // all-day rule complete this morning is a fact, not a pending
+                // judgement, and it must count today rather than tomorrow.
+                if status == nil, !hasElapsed(date, rule: rule, now: now, today: today) {
+                    continue
+                }
+
                 switch status {
                 case .skipped, .cancelled, .moved:
                     stoodDown += 1
@@ -126,7 +134,7 @@ public struct ScoringEngine: Sendable {
             scores.append(RuleScore(
                 ruleID: rule.id, title: rule.title,
                 kept: kept, keptLate: keptLate, missed: missed, stoodDown: stoodDown,
-                streak: streak(due: due, byDate: byDate),
+                streak: streak(due: due, byDate: byDate, rule: rule, now: now, today: today),
                 ratio: weight > 0 ? weighted / weight : nil,
                 missedDates: missedDates
             ))
@@ -158,29 +166,26 @@ public struct ScoringEngine: Sendable {
     }
 
     private func weightFor(_ date: CalendarDate, today: CalendarDate) -> Double {
-        let age = daysBetween(date, today)
+        let age = max(0, date.days(until: today))
         guard age > fullWeightDays else { return 1.0 }
         let beyond = Double(age - fullWeightDays)
         return pow(0.5, beyond / halfLifeDays)
-    }
-
-    private func daysBetween(_ earlier: CalendarDate, _ later: CalendarDate) -> Int {
-        var count = 0
-        var cursor = earlier
-        while cursor < later && count < 4000 {
-            cursor = cursor.adding(days: 1)
-            count += 1
-        }
-        return count
     }
 
     /// Consecutive due days kept, counting back from the most recent.
     ///
     /// Days stood down are stepped over rather than ending it: pausing is a
     /// legitimate act and must not read as a break.
-    private func streak(due: [CalendarDate], byDate: [CalendarDate: Occurrence]) -> Int {
+    private func streak(
+        due: [CalendarDate], byDate: [CalendarDate: Occurrence],
+        rule: Rule, now: Date, today: CalendarDate
+    ) -> Int {
         var count = 0
         for date in due.sorted(by: >) {
+            // A day still ahead cannot end a streak.
+            if byDate[date] == nil, !hasElapsed(date, rule: rule, now: now, today: today) {
+                continue
+            }
             switch byDate[date]?.status {
             case .completed, .completedLate:
                 count += 1

@@ -17,6 +17,12 @@ final class SoundPlayer {
     private var ticks: [AVAudioPlayer] = []
     private var nextTick = 0
 
+    /// One for the whole app. SwiftUI evaluates a `@State` initialiser every
+    /// time a view struct is constructed — which is on every parent body
+    /// evaluation — so a player created there re-synthesised a hundred and
+    /// fifteen thousand samples each time the rope view was rebuilt.
+    static let shared = SoundPlayer()
+
     init() {
         bell = Self.make(.bell)
         ticks = (0..<4).compactMap { _ in Self.make(.tick) }

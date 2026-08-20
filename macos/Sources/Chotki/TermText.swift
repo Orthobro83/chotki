@@ -33,7 +33,7 @@ struct TermText: View {
     }
 
     private var attributed: AttributedString {
-        TermText.link(text, in: Glossary.shared.scoped(to: model.settings.jurisdiction.tradition))
+        TermText.link(text, in: Glossary.shared(for: model.settings.jurisdiction.tradition))
     }
 
     /// Extracted so the index arithmetic can be tested. Mapping a `String`

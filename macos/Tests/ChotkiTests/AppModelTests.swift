@@ -137,8 +137,11 @@ struct MarkingKeptTests {
         #expect(!cleared.isKept)
     }
 
-    @Test("a day kept in the past counts as kept late")
-    func keptLate() throws {
+    // Superseded: ticking no longer infers lateness from when the box was
+    // ticked. See BackfillingTests — forgetting to record something is not the
+    // same as doing it late, and the app cannot tell them apart.
+    @Test("ticking an earlier day trusts that it was kept")
+    func earlierDayIsTrusted() throws {
         let model = try makeModel()
         model.save(Rule(title: "Evening prayers", recurrence: .daily), isNew: true)
         model.selectedDate = model.today.adding(days: -1)
@@ -152,7 +155,7 @@ struct MarkingKeptTests {
         model.toggleKept(yesterday)
 
         let updated = try #require(model.entries(on: model.today.adding(days: -1)).first)
-        #expect(updated.status == .completedLate, "done, but after the day was out")
+        #expect(updated.status == .completed, "not penalised for recording it later")
     }
 }
 
@@ -490,5 +493,246 @@ struct ReminderDriverTests {
         driver.tick()
         try? await Task.sleep(for: .milliseconds(50))
         #expect(notifier.cancelled == ["a"], "a delivered reminder must be taken back")
+    }
+}
+
+/// Recording a day you kept but forgot to tick at the time.
+@Suite("Marking earlier days")
+@MainActor
+struct BackfillingTests {
+
+    private func modelWithRuleSince(_ daysAgo: Int) throws -> (AppModel, Rule) {
+        let model = try makeModel()
+        let rule = Rule(title: "Morning prayers", recurrence: .daily)
+        try model.store.save(rule)
+        try model.store.save(
+            Activation(ruleID: rule.id, from: model.today.adding(days: -daysAgo))
+        )
+        model.reload()
+        return (model, rule)
+    }
+
+    @Test("an earlier day can be marked kept")
+    func canMarkAnEarlierDay() throws {
+        let (model, _) = try modelWithRuleSince(7)
+        let threeDaysAgo = model.today.adding(days: -3)
+
+        let entry = try #require(model.entries(on: threeDaysAgo).first)
+        #expect(!entry.isKept)
+        model.toggleKept(entry)
+
+        #expect(try #require(model.entries(on: threeDaysAgo).first).isKept)
+    }
+
+    // Forgetting to tick a box is not the same as doing something late, and the
+    // app cannot tell the difference — so it must not guess against the user.
+    @Test("marking an earlier day records it as kept, not as late")
+    func earlierDaysAreNotAssumedLate() throws {
+        let (model, _) = try modelWithRuleSince(7)
+        let yesterday = model.today.adding(days: -1)
+
+        let entry = try #require(model.entries(on: yesterday).first)
+        model.toggleKept(entry)
+
+        #expect(try #require(model.entries(on: yesterday).first).status == .completed,
+                "trusting the user, not penalising them for remembering late")
+    }
+
+    @Test("kept late is available as a deliberate choice")
+    func lateIsExplicit() throws {
+        let (model, _) = try modelWithRuleSince(7)
+        let yesterday = model.today.adding(days: -1)
+
+        let entry = try #require(model.entries(on: yesterday).first)
+        model.markKeptLate(entry)
+
+        #expect(try #require(model.entries(on: yesterday).first).status == .completedLate)
+    }
+
+    // Un-ticking previously wrote `.skipped`, which quietly excused the day
+    // instead of restoring it — and made the checkbox identical to standing the
+    // rule down.
+    @Test("clearing a day restores it to having no record")
+    func clearingRestoresAbsence() throws {
+        let (model, rule) = try modelWithRuleSince(7)
+        let yesterday = model.today.adding(days: -1)
+
+        let entry = try #require(model.entries(on: yesterday).first)
+        model.toggleKept(entry)
+        let kept = try #require(model.entries(on: yesterday).first)
+        model.toggleKept(kept)
+
+        let cleared = try #require(model.entries(on: yesterday).first)
+        #expect(cleared.occurrence == nil, "no record at all, not a stood-down one")
+        #expect(!cleared.isStoodDown)
+        #expect(try model.store.occurrences(ruleID: rule.id, from: nil, through: nil).isEmpty)
+    }
+
+    @Test("standing a day down is still distinct from clearing it")
+    func standingDownIsSeparate() throws {
+        let (model, _) = try modelWithRuleSince(7)
+        let yesterday = model.today.adding(days: -1)
+
+        let entry = try #require(model.entries(on: yesterday).first)
+        model.setStatus(.skipped, for: entry.rule, on: entry.date)
+
+        let stood = try #require(model.entries(on: yesterday).first)
+        #expect(stood.isStoodDown)
+        #expect(stood.occurrence != nil)
+    }
+
+    // Backfilling must respect when the rule was actually taken on.
+    @Test("days before the rule existed are not offered")
+    func noDaysBeforeTheRuleBegan() throws {
+        let (model, _) = try modelWithRuleSince(3)
+        #expect(model.entries(on: model.today.adding(days: -3)).count == 1)
+        #expect(model.entries(on: model.today.adding(days: -4)).isEmpty,
+                "the rule did not exist then")
+    }
+}
+
+/// Editing a rule must never quietly change what it means. Three shapes were
+/// being replaced on save because the form could not express them: a one-off
+/// day became a daily rule, a Great Lent rule became a general fast-day rule,
+/// and a monthly rule's short-month policy reset.
+@Suite("Editing a rule loses nothing")
+struct RecurrenceFormTests {
+
+    private static let shapes: [Recurrence] = [
+        .daily,
+        .once(CalendarDate(year: 2026, month: 8, day: 19)!),
+        .weekly(days: [.sunday]),
+        .weekly(days: [.wednesday, .friday]),
+        .monthly(day: 1, whenShort: .lastDay),
+        .monthly(day: 31, whenShort: .lastDay),
+        .monthly(day: 31, whenShort: .skip),
+        .liturgical(.fastDay),
+        .liturgical(.greatFeast),
+        .liturgical(.season(.greatLent)),
+        .liturgical(.season(.nativityFast)),
+        .liturgical(.season(.apostlesFast)),
+        .liturgical(.season(.dormitionFast))
+    ]
+
+    @Test("every recurrence survives a load and save unchanged", arguments: shapes)
+    func roundTrip(recurrence: Recurrence) {
+        let fallback = CalendarDate(year: 2026, month: 1, day: 1)!
+        let form = RecurrenceForm(recurrence)
+        #expect(form.recurrence(fallback: fallback) == recurrence)
+    }
+
+    @Test("a one-off day never becomes a repeating rule")
+    func onceStaysOnce() {
+        let day = CalendarDate(year: 2026, month: 8, day: 19)!
+        let form = RecurrenceForm(.once(day))
+        #expect(form.kind == .once)
+        #expect(form.recurrence(fallback: CalendarDate(year: 2020, month: 1, day: 1)!) == .once(day))
+    }
+
+    @Test("a season keeps which season it was")
+    func seasonKeepsItsIdentity() {
+        for season in [FastingSeason.greatLent, .nativityFast, .apostlesFast, .dormitionFast] {
+            let form = RecurrenceForm(.liturgical(.season(season)))
+            #expect(form.kind == .season)
+            #expect(form.season == season)
+        }
+    }
+
+    @Test("the short-month policy is carried through, though nothing shows it")
+    func policySurvives() {
+        let form = RecurrenceForm(.monthly(day: 31, whenShort: .skip))
+        #expect(form.shortMonthPolicy == .skip)
+        let saved = form.recurrence(fallback: CalendarDate(year: 2026, month: 1, day: 1)!)
+        #expect(saved == .monthly(day: 31, whenShort: .skip))
+    }
+
+    @Test("clearing every weekday falls back rather than making a rule that never runs")
+    func emptyWeekdaysFallBack() {
+        var form = RecurrenceForm(.weekly(days: [.sunday]))
+        form.weekdays = []
+        let saved = form.recurrence(fallback: CalendarDate(year: 2026, month: 1, day: 1)!)
+        #expect(saved == .weekly(days: [.sunday]))
+    }
+
+    @Test("every kind the picker offers can be saved")
+    func everyKindIsReachable() {
+        let fallback = CalendarDate(year: 2026, month: 8, day: 19)!
+        for kind in RecurrenceForm.Kind.allCases {
+            var form = RecurrenceForm()
+            form.kind = kind
+            _ = form.recurrence(fallback: fallback)   // must not trap
+        }
+    }
+}
+
+/// A day still in progress is not a verdict. Progress speaks only about days
+/// that are finished — otherwise a rule added this morning and not yet kept
+/// counts against someone before they have had the chance.
+@Suite("Progress stops at yesterday")
+@MainActor
+struct ProgressWindowTests {
+
+    @Test("the window ends the day before today")
+    func endsYesterday() throws {
+        let model = try makeModel()
+        #expect(model.progressThrough == model.today.adding(days: -1))
+    }
+
+    @Test("a rule added today does not drag the score down")
+    func todaysRuleIsNotJudged() throws {
+        let model = try makeModel()
+        // A timed rule whose hour has already passed today.
+        model.save(
+            Rule(title: "Morning prayers", recurrence: .daily,
+                 timeOfDay: TimeOfDay(hour: 0, minute: 1)),
+            isNew: true
+        )
+
+        let report = model.report()
+        #expect(report.overall == nil, "nothing has finished yet, so there is no figure")
+        #expect(report.perRule.allSatisfy { $0.missed == 0 })
+    }
+
+    @Test("yesterday still counts")
+    func yesterdayIsJudged() throws {
+        let model = try makeModel()
+        let rule = Rule(title: "Evening prayers", recurrence: .daily)
+        try model.store.save(rule)
+        try model.store.save(Activation(ruleID: rule.id, from: model.today.adding(days: -3)))
+        model.reload()
+
+        let report = model.report()
+        #expect(report.perRule[0].missed == 3, "the three finished days")
+    }
+
+    @Test("keeping yesterday shows up straight away")
+    func keptYesterdayCounts() throws {
+        let model = try makeModel()
+        let rule = Rule(title: "Evening prayers", recurrence: .daily)
+        try model.store.save(rule)
+        try model.store.save(Activation(ruleID: rule.id, from: model.today.adding(days: -1)))
+        model.reload()
+
+        let entry = try #require(model.entries(on: model.today.adding(days: -1)).first)
+        model.toggleKept(entry)
+
+        #expect(model.report().overall == 1.0)
+    }
+
+    @Test("what today is marked as makes no difference to progress")
+    func todayIsIgnoredEitherWay() throws {
+        let model = try makeModel()
+        let rule = Rule(title: "Jesus prayer", recurrence: .daily)
+        try model.store.save(rule)
+        try model.store.save(Activation(ruleID: rule.id, from: model.today.adding(days: -2)))
+        model.reload()
+
+        let before = model.report()
+        let today = try #require(model.entries(on: model.today).first)
+        model.toggleKept(today)
+        let after = model.report()
+
+        #expect(before.perRule[0].scoreable == after.perRule[0].scoreable)
+        #expect(before.overall == after.overall, "today is outside the window entirely")
     }
 }

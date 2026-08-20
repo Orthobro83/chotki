@@ -81,6 +81,10 @@ public final class InMemoryStore: Store, @unchecked Sendable {
         }
     }
 
+    public func removeOccurrence(ruleID: UUID, date: CalendarDate) throws {
+        _ = locked { occurrenceByKey.removeValue(forKey: "\(ruleID):\(date.iso)") }
+    }
+
     public func loadSettings() throws -> AppSettings? {
         locked { storedSettings }
     }

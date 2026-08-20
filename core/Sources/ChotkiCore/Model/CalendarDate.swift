@@ -114,6 +114,32 @@ public struct CalendarDate: Sendable, Hashable, Comparable, Codable, CustomStrin
 
     public var iso: String { description }
 
+    /// Days since 1 January 1970, by direct calculation.
+    ///
+    /// Constant time, exact for any year, and it does not build a `Date` — which
+    /// matters because scoring asks for the distance between days once per due
+    /// day, and the previous approach stepped a day at a time and gave up
+    /// silently after four thousand of them.
+    ///
+    /// This is the standard civil-to-days algorithm: shift the year so that
+    /// March is the first month, which puts the leap day at the end of the year
+    /// and removes it from the arithmetic entirely.
+    public var daysSinceEpoch: Int {
+        var y = year
+        if month <= 2 { y -= 1 }
+        let era = (y >= 0 ? y : y - 399) / 400
+        let yoe = y - era * 400                                   // 0...399
+        let monthShift = month > 2 ? -3 : 9
+        let doy = (153 * (month + monthShift) + 2) / 5 + day - 1  // 0...365
+        let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy           // 0...146096
+        return era * 146_097 + doe - 719_468
+    }
+
+    /// Whole days from this date to `other`. Negative if `other` is earlier.
+    public func days(until other: CalendarDate) -> Int {
+        other.daysSinceEpoch - daysSinceEpoch
+    }
+
     public static func < (a: CalendarDate, b: CalendarDate) -> Bool {
         (a.year, a.month, a.day) < (b.year, b.month, b.day)
     }

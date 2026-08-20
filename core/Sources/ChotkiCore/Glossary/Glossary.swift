@@ -25,6 +25,24 @@ public struct Glossary: Sendable {
 
     public static let shared = Glossary()
 
+    private static let scopedLock = NSLock()
+    nonisolated(unsafe) private static var scopedCache: [Tradition: Glossary] = [:]
+
+    /// The bundled glossary narrowed to one tradition, built once and kept.
+    ///
+    /// `scoped(to:)` filters every entry, prunes cross-references and rebuilds
+    /// the slug index. Doing that inside a view body — which is where it was
+    /// being called, for every linked term on screen — repeated all of it on
+    /// each render.
+    public static func shared(for tradition: Tradition) -> Glossary {
+        scopedLock.lock()
+        defer { scopedLock.unlock() }
+        if let cached = scopedCache[tradition] { return cached }
+        let built = shared.scoped(to: tradition)
+        scopedCache[tradition] = built
+        return built
+    }
+
     public init(entries: [GlossaryEntry] = Glossary.bundled) {
         self.entries = entries.sorted { $0.term.lowercased() < $1.term.lowercased() }
         self.bySlug = Dictionary(uniqueKeysWithValues: entries.map { ($0.slug, $0) })

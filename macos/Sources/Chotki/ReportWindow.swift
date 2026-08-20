@@ -13,7 +13,7 @@ struct ReportWindowView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("The last ninety days")
+                    Text("Your progress up to \(Format.longDate(model.progressThrough)) — the ninety days to then")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.muted)
                     ForEach(report.summary, id: \.self) { line in

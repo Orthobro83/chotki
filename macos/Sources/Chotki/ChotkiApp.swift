@@ -144,6 +144,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if popover.isShown {
             popover.performClose(nil)
         } else {
+            // A notice belongs to the moment it was raised. Without this,
+            // "Backup written to…" sat there for the rest of the session.
+            model?.notice = nil
             model?.reload()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             // An accessory app's popover does not become key on its own, so text

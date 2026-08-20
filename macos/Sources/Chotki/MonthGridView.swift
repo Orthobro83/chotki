@@ -43,7 +43,7 @@ struct MonthGridView: View {
 
             Spacer()
             VStack(spacing: 1) {
-                Text(monthName)
+                Text(Format.monthAndYear(visible))
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.parchment)
                 if model.settings.showOldStyleDates, let old = oldStyle {
@@ -140,8 +140,7 @@ struct MonthGridView: View {
                 date: CalendarDate(year: visible.year, month: visible.month, day: day), inMonth: true
             ))
         }
-        while result.count % 7 != 0 {
-            let last = result.compactMap(\.date).last!
+        while result.count % 7 != 0, let last = result.compactMap(\.date).last {
             result.append(Cell(date: last.adding(days: 1), inMonth: false))
         }
         return result
@@ -149,23 +148,14 @@ struct MonthGridView: View {
 
     private var visible: CalendarDate { model.visibleMonth }
 
-    private var monthName: String {
-        let names = ["January", "February", "March", "April", "May", "June",
-                     "July", "August", "September", "October", "November", "December"]
-        return "\(names[visible.month - 1]) \(visible.year)"
-    }
 
     private var oldStyle: String? {
         guard let day = model.liturgical.cachedDay(for: model.selectedDate),
               day.observedDate != day.civilDate
         else { return nil }
-        return "\(day.observedDate.day) \(shortMonth(day.observedDate.month)) o.s."
+        return "\(day.observedDate.day) \(Format.shortMonth(day.observedDate.month)) o.s."
     }
 
-    private func shortMonth(_ month: Int) -> String {
-        ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
-    }
 
     private func step(_ months: Int) {
         var year = visible.year

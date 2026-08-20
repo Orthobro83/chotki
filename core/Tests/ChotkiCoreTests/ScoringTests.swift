@@ -250,3 +250,94 @@ struct ProseTests {
         }
     }
 }
+
+/// The bug this covers: an all-day rule kept this morning did not appear in
+/// the report at all, because the day had not finished. Elapsing decides
+/// whether an absent record is a miss; it says nothing about a day that was
+/// actually kept.
+@Suite("Today counts")
+struct TodayCountsTests {
+
+    @Test("an all-day rule kept today shows up today")
+    func allDayKeptTodayCounts() {
+        let (rule, activation) = dailyRule("The Wednesday and Friday fast")
+        let today = CalendarDate(now, in: zone)
+        let kept = [Occurrence(ruleID: rule.id, date: today, status: .completed)]
+
+        let report = engine().report(
+            rules: [rule], activations: [activation], occurrences: kept,
+            from: today, through: today, now: now
+        )
+        let score = report.perRule[0]
+        #expect(score.hasAnythingDue, "it must be in the report the moment it is kept")
+        #expect(score.kept == 1)
+        #expect(report.overall == 1.0)
+    }
+
+    @Test("an all-day rule not yet acted on today is not a miss")
+    func allDayPendingIsNotMissed() {
+        let (rule, activation) = dailyRule("Jesus prayer")
+        let today = CalendarDate(now, in: zone)
+
+        let report = engine().report(
+            rules: [rule], activations: [activation], occurrences: [],
+            from: today, through: today, now: now
+        )
+        #expect(report.perRule[0].missed == 0, "the day is not over")
+        #expect(report.overall == nil, "and there is nothing to score yet")
+    }
+
+    @Test("a timed rule kept before its hour counts straight away")
+    func timedKeptEarlyCounts() {
+        let (rule, activation) = dailyRule("Evening prayers", at: TimeOfDay(hour: 21, minute: 30))
+        let today = CalendarDate(now, in: zone)
+        // now is 10:00; the rule is due at 21:30 and has been kept already.
+        let kept = [Occurrence(ruleID: rule.id, date: today, status: .completed)]
+
+        let report = engine().report(
+            rules: [rule], activations: [activation], occurrences: kept,
+            from: today, through: today, now: now
+        )
+        #expect(report.perRule[0].kept == 1, "done early is still done")
+    }
+
+    @Test("standing today down still removes it from the ratio")
+    func stoodDownTodayIsNeutral() {
+        let (rule, activation) = dailyRule("Jesus prayer")
+        let today = CalendarDate(now, in: zone)
+        let stood = [Occurrence(ruleID: rule.id, date: today, status: .skipped)]
+
+        let report = engine().report(
+            rules: [rule], activations: [activation], occurrences: stood,
+            from: today, through: today, now: now
+        )
+        #expect(report.perRule[0].stoodDown == 1)
+        #expect(report.perRule[0].scoreable == 0)
+    }
+
+    // A day that has not happened cannot end a streak — otherwise every streak
+    // would read as zero from midnight until the rule's hour.
+    @Test("today being still ahead does not end a streak")
+    func pendingTodayDoesNotBreakStreak() {
+        let (rule, activation) = dailyRule("Evening prayers", at: TimeOfDay(hour: 21, minute: 30))
+        let today = CalendarDate(now, in: zone)
+        let kept = (1...19).map {
+            Occurrence(ruleID: rule.id, date: d(2026, 8, $0), status: .completed)
+        }
+        let report = engine().report(
+            rules: [rule], activations: [activation], occurrences: kept,
+            from: d(2026, 8, 1), through: today, now: now
+        )
+        #expect(report.perRule[0].streak == 19, "the 20th has not come round yet")
+    }
+
+    @Test("an all-day rule missed yesterday is still a miss")
+    func yesterdayStillCounts() {
+        let (rule, activation) = dailyRule("Jesus prayer")
+        let report = engine().report(
+            rules: [rule], activations: [activation], occurrences: [],
+            from: d(2026, 8, 18), through: CalendarDate(now, in: zone), now: now
+        )
+        #expect(report.perRule[0].missed == 2, "the 18th and 19th are over; the 20th is not")
+    }
+}

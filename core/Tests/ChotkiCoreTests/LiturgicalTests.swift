@@ -247,3 +247,69 @@ struct LiturgicalServiceTests {
         #expect(fetcher.requestCount == before, "no refetch needed to switch back")
     }
 }
+
+/// The month grid asks about forty-two days on every redraw, most of them
+/// outside the cached window, so misses are remembered. That memory must not
+/// outlive a change of reckoning.
+@Suite("Remembering absences")
+struct AbsenceCacheTests {
+
+    private func d(_ y: Int, _ m: Int, _ day: Int) -> CalendarDate {
+        CalendarDate(year: y, month: m, day: day)!
+    }
+
+    @Test("a day with no record reads as absent, repeatedly and consistently")
+    func absentStaysAbsent() throws {
+        let store = InMemoryStore()
+        let service = LiturgicalService(store: store, jurisdiction: .default)
+        let date = d(2026, 8, 19)
+
+        #expect(service.cachedDay(for: date) == nil)
+        #expect(service.cachedDay(for: date) == nil, "and again, from memory")
+    }
+
+    @Test("a day that arrives later is no longer treated as absent")
+    func arrivalClearsTheMemory() throws {
+        let store = InMemoryStore()
+        let service = LiturgicalService(store: store, jurisdiction: .default)
+        let date = d(2026, 8, 19)
+
+        #expect(service.cachedDay(for: date) == nil)
+
+        try store.saveLiturgicalDay(sampleDay(date, reckoning: .julian))
+        try service.loadSnapshot(around: date)
+
+        #expect(service.cachedDay(for: date) != nil, "the record must become visible")
+    }
+
+    // Both caches are keyed by civil date but answer for one reckoning.
+    @Test("changing reckoning forgets what was absent")
+    func switchingReckoningClearsIt() throws {
+        let store = InMemoryStore()
+        let service = LiturgicalService(store: store, jurisdiction: .default)
+        let date = d(2026, 8, 19)
+
+        #expect(service.cachedDay(for: date) == nil)
+
+        // The New Calendar has a record for that civil day.
+        try store.saveLiturgicalDay(sampleDay(date, reckoning: .revisedJulian))
+        try service.setJurisdiction(
+            Jurisdiction(name: "Greek", reckoning: .revisedJulian, tradition: .greek),
+            around: date
+        )
+
+        #expect(service.cachedDay(for: date) != nil,
+                "a stale absence would make the whole calendar look empty")
+    }
+
+    private func sampleDay(_ date: CalendarDate, reckoning: Reckoning) -> LiturgicalDay {
+        LiturgicalDay(
+            civilDate: date, reckoning: reckoning, observedDate: date,
+            tone: 2, title: nil, summaryTitle: "A commemoration", saints: [], feasts: [],
+            fastLevel: 1, fastLevelDescription: "Fast", fastException: 0,
+            fastExceptionDescription: nil, abstentions: ["meat"],
+            feastLevel: 0, feastLevelDescription: "Liturgy",
+            readings: [], paschaDistance: 129, fetchedAt: Date()
+        )
+    }
+}

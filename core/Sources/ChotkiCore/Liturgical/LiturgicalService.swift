@@ -16,6 +16,7 @@ public final class LiturgicalService: LiturgicalDayProvider, @unchecked Sendable
     private var _jurisdiction: Jurisdiction
     /// Snapshot of the cache for the current reckoning, so the synchronous
     /// provider methods never touch SQLite on a hot path.
+    private var knownAbsent: Set<CalendarDate> = []
     private var snapshot: [CalendarDate: LiturgicalDay] = [:]
     private var _lastRefreshFailed = false
     private var _lastSuccessfulRefresh: Date?
@@ -48,6 +49,10 @@ public final class LiturgicalService: LiturgicalDayProvider, @unchecked Sendable
         locked {
             _jurisdiction = jurisdiction
             snapshot = [:]
+            // Both caches are keyed by civil date but hold answers for one
+            // reckoning. Keeping the misses would make every day look absent
+            // after a switch from Old to New calendar.
+            knownAbsent = []
         }
         try loadSnapshot(around: date, window: window)
     }
@@ -63,13 +68,26 @@ public final class LiturgicalService: LiturgicalDayProvider, @unchecked Sendable
             through: date.adding(days: window)
         )
         locked {
-            for day in days { snapshot[day.civilDate] = day }
+            for day in days {
+                snapshot[day.civilDate] = day
+                knownAbsent.remove(day.civilDate)
+            }
         }
     }
 
     public func cachedDay(for date: CalendarDate) -> LiturgicalDay? {
         if let hit = locked({ snapshot[date] }) { return hit }
-        return try? store.liturgicalDay(civilDate: date, reckoning: jurisdiction.reckoning)
+        // A month grid asks about forty-two days on every redraw, and most of
+        // them fall outside the cached window. Without remembering the misses,
+        // each redraw ran forty-two queries that were always going to find
+        // nothing. Cleared whenever new days arrive or the reckoning changes.
+        if locked({ knownAbsent.contains(date) }) { return nil }
+
+        let found = try? store.liturgicalDay(civilDate: date, reckoning: jurisdiction.reckoning)
+        locked {
+            if let found { snapshot[date] = found } else { knownAbsent.insert(date) }
+        }
+        return found
     }
 
     /// Fetch the window ahead, skipping anything already cached.
@@ -88,7 +106,10 @@ public final class LiturgicalService: LiturgicalDayProvider, @unchecked Sendable
             do {
                 let day = try await client.day(for: date, reckoning: reckoning, now: now)
                 try store.saveLiturgicalDay(day)
-                locked { snapshot[date] = day }
+                locked {
+                    snapshot[date] = day
+                    knownAbsent.remove(date)
+                }
                 fetched += 1
             } catch {
                 anyFailure = true

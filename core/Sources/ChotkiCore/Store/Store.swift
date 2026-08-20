@@ -22,6 +22,13 @@ public protocol Store: Sendable {
 
     func save(_ occurrence: Occurrence) throws
     func occurrences(ruleID: UUID?, from: CalendarDate?, through: CalendarDate?) throws -> [Occurrence]
+    /// Returns a day to having no record at all.
+    ///
+    /// Absence is the default state — due, or missed once its moment has passed
+    /// — so restoring absence needs a real delete. Writing `.skipped` instead
+    /// would quietly remove the day from scoring, which is a different thing
+    /// entirely and not what un-ticking a box means.
+    func removeOccurrence(ruleID: UUID, date: CalendarDate) throws
 
     func apply(_ plan: EditPlan) throws
 

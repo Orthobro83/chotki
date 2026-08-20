@@ -14,7 +14,7 @@ struct GlossaryView: View {
     @State private var hasSeeded = false
 
     private var glossary: Glossary {
-        Glossary.shared.scoped(to: model.settings.jurisdiction.tradition)
+        Glossary.shared(for: model.settings.jurisdiction.tradition)
     }
 
     var body: some View {

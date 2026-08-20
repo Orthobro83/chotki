@@ -183,6 +183,20 @@ Two guards, both learned the hard way:
 - **An empty backup is never written.** If the store failed to open, or this is a fresh install, an empty file is worthless and could replace a good one.
 - **Tests never write backups.** `AppModel` takes `writesBackups`, false in tests. The suite had already written a 0-rule backup into a real user's Application Support before this existed — the second time test code reached the real machine, after the preferences files. Anything a test constructs must be told not to touch the world.
 
+## Progress speaks only about finished days
+
+The window ends **yesterday**. Today is outside it entirely, and the report says so: "Your progress up to Tuesday 18 August."
+
+A day still in progress is not a verdict. Without this, a rule added in the morning and not yet kept counted against someone before they had had the chance — and a rule kept today appeared or not depending on whether its hour had passed, which made the report look arbitrary.
+
+Related, and separate: **elapsing gates misses, not keeping.** A day that was actually kept counts from the moment it is marked, whatever the clock says. Marking something complete is a fact, not a pending judgement.
+
+## Marking a day you forgot to tick
+
+Any day the rule was in force can be marked afterwards, and doing so records it as **kept** — not as kept late. Forgetting to tick a box is not the same as doing something late, and the app cannot tell the difference, so it trusts the person rather than guessing against them. Recording something as late is available in the menu as a deliberate choice.
+
+Un-ticking **removes the record**, restoring the day to due-or-missed. It previously wrote `.skipped`, which quietly excused the day and made the checkbox indistinguishable from standing the rule down.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

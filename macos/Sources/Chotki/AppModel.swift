@@ -125,7 +125,7 @@ final class AppModel: ObservableObject {
         var updated = settings
         for trigger in wanted { updated.observances.observe(trigger) }
         settings = updated
-        try? store.saveSettings(updated)
+        persist(updated)
     }
 
     /// Someone who already has rules has plainly been here before, whatever the
@@ -135,7 +135,18 @@ final class AppModel: ObservableObject {
         var updated = settings
         updated.hasCompletedFirstRun = true
         settings = updated
-        try? store.saveSettings(updated)
+        persist(updated)
+    }
+
+    /// A setting that fails to save reverts on the next launch without anyone
+    /// knowing — which is precisely how the observance bug went unnoticed. Say
+    /// so instead of swallowing it.
+    private func persist(_ settings: AppSettings) {
+        do {
+            try store.saveSettings(settings)
+        } catch {
+            loadError = "Could not save that setting, so it may not survive a restart. \(error)"
+        }
     }
 
     func refreshLiturgical() async {
@@ -169,10 +180,18 @@ final class AppModel: ObservableObject {
 
     /// The report over a trailing window. Recomputed on demand rather than
     /// cached: it is cheap, and a stale figure would be worse than none.
+    /// The last day progress speaks about: yesterday.
+    ///
+    /// Today is deliberately outside it. A day still in progress is not a
+    /// verdict — a rule added this morning and not yet kept would otherwise
+    /// count against someone before they had had the chance.
+    var progressThrough: CalendarDate { today.adding(days: -1) }
+
     func report(days: Int = 30) -> ProgressReport {
-        ScoringEngine(engine: engine, timeZone: .current).report(
+        let through = progressThrough
+        return ScoringEngine(engine: engine, timeZone: .current).report(
             rules: rules, activations: activations, occurrences: occurrences,
-            from: today.adding(days: -(days - 1)), through: today
+            from: through.adding(days: -(days - 1)), through: through
         )
     }
 
@@ -182,21 +201,18 @@ final class AppModel: ObservableObject {
 
     // MARK: acting
 
-    func setStatus(_ status: OccurrenceStatus?, for rule: Rule, on date: CalendarDate) {
+    func setStatus(_ status: OccurrenceStatus, for rule: Rule, on date: CalendarDate) {
+        let kept = status == .completed || status == .completedLate
         do {
-            if let status {
-                try store.save(Occurrence(
-                    ruleID: rule.id, date: date, status: status,
-                    completedAt: status == .completed || status == .completedLate ? Date() : nil
-                ))
-                // Completing silences the rest of the day immediately.
-                let ids = scheduler.cancellationIDs(
-                    ruleID: rule.id, date: date, rules: rules, activations: activations
-                )
-                Task { await notifier.cancel(ids: ids) }
-            } else {
-                try store.save(Occurrence(ruleID: rule.id, date: date, status: .skipped))
-            }
+            try store.save(Occurrence(
+                ruleID: rule.id, date: date, status: status,
+                completedAt: kept ? Date() : nil
+            ))
+            // Settling a day silences the rest of it immediately.
+            let ids = scheduler.cancellationIDs(
+                ruleID: rule.id, date: date, rules: rules, activations: activations
+            )
+            Task { await notifier.cancel(ids: ids) }
             reload()
         } catch {
             loadError = "Could not save that. \(error)"
@@ -204,24 +220,33 @@ final class AppModel: ObservableObject {
     }
 
     /// Marks kept, or un-marks it if it was already kept.
+    /// Ticking says "I kept this", whenever the box happens to be ticked.
+    ///
+    /// It deliberately does not infer lateness from when the box was ticked.
+    /// Someone who kept a rule on the day and only remembered to record it
+    /// afterwards has not done anything late, and the app cannot tell the
+    /// difference — so it trusts them. Recording something as kept late is a
+    /// separate, deliberate choice.
     func toggleKept(_ entry: DayEntry) {
         if entry.isKept {
             clearOccurrence(entry)
         } else {
-            let late = entry.date < today
-            setStatus(late ? .completedLate : .completed, for: entry.rule, on: entry.date)
+            setStatus(.completed, for: entry.rule, on: entry.date)
         }
     }
 
-    private func clearOccurrence(_ entry: DayEntry) {
-        // Returning a day to "simply due" means removing the row, since absence
-        // is the default state.
-        guard let existing = entry.occurrence else { return }
+    func markKeptLate(_ entry: DayEntry) {
+        setStatus(.completedLate, for: entry.rule, on: entry.date)
+    }
+
+    /// Returns a day to having no record at all — due, or missed once its
+    /// moment has passed. This previously wrote `.skipped`, which quietly took
+    /// the day out of scoring altogether: un-ticking a box you had ticked by
+    /// mistake silently excused the day instead of restoring it, and made the
+    /// checkbox indistinguishable from standing the rule down.
+    func clearOccurrence(_ entry: DayEntry) {
         do {
-            try store.save(Occurrence(
-                id: existing.id, ruleID: existing.ruleID, date: existing.date,
-                status: .skipped, completedAt: nil
-            ))
+            try store.removeOccurrence(ruleID: entry.rule.id, date: entry.date)
             reload()
         } catch {
             loadError = "Could not update that. \(error)"
@@ -350,11 +375,7 @@ final class AppModel: ObservableObject {
         change(&updated)
         let jurisdictionChanged = updated.jurisdiction != settings.jurisdiction
         settings = updated
-        do {
-            try store.saveSettings(updated)
-        } catch {
-            loadError = "Could not save that setting. \(error)"
-        }
+        persist(updated)
 
         if jurisdictionChanged {
             try? liturgical.setJurisdiction(updated.jurisdiction, around: today)
@@ -389,10 +410,12 @@ final class AppModel: ObservableObject {
 
     /// Acting on a notification's buttons.
     private func listenForActions() {
+        // The task inherits the main actor from here, so neither the property
+        // nor the handler needs awaiting — only the stream itself does.
         Task { [weak self] in
             guard let self else { return }
-            for await event in await self.notifier.actionEvents {
-                await self.handle(event)
+            for await event in self.notifier.actionEvents {
+                self.handle(event)
             }
         }
     }

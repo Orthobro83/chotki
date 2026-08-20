@@ -166,6 +166,11 @@ struct SettingsViewContent: View {
     /// Three plain options, with no prompt asking why. Someone who cannot fast
     /// for health reasons, or has no parish within reach, is not asked to
     /// explain themselves to an app.
+    // Swift 6 warns that these setters are not Sendable when handed to a
+    // Binding. Annotating them @Sendable breaks the call sites, which legitimately
+    // capture the main-actor model, and @MainActor crashes the 6.1.2 compiler
+    // outright. The closures only ever run on the main actor, so the warning is
+    // benign and left alone deliberately.
     private func observanceRow(
         _ title: String, value: Observance, set: @escaping (Observance) -> Void
     ) -> some View {

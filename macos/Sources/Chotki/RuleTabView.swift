@@ -30,7 +30,7 @@ struct DayPanel: View {
 
     private var dayHeader: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(longDate(model.selectedDate))
+            Text(Format.longDate(model.selectedDate))
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.parchment)
             Spacer()
@@ -99,12 +99,6 @@ struct DayPanel: View {
         .padding(.horizontal, 14).padding(.vertical, 9)
     }
 
-    private func longDate(_ date: CalendarDate) -> String {
-        let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-        let months = ["January", "February", "March", "April", "May", "June",
-                      "July", "August", "September", "October", "November", "December"]
-        return "\(weekdays[date.weekday.rawValue - 1]) \(date.day) \(months[date.month - 1])"
-    }
 }
 
 struct EntryRow: View {
@@ -148,7 +142,7 @@ struct EntryRow: View {
 
             // "all day" rather than "anytime": a fast is not optional, and
             // "anytime" reads as though it were.
-            Text(entry.rule.timeOfDay.map(format) ?? "all day")
+            Text(entry.rule.timeOfDay.map(Format.time) ?? "all day")
                 .font(.system(size: 11))
                 .foregroundStyle(entry.isKept ? Theme.faint : Theme.muted)
 
@@ -167,8 +161,11 @@ struct EntryRow: View {
         .onHover { hovering = $0 }
         .help(entry.isKept ? "Click to mark as not kept" : "Click to mark as kept")
         .contextMenu {
-            Button(entry.isKept ? "Mark as not kept" : "Mark as kept") { model.toggleKept(entry) }
-            Button("Stand down for today") {
+            Button(entry.isKept ? "Clear this day" : "Mark as kept") { model.toggleKept(entry) }
+            if !entry.isKept {
+                Button("Mark as kept, late") { model.markKeptLate(entry) }
+            }
+            Button("Stand down for this day") {
                 model.setStatus(.skipped, for: entry.rule, on: entry.date)
             }
             Divider()
@@ -181,9 +178,6 @@ struct EntryRow: View {
         }
     }
 
-    private func format(_ time: TimeOfDay) -> String {
-        String(format: "%02d:%02d", time.hour, time.minute)
-    }
 }
 
 extension View {

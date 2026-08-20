@@ -125,3 +125,49 @@ struct DSTTests {
         #expect(localTime(instant, zone) == (1, 30))
     }
 }
+
+@Suite("Counting days")
+struct DayCountingTests {
+
+    private func d(_ y: Int, _ m: Int, _ day: Int) -> CalendarDate {
+        CalendarDate(year: y, month: m, day: day)!
+    }
+
+    @Test("the epoch is day zero")
+    func epoch() {
+        #expect(d(1970, 1, 1).daysSinceEpoch == 0)
+        #expect(d(1969, 12, 31).daysSinceEpoch == -1)
+        #expect(d(1970, 1, 2).daysSinceEpoch == 1)
+    }
+
+    @Test("distance matches stepping a day at a time", arguments: [1, 2, 27, 28, 29, 31, 59, 365, 366, 1_000])
+    func agreesWithStepping(days: Int) {
+        // Across a leap day, a century, and a year boundary.
+        for start in [d(2026, 8, 19), d(2028, 2, 27), d(1899, 12, 30), d(2099, 12, 30)] {
+            #expect(start.days(until: start.adding(days: days)) == days)
+            #expect(start.adding(days: days).days(until: start) == -days)
+        }
+    }
+
+    // The previous implementation stepped one day at a time and gave up after
+    // four thousand, returning a wrong answer without saying so.
+    @Test("distances beyond eleven years are still correct")
+    func longDistances() {
+        #expect(d(1970, 1, 1).days(until: d(2000, 1, 1)) == 10_957)
+        #expect(d(2000, 1, 1).days(until: d(2100, 1, 1)) == 36_525, "2000 is a leap year, so this century has 25")
+        #expect(d(2026, 1, 1).days(until: d(2126, 1, 1)) == 36_524, "this one skips 2100, so 24")
+    }
+
+    @Test("the same day is zero apart")
+    func sameDay() {
+        #expect(d(2026, 8, 19).days(until: d(2026, 8, 19)) == 0)
+    }
+
+    @Test("a year is 365 days, and a leap year 366")
+    func years() {
+        #expect(d(2026, 1, 1).days(until: d(2027, 1, 1)) == 365)
+        #expect(d(2028, 1, 1).days(until: d(2029, 1, 1)) == 366)
+        #expect(d(1900, 1, 1).days(until: d(1901, 1, 1)) == 365, "1900 was not a leap year")
+        #expect(d(2000, 1, 1).days(until: d(2001, 1, 1)) == 366, "2000 was")
+    }
+}

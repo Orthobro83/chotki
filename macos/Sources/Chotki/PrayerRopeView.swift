@@ -9,7 +9,7 @@ struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
     @State private var count = 0
     @State private var target = 33
-    @State private var sound = SoundPlayer()
+    private let sound = SoundPlayer.shared
     @FocusState private var focused: Bool
 
     private let targets = [33, 50, 100]
