@@ -227,6 +227,14 @@ A test walks a full year for every template and asserts the count matches the pr
 
 The rule: the app's **own** labels are lowercase by design — section headings, the legend, category names. Anything that arrived from orthocal is shown exactly as it came.
 
+## The app icon is generated, not checked in
+
+`NSApp.applicationIconImage` only changes the Dock icon of the *running* app. Launchpad, Finder and Get Info read the icon from the bundle, so without a real `.icns` they showed the generic placeholder however the Dock looked.
+
+The build script now runs the app itself with `CHOTKI_EXPORT_ICON`, which draws all ten iconset sizes straight into bitmaps of the exact pixel size — rendered rather than scaled down from one large image — and `iconutil` turns them into an `.icns` that goes into the bundle with `CFBundleIconFile`.
+
+Generated at build time from the same `CrossGeometry` as everything else, so the icon cannot fall out of step with the drawing.
+
 ## The marks
 
 Two drawn in code, like the icons, so nothing can drift from the palette and nothing needs an asset.

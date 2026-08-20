@@ -22,6 +22,15 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/$APP_NAME"
 
+# The icon is generated from the app itself, not checked in, so it cannot fall
+# out of step with the drawing. Without a real .icns in the bundle, Launchpad
+# and Finder show the generic placeholder however the Dock icon is set at
+# runtime — setting NSApp.applicationIconImage only affects the running app.
+echo "==> generating the icon"
+ICONSET="$(mktemp -d)/$APP_NAME.iconset"
+CHOTKI_EXPORT_ICON="$ICONSET" "$BIN" >/dev/null
+iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/$APP_NAME.icns"
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -31,6 +40,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleDisplayName</key><string>$APP_NAME</string>
     <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
     <key>CFBundleExecutable</key><string>$APP_NAME</string>
+    <key>CFBundleIconFile</key><string>$APP_NAME</string>
+    <key>CFBundleIconName</key><string>$APP_NAME</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleVersion</key><string>$VERSION</string>

@@ -37,6 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         trace("launched, activationPolicy=\(NSApp.activationPolicy().rawValue)")
+        if let directory = ProcessInfo.processInfo.environment["CHOTKI_EXPORT_ICON"] {
+            IconExport.run(to: directory)
+            return
+        }
+
         if let prefix = ProcessInfo.processInfo.environment["CHOTKI_RENDER"] {
             RenderMode.run(prefix: prefix)
             return
