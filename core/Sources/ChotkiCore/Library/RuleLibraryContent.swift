@@ -61,8 +61,13 @@ extension RuleLibrary {
 
         RuleTemplate(
             id: "wednesday-friday-fast", title: "The Wednesday and Friday fast",
-            summary: "The weekly fast kept through most of the year.",
-            recurrence: .liturgical(.fastDay), category: .fasting,
+            summary: "The weekly fast, lifted by the Church in a few stretches of the year.",
+            // Wednesdays and Fridays, literally. This used to be
+            // `.liturgical(.fastDay)`, which means *any* day the calendar marks
+            // as a fast — so through the Dormition Fast, Great Lent and the
+            // Nativity Fast it fired every single day. The fast-free stretches
+            // are handled as dispensations, not by changing which days apply.
+            recurrence: .weekly(days: [.wednesday, .friday]), category: .fasting,
             glossarySlugs: ["wednesday-friday-fast", "fast-free", "abstention"]
         ),
         RuleTemplate(
@@ -116,8 +121,8 @@ extension RuleLibrary {
         ),
         RuleTemplate(
             id: "confession", title: "Confession",
-            summary: "In Russian practice, customarily before each communion. Elsewhere, less often.",
-            note: "How often is settled with your priest.",
+            summary: "Monthly to begin with. Russian practice expects it before each communion.",
+            note: "The app cannot know when you next commune, so this is a regular reminder rather than a rule. How often is settled with your priest.",
             recurrence: .monthly(day: 1), category: .services,
             glossarySlugs: ["confession", "preparation-for-communion", "holy-mysteries"]
         ),

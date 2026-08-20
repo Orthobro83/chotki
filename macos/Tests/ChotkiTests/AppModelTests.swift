@@ -90,16 +90,57 @@ struct TakingRulesOnTests {
         #expect(model.notice == nil)
     }
 
-    @Test("every liturgical template declares what it needs")
-    func liturgicalTemplatesDeclareTheirTrigger() {
+    @Test("every template that depends on the church calendar declares it")
+    func templatesDeclareWhatTheyNeed() {
         for template in RuleLibrary.bundled {
             if case .liturgical(let trigger) = template.recurrence {
                 #expect(template.requiredTrigger == trigger,
                         "\(template.id) would silently do nothing when taken on")
+            } else if template.category == .fasting {
+                // Weekly in shape, but still wants fast days marked on the
+                // calendar and still answers to dispensations.
+                #expect(template.requiredTrigger == .fastDay, "\(template.id)")
             } else {
-                #expect(template.requiredTrigger == nil)
+                #expect(template.requiredTrigger == nil, "\(template.id)")
             }
         }
+    }
+
+    // The bug this covers: the Wednesday and Friday fast was modelled as
+    // `.liturgical(.fastDay)`, which means *any* day the calendar marks as a
+    // fast — so through the Dormition Fast, Great Lent and the Nativity Fast it
+    // appeared every single day.
+    @Test("the Wednesday and Friday fast falls on Wednesdays and Fridays")
+    func weeklyFastIsWeekly() throws {
+        let template = try #require(RuleLibrary.shared.template(id: "wednesday-friday-fast"))
+        #expect(template.recurrence == .weekly(days: [.wednesday, .friday]))
+
+        let engine = RecurrenceEngine()
+        let rule = template.makeRule()
+        let activations = [Activation(ruleID: rule.id, from: CalendarDate(year: 2026, month: 8, day: 1)!)]
+        let due = engine.dueDates(
+            rule: rule, activations: activations,
+            from: CalendarDate(year: 2026, month: 8, day: 1)!,
+            through: CalendarDate(year: 2026, month: 8, day: 31)!
+        )
+        #expect(due.count == 8, "four Wednesdays and four Fridays")
+        #expect(due.allSatisfy { $0.weekday == .wednesday || $0.weekday == .friday })
+    }
+
+    /// Every fasting template should fall on the days its own name claims.
+    @Test("no fasting template fires every day of a fasting season")
+    func fastingTemplatesMatchTheirNames() throws {
+        let engine = RecurrenceEngine()
+        let template = try #require(RuleLibrary.shared.template(id: "wednesday-friday-fast"))
+        let rule = template.makeRule()
+        let from = CalendarDate(year: 2026, month: 1, day: 1)!
+        let through = CalendarDate(year: 2026, month: 12, day: 31)!
+        let due = engine.dueDates(
+            rule: rule,
+            activations: [Activation(ruleID: rule.id, from: from)],
+            from: from, through: through
+        )
+        #expect(due.count > 90 && due.count < 110, "about two days a week, not most of the year")
     }
 }
 

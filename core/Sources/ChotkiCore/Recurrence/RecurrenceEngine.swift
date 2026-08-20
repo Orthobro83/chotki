@@ -46,10 +46,39 @@ public struct RecurrenceEngine: Sendable {
         from start: CalendarDate,
         through end: CalendarDate
     ) -> [CalendarDate] {
+        inForce(rule: rule, activations: activations, from: start, through: end)
+            .filter { dispensation(rule: rule, on: $0) == nil }
+    }
+
+    /// Days the rule would fall on, but which the Church has lifted — with the
+    /// reason. These are deliberately **not** due: they cannot be missed and
+    /// they raise no reminder. They are returned separately so the day can
+    /// still be shown, kept, with an explanation, rather than silently
+    /// vanishing from the list as though the rule had broken.
+    public func dispensations(
+        rule: Rule,
+        activations: [Activation],
+        from start: CalendarDate,
+        through end: CalendarDate
+    ) -> [(date: CalendarDate, reason: String)] {
+        inForce(rule: rule, activations: activations, from: start, through: end)
+            .compactMap { date in
+                dispensation(rule: rule, on: date).map { (date, $0) }
+            }
+    }
+
+    private func inForce(
+        rule: Rule, activations: [Activation], from start: CalendarDate, through end: CalendarDate
+    ) -> [CalendarDate] {
         let mine = activations.filter { $0.ruleID == rule.id }
         guard !mine.isEmpty else { return [] }
         return patternDates(for: rule.recurrence, from: start, through: end)
             .filter { date in mine.contains { $0.covers(date) } }
+    }
+
+    private func dispensation(rule: Rule, on date: CalendarDate) -> String? {
+        guard rule.isFastingRule else { return nil }
+        return liturgical.fastFreeReason(date)
     }
 
     private func matches(_ recurrence: Recurrence, _ date: CalendarDate) -> Bool {

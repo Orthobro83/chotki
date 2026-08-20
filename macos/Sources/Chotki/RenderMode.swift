@@ -76,7 +76,7 @@ enum RenderMode {
         // With this set, the copy is used exactly as it is — no sample rules —
         // so the real state can be inspected.
         if ProcessInfo.processInfo.environment["CHOTKI_RENDER_LIVE"] == "1" {
-            return store
+        return store
         }
 
         for (title, time) in seeds {
@@ -100,6 +100,26 @@ enum RenderMode {
                 try store.save(Occurrence(ruleID: rule.id, date: today, status: .completed))
             }
         }
+            // A fast rule on a day the Church has lifted, so the dispensation path
+        // can be seen rather than only tested.
+        let fast = Rule(
+            title: "The Wednesday and Friday fast",
+            recurrence: .weekly(days: [.wednesday, .friday]),
+            category: RuleCategory.fasting.rawValue
+        )
+        try store.save(fast)
+        try store.save(Activation(ruleID: fast.id, from: today.adding(days: -40)))
+        try store.saveLiturgicalDay(
+            LiturgicalDay(
+                civilDate: today, reckoning: .julian, observedDate: today.adding(days: -13),
+                tone: 1, title: "Bright Wednesday", summaryTitle: "Bright Wednesday",
+                saints: [], feasts: [], fastLevel: 0, fastLevelDescription: "No Fast",
+                fastException: 11, fastExceptionDescription: "Fast Free", abstentions: [],
+                feastLevel: 0, feastLevelDescription: "Liturgy",
+                readings: [], paschaDistance: 3, fetchedAt: Date()
+            )
+        )
+
         return store
     }
 

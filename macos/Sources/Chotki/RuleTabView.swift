@@ -114,10 +114,10 @@ struct EntryRow: View {
             // clickable, which is why this appeared to do nothing.
             ZStack {
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(entry.isKept ? Theme.gold : Color.clear)
+                    .fill(entry.showsAsSatisfied ? Theme.gold : Color.clear)
                 RoundedRectangle(cornerRadius: 3)
-                    .stroke(entry.isKept ? Theme.gold : (hovering ? Theme.muted : Theme.faint), lineWidth: 1)
-                if entry.isKept {
+                    .stroke(entry.showsAsSatisfied ? Theme.gold : (hovering ? Theme.muted : Theme.faint), lineWidth: 1)
+                if entry.showsAsSatisfied {
                     Image(systemName: "checkmark")
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(Theme.ground)
@@ -128,9 +128,16 @@ struct EntryRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.rule.title)
                     .font(.system(size: 12))
-                    .foregroundStyle(entry.isKept ? Theme.muted : Theme.parchment)
-                    .strikethrough(entry.isKept, color: Theme.faint)
-                if entry.isStoodDown {
+                    .foregroundStyle(entry.showsAsSatisfied ? Theme.muted : Theme.parchment)
+                    .strikethrough(entry.showsAsSatisfied, color: Theme.faint)
+                if let dispensation = entry.dispensation {
+                    // The Church lifted it. Said plainly, so the day teaches
+                    // something rather than the rule seeming to have broken.
+                    Text("Not observed during \(dispensation)")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Theme.goldDim)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if entry.isStoodDown {
                     // Neutral wording: stood down, not skipped or missed.
                     Text("stood down")
                         .font(.system(size: 10))
@@ -158,15 +165,20 @@ struct EntryRow: View {
         .rowBackground(hovering)
         .contentShape(Rectangle())
         .onTapGesture { model.toggleKept(entry) }
+        .allowsHitTesting(true)
         .onHover { hovering = $0 }
-        .help(entry.isKept ? "Click to mark as not kept" : "Click to mark as kept")
+        .help(entry.isDispensed ? "The Church lifts this today" : (entry.isKept ? "Click to mark as not kept" : "Click to mark as kept"))
         .contextMenu {
-            Button(entry.isKept ? "Clear this day" : "Mark as kept") { model.toggleKept(entry) }
-            if !entry.isKept {
-                Button("Mark as kept, late") { model.markKeptLate(entry) }
-            }
-            Button("Stand down for this day") {
-                model.setStatus(.skipped, for: entry.rule, on: entry.date)
+            if entry.isDispensed {
+                Text("Lifted by the Church today")
+            } else {
+                Button(entry.isKept ? "Clear this day" : "Mark as kept") { model.toggleKept(entry) }
+                if !entry.isKept {
+                    Button("Mark as kept, late") { model.markKeptLate(entry) }
+                }
+                Button("Stand down for this day") {
+                    model.setStatus(.skipped, for: entry.rule, on: entry.date)
+                }
             }
             Divider()
             Button("Edit rule…") { model.screen = .editor(entry.rule.id) }

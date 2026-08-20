@@ -86,6 +86,36 @@ public struct LiturgicalDay: Sendable, Hashable, Codable {
         }
     }
 
+    /// Why a fast that would otherwise fall today is not kept.
+    ///
+    /// The Church lifts the Wednesday and Friday fast in four stretches of the
+    /// year. A rule that simply vanished on those days would look broken and
+    /// teach nothing, so the day is still shown — kept, with the reason.
+    ///
+    /// Identified from the calendar's own data rather than by computing dates:
+    /// Bright Week names itself, and the others sit at fixed distances from
+    /// Pascha or on fixed old-style dates.
+    public var fastFreeReason: String? {
+        guard !isFast || isFastFree else { return nil }
+        guard isFastFree || fastLevel == 0 else { return nil }
+
+        if (title ?? "").hasPrefix("Bright") || summaryTitle.hasPrefix("Bright") {
+            return "Bright Week"
+        }
+        if (50...56).contains(paschaDistance) {
+            return "the week after Pentecost"
+        }
+        if (-70...(-64)).contains(paschaDistance) {
+            return "the week of the Publican and the Pharisee"
+        }
+        // Old-style 25 December to 5 January: the days between the feasts.
+        if (observedDate.month == 12 && observedDate.day >= 25)
+            || (observedDate.month == 1 && observedDate.day <= 5) {
+            return "the days between the Nativity and Theophany"
+        }
+        return "a fast-free day"
+    }
+
     /// Wording matters: this describes what the church calendar marks, it does
     /// not instruct anyone what to eat. See the Observance section in design.md.
     public var fastDescription: String {

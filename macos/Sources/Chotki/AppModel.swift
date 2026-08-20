@@ -163,10 +163,24 @@ final class AppModel: ObservableObject {
             occurrences.filter { $0.date == date }.map { ($0.ruleID, $0) },
             uniquingKeysWith: { first, _ in first }
         )
-        return rules.compactMap { rule in
+        let engine = self.engine
+        return rules.compactMap { rule -> DayEntry? in
             let due = engine.dueDates(rule: rule, activations: activations, from: date, through: date)
-            guard !due.isEmpty else { return nil }
-            return DayEntry(rule: rule, date: date, occurrence: byRule[rule.id])
+            if !due.isEmpty {
+                return DayEntry(
+                    rule: rule, date: date, occurrence: byRule[rule.id], dispensation: nil
+                )
+            }
+            // Not due — but if the Church has lifted it rather than it simply
+            // not applying, say so instead of letting the rule disappear.
+            if let lifted = engine.dispensations(
+                rule: rule, activations: activations, from: date, through: date
+            ).first {
+                return DayEntry(
+                    rule: rule, date: date, occurrence: nil, dispensation: lifted.reason
+                )
+            }
+            return nil
         }
         .sorted { a, b in
             switch (a.rule.timeOfDay, b.rule.timeOfDay) {
@@ -228,6 +242,8 @@ final class AppModel: ObservableObject {
     /// difference — so it trusts them. Recording something as kept late is a
     /// separate, deliberate choice.
     func toggleKept(_ entry: DayEntry) {
+        // Nothing was asked of anyone today, so there is nothing to record.
+        guard !entry.isDispensed else { return }
         if entry.isKept {
             clearOccurrence(entry)
         } else {
@@ -445,9 +461,15 @@ struct DayEntry: Identifiable, Hashable {
     let rule: Rule
     let date: CalendarDate
     let occurrence: Occurrence?
+    /// Why the Church has lifted this rule today, if it has.
+    let dispensation: String?
 
     var id: String { "\(rule.id):\(date.iso)" }
     var status: OccurrenceStatus? { occurrence?.status }
     var isKept: Bool { status == .completed || status == .completedLate }
     var isStoodDown: Bool { status == .skipped || status == .cancelled }
+    var isDispensed: Bool { dispensation != nil }
+    /// Shown with a tick either way — but a dispensed day was never asked of
+    /// anyone, so it is not something they did.
+    var showsAsSatisfied: Bool { isKept || isDispensed }
 }

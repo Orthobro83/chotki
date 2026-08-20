@@ -40,6 +40,10 @@ public struct RuleTemplate: Sendable, Hashable, Identifiable {
     /// no-op. Callers use this to avoid that.
     public var requiredTrigger: LiturgicalTrigger? {
         if case .liturgical(let trigger) = recurrence { return trigger }
+        // A fasting rule that is not itself liturgical — the Wednesday and
+        // Friday fast is simply weekly — still wants the calendar marking fast
+        // days, and still answers to the Church's dispensations.
+        if category == .fasting { return .fastDay }
         return nil
     }
 

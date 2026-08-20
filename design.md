@@ -197,6 +197,30 @@ Any day the rule was in force can be marked afterwards, and doing so records it 
 
 Un-ticking **removes the record**, restoring the day to due-or-missed. It previously wrote `.skipped`, which quietly excused the day and made the checkbox indistinguishable from standing the rule down.
 
+## Dispensations — when the Church lifts a rule
+
+The Wednesday and Friday fast is not kept in four stretches of the year: Bright Week, the week after Pentecost, the week of the Publican and the Pharisee, and the days between the Nativity and Theophany. orthocal already reports these as `fast_level: 0` with exception `Fast Free`.
+
+The naive handling is to let the rule produce no due day, which the app did. That scores correctly but **looks like a bug**: the rule simply vanishes from the list with no explanation, and the person learns nothing.
+
+So a dispensed day is a third state, alongside due and not-applicable:
+
+- It is **not due** — it cannot be missed, it is not scored, and it raises no reminder.
+- It is **still shown**, ticked, with the reason beneath: "Not observed during Bright Week."
+- It cannot be marked or cleared, because nothing was asked of anyone.
+
+The period is named from the calendar's own data rather than by recomputing dates: Bright Week names itself in the title, the others sit at fixed distances from Pascha or on fixed old-style dates.
+
+Dispensation applies to rules in the **fasting category**, keyed on the category rather than the recurrence so it holds for a rule written by hand as much as one taken from the library.
+
+## A template must fall on the days its name claims
+
+`wednesday-friday-fast` was modelled as `.liturgical(.fastDay)`, which means *any* day the calendar marks as a fast. Through the Dormition Fast, Great Lent and the Nativity Fast, that is every single day — so a rule called "The Wednesday and Friday fast" appeared on roughly 180 days a year, mostly the wrong ones.
+
+It is now `.weekly(days: [.wednesday, .friday])`, which is what it says, with the fast-free stretches handled as dispensations rather than by changing which days apply.
+
+A test walks a full year for every template and asserts the count matches the promise: about 104 for the weekly fast, 365 for a daily rule, 52 for a weekly one.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

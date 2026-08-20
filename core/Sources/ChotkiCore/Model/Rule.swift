@@ -48,6 +48,11 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     public var isArchived: Bool { archivedAt != nil }
 
     public var effectiveReminders: RuleReminders { reminders ?? .default }
+
+    /// Fasting rules are subject to the Church's dispensations. Keyed on the
+    /// category rather than the recurrence, so it holds for a rule written by
+    /// hand as well as one taken from the library.
+    public var isFastingRule: Bool { category == RuleCategory.fasting.rawValue }
 }
 
 /// A stretch during which a rule is actually in force.

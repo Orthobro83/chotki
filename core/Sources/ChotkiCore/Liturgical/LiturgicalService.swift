@@ -136,4 +136,8 @@ public final class LiturgicalService: LiturgicalDayProvider, @unchecked Sendable
     public func season(_ date: CalendarDate) -> FastingSeason? {
         cachedDay(for: date)?.season
     }
+
+    public func fastFreeReason(_ date: CalendarDate) -> String? {
+        cachedDay(for: date)?.fastFreeReason
+    }
 }
