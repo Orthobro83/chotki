@@ -1,14 +1,22 @@
-# chotki (beta)
+# chotki (alpha)
 
 A menu bar app for keeping an Orthodox routine, and honestly measuring whether it is kept.
 
 A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning prayer into a scoreboard.
 
-You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community (such as The Brotherhood of the Narrow Path, who inspired this app). 
+You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community — such as [The Brotherhood of the Narrow Path](https://www.skool.com/fathermoses/), who inspired this app.
+
+> chotki is an independent project. It was inspired by The Brotherhood of the Narrow Path, but it is not sanctioned by, affiliated with, or endorsed by them, and nothing in it should be taken as speaking for them.
 
 ## Status
 
-Design complete, app in beta. macOS first; Windows and Linux planned.
+**Alpha.** It runs, and it is in daily use by its author. It has not been used by anyone else yet.
+
+What that means in practice:
+
+- Built for Apple Silicon only for now, and signed ad-hoc rather than notarised, so macOS will not open it without going through Privacy and Security first. A universal, properly signed build comes before anyone else is asked to try it.
+- The glossary and the passages from the Fathers are introductory and await a priest's review. Do not treat them as authoritative.
+- macOS 13 or later.
 
 - [design.md](design.md) — data model, liturgical handling, scoring
 - [checklist.md](checklist.md) — build order, phase by phase
@@ -23,6 +31,9 @@ Design complete, app in beta. macOS first; Windows and Linux planned.
 - Track consistency, weighted to the last 30 days, reported as prose before figures
 - Notify ahead of timed rules, and bounded reminders for untimed ones
 - Show the day's commemoration, fasting rule, and scripture readings
+- Explain the words — a glossary of around 120 terms, scoped to your tradition, tappable where they appear
+- Count the Jesus Prayer on a prayer rope, with a chime when the knot is complete
+- Keep a daily backup of your record, and export or restore it whenever you like
 
 ## Calendar
 
@@ -43,6 +54,12 @@ Core tests run on Linux in CI from the first phase, so portability fails loudly 
 ## Data
 
 Liturgical data comes from [orthocal.info](https://orthocal.info), a free public JSON API. No key, no account. It is the only network call the app makes: no analytics, no telemetry, no sync. Everything is stored locally in SQLite and backed up by JSON export.
+
+## A note on tone
+
+The app is deliberately encouraging and never shaming. There is no red anywhere in the progress view, no "failed", no broken-streak language, and no comparison against a target or a better past self. Pausing a rule removes those days from the record rather than counting them against you, and the consistency figure can be hidden entirely, leaving only the prose.
+
+That is a fixed constraint rather than a style choice, and it is enforced by tests.
 
 ## Licence
 
