@@ -14,7 +14,8 @@ You can add custom items to your practice which may not be Church canon, but are
 
 What that means in practice:
 
-- Built for Apple Silicon only for now, and signed ad-hoc rather than notarised, so macOS will not open it without going through Privacy and Security first. A universal, properly signed build comes before anyone else is asked to try it.
+- Apple Silicon only for now (M1 and later). An Intel build is coming.
+- Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - The glossary and the passages from the Fathers are introductory and await a priest's review. Do not treat them as authoritative.
 - macOS 13 or later.
 
@@ -61,6 +62,30 @@ The app is deliberately encouraging and never shaming. There is no red anywhere 
 
 That is a fixed constraint rather than a style choice, and it is enforced by tests.
 
+## Getting it
+
+**Apple Silicon Macs only** for now (M1 and later), running macOS 13 or later. An Intel build needs a universal binary, which is coming.
+
+1. Download `Chotki.zip` from the [latest release](../../releases/latest) and unzip it.
+2. Drag **Chotki.app** into your Applications folder.
+3. Open it. **macOS will refuse the first time** — this is expected, and is explained below.
+4. Go to **System Settings › Privacy & Security**, scroll down, and next to the message about Chotki click **Open Anyway**. Confirm.
+5. It will ask permission to send notifications. Allow it if you want reminders; the app works either way.
+
+A cross appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
+
+### Why macOS blocks it
+
+Because this build is signed by its author rather than notarised by Apple, which costs a hundred dollars a year and is not worth it for an alpha. macOS cannot tell an unnotarised app from a harmful one, so it refuses both. The source is here to read if you would rather check it yourself, and the whole app is built by the script in `macos/build-app.sh` if you would rather build it than trust a download.
+
+### Removing it
+
+Drag the app to the trash. Your record lives in `~/Library/Application Support/Chotki` — delete that folder too if you want it gone, or keep it and it will be there if you reinstall.
+
 ## Licence
 
-MIT.
+Not open source. The source is published so it can be read and audited, not reused.
+
+During the alpha you may build, install and run it freely for your own use. You may not sell it, redistribute it, or reuse its source in another project. chotki is intended to become a paid application, with the proceeds going to the author's church or to causes chosen by it.
+
+See [LICENSE](LICENSE) for the full terms.

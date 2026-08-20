@@ -37,7 +37,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <!-- Menu bar app: no Dock icon, no menu bar menus of its own. -->
     <key>LSUIElement</key><true/>
-    <key>NSHumanReadableCopyright</key><string>MIT</string>
+    <key>NSHumanReadableCopyright</key><string>© 2026 Ryan Macfarlane. All rights reserved.</string>
 </dict>
 </plist>
 PLIST
