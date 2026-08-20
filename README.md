@@ -1,8 +1,8 @@
 # Chotki (alpha)
 
-A menu bar app for keeping an Orthodox routine, and honestly measuring whether it is kept.
+A app for keeping an Orthodox routine, and honestly measuring whether it is kept, to help you hold yourself accountable.
 
-A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning prayer into a scoreboard.
+A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning practice into a scoreboard.
 
 You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community — such as [The Brotherhood of the Narrow Path](https://www.skool.com/fathermoses/), who inspired this app.
 
