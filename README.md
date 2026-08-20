@@ -1,4 +1,4 @@
-# chotki (alpha)
+# Chotki (alpha)
 
 A menu bar app for keeping an Orthodox routine, and honestly measuring whether it is kept.
 
