@@ -22,59 +22,21 @@ enum RenderMode {
             // representative; the app does this asynchronously at launch.
             try? model.liturgical.loadSnapshot(around: model.today)
 
-            // The whole shell, to confirm it is a fixed size no matter which
-            // screen is showing.
-            render(RootView(model: model), to: "\(prefix)-shell-main.png")
-            model.screen = .settings
-            render(RootView(model: model), to: "\(prefix)-shell-settings.png")
-            model.screen = .main
-
-            render(ReadingViewContent(model: model).background(Theme.ground), to: "\(prefix)-reading.png")
-
-            render(OnboardingView(model: model).background(Theme.ground), to: "\(prefix)-onboarding.png")
-            render(PrayerRopeView(model: model).background(Theme.ground), to: "\(prefix)-rope.png")
-
-            render(ProgressTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-progress.png")
-
-            // The window's rule panel, which is the surface that opens by
-            // default and the one that was missing its marks.
-            render(
-                ZStack {
-                    RuleBackdrop(crossHeight: 150, markSize: 34)
-                    DayPanel(model: model).padding(.horizontal, 6)
-                }
-                .frame(width: 560, height: 620)
-                .background(Theme.ground),
-                to: "\(prefix)-window.png"
-            )
-
-            // The cross alone, to judge the shape against the reference.
-            render(
-                OrthodoxCross()
-                    .fill(Theme.parchment)
-                    .frame(width: 300 * CrossGeometry.aspect, height: 300)
-                    .padding(40)
-                    .background(Theme.ground),
-                to: "\(prefix)-cross.png"
-            )
-
-            // The mark on its own, large, to judge the shape.
-            render(
-                RopeMark(size: 190).opacity(1).padding(30).background(Theme.ground),
-                to: "\(prefix)-mark.png"
-            )
-
             render(
                 ZStack {
                     RuleBackdrop()
                     RuleTabViewContent(model: model)
-                }
-                .background(Theme.ground),
+                },
                 to: "\(prefix)-rule.png"
             )
-
-            render(LibraryViewContent(model: model).background(Theme.ground), to: "\(prefix)-library.png")
-            render(SettingsViewContent(model: model).background(Theme.ground), to: "\(prefix)-settings.png")
+            render(ReadingViewContent(model: model),
+                   to: "\(prefix)-reading.png")
+            render(ProgressTabViewContent(model: model),
+                   to: "\(prefix)-progress.png")
+            render(LibraryViewContent(model: model),
+                   to: "\(prefix)-library.png")
+            render(PrayerRopeView(model: model, startingAt: 21),
+                   to: "\(prefix)-rope.png")
 
             FileHandle.standardOutput.write(Data("rendered\n".utf8))
         } catch {
@@ -85,84 +47,99 @@ enum RenderMode {
 
     /// A copy of the real database, so the liturgical cache is realistic, plus a
     /// few rules to show. The original is never opened for writing.
+    /// A throwaway store holding sample rules and nothing personal.
+    ///
+    /// Only the liturgical cache is taken from the real database — the calendar
+    /// is the same for everyone. Rules, activations and occurrences are made up
+    /// here, so a screenshot can never carry someone's actual practice into a
+    /// public README.
     private static func seededStore() throws -> any Store {
         let temp = FileManager.default.temporaryDirectory
             .appendingPathComponent("chotki-render-\(UUID().uuidString).sqlite")
+        let store = try SQLiteStore(path: temp.path)
+        let today = CalendarDate(Date(), in: .current)
+
+        if ProcessInfo.processInfo.environment["CHOTKI_RENDER_LIVE"] == "1" {
+            // Inspecting real state: copy the whole database, including the WAL,
+            // which holds anything not yet checkpointed.
+            if let real = try? StoreLocation.databasePath(),
+               FileManager.default.fileExists(atPath: real) {
+                let copy = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("chotki-live-\(UUID().uuidString).sqlite")
+                for suffix in ["", "-wal", "-shm"] {
+                    try? FileManager.default.copyItem(
+                        atPath: real + suffix, toPath: copy.path + suffix
+                    )
+                }
+                return try SQLiteStore(path: copy.path)
+            }
+            return store
+        }
+
+        // Carry across the calendar only.
         if let real = try? StoreLocation.databasePath(),
            FileManager.default.fileExists(atPath: real) {
-            // The write-ahead log holds anything not yet checkpointed, which is
-            // most of it on a freshly written database. Copying the .sqlite
-            // alone silently loses recent data.
-            for suffix in ["", "-wal", "-shm"] {
-                try? FileManager.default.copyItem(
-                    atPath: real + suffix, toPath: temp.path + suffix
-                )
+            let source = try SQLiteStore(path: real)
+            let settings = (try? source.loadSettings()) ?? .default
+            for reckoning in Reckoning.allCases {
+                let days = (try? source.liturgicalDays(
+                    reckoning: reckoning,
+                    from: today.adding(days: -40), through: today.adding(days: 40)
+                )) ?? []
+                for day in days { try store.saveLiturgicalDay(day) }
             }
+            var clean = AppSettings.default
+            clean.jurisdiction = settings.jurisdiction
+            clean.observances = ObservanceSettings(fasting: .observed, feasts: .shown)
+            clean.hasCompletedFirstRun = true
+            try store.saveSettings(clean)
         }
-        let store = try SQLiteStore(path: temp.path)
 
-        let today = CalendarDate(Date(), in: .current)
-        let seeds: [(String, TimeOfDay?)] = [
-            ("Morning prayers", TimeOfDay(hour: 6, minute: 30)),
-            ("Read the day's Gospel", TimeOfDay(hour: 12, minute: 0)),
-            ("Jesus prayer — 50 knots", nil),
-            ("Evening prayers", TimeOfDay(hour: 21, minute: 30))
+        // A believable rule, kept mostly but not perfectly.
+        let sample: [(String, TimeOfDay?, Recurrence, RuleCategory)] = [
+            ("Morning prayers", TimeOfDay(hour: 6, minute: 30), .daily, .prayer),
+            ("The Wednesday and Friday fast", nil,
+             .weekly(days: [.wednesday, .friday]), .fasting),
+            ("Read the day's Gospel", TimeOfDay(hour: 12, minute: 0), .daily, .reading),
+            ("Jesus prayer — 50 knots", nil, .daily, .prayer),
+            ("Evening prayers", TimeOfDay(hour: 21, minute: 30), .daily, .prayer)
         ]
-        // With this set, the copy is used exactly as it is — no sample rules —
-        // so the real state can be inspected.
-        if ProcessInfo.processInfo.environment["CHOTKI_RENDER_LIVE"] == "1" {
-        return store
-        }
 
-        for (title, time) in seeds {
-            let rule = Rule(title: title, recurrence: .daily, timeOfDay: time)
+        for (title, time, recurrence, category) in sample {
+            let rule = Rule(
+                title: title, source: "the library", recurrence: recurrence,
+                timeOfDay: time, category: category.rawValue
+            )
             try store.save(rule)
             try store.save(Activation(ruleID: rule.id, from: today.adding(days: -40)))
 
-            // A believable history: mostly kept, evening prayers slipping on
-            // Fridays, one stretch stood down.
-            for offset in 1...40 {
+            for offset in 0...40 {
                 let date = today.adding(days: -offset)
+                // Evening prayers slip on Fridays; one stretch of the prayer
+                // rope stood down; everything else held.
                 if title == "Evening prayers" && date.weekday == .friday { continue }
-                if title == "Jesus prayer — 50 knots" && offset >= 12 && offset <= 15 {
+                if title == "Jesus prayer — 50 knots" && (12...15).contains(offset) {
                     try store.save(Occurrence(ruleID: rule.id, date: date, status: .skipped))
                     continue
                 }
-                let status: OccurrenceStatus = (offset % 11 == 0) ? .completedLate : .completed
+                // Today: only the morning is done so far.
+                if offset == 0 && title != "Morning prayers" { continue }
+                let status: OccurrenceStatus = offset % 13 == 0 ? .completedLate : .completed
                 try store.save(Occurrence(ruleID: rule.id, date: date, status: status))
             }
-            if title == "Morning prayers" {
-                try store.save(Occurrence(ruleID: rule.id, date: today, status: .completed))
-            }
         }
-            // A fast rule on a day the Church has lifted, so the dispensation path
-        // can be seen rather than only tested.
-        let fast = Rule(
-            title: "The Wednesday and Friday fast",
-            recurrence: .weekly(days: [.wednesday, .friday]),
-            category: RuleCategory.fasting.rawValue
-        )
-        try store.save(fast)
-        try store.save(Activation(ruleID: fast.id, from: today.adding(days: -40)))
-        try store.saveLiturgicalDay(
-            LiturgicalDay(
-                civilDate: today, reckoning: .julian, observedDate: today.adding(days: -13),
-                tone: 1, title: "Bright Wednesday", summaryTitle: "Bright Wednesday",
-                saints: [], feasts: [], fastLevel: 0, fastLevelDescription: "No Fast",
-                fastException: 11, fastExceptionDescription: "Fast Free", abstentions: [],
-                feastLevel: 0, feastLevelDescription: "Liturgy",
-                readings: [], paschaDistance: 3, fetchedAt: Date()
-            )
-        )
-
         return store
     }
 
     private static func render(_ view: some View, to path: String) {
         // A ScrollView needs a definite height to lay out; the real popover
-        // gets one from its contentSize, so give the renderer the same.
+        // gets one from its contentSize, so give the renderer the same. The
+        // ground goes on outside the frame, so a view shorter than the popover
+        // leaves dark space rather than white bands.
         let renderer = ImageRenderer(
-            content: view.frame(width: Theme.popoverWidth, height: Theme.popoverHeight)
+            content: view
+                .frame(width: Theme.popoverWidth, height: Theme.popoverHeight, alignment: .top)
+                .background(Theme.ground)
         )
         renderer.scale = 2
         guard let image = renderer.nsImage,

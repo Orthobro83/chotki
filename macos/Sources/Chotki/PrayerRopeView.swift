@@ -7,12 +7,17 @@ import ChotkiCore
 /// kept, no score. Losing count is not an event worth reporting.
 struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
-    @State private var count = 0
+    @State private var count: Int
     @State private var target = 33
     private let sound = SoundPlayer.shared
     @FocusState private var focused: Bool
 
     private let targets = [33, 50, 100]
+
+    init(model: AppModel, startingAt count: Int = 0) {
+        self.model = model
+        _count = State(initialValue: count)
+    }
 
     var body: some View {
         VStack(spacing: 0) {

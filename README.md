@@ -24,6 +24,28 @@ What that means in practice:
 - [mockup.html](mockup.html) — the interface
 - [plan.html](plan.html) — the full plan, formatted
 
+## What it looks like
+
+<p align="center">
+  <img src="screenshots/chotki-rule.png" width="330" alt="The month, shaded for fasts and feasts, above the day's rules with checkboxes.">
+  <img src="screenshots/chotki-progress.png" width="330" alt="A progress report leading with sentences, then a percentage, then a breakdown by rule.">
+</p>
+
+**The day's rule**, and **progress**. The month is shaded by the church calendar — violet for fasting days, gold for great feasts, ochre for Sundays. Progress leads with what happened in words, notices patterns on its own, and puts the figure second. It covers finished days only; today is never judged.
+
+<p align="center">
+  <img src="screenshots/chotki-reading.png" width="330" alt="The day's commemoration, fasting rule and scripture readings, with glossary terms underlined.">
+  <img src="screenshots/chotki-library.png" width="330" alt="A library of rules grouped by category, each with a Take on button.">
+</p>
+
+**The day's reading**, and **the library**. Commemoration, what the calendar marks, and the appointed readings — with unfamiliar terms underlined and tappable, so the explanation is one click from the word. Nothing in the library is switched on until you choose it.
+
+<p align="center">
+  <img src="screenshots/chotki-rope.png" width="330" alt="A prayer rope counter partway through a knot of thirty-three, with preset buttons.">
+</p>
+
+**The prayer rope.** Thirty-three, fifty or a hundred, counted by click or spacebar, with a chime when the knot is complete — so you can pray with your eyes closed.
+
 ## What it does
 
 - Schedule rules — daily, weekly, monthly, or tied to the liturgical calendar
