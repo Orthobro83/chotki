@@ -53,8 +53,19 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
+# Strip extended attributes before signing. macOS adds provenance attributes to
+# anything it builds, and `ditto` archives those as AppleDouble `._` files — which
+# a command-line `unzip` then materialises, breaking the signature seal and making
+# the app look damaged. Finder is unaffected, but the failure is baffling when it
+# happens, so remove the cause.
+xattr -cr "$APP"
+
 echo "==> signing (ad-hoc)"
 codesign --force --sign - --timestamp=none "$APP"
 codesign --verify --verbose=1 "$APP" 2>&1 | sed 's/^/    /'
 
-echo "==> built $APP"
+echo "==> packaging"
+rm -f "$DIST/$APP_NAME.zip"
+ditto -c -k --keepParent --noextattr --norsrc "$APP" "$DIST/$APP_NAME.zip"
+
+echo "==> built $APP and $DIST/$APP_NAME.zip"
