@@ -108,6 +108,6 @@ Drag the app to the trash. Your record lives in `~/Library/Application Support/C
 
 Not open source. The source is published so it can be read and audited, not reused.
 
-During the alpha you may build, install and run it freely for your own use. You may not sell it, redistribute it, or reuse its source in another project. chotki is intended to become a paid application, with the proceeds going to the author's church or to causes chosen by it.
+During the alpha you may build, install and run it freely for your own use. You may not sell it, redistribute it, or reuse its source in another project. Chotki is intended to become a paid application, with the proceeds going to the author's church or to causes chosen by it.
 
 See [LICENSE](LICENSE) for the full terms.
