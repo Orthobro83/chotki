@@ -36,6 +36,18 @@ enum RenderMode {
 
             render(ProgressTabViewContent(model: model).background(Theme.ground), to: "\(prefix)-progress.png")
 
+            // The window's rule panel, which is the surface that opens by
+            // default and the one that was missing its marks.
+            render(
+                ZStack {
+                    RuleBackdrop(crossHeight: 150, markSize: 34)
+                    DayPanel(model: model).padding(.horizontal, 6)
+                }
+                .frame(width: 560, height: 620)
+                .background(Theme.ground),
+                to: "\(prefix)-window.png"
+            )
+
             // The mark on its own, large, to judge the shape.
             render(
                 RopeMark(size: 190).opacity(1).padding(30).background(Theme.ground),

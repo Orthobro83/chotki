@@ -138,11 +138,18 @@ struct MainWindowView: View {
 
             Rectangle().fill(Theme.line).frame(width: 1)
 
-            ScrollView {
-                DayPanel(model: model)
-                    .padding(.horizontal, 6)
+            ZStack {
+                // The window has far more empty panel than the popover, so the
+                // marks matter more here — and this is the surface that opens
+                // by default.
+                RuleBackdrop(crossHeight: 150, markSize: 34)
+
+                ScrollView {
+                    DayPanel(model: model)
+                        .padding(.horizontal, 6)
+                }
+                .scrollContentBackgroundHidden()
             }
-            .scrollContentBackgroundHidden()
         }
     }
 

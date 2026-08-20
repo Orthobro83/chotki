@@ -100,6 +100,9 @@ struct RopeMark: View {
 ///
 /// Its own view so the app and the offscreen renderer draw the same thing.
 struct RuleBackdrop: View {
+    var crossHeight: CGFloat = 96
+    var markSize: CGFloat = 30
+
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             // Anchored to the bottom, where the space actually is. Centred, it
@@ -107,12 +110,12 @@ struct RuleBackdrop: View {
             // as a cross.
             VStack {
                 Spacer(minLength: 0)
-                CrossWatermark(height: 96)
+                CrossWatermark(height: crossHeight)
                     .padding(.bottom, 30)
             }
             .frame(maxWidth: .infinity)
 
-            RopeMark(size: 30)
+            RopeMark(size: markSize)
                 .padding(.trailing, 14)
                 .padding(.bottom, 14)
         }
