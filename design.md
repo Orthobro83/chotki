@@ -262,6 +262,16 @@ The footrest is raised at the **viewer's left**. That is the traditional orienta
 
 Both live in `RuleBackdrop`, shared by the app and the offscreen renderer so the two draw the same thing.
 
+## Where a decision belongs
+
+`macos/` holds what is genuinely platform-specific: views, notifications, launch at login, the menu bar and window, the timer, sound playback, icon drawing. Everything that *decides* something lives in core.
+
+The test is mechanical: **if a type in `macos/` imports nothing from Apple, it is in the wrong place.** Four did — the date formatter, the editor's recurrence mapping, the cross proportions and the reminder tick — along with about 350 lines of decisions inside `AppModel`. All of it moved.
+
+This matters more than the line count suggests, because every bug found by hand has been in that layer and none in core. A port that rewrites it gets to reintroduce all of them.
+
+**Swift does not run on Android in any practical way**, so an Android version means a Kotlin reimplementation. That makes core the *specification* rather than the shared implementation: every decision stated once, with tests saying what it must do. Behaviour left in the platform layer has to be rediscovered by whoever writes the port.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

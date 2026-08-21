@@ -86,6 +86,14 @@ final class AppModel: ObservableObject {
         Task { await refreshLiturgical() }
     }
 
+    /// The decisions live in core; this is the current snapshot to ask.
+    private var practice: Practice {
+        Practice(
+            rules: rules, activations: activations, occurrences: occurrences,
+            settings: settings, liturgical: liturgical
+        )
+    }
+
     private var engine: RecurrenceEngine {
         RecurrenceEngine(liturgical: liturgical, observances: settings.observances)
     }
@@ -110,31 +118,19 @@ final class AppModel: ObservableObject {
         rearmReminders()
     }
 
-    /// A rule on the calendar that depends on an observance which is not being
-    /// observed can never come due — it is on the list and invisible. That can
-    /// happen to a rule taken on before this was handled, or to one restored
-    /// from an older backup, so it is repaired here rather than only at the
-    /// moment of taking on.
+    /// Turns on any observance a rule depends on. What is needed is decided in
+    /// core; this only writes the result.
     private func reconcileObservances() {
-        var wanted: [LiturgicalTrigger] = []
-        for rule in rules where !rule.isArchived {
-            guard case .liturgical(let trigger) = rule.recurrence else { continue }
-            guard activations.contains(where: { $0.ruleID == rule.id && $0.isOpen }) else { continue }
-            guard !settings.observances.setting(for: trigger).drivesRules else { continue }
-            wanted.append(trigger)
-        }
+        let wanted = practice.observancesNeeded()
         guard !wanted.isEmpty else { return }
-
         var updated = settings
         for trigger in wanted { updated.observances.observe(trigger) }
         settings = updated
         persist(updated)
     }
 
-    /// Someone who already has rules has plainly been here before, whatever the
-    /// stored flag says. Showing them the first-run screen would be absurd.
     private func reconcileFirstRun() {
-        guard !settings.hasCompletedFirstRun, !rules.isEmpty else { return }
+        guard practice.shouldMarkFirstRunComplete else { return }
         var updated = settings
         updated.hasCompletedFirstRun = true
         settings = updated
@@ -160,60 +156,19 @@ final class AppModel: ObservableObject {
 
     // MARK: what is due
 
-    /// Rules due on a day, with what has become of each.
-    func entries(on date: CalendarDate) -> [DayEntry] {
-        let byRule = Dictionary(
-            occurrences.filter { $0.date == date }.map { ($0.ruleID, $0) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        let engine = self.engine
-        return rules.compactMap { rule -> DayEntry? in
-            let due = engine.dueDates(rule: rule, activations: activations, from: date, through: date)
-            if !due.isEmpty {
-                return DayEntry(
-                    rule: rule, date: date, occurrence: byRule[rule.id], dispensation: nil
-                )
-            }
-            // Not due — but if the Church has lifted it rather than it simply
-            // not applying, say so instead of letting the rule disappear.
-            if let lifted = engine.dispensations(
-                rule: rule, activations: activations, from: date, through: date
-            ).first {
-                return DayEntry(
-                    rule: rule, date: date, occurrence: nil, dispensation: lifted.reason
-                )
-            }
-            return nil
-        }
-        .sorted { a, b in
-            switch (a.rule.timeOfDay, b.rule.timeOfDay) {
-            case let (x?, y?): return x < y
-            case (nil, _?): return false      // untimed rules sit below timed ones
-            case (_?, nil): return true
-            case (nil, nil): return a.rule.title < b.rule.title
-            }
-        }
-    }
+    func entries(on date: CalendarDate) -> [DayEntry] { practice.entries(on: date) }
+
+    func isPaused(_ rule: Rule) -> Bool { practice.isPaused(rule) }
+
+    /// Every rule for the day accounted for, with at least one actually kept.
+    func dayIsSettled(_ date: CalendarDate) -> Bool { practice.isSettled(on: date) }
 
     /// The report over a trailing window. Recomputed on demand rather than
     /// cached: it is cheap, and a stale figure would be worse than none.
-    /// The last day progress speaks about: yesterday.
-    ///
-    /// Today is deliberately outside it. A day still in progress is not a
-    /// verdict — a rule added this morning and not yet kept would otherwise
-    /// count against someone before they had had the chance.
-    var progressThrough: CalendarDate { today.adding(days: -1) }
+    var progressThrough: CalendarDate { Practice.progressThrough(today: today) }
 
     func report(days: Int = 30) -> ProgressReport {
-        let through = progressThrough
-        return ScoringEngine(engine: engine, timeZone: .current).report(
-            rules: rules, activations: activations, occurrences: occurrences,
-            from: through.adding(days: -(days - 1)), through: through
-        )
-    }
-
-    func isPaused(_ rule: Rule) -> Bool {
-        !activations.contains { $0.ruleID == rule.id && $0.isOpen }
+        practice.report(days: days, today: today)
     }
 
     // MARK: acting
@@ -254,18 +209,6 @@ final class AppModel: ObservableObject {
             setStatus(.completed, for: entry.rule, on: entry.date)
             if !wasSettled, dayIsSettled(entry.date) { giveThanks() }
         }
-    }
-
-    /// Every rule for the day accounted for, with at least one actually kept.
-    ///
-    /// A rule stood down counts as settled: standing down is a legitimate act,
-    /// and treating it as unfinished would quietly punish pausing — which the
-    /// rest of the app takes care not to do.
-    func dayIsSettled(_ date: CalendarDate) -> Bool {
-        let items = entries(on: date)
-        guard !items.isEmpty else { return false }
-        guard items.contains(where: \.isKept) else { return false }
-        return items.allSatisfy { $0.showsAsSatisfied || $0.isStoodDown }
     }
 
     /// The app does not congratulate anyone for praying. Keeping a rule is
@@ -491,22 +434,4 @@ final class AppModel: ObservableObject {
             break
         }
     }
-}
-
-/// One rule on one day, with whatever has become of it.
-struct DayEntry: Identifiable, Hashable {
-    let rule: Rule
-    let date: CalendarDate
-    let occurrence: Occurrence?
-    /// Why the Church has lifted this rule today, if it has.
-    let dispensation: String?
-
-    var id: String { "\(rule.id):\(date.iso)" }
-    var status: OccurrenceStatus? { occurrence?.status }
-    var isKept: Bool { status == .completed || status == .completedLate }
-    var isStoodDown: Bool { status == .skipped || status == .cancelled }
-    var isDispensed: Bool { dispensation != nil }
-    /// Shown with a tick either way — but a dispensed day was never asked of
-    /// anyone, so it is not something they did.
-    var showsAsSatisfied: Bool { isKept || isDispensed }
 }

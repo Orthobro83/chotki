@@ -21,11 +21,29 @@ Ryan, in daily use by him, published as an alpha at
 | Installed app | `/Applications/Chotki.app` |
 | Liturgical data | `orthocal.info` — free, no key, the only network call the app makes |
 
-`core/` is a pure SwiftPM package: Foundation and SQLite only, no Apple-only
-imports. `macos/` is the only Apple-specific code. CI builds and tests core on
-Linux, and a guard job fails the build if core ever imports AppKit, SwiftUI,
-UserNotifications or similar. Windows and Linux ports are planned; that rule is
-what keeps them cheap.
+`core/` is a pure SwiftPM package: Foundation and SQLite only. CI builds and
+tests it on Linux every push, and a guard job fails the build if it ever
+imports AppKit, SwiftUI, UserNotifications or similar.
+
+`macos/` should hold only what is genuinely platform-specific: views, the
+notifier, launch at login, the menu bar and window, the timer that drives
+reminders, sound playback, icon drawing. **Anything that decides something
+belongs in core.** `Practice` answers what is due on a day, whether a day is
+settled, whether a rule is paused, and which repairs a loaded record needs.
+`ReminderTicker` decides what to show and what to withdraw. If a new type in
+`macos/` imports nothing from Apple, it is in the wrong place.
+
+### On porting
+
+Swift runs properly on Windows and Linux, so those ports inherit `core`
+unchanged and rewrite only the interface. **Swift does not run on Android in
+any practical way** — an Android version means a Kotlin reimplementation.
+
+That makes core more important, not less. Core plus its test suites is the
+*specification* a reimplementation is written against: every decision stated
+once, with tests that say what it must do. Behaviour left in the platform layer
+has to be rediscovered by whoever writes the port, and it is exactly the layer
+where every bug found by hand has been.
 
 ## Constraints that are not negotiable
 
