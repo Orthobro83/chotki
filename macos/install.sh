@@ -10,6 +10,10 @@ cd "$(dirname "$0")"
 
 DEST="/Applications/Chotki.app"
 
+# Always install and launch the copy that was just built. Building into dist/
+# and then launching /Applications leaves someone testing a stale binary and
+# reporting a feature as missing when it is simply not in the build they are
+# running. That happened.
 echo "==> stopping any running copy"
 pkill -f "Chotki.app/Contents/MacOS/Chotki" 2>/dev/null || true
 
