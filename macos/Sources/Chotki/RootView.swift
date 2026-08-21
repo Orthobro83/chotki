@@ -39,6 +39,10 @@ struct RootView: View {
                 Header(title: ruleID == nil ? "New rule" : "Edit rule") { model.screen = .main }
                 RuleEditorView(model: model, ruleID: ruleID) { model.screen = .main }
                     .frame(maxHeight: .infinity, alignment: .top)
+            case .prayers(let ruleID):
+                Header(title: "Prayers") { model.screen = .main }
+                PrayerView(model: model, ruleID: ruleID)
+                    .frame(maxHeight: .infinity, alignment: .top)
             case .prayerRope:
                 Header(title: "Prayer rope") { model.screen = .main }
                 PrayerRopeView(model: model)

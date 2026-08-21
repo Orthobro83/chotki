@@ -183,6 +183,17 @@ struct EntryRow: View {
                 .font(.system(size: 11))
                 .foregroundStyle(entry.isKept ? Theme.faint : Theme.muted)
 
+            // Always shown when a rule carries prayers, not only on hover: it
+            // is the way to the words, which is the point of the rule.
+            if entry.rule.hasPrayers {
+                Button { model.screen = .prayers(entry.rule.id) } label: {
+                    Image(systemName: "text.alignleft").font(.system(size: 10))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
+                .help("Read the prayers")
+            }
+
             if hovering {
                 Button { model.screen = .editor(entry.rule.id) } label: {
                     Image(systemName: "pencil").font(.system(size: 10))
@@ -206,6 +217,10 @@ struct EntryRow: View {
             if entry.isDispensed {
                 Text("Lifted by the Church today")
             } else {
+                if entry.rule.hasPrayers {
+                    Button("Read the prayers") { model.screen = .prayers(entry.rule.id) }
+                    Divider()
+                }
                 Button(entry.isKept ? "Clear this day" : "Mark as kept") { model.toggleKept(entry) }
                 if !entry.isKept {
                     Button("Mark as kept, late") { model.markKeptLate(entry) }

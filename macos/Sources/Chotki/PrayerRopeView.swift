@@ -9,6 +9,7 @@ struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
     @State private var count: Int
     @State private var target = 33
+    @State private var prayerID = "jesus-prayer"
     private let sound = SoundPlayer.shared
     @FocusState private var focused: Bool
 
@@ -21,6 +22,20 @@ struct PrayerRopeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            prayerChooser
+
+            if let prayer = PrayerBook.shared.prayer(id: prayerID) {
+                // The words, above the count. Praying them is the point; the
+                // number is only a place to keep.
+                Text(prayer.text)
+                    .font(.custom("Cardo", size: 15))
+                    .foregroundStyle(Theme.parchment)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 26).padding(.top, 4).padding(.bottom, 14)
+            }
+
             VStack(spacing: 4) {
                 Text("\(count)")
                     .font(.system(size: 54, weight: .light))
@@ -32,7 +47,7 @@ struct PrayerRopeView: View {
                     .foregroundStyle(count >= target ? Theme.goldDim : Theme.muted)
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, 26).padding(.bottom, 18)
+            .padding(.top, 2).padding(.bottom, 16)
 
             knots
                 .padding(.horizontal, 22).padding(.bottom, 20)
@@ -80,6 +95,24 @@ struct PrayerRopeView: View {
             }
             .padding(.horizontal, 22).padding(.bottom, 16)
         }
+    }
+
+    /// Which prayer is being said. The rope is for repeating one prayer, so
+    /// this is a choice made once and then left alone.
+    private var prayerChooser: some View {
+        HStack {
+            Picker("", selection: $prayerID) {
+                ForEach(PrayerBook.shared.forRope(), id: \.id) { prayer in
+                    Text(prayer.title).tag(prayer.id)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .font(.system(size: 11))
+            .frame(maxWidth: 250)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 14).padding(.bottom, 2)
     }
 
     /// One dot per knot, filling as it goes.

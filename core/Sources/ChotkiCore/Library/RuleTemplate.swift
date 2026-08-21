@@ -20,17 +20,21 @@ public struct RuleTemplate: Sendable, Hashable, Identifiable {
     public let traditions: Set<Tradition>
     /// Terms in the glossary worth reading alongside it.
     public let glossarySlugs: [String]
+    /// The prayers this rule carries, in the order they are said.
+    public let prayerIDs: [String]
 
     public init(
         id: String, title: String, summary: String, note: String? = nil,
         recurrence: Recurrence, timeOfDay: TimeOfDay? = nil,
         category: RuleCategory, reminders: RuleReminders = .default,
-        traditions: Set<Tradition> = [], glossarySlugs: [String] = []
+        traditions: Set<Tradition> = [], glossarySlugs: [String] = [],
+        prayerIDs: [String] = []
     ) {
         self.id = id; self.title = title; self.summary = summary; self.note = note
         self.recurrence = recurrence; self.timeOfDay = timeOfDay
         self.category = category; self.reminders = reminders
         self.traditions = traditions; self.glossarySlugs = glossarySlugs
+        self.prayerIDs = prayerIDs
     }
 
     /// The observance this rule needs before it will ever come due.
@@ -56,7 +60,8 @@ public struct RuleTemplate: Sendable, Hashable, Identifiable {
         Rule(
             title: title, note: note, source: source,
             recurrence: recurrence, timeOfDay: timeOfDay,
-            category: category.rawValue, reminders: reminders
+            category: category.rawValue, reminders: reminders,
+            prayerIDs: prayerIDs.isEmpty ? nil : prayerIDs
         )
     }
 }

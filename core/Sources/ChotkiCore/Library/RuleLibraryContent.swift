@@ -1,6 +1,12 @@
 import Foundation
 
-// The rules offered in the library. Nothing here is enabled by default: taking
+// The rules offered in the library.
+//
+// Where a rule carries prayers, the sequence is the prayers common to almost
+// every form of that rule rather than any one prayer book's full order. Prayer
+// books differ, and the full morning and evening rules are settled with a
+// priest — so the app shows what is true of nearly all of them and leaves the
+// rest to be added. Nothing here is enabled by default: taking
 // something on is always a deliberate act, and first launch invites two or
 // three rather than presenting all of it.
 //
@@ -18,26 +24,30 @@ extension RuleLibrary {
             id: "morning-prayers", title: "Morning prayers",
             summary: "The morning prayers from the prayer book, on rising.",
             recurrence: .daily, timeOfDay: t(6, 30), category: .prayer,
-            glossarySlugs: ["prayer-rule", "trisagion", "icon-corner"]
+            glossarySlugs: ["prayer-rule", "trisagion", "icon-corner"],
+            prayerIDs: ["beginning", "heavenly-king", "trisagion", "all-holy-trinity", "our-father", "having-risen", "guardian-angel", "rejoice-o-virgin", "it-is-truly-meet"]
         ),
         RuleTemplate(
             id: "evening-prayers", title: "Evening prayers",
             summary: "The evening prayers, before sleep.",
             recurrence: .daily, timeOfDay: t(21, 30), category: .prayer,
-            glossarySlugs: ["prayer-rule", "compline", "icon-corner"]
+            glossarySlugs: ["prayer-rule", "compline", "icon-corner"],
+            prayerIDs: ["beginning", "heavenly-king", "trisagion", "all-holy-trinity", "our-father", "evening-forgiveness", "guardian-angel", "it-is-truly-meet"]
         ),
         RuleTemplate(
             id: "jesus-prayer", title: "The Jesus Prayer",
             summary: "A set number of repetitions, often counted on a prayer rope.",
             note: "Start with a number you can keep. It is meant to grow slowly.",
             recurrence: .daily, category: .prayer, reminders: RuleReminders(leads: []),
-            glossarySlugs: ["jesus-prayer", "chotki", "prayer-rule"]
+            glossarySlugs: ["jesus-prayer", "chotki", "prayer-rule"],
+            prayerIDs: ["jesus-prayer"]
         ),
         RuleTemplate(
             id: "trisagion-prayers", title: "The Trisagion prayers",
             summary: "The short opening prayers — a complete rule in itself when time is short.",
             recurrence: .daily, category: .prayer,
-            glossarySlugs: ["trisagion", "prayer-rule"]
+            glossarySlugs: ["trisagion", "prayer-rule"],
+            prayerIDs: ["beginning", "heavenly-king", "trisagion", "all-holy-trinity", "our-father"]
         ),
         RuleTemplate(
             id: "prayer-before-meals", title: "Prayer before meals",

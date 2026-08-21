@@ -35,6 +35,11 @@ enum RenderMode {
                    to: "\(prefix)-progress.png")
             render(LibraryViewContent(model: model),
                    to: "\(prefix)-library.png")
+            if let morning = model.rules.first(where: { $0.hasPrayers }) {
+                render(PrayerViewContent(model: model, ruleID: morning.id),
+                       to: "\(prefix)-prayers.png")
+            }
+
             render(PrayerRopeView(model: model, startingAt: 21),
                    to: "\(prefix)-rope.png")
 
@@ -106,7 +111,9 @@ enum RenderMode {
         ]
 
         for (title, time, recurrence, category) in sample {
-            let rule = Rule(
+            // Prefer the real template, so the sample carries its prayers.
+            let template = RuleLibrary.shared.templates.first { $0.title == title }
+            let rule = template?.makeRule(source: "the library") ?? Rule(
                 title: title, source: "the library", recurrence: recurrence,
                 timeOfDay: time, category: category.rawValue
             )

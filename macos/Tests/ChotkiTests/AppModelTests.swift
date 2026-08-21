@@ -247,7 +247,7 @@ struct WindowRoutingTests {
         // this list must grow with it, or the new control is dead in the window.
         let requests: [Screen] = [
             .library, .settings, .glossary(nil), .glossary("pascha"),
-            .editor(nil), .editor(UUID()), .prayerRope
+            .editor(nil), .editor(UUID()), .prayerRope, .prayers(UUID())
         ]
         for screen in requests {
             #expect(WindowRoute.route(for: screen) != .stay,
@@ -267,6 +267,8 @@ struct WindowRoutingTests {
         #expect(WindowRoute.route(for: .glossary("pascha")) == .glossary("pascha"))
         #expect(WindowRoute.route(for: .editor(nil)) == .editor(nil))
         #expect(WindowRoute.route(for: .prayerRope) == .section(.rope))
+        let ruleID = UUID()
+        #expect(WindowRoute.route(for: .prayers(ruleID)) == .prayers(ruleID))
     }
 
     @Test("adding a rule opens the editor rather than being swallowed")

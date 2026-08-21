@@ -55,6 +55,7 @@ What that means in practice:
 - Notify ahead of timed rules, and bounded reminders for untimed ones
 - Show the day's commemoration, fasting rule, and scripture readings
 - Explain the words — a glossary of around 120 terms, scoped to your tradition, tappable where they appear
+- Read the prayers themselves — the rules carry their texts, and the rope offers a choice of what to pray
 - Count the Jesus Prayer on a prayer rope, with a chime when the knot is complete
 - Keep a daily backup of your record, and export or restore it whenever you like
 

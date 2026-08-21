@@ -272,6 +272,18 @@ This matters more than the line count suggests, because every bug found by hand 
 
 **Swift does not run on Android in any practical way**, so an Android version means a Kotlin reimplementation. That makes core the *specification* rather than the shared implementation: every decision stated once, with tests saying what it must do. Behaviour left in the platform layer has to be rediscovered by whoever writes the port.
 
+## The prayers themselves
+
+The words are the point of the app, so they are **data rather than code**: correcting one, or replacing a translation wholesale, is an edit to `PrayerContent.swift` and nothing else. A parish that uses different wording should have that file edited rather than the app worked around.
+
+**Every text awaits a priest's review**, and this matters more here than anywhere else — a prayer that is subtly wrong is worse than a prayer that is absent.
+
+The wording is older public-domain liturgical English, chiefly the Hapgood Service Book of 1906, for the same reason the patristic passages are: **modern prayer books, the Jordanville book included, remain in copyright** and must not be pasted in. A test rejects any source naming one.
+
+What is bundled is a **core set, not a full prayer rule**. The morning and evening rules are long and differ between prayer books, so what a rule carries is the prayers common to almost every form of it — and the screen says so in as many words, because the difference between "these are the prayers" and "these are some of the prayers" matters to someone learning a rule.
+
+A rule reaches its prayers from a mark on the row, always shown rather than only on hover, since the words are the reason the rule exists. The prayer rope carries a chooser of the short prayers — the Jesus Prayer in two forms, the Publican's prayer, Lord have mercy, and Rejoice O Virgin, which is what the Rule of the Theotokos repeats — and shows the chosen one above the count.
+
 ## Fixed facts
 
 - Single user, single machine. Local storage only, no account, no sync, no telemetry.

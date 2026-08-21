@@ -187,6 +187,15 @@ public final class SQLiteStore: Store, @unchecked Sendable {
                 INSERT INTO schema_version (version) VALUES (4);
                 """)
         }
+
+        if current < 5 {
+            // The prayers a rule carries. Nullable, so rules written before
+            // this existed keep working.
+            try exec("""
+                ALTER TABLE rule ADD COLUMN prayer_ids TEXT;
+                INSERT INTO schema_version (version) VALUES (5);
+                """)
+        }
     }
 
     // MARK: liturgical cache
@@ -264,18 +273,18 @@ public final class SQLiteStore: Store, @unchecked Sendable {
     public func save(_ rule: Rule) throws {
         try locked {
             try run("""
-                INSERT INTO rule (id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO rule (id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders, prayer_ids)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     title = excluded.title, note = excluded.note, source = excluded.source,
                     recurrence = excluded.recurrence, time_of_day = excluded.time_of_day,
                     category = excluded.category, archived_at = excluded.archived_at,
-                    reminders = excluded.reminders;
+                    reminders = excluded.reminders, prayer_ids = excluded.prayer_ids;
                 """, [
                     rule.id.uuidString, rule.title, rule.note, rule.source,
                     try encodeJSON(rule.recurrence), try encodeJSON(rule.timeOfDay),
                     rule.category, encode(rule.createdAt), encode(rule.archivedAt),
-                    try encodeJSON(rule.reminders)
+                    try encodeJSON(rule.reminders), try encodeJSON(rule.prayerIDs)
                 ])
         }
     }
@@ -292,12 +301,13 @@ public final class SQLiteStore: Store, @unchecked Sendable {
             timeOfDay: try decodeJSON(TimeOfDay.self, text(s, 5)),
             category: text(s, 6),
             reminders: try decodeJSON(RuleReminders.self, text(s, 9)),
+            prayerIDs: try decodeJSON([String].self, text(s, 10)),
             createdAt: createdAt, archivedAt: decode(text(s, 8))
         )
     }
 
     private static let ruleColumns =
-        "id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders"
+        "id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders, prayer_ids"
 
     public func rule(id: UUID) throws -> Rule? {
         try locked {

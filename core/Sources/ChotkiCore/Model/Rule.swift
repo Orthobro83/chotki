@@ -17,6 +17,9 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     /// Optional on purpose: a backup written before this existed decodes to nil
     /// rather than failing, and `effectiveReminders` supplies the default.
     public var reminders: RuleReminders?
+    /// The prayers this rule carries, in the order they are said. Optional so a
+    /// rule written before this existed still decodes.
+    public var prayerIDs: [String]?
     public var createdAt: Date
     /// Set when the rule is removed. Never deleted, so history survives.
     public var archivedAt: Date?
@@ -30,6 +33,7 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         timeOfDay: TimeOfDay? = nil,
         category: String? = nil,
         reminders: RuleReminders? = nil,
+        prayerIDs: [String]? = nil,
         createdAt: Date = Date(),
         archivedAt: Date? = nil
     ) {
@@ -41,6 +45,7 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         self.timeOfDay = timeOfDay
         self.category = category
         self.reminders = reminders
+        self.prayerIDs = prayerIDs
         self.createdAt = createdAt
         self.archivedAt = archivedAt
     }
@@ -52,6 +57,9 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     /// Fasting rules are subject to the Church's dispensations. Keyed on the
     /// category rather than the recurrence, so it holds for a rule written by
     /// hand as well as one taken from the library.
+    public var prayers: [Prayer] { PrayerBook.shared.prayers(prayerIDs ?? []) }
+    public var hasPrayers: Bool { !(prayerIDs ?? []).isEmpty }
+
     public var isFastingRule: Bool { category == RuleCategory.fasting.rawValue }
 }
 

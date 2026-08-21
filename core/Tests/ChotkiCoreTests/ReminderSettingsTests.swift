@@ -233,10 +233,16 @@ struct SchemaMigrationTests {
 
     private func makeLegacyDatabase(at path: String) throws {
         let store = try SQLiteStore(path: path)
-        // Wind the file back to exactly what version 2 left behind. Every
-        // later migration must be undone, not just the next one — otherwise
-        // this stops testing the upgrade the moment a version 4 is added.
-        try store.exec("ALTER TABLE rule DROP COLUMN reminders;")
+        // Wind the file back to exactly what version 2 left behind.
+        //
+        // **Every later migration must be undone here**, not just the most
+        // recent one. This has now broken twice — once when version 4 arrived
+        // and again at version 5 — because a new migration was added without
+        // teaching this fixture to reverse it. If you add a migration, add its
+        // reversal to this list.
+        for column in ["reminders", "prayer_ids"] {
+            try? store.exec("ALTER TABLE rule DROP COLUMN \(column);")
+        }
         try store.exec("DROP TABLE IF EXISTS app_settings;")
         try store.exec("DELETE FROM schema_version WHERE version > 2;")
     }

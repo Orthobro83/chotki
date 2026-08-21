@@ -37,6 +37,7 @@ enum MainSection: String, CaseIterable, Hashable {
 enum WindowRoute: Equatable {
     case section(MainSection)
     case editor(UUID?)
+    case prayers(UUID)
     case glossary(String?)
     /// Already where it needs to be.
     case stay
@@ -49,6 +50,7 @@ enum WindowRoute: Equatable {
         case .glossary(let slug): return .glossary(slug)
         case .editor(let ruleID): return .editor(ruleID)
         case .prayerRope: return .section(.rope)
+        case .prayers(let ruleID): return .prayers(ruleID)
         }
     }
 }
@@ -63,6 +65,7 @@ struct MainWindowView: View {
     @ObservedObject var model: AppModel
     @State private var section: MainSection = .rule
     @State private var editing: EditorTarget?
+    @State private var reading: EditorTarget?
     @State private var pendingSlug: String?
 
     var body: some View {
@@ -96,8 +99,20 @@ struct MainWindowView: View {
                 section = .terms
             case .editor(let ruleID):
                 editing = EditorTarget(ruleID: ruleID)
+            case .prayers(let ruleID):
+                reading = EditorTarget(ruleID: ruleID)
             }
             model.screen = .main
+        }
+        .sheet(item: $reading) { target in
+            VStack(spacing: 0) {
+                Header(title: "Prayers") { reading = nil }
+                if let ruleID = target.ruleID {
+                    PrayerView(model: model, ruleID: ruleID)
+                }
+            }
+            .frame(width: 460, height: 620)
+            .background(Theme.ground)
         }
         .sheet(item: $editing) { target in
             VStack(spacing: 0) {

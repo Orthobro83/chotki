@@ -11,6 +11,7 @@ enum Screen: Hashable {
     case glossary(String?)
     case editor(UUID?)
     case prayerRope
+    case prayers(UUID)
 }
 
 @MainActor
