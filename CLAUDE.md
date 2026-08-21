@@ -33,6 +33,12 @@ settled, whether a rule is paused, and which repairs a loaded record needs.
 `ReminderTicker` decides what to show and what to withdraw. If a new type in
 `macos/` imports nothing from Apple, it is in the wrong place.
 
+Two exceptions, deliberate: `ReminderDriver` (a `Timer` on a run loop) and
+`SettingsStorage` (the Application Support path and the old `UserDefaults`
+migration). Both import only Foundation, but both are platform glue rather
+than decisions — what they used to decide now lives in `ReminderTicker` and
+the `Store` — so do not move them.
+
 ### On porting
 
 Swift runs properly on Windows and Linux, so those ports inherit `core`
