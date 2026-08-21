@@ -1,42 +1,13 @@
 import SwiftUI
+import ChotkiCore
 
-/// The proportions of the eight-pointed cross, in one place.
-///
-/// Taken from a reference drawing rather than invented, and expressed as
-/// fractions of a bounding box so the menu bar icon, the Dock icon, the
-/// watermark and the rope mark are all the same cross at different sizes.
-///
-/// Note the footrest: the viewer's **left** end is the raised one. That is the
-/// traditional orientation — it points to Paradise, for the thief crucified at
-/// Christ's right hand. An earlier version had it the other way round.
-enum CrossGeometry {
-    /// Width divided by height.
-    static let aspect: CGFloat = 748.0 / 1440.0
-
-    /// Upright, titulus and crossbar, as fractions: (x, y, width, height).
-    static let bars: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
-        (0.402, 0.000, 0.201, 1.000),   // upright
-        (0.205, 0.101, 0.594, 0.097),   // titulus
-        (0.000, 0.299, 1.000, 0.097)    // crossbar
-    ]
-
-    /// The slanted footrest, as a parallelogram: leading and trailing x, the
-    /// y of the top edge at each end, and its thickness.
-    static let footrest = (
-        leadingX: CGFloat(0.209), trailingX: CGFloat(0.786),
-        leadingY: CGFloat(0.639), trailingY: CGFloat(0.792),
-        thickness: CGFloat(0.097)
-    )
-
-    /// The box the cross occupies inside `rect`, keeping its proportions.
+extension CrossGeometry {
+    /// Drawing-side convenience. The proportions themselves live in core.
     static func fitted(in rect: CGRect) -> CGRect {
-        var width = rect.width
-        var height = rect.height
-        if width / height > aspect { width = height * aspect } else { height = width / aspect }
-        return CGRect(
-            x: rect.midX - width / 2, y: rect.midY - height / 2,
-            width: width, height: height
+        let box = fitted(
+            inX: rect.minX, y: rect.minY, width: rect.width, height: rect.height
         )
+        return CGRect(x: box.x, y: box.y, width: box.width, height: box.height)
     }
 }
 
@@ -51,9 +22,10 @@ struct OrthodoxCross: Shape {
         func y(_ v: CGFloat) -> CGFloat { box.minY + v * box.height }
 
         var path = Path()
-        for (bx, by, bw, bh) in CrossGeometry.bars {
+        for bar in CrossGeometry.bars {
             path.addRect(CGRect(
-                x: x(bx), y: y(by), width: bw * box.width, height: bh * box.height
+                x: x(bar.x), y: y(bar.y),
+                width: bar.width * box.width, height: bar.height * box.height
             ))
         }
 

@@ -1,31 +1,24 @@
 import Foundation
 import ChotkiCore
 
-/// Turns the core scheduler's plan into notifications that actually arrive.
+/// Drives the reminder tick and obeys its decisions.
 ///
-/// The app is tray-resident, so scheduling happens in process rather than being
-/// handed to the OS: core decides *when*, this fires at that moment, and the
-/// notifier only *shows*. That is what makes the same logic portable — Windows
-/// and Linux will reuse the scheduler untouched and replace only the notifier.
+/// Everything that decides *what* happens lives in `ReminderTicker` in core:
+/// not repeating a reminder, not firing a burst of stale ones, crossing
+/// midnight, taking back one that is no longer due. This holds only the timer
+/// and the notifier — the two things that are genuinely platform-specific.
+///
+/// The app is tray-resident and always running, so scheduling happens in
+/// process rather than being handed to the operating system. That is what lets
+/// the same decisions serve any platform.
 @MainActor
 final class ReminderDriver {
 
     private let notifier: any Notifier
     private let plan: () -> [PlannedNotification]
-    /// Injected so the day rollover can be tested. It runs once a day in real
-    /// life, which means in practice it never runs during development — and a
-    /// mistake there costs a whole day of either silence or repeats.
     private let clock: any Clock
+    private var ticker = ReminderTicker()
     private var timer: Timer?
-
-    /// Reminders already delivered, so a tick never repeats one.
-    private var fired: Set<String> = []
-    /// Occurrence keys held back, and until when.
-    private var snoozedUntil: [String: Date] = [:]
-    private var lastDay: CalendarDate?
-
-    /// How late a reminder may be and still be worth showing.
-    private static let staleAfter: TimeInterval = 15 * 60
 
     init(
         notifier: any Notifier,
@@ -39,8 +32,8 @@ final class ReminderDriver {
 
     func start() {
         timer?.invalidate()
-        // Half a minute is fine: reminders are minute-grained, and a resident
-        // menu bar app should not be waking the CPU more often than it needs.
+        // Half a minute is enough: reminders are minute-grained, and a resident
+        // menu bar app should not wake the processor more often than it must.
         let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
@@ -54,59 +47,24 @@ final class ReminderDriver {
         timer = nil
     }
 
-    /// Called when rules change, so a newly completed rule stops reminding at once.
-    func refresh() {
-        tick()
-    }
+    /// Called when rules change, so a rule just kept stops reminding at once.
+    func refresh() { tick() }
 
     func snooze(ruleID: UUID, date: CalendarDate, by interval: TimeInterval) {
-        let key = PlannedNotification.occurrenceKey(ruleID: ruleID, date: date)
-        snoozedUntil[key] = Date().addingTimeInterval(interval)
+        ticker.snooze(
+            ruleID: ruleID, date: date, until: clock.now.addingTimeInterval(interval)
+        )
     }
 
     func tick() {
-        let now = clock.now
-        let today = CalendarDate(now, in: .current)
+        let decision = ticker.tick(planned: plan(), now: clock.now)
+        guard !decision.isEmpty else { return }
 
-        // A new day starts with a clean slate, and yesterday's silences lapse.
-        if lastDay != today {
-            fired.removeAll()
-            snoozedUntil.removeAll()
-            lastDay = today
-        }
-
-        let planned = plan()
-        let live = Set(planned.map(\.id))
-
-        // Anything no longer in the plan — the rule was kept, paused, silenced
-        // or deleted — must be withdrawn rather than left pending.
-        let stale = fired.subtracting(live)
-        if !stale.isEmpty {
-            let ids = Array(stale)
+        if !decision.withdraw.isEmpty {
+            let ids = decision.withdraw
             Task { await notifier.cancel(ids: ids) }
-            fired.subtract(stale)
         }
-
-        for notification in planned {
-            guard !fired.contains(notification.id) else { continue }
-            guard notification.fireAt <= now else { continue }
-
-            // A reminder is only useful near its time. Without this, launching
-            // at four in the afternoon — or a rule becoming due mid-day, as
-            // happens when an observance is turned on — fires every earlier
-            // reminder for today at once, in a burst. Those moments have
-            // passed; mark them handled and stay quiet.
-            guard now.timeIntervalSince(notification.fireAt) <= ReminderDriver.staleAfter else {
-                fired.insert(notification.id)
-                continue
-            }
-
-            let key = PlannedNotification.occurrenceKey(
-                ruleID: notification.ruleID, date: notification.date
-            )
-            if let until = snoozedUntil[key], until > now { continue }
-
-            fired.insert(notification.id)
+        for notification in decision.show {
             let request = notification.request
             Task { try? await notifier.show(request) }
         }

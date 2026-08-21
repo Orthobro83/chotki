@@ -1,5 +1,4 @@
 import Foundation
-import ChotkiCore
 
 /// The editor's view of a recurrence, and the way back.
 ///
@@ -8,9 +7,9 @@ import ChotkiCore
 /// a general fast-day rule, and a monthly rule's short-month policy reset. Each
 /// happened because the form could not express the shape it had loaded, so
 /// saving replaced it with something else — without saying so.
-struct RecurrenceForm: Equatable {
+public struct RecurrenceForm: Equatable, Sendable {
 
-    enum Kind: String, CaseIterable, Hashable {
+    public enum Kind: String, CaseIterable, Hashable, Sendable {
         case once = "Just one day"
         case daily = "Every day"
         case weekly = "Certain weekdays"
@@ -20,17 +19,17 @@ struct RecurrenceForm: Equatable {
         case greatFeasts = "Great feasts"
     }
 
-    var kind: Kind = .daily
-    var weekdays: Set<Weekday> = [.sunday]
-    var monthDay: Int = 1
+    public var kind: Kind = .daily
+    public var weekdays: Set<Weekday> = [.sunday]
+    public var monthDay: Int = 1
     /// No control for this; carried through so an edit cannot change it.
-    var shortMonthPolicy: ShortMonthPolicy = .lastDay
-    var season: FastingSeason = .greatLent
-    var onceDate: CalendarDate?
+    public var shortMonthPolicy: ShortMonthPolicy = .lastDay
+    public var season: FastingSeason = .greatLent
+    public var onceDate: CalendarDate?
 
-    init() {}
+    public init() {}
 
-    init(_ recurrence: Recurrence) {
+    public init(_ recurrence: Recurrence) {
         switch recurrence {
         case .once(let day):
             kind = .once; onceDate = day
@@ -51,7 +50,7 @@ struct RecurrenceForm: Equatable {
 
     /// `fallback` is used only when a one-off rule somehow has no day, so that
     /// it stays a single day rather than quietly becoming a daily rule.
-    func recurrence(fallback: CalendarDate) -> Recurrence {
+    public func recurrence(fallback: CalendarDate) -> Recurrence {
         switch kind {
         case .once: return .once(onceDate ?? fallback)
         case .daily: return .daily

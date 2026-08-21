@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import ChotkiCore
 
 /// The cross as AppKit images: the menu bar item and the Dock icon.
 ///
@@ -16,9 +17,10 @@ enum CrossIcon {
         func y(_ v: CGFloat) -> CGFloat { box.minY + v * box.height }
 
         colour.setFill()
-        for (bx, by, bw, bh) in CrossGeometry.bars {
+        for bar in CrossGeometry.bars {
             NSBezierPath(rect: NSRect(
-                x: x(bx), y: y(by), width: bw * box.width, height: bh * box.height
+                x: x(bar.x), y: y(bar.y),
+                width: bar.width * box.width, height: bar.height * box.height
             )).fill()
         }
 
