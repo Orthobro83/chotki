@@ -1,6 +1,6 @@
 # Chotki (alpha)
 
-A app for keeping an Orthodox routine, and honestly measuring whether it is kept, to help you hold yourself accountable.
+An app for keeping an Orthodox routine, and honestly measuring whether it is kept, to help you hold yourself accountable.
 
 A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning practice into a scoreboard.
 
