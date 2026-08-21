@@ -28,6 +28,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var loadError: String?
     /// A neutral note, not an error. Cleared when the popover reopens.
     @Published var notice: String?
+    /// Shown briefly when the last thing on a day is settled.
+    @Published private(set) var thanksgiving: String?
+    private var thanksgivingTask: Task<Void, Never>?
     /// Set by the app delegate. The model asks for a window; it does not know
     /// what a window is.
     var openDetachedReport: (() -> Void)?
@@ -247,8 +250,42 @@ final class AppModel: ObservableObject {
         if entry.isKept {
             clearOccurrence(entry)
         } else {
+            let wasSettled = dayIsSettled(entry.date)
             setStatus(.completed, for: entry.rule, on: entry.date)
+            if !wasSettled, dayIsSettled(entry.date) { giveThanks() }
         }
+    }
+
+    /// Every rule for the day accounted for, with at least one actually kept.
+    ///
+    /// A rule stood down counts as settled: standing down is a legitimate act,
+    /// and treating it as unfinished would quietly punish pausing — which the
+    /// rest of the app takes care not to do.
+    func dayIsSettled(_ date: CalendarDate) -> Bool {
+        let items = entries(on: date)
+        guard !items.isEmpty else { return false }
+        guard items.contains(where: \.isKept) else { return false }
+        return items.allSatisfy { $0.showsAsSatisfied || $0.isStoodDown }
+    }
+
+    /// The app does not congratulate anyone for praying. Keeping a rule is
+    /// answered with thanksgiving, not applause — Saint John Chrysostom's
+    /// words, which the bundled passages already carry.
+    private func giveThanks() {
+        thanksgivingTask?.cancel()
+        thanksgiving = "Glory to God for all things."
+        thanksgivingTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(6))
+            guard !Task.isCancelled else { return }
+            self?.thanksgiving = nil
+        }
+    }
+
+    /// Moving to another day, or reopening, clears it — it belongs to the
+    /// moment it was raised.
+    func clearThanksgiving() {
+        thanksgivingTask?.cancel()
+        thanksgiving = nil
     }
 
     func markKeptLate(_ entry: DayEntry) {

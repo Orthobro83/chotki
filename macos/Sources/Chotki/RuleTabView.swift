@@ -23,9 +23,29 @@ struct DayPanel: View {
         VStack(spacing: 0) {
             dayHeader
             entries
+            if let thanksgiving = model.thanksgiving {
+                thanksgivingLine(thanksgiving)
+            }
             Rectangle().fill(Theme.lineSoft).frame(height: 1)
             footer
         }
+        .animation(.easeInOut(duration: 0.45), value: model.thanksgiving)
+        .onChange(of: model.selectedDate) { _ in model.clearThanksgiving() }
+    }
+
+    /// One line, between two hairlines, when the last thing on the day is
+    /// settled. It fades in, sits, and goes. No sound — the chime belongs to
+    /// the prayer rope, and would lose its meaning if the app rang all day.
+    private func thanksgivingLine(_ text: String) -> some View {
+        HStack(spacing: 8) {
+            Rectangle().fill(Theme.goldDim.opacity(0.4)).frame(width: 14, height: 1)
+            Text(text)
+                .font(.custom("Cardo", size: 14))
+                .foregroundStyle(Theme.gold)
+            Rectangle().fill(Theme.goldDim.opacity(0.4)).frame(height: 1)
+        }
+        .padding(.horizontal, 14).padding(.top, 8).padding(.bottom, 4)
+        .transition(.opacity)
     }
 
     private var dayHeader: some View {
@@ -105,6 +125,10 @@ struct EntryRow: View {
     @ObservedObject var model: AppModel
     let entry: DayEntry
     @State private var hovering = false
+    /// A single soft swell around the box at the moment it is ticked. Nothing
+    /// is said — a phrase repeated five times a day becomes wallpaper, and
+    /// using it as a checkbox noise would cheapen it.
+    @State private var breathing = false
 
     var body: some View {
         HStack(spacing: 9) {
@@ -113,6 +137,12 @@ struct EntryRow: View {
             // a clear fill is not hit-testable at all: only its 1pt outline was
             // clickable, which is why this appeared to do nothing.
             ZStack {
+                if breathing {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(Theme.gold.opacity(0.35), lineWidth: 3)
+                        .frame(width: 22, height: 22)
+                        .blur(radius: 2)
+                }
                 RoundedRectangle(cornerRadius: 3)
                     .fill(entry.showsAsSatisfied ? Theme.gold : Color.clear)
                 RoundedRectangle(cornerRadius: 3)
@@ -164,7 +194,11 @@ struct EntryRow: View {
         .padding(.horizontal, 4).padding(.vertical, 5)
         .rowBackground(hovering)
         .contentShape(Rectangle())
-        .onTapGesture { model.toggleKept(entry) }
+        .onTapGesture {
+            let wasKept = entry.isKept
+            model.toggleKept(entry)
+            if !wasKept, !entry.isDispensed { breathe() }
+        }
         .allowsHitTesting(true)
         .onHover { hovering = $0 }
         .help(entry.isDispensed ? "The Church lifts this today" : (entry.isKept ? "Click to mark as not kept" : "Click to mark as kept"))
@@ -190,6 +224,14 @@ struct EntryRow: View {
         }
     }
 
+
+    private func breathe() {
+        withAnimation(.easeOut(duration: 0.18)) { breathing = true }
+        Task {
+            try? await Task.sleep(for: .milliseconds(420))
+            withAnimation(.easeIn(duration: 0.35)) { breathing = false }
+        }
+    }
 }
 
 extension View {

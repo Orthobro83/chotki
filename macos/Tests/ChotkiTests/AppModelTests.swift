@@ -777,3 +777,103 @@ struct ProgressWindowTests {
         #expect(before.overall == after.overall, "today is outside the window entirely")
     }
 }
+
+/// The app does not congratulate anyone for praying. When the last thing on a
+/// day is settled it gives thanks instead — once, quietly, and only then.
+@Suite("Thanksgiving")
+@MainActor
+struct ThanksgivingTests {
+
+    private func modelWithRules(_ titles: [String]) throws -> AppModel {
+        let model = try makeModel()
+        for title in titles {
+            model.save(Rule(title: title, recurrence: .daily), isNew: true)
+        }
+        return model
+    }
+
+    private func entry(_ model: AppModel, _ title: String) throws -> DayEntry {
+        try #require(model.entries(on: model.today).first { $0.rule.title == title })
+    }
+
+    @Test("nothing is said until the last thing is done")
+    func onlyOnTheLast() throws {
+        let model = try modelWithRules(["Morning prayers", "Evening prayers"])
+
+        model.toggleKept(try entry(model, "Morning prayers"))
+        #expect(model.thanksgiving == nil, "one of two is not the day")
+
+        model.toggleKept(try entry(model, "Evening prayers"))
+        #expect(model.thanksgiving == "Glory to God for all things.")
+    }
+
+    @Test("a day with one rule still counts")
+    func singleRuleDay() throws {
+        let model = try modelWithRules(["Morning prayers"])
+        model.toggleKept(try entry(model, "Morning prayers"))
+        #expect(model.thanksgiving != nil)
+    }
+
+    // Standing a rule down is a legitimate act. Treating it as unfinished would
+    // quietly punish pausing, which the rest of the app takes care not to do.
+    @Test("a rule stood down still leaves the day settled")
+    func stoodDownStillSettles() throws {
+        let model = try modelWithRules(["Morning prayers", "Jesus prayer"])
+        let stood = try entry(model, "Jesus prayer")
+        model.setStatus(.skipped, for: stood.rule, on: stood.date)
+
+        model.toggleKept(try entry(model, "Morning prayers"))
+        #expect(model.thanksgiving != nil, "nothing is left outstanding")
+    }
+
+    @Test("standing everything down says nothing")
+    func nothingKeptSaysNothing() throws {
+        let model = try modelWithRules(["Morning prayers", "Evening prayers"])
+        for title in ["Morning prayers", "Evening prayers"] {
+            let e = try entry(model, title)
+            model.setStatus(.skipped, for: e.rule, on: e.date)
+        }
+        #expect(model.thanksgiving == nil, "nothing was kept, so there is nothing to give thanks for")
+        #expect(!model.dayIsSettled(model.today))
+    }
+
+    @Test("un-ticking does not give thanks")
+    func clearingIsSilent() throws {
+        let model = try modelWithRules(["Morning prayers"])
+        model.toggleKept(try entry(model, "Morning prayers"))
+        model.clearThanksgiving()
+
+        model.toggleKept(try entry(model, "Morning prayers"))
+        #expect(model.thanksgiving == nil)
+    }
+
+    @Test("a settled day that is ticked again does not repeat itself")
+    func noRepeatOnAnAlreadySettledDay() throws {
+        let model = try modelWithRules(["Morning prayers", "Evening prayers"])
+        model.toggleKept(try entry(model, "Morning prayers"))
+        model.toggleKept(try entry(model, "Evening prayers"))
+        model.clearThanksgiving()
+
+        // Clear one and re-tick it: the day was already settled before.
+        let evening = try entry(model, "Evening prayers")
+        model.toggleKept(evening)
+        model.clearThanksgiving()
+        model.toggleKept(try entry(model, "Evening prayers"))
+        #expect(model.thanksgiving != nil, "it became settled again, so it is said again")
+    }
+
+    @Test("a day with nothing on it is not settled")
+    func emptyDayIsNotSettled() throws {
+        let model = try makeModel()
+        #expect(!model.dayIsSettled(model.today))
+    }
+
+    @Test("it can be cleared")
+    func clearing() throws {
+        let model = try modelWithRules(["Morning prayers"])
+        model.toggleKept(try entry(model, "Morning prayers"))
+        #expect(model.thanksgiving != nil)
+        model.clearThanksgiving()
+        #expect(model.thanksgiving == nil)
+    }
+}

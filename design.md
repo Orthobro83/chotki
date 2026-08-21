@@ -235,6 +235,20 @@ The build script now runs the app itself with `CHOTKI_EXPORT_ICON`, which draws 
 
 Generated at build time from the same `CrossGeometry` as everything else, so the icon cannot fall out of step with the drawing.
 
+## Keeping something is answered with thanksgiving, not applause
+
+The app never congratulates anyone for praying. Being told "well done" for keeping a prayer rule is the wrong register, and it is the same failure the Tone section already guards against — praise directed at the person turns the practice into a performance.
+
+So when the last thing on a day is settled, one line appears where the list ends: **"Glory to God for all things."** Saint John Chrysostom's words, which the bundled passages already carry. It fades in, sits a few seconds, and goes. Moving to another day clears it, because it belongs to the moment it was raised.
+
+Three deliberate restraints:
+
+- **Ticking a single rule says nothing.** A phrase shown five times a day becomes wallpaper, and using "Glory to God" as a checkbox noise cheapens it. The individual act gets a soft gold swell around the box and nothing more.
+- **No sound.** The chime belongs to the prayer rope; it would lose its meaning if the app rang all day.
+- **One phrase, always.** A seasonal variant was designed — the Paschal greeting, the Nativity greeting, a quieter form in Lent — and deliberately set aside. "Glory to God for all things" is fitting in every season, and choosing between greetings is a judgement for a priest rather than a program.
+
+A day counts as settled when nothing is left outstanding and **at least one thing was actually kept**. A rule stood down still counts as settled: standing down is legitimate, and treating it as unfinished would quietly punish pausing. Standing everything down says nothing, because nothing was kept.
+
 ## The marks
 
 Two drawn in code, like the icons, so nothing can drift from the palette and nothing needs an asset.
