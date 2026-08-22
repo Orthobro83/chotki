@@ -53,9 +53,9 @@ struct GlossaryView: View {
             ForEach(glossary.byCategory, id: \.0) { category, entries in
                 let matching = entries.filter { visible.contains($0.slug) }
                 if !matching.isEmpty {
-                    Text(category.displayName.lowercased())
+                    Text(category.displayName)
                         .font(.system(size: 11))
-                        .foregroundStyle(Theme.muted)
+                        .foregroundStyle(Theme.gold)
                         .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 2)
                     ForEach(matching) { entry in
                         Button { openSlug = entry.slug } label: {

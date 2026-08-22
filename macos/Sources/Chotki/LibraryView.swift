@@ -22,11 +22,11 @@ struct LibraryViewContent: View {
                 .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 4)
 
             ForEach(library.byCategory(), id: \.0) { category, templates in
-                // The app's own labels are lowercase by design. Text that came
-                // from the calendar is never re-cased.
-                Text(category.displayName.lowercased())
+                // Capitalised as they are defined in core. Text that came from
+                // the calendar is never re-cased either way.
+                Text(category.displayName)
                     .font(.system(size: 11))
-                    .foregroundStyle(Theme.muted)
+                    .foregroundStyle(Theme.gold)
                     .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 3)
 
                 ForEach(templates) { template in
@@ -100,7 +100,7 @@ struct TemplateRow: View {
             Spacer(minLength: 4)
 
             if taken {
-                Text("on your rule")
+                Text("On your rule")
                     .font(.system(size: 10))
                     .foregroundStyle(Theme.goldDim)
             } else {

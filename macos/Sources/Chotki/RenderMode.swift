@@ -196,6 +196,7 @@ enum RenderMode {
             describeMenus(in: host)
 
             shot("window-terms-back") { model.openGlossary("publican") }
+            shot("window-terms-list") { model.openGlossary(nil) }
 
             // The popover is the surface most people use, and until now none of
             // it could be drawn: every screen in it is inside a ScrollView.
