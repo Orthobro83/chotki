@@ -22,6 +22,17 @@ extension PrayerBook {
         // MARK: the opening prayers
 
         Prayer(
+            id: "opening-prayer",
+            title: "The Opening Prayer",
+            rubric: "Said first of all.",
+            paragraphs: [
+                "O Lord Jesus Christ, Son of God, for the sake of the prayers of Thy most pure Mother and of all the saints, have mercy on us. Amen."
+            ],
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
+        ),
+
+        Prayer(
             id: "beginning",
             title: "The Beginning",
             rubric: "How every rule opens.",
@@ -103,6 +114,28 @@ extension PrayerBook {
                 "O Angel of God, my holy guardian, given to me from heaven by God: enlighten me this day, and keep me from all evil, guide me toward good deeds, and set me upon the path of salvation. Amen."
             ],
             source: "Common usage"
+        ),
+
+        Prayer(
+            id: "macarius",
+            title: "The Prayer of Saint Macarius",
+            rubric: "On waking, before anything else.",
+            paragraphs: [
+                "O God, cleanse me a sinner, for I have never done anything good in Thy sight; but deliver me from the evil one, and let Thy will be done in me, that I may open mine unworthy mouth without condemnation and praise Thy holy name, of the Father, and of the Son, and of the Holy Spirit, now and ever, and unto ages of ages. Amen."
+            ],
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
+        ),
+        Prayer(
+            id: "ioannikios",
+            title: "The Prayer of Saint Ioannikios",
+            rubric: "At the close of the evening rule.",
+            paragraphs: [
+                "My hope is the Father, my refuge the Son, my protection the Holy Spirit: O Holy Trinity, glory to Thee."
+            ],
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg",
+            isForRope: true
         ),
 
         // MARK: to the Theotokos

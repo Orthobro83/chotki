@@ -97,11 +97,16 @@ struct RulePrayerTests {
         }
     }
 
-    @Test("every prayer rule opens the same way")
-    func rulesOpenAlike() throws {
+    /// Every rule carries the Trisagion prayers — the common core of all of
+    /// them — whatever else it opens with.
+    @Test("every prayer rule carries the common core")
+    func rulesShareTheirCore() throws {
+        let core = ["beginning", "heavenly-king", "trisagion", "all-holy-trinity", "our-father"]
         for id in ["morning-prayers", "evening-prayers", "trisagion-prayers"] {
             let template = try #require(library.template(id: id))
-            #expect(template.prayerIDs.prefix(2) == ["beginning", "heavenly-king"])
+            for prayer in core {
+                #expect(template.prayerIDs.contains(prayer), "\(id) is missing \(prayer)")
+            }
         }
     }
 
@@ -193,6 +198,72 @@ struct PrayerSourceTests {
             guard let host = prayer.sourceURL.flatMap({ URL(string: $0)?.host }) else { continue }
             #expect(!referenceHosts.contains(host),
                     "\(prayer.id) cites \(host), whose translation is under copyright")
+        }
+    }
+}
+
+/// A rule said through from beginning to end, as opposed to one prayer
+/// repeated. Defined once so the library and the rope cannot drift apart.
+@Suite("Prayer sequences")
+struct PrayerSequenceTests {
+    let book = PrayerBook.shared
+
+    @Test("every sequence names prayers that exist", arguments: PrayerSequence.all)
+    func sequencesResolve(sequence: PrayerSequence) {
+        #expect(!sequence.prayerIDs.isEmpty)
+        for id in sequence.prayerIDs {
+            #expect(book.prayer(id: id) != nil, "\(sequence.id) names missing \(id)")
+        }
+        #expect(book.prayers(of: sequence).count == sequence.prayerIDs.count)
+    }
+
+    @Test("morning and evening are both offered")
+    func bothRulesPresent() {
+        let ids = PrayerSequence.all.map(\.id)
+        #expect(ids.contains("morning"))
+        #expect(ids.contains("evening"))
+    }
+
+    @Test("a sequence keeps its order")
+    func order() {
+        #expect(book.prayers(of: .morning).map(\.id) == PrayerSequence.morning.prayerIDs)
+    }
+
+    @Test("each rule opens with the opening prayer")
+    func opensAlike() {
+        for sequence in [PrayerSequence.morning, .evening] {
+            #expect(sequence.prayerIDs.first == "opening-prayer", "\(sequence.id)")
+        }
+    }
+
+    @Test("morning and evening differ where they should")
+    func rulesDiffer() {
+        #expect(PrayerSequence.morning.prayerIDs.contains("having-risen"))
+        #expect(!PrayerSequence.morning.prayerIDs.contains("evening-forgiveness"))
+        #expect(PrayerSequence.evening.prayerIDs.contains("evening-forgiveness"))
+        #expect(!PrayerSequence.evening.prayerIDs.contains("having-risen"))
+    }
+
+    // One definition, used by both. If a template ever carried its own list
+    // again, the two would drift and nobody would notice.
+    @Test("the library takes its sequences from here")
+    func libraryUsesTheSameDefinition() throws {
+        let library = RuleLibrary.shared
+        for (id, sequence) in [("morning-prayers", PrayerSequence.morning),
+                               ("evening-prayers", PrayerSequence.evening),
+                               ("trisagion-prayers", PrayerSequence.trisagionPrayers)] {
+            let template = try #require(library.template(id: id))
+            #expect(template.prayerIDs == sequence.prayerIDs, "\(id) has drifted")
+        }
+    }
+
+    @Test("a sequence id is never also a prayer id")
+    func idsDoNotCollide() {
+        // The rope picker keys on one field for both, so a collision would make
+        // a sequence unselectable.
+        let prayerIDs = Set(book.prayers.map(\.id))
+        for sequence in PrayerSequence.all {
+            #expect(!prayerIDs.contains(sequence.id), "\(sequence.id) collides with a prayer")
         }
     }
 }

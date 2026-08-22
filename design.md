@@ -286,6 +286,10 @@ Every prayer shows, in fine print beneath it, where its wording came from and a 
 
 The prayer screen also lists two dozen places to read prayers online, from parishes and jurisdictions. **These are references, not sources.** Almost all publish modern translations, which are under copyright however freely they can be read: being on a public web page is not the same as being in the public domain. They are there so someone can compare this wording against their own jurisdiction's and find the fuller rules the app does not carry. A test asserts that no bundled prayer cites one of those hosts as its source — if one ever did, the text almost certainly came from there too.
 
+On the rope, the count and the knots sit **above** the words, with the words filling the lower half behind a divider: the number is a place to keep and the eye should find it first, but the prayer is what stays on screen while it is said. The chooser offers both the short prayers, repeated on the rope, and whole rules said through from beginning to end — both are ways the rope is used.
+
+The sequences are defined once, in `PrayerSequence`, and used by the library and the rope alike. A test asserts they have not drifted apart; before it existed, each carried its own copy of the order.
+
 A rule reaches its prayers from a mark on the row, always shown rather than only on hover, since the words are the reason the rule exists. The prayer rope carries a chooser of the short prayers — the Jesus Prayer in two forms, the Publican's prayer, Lord have mercy, and Rejoice O Virgin, which is what the Rule of the Theotokos repeats — and shows the chosen one above the count.
 
 ## Fixed facts

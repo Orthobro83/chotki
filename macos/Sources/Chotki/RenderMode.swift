@@ -40,7 +40,9 @@ enum RenderMode {
                        to: "\(prefix)-prayers.png")
             }
 
-            render(PrayerRopeView(model: model, startingAt: 21),
+            render(RopeWords(selection: "morning").padding(20), to: "\(prefix)-ropewords.png")
+
+            render(PrayerRopeView(model: model, startingAt: 21).frame(height: Theme.popoverHeight),
                    to: "\(prefix)-rope.png")
 
             FileHandle.standardOutput.write(Data("rendered\n".utf8))

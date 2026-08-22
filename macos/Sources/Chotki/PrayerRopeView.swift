@@ -9,7 +9,7 @@ struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
     @State private var count: Int
     @State private var target = 33
-    @State private var prayerID = "jesus-prayer"
+    @State private var selection = "jesus-prayer"
     private let sound = SoundPlayer.shared
     @FocusState private var focused: Bool
 
@@ -40,22 +40,6 @@ struct PrayerRopeView: View {
             knots
                 .padding(.horizontal, 22).padding(.bottom, 16)
 
-            if let prayer = PrayerBook.shared.prayer(id: prayerID) {
-                // The words below the count and the rope: the number is a
-                // place to keep, and the eye should land on it first, but the
-                // prayer is what stays on screen while it is said.
-                Text(prayer.text)
-                    .font(.custom("Cardo", size: 15))
-                    .foregroundStyle(Theme.parchment)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 26).padding(.top, 4)
-
-                PrayerAttribution(prayer: prayer)
-                    .padding(.bottom, 12)
-            }
-
             Button { advance() } label: {
                 Text("Count")
                     .font(.system(size: 13))
@@ -71,9 +55,20 @@ struct PrayerRopeView: View {
             Text("Click, or press space.")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.faint)
-                .padding(.top, 7)
+                .padding(.top, 7).padding(.bottom, 14)
 
-            Spacer(minLength: 12)
+            Rectangle().fill(Theme.lineSoft).frame(height: 1)
+
+            // The words fill the lower half. A sequence is long, so this
+            // scrolls while the count and the rope stay put above it.
+            ScrollView {
+                RopeWords(selection: selection)
+                    .padding(.horizontal, 22).padding(.vertical, 14)
+            }
+            .scrollContentBackgroundHidden()
+            .frame(maxHeight: .infinity)
+
+            Rectangle().fill(Theme.lineSoft).frame(height: 1)
 
             HStack(spacing: 8) {
                 ForEach(targets, id: \.self) { value in
@@ -105,9 +100,15 @@ struct PrayerRopeView: View {
     /// this is a choice made once and then left alone.
     private var prayerChooser: some View {
         HStack {
-            Picker("", selection: $prayerID) {
+            Picker("", selection: $selection) {
                 ForEach(PrayerBook.shared.forRope(), id: \.id) { prayer in
                     Text(prayer.title).tag(prayer.id)
+                }
+                Divider()
+                // A rule said through while counting, rather than one prayer
+                // repeated. Both are ways the rope is used.
+                ForEach(PrayerBook.shared.sequences, id: \.id) { sequence in
+                    Text(sequence.title).tag(sequence.id)
                 }
             }
             .labelsHidden()
@@ -141,6 +142,51 @@ struct PrayerRopeView: View {
             if model.settings.chimeOnCompletion { sound.playBell() }
         } else if model.settings.tickEachKnot {
             sound.playTick()
+        }
+    }
+}
+
+/// What the rope shows: one short prayer, or a whole rule said through.
+///
+/// Its own view so it can be drawn without the scroll view around it —
+/// ImageRenderer does not draw ScrollView contents, and a view that cannot be
+/// looked at is one that gets shipped broken.
+struct RopeWords: View {
+    let selection: String
+
+    @ViewBuilder var body: some View {
+        if let sequence = PrayerBook.shared.sequence(id: selection) {
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(PrayerBook.shared.prayers(of: sequence), id: \.id) { prayer in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(prayer.title)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.gold)
+                        ForEach(prayer.paragraphs, id: \.self) { paragraph in
+                            Text(paragraph)
+                                .font(.custom("Cardo", size: 14))
+                                .foregroundStyle(Theme.parchment)
+                                .lineSpacing(4)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                if let first = PrayerBook.shared.prayers(of: sequence).first {
+                    PrayerAttribution(prayer: first)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else if let prayer = PrayerBook.shared.prayer(id: selection) {
+            VStack(spacing: 4) {
+                Text(prayer.text)
+                    .font(.custom("Cardo", size: 15))
+                    .foregroundStyle(Theme.parchment)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+                PrayerAttribution(prayer: prayer)
+            }
+            .frame(maxWidth: .infinity)
         }
     }
 }

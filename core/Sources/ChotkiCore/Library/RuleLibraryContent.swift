@@ -25,14 +25,14 @@ extension RuleLibrary {
             summary: "The morning prayers from the prayer book, on rising.",
             recurrence: .daily, timeOfDay: t(6, 30), category: .prayer,
             glossarySlugs: ["prayer-rule", "trisagion", "icon-corner"],
-            prayerIDs: ["beginning", "heavenly-king", "trisagion", "all-holy-trinity", "our-father", "having-risen", "guardian-angel", "rejoice-o-virgin", "it-is-truly-meet"]
+            prayerIDs: PrayerSequence.morning.prayerIDs
         ),
         RuleTemplate(
             id: "evening-prayers", title: "Evening prayers",
             summary: "The evening prayers, before sleep.",
             recurrence: .daily, timeOfDay: t(21, 30), category: .prayer,
             glossarySlugs: ["prayer-rule", "compline", "icon-corner"],
-            prayerIDs: ["beginning", "heavenly-king", "trisagion", "all-holy-trinity", "our-father", "evening-forgiveness", "guardian-angel", "it-is-truly-meet"]
+            prayerIDs: PrayerSequence.evening.prayerIDs
         ),
         RuleTemplate(
             id: "jesus-prayer", title: "The Jesus Prayer",
@@ -47,7 +47,7 @@ extension RuleLibrary {
             summary: "The short opening prayers — a complete rule in itself when time is short.",
             recurrence: .daily, category: .prayer,
             glossarySlugs: ["trisagion", "prayer-rule"],
-            prayerIDs: ["beginning", "heavenly-king", "trisagion", "all-holy-trinity", "our-father"]
+            prayerIDs: PrayerSequence.trisagionPrayers.prayerIDs
         ),
         RuleTemplate(
             id: "prayer-before-meals", title: "Prayer before meals",
