@@ -8,7 +8,51 @@ struct RuleTabViewContent: View {
         VStack(spacing: 0) {
             MonthGridView(model: model)
             Rectangle().fill(Theme.line).frame(height: 1)
+            DayAndLibrary(model: model)
+        }
+    }
+}
+
+/// The day, and the library beneath it when it is open.
+///
+/// While the library is open the day is pinned to the top and the library scrolls
+/// under it. What you are weighing a new rule against is the date, what you have
+/// already promised for it and at what times — so that is the one thing that must
+/// not scroll away while you weigh it.
+///
+/// Pinned only while the library is open. With it closed there is nothing to
+/// scroll under the day, and the cross behind the rules would be covered by the
+/// opaque background the pinning needs.
+struct DayAndLibrary: View {
+    @ObservedObject var model: AppModel
+    /// Gutter for the window, which insets the day from the divider.
+    var inset: CGFloat = 0
+    /// Carries the pinned background up past the top of the column.
+    ///
+    /// SwiftUI runs a scroll view underneath the window's transparent titlebar,
+    /// so library rows slide through the strip above the pinned day and it stops
+    /// looking like the top of anything. Only safe where the day is the first
+    /// thing in its column: in the popover the month grid sits above it, and
+    /// this would cover it.
+    var masksAbove: Bool = false
+
+    var body: some View {
+        if model.libraryOnRule {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                Section {
+                    InlineLibrary(model: model)
+                        .padding(.horizontal, inset)
+                } header: {
+                    DayPanel(model: model)
+                        .padding(.horizontal, inset)
+                        // Opaque, and applied outside the inset so the library
+                        // does not show through the gutters as it passes under.
+                        .background(Theme.ground.padding(.top, masksAbove ? -120 : 0))
+                }
+            }
+        } else {
             DayPanel(model: model)
+                .padding(.horizontal, inset)
         }
     }
 }
@@ -28,12 +72,8 @@ struct DayPanel: View {
             }
             Rectangle().fill(Theme.lineSoft).frame(height: 1)
             footer
-            if model.libraryOnRule {
-                InlineLibrary(model: model)
-            }
         }
         .animation(.easeInOut(duration: 0.45), value: model.thanksgiving)
-        .animation(.easeInOut(duration: 0.2), value: model.libraryOnRule)
         .onChange(of: model.selectedDate) { _ in model.clearThanksgiving() }
     }
 

@@ -184,6 +184,7 @@ enum RenderMode {
 
             shot("window-rule") { }
             shot("window-library-drawer") { model.libraryOnRule = true }
+            shot("window-library-scrolled") { scrollDown(host, by: 420) }
             shot("window-prayers") {
                 model.libraryOnRule = false
                 model.prayers = PrayerScreen(selection: "morning")
@@ -209,6 +210,9 @@ enum RenderMode {
 
             draw(popover, "popover-rule", prefix: prefix) { }
             draw(popover, "popover-library-drawer", prefix: prefix) { model.libraryOnRule = true }
+            draw(popover, "popover-library-scrolled", prefix: prefix) {
+                scrollDown(popover, by: 420)
+            }
             draw(popover, "popover-prayers", prefix: prefix) {
                 model.libraryOnRule = false
                 model.prayers = PrayerScreen(selection: "jesus-prayer", count: 12)
@@ -235,6 +239,29 @@ enum RenderMode {
         guard let png = rep.representation(using: .png, properties: [:]) else { return }
         try? png.write(to: URL(fileURLWithPath: "\(prefix)-\(name).png"))
         FileHandle.standardOutput.write(Data("\(name)\n".utf8))
+    }
+
+    /// Scrolls the tallest scroll view in the hierarchy, so that anything which
+    /// only happens part-way down — a pinned header, content passing under it —
+    /// can actually be seen. SwiftUI's ScrollView is an NSScrollView underneath.
+    @discardableResult
+    private static func scrollDown(_ view: NSView, by amount: CGFloat) -> Bool {
+        var found: [NSScrollView] = []
+        func walk(_ view: NSView) {
+            if let scroll = view as? NSScrollView { found.append(scroll) }
+            for subview in view.subviews { walk(subview) }
+        }
+        walk(view)
+
+        // The tallest content is the one worth scrolling: in the window the day
+        // column holds the library, while the calendar beside it barely moves.
+        guard let scroll = found.max(by: {
+            ($0.documentView?.bounds.height ?? 0) < ($1.documentView?.bounds.height ?? 0)
+        }) else { return false }
+
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: amount))
+        scroll.reflectScrolledClipView(scroll.contentView)
+        return true
     }
 
     /// Prints what any pop-up menu in the hierarchy actually offers.

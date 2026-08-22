@@ -33,6 +33,24 @@ moved to `PrayerScreen` in core. Following a word into the glossary destroys and
 rebuilds the view, and losing a hundred-knot count to a lookup would be a poor
 trade.
 
+## The day stays put while the library scrolls (22 Aug 2026)
+
+With the library open, the day is pinned: the date, what is already promised for
+it and at what times, and the Add and Library buttons stay at the top while the
+library scrolls underneath them. What you are weighing a new rule against should
+not scroll away while you weigh it.
+
+Pinned only while the library is open. Closed, there is nothing to scroll under
+the day, and the opaque background pinning needs would cover the cross behind
+the rules.
+
+In the window the pinned background is carried up past the top of its column.
+SwiftUI runs a scroll view underneath the transparent titlebar, so without that
+the library slid through the strip above the pinned day and it stopped reading
+as the top of anything. Ignoring the safe area fixed the bleed but jammed the
+date against the window edge and threw it out of line with the calendar beside
+it.
+
 ## The library on the rule page (22 Aug 2026)
 
 The Library button on the rule screen now opens the library **underneath the

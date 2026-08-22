@@ -187,8 +187,7 @@ struct MainWindowView: View {
                 RuleBackdrop(crossHeight: 150, markSize: 34)
 
                 ScrollView {
-                    DayPanel(model: model)
-                        .padding(.horizontal, 6)
+                    DayAndLibrary(model: model, inset: 6, masksAbove: true)
                 }
                 .scrollContentBackgroundHidden()
             }
