@@ -177,7 +177,10 @@ struct MainWindowView: View {
     private var ruleSection: some View {
         GeometryReader { proxy in
             if proxy.size.width < Self.sideBySideWidth {
-                RuleTabView(model: model)
+                // Stacked, the calendar is pinned along with the day: the window
+                // has the height for both, and losing the calendar is the thing
+                // the layout was rearranged to avoid.
+                RuleTabView(model: model, pinsCalendar: true)
             } else {
                 sideBySideRule
             }

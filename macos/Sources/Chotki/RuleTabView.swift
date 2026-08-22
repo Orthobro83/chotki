@@ -3,12 +3,42 @@ import ChotkiCore
 
 struct RuleTabViewContent: View {
     @ObservedObject var model: AppModel
+    /// Holds the calendar on screen along with the day while the library is
+    /// browsed. Wants the height to spare: pinned, the calendar and the day
+    /// together take the top half of the pane and the library reads through
+    /// what is left.
+    var pinsCalendar: Bool = false
 
     var body: some View {
+        if model.libraryOnRule {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                if !pinsCalendar { calendar }
+                Section {
+                    InlineLibrary(model: model)
+                } header: {
+                    VStack(spacing: 0) {
+                        if pinsCalendar { calendar }
+                        DayPanel(model: model)
+                    }
+                    // Opaque, or the library shows through as it passes under.
+                    // Carried up past the top because SwiftUI runs a scroll view
+                    // beneath the window's transparent titlebar — safe only
+                    // because a pinned calendar is the topmost thing there is.
+                    .background(Theme.ground.padding(.top, pinsCalendar ? -120 : 0))
+                }
+            }
+        } else {
+            VStack(spacing: 0) {
+                calendar
+                DayPanel(model: model)
+            }
+        }
+    }
+
+    private var calendar: some View {
         VStack(spacing: 0) {
             MonthGridView(model: model)
             Rectangle().fill(Theme.line).frame(height: 1)
-            DayAndLibrary(model: model)
         }
     }
 }
@@ -309,6 +339,7 @@ extension View {
 /// rendered directly — ImageRenderer does not draw ScrollView contents.
 struct RuleTabView: View {
     @ObservedObject var model: AppModel
+    var pinsCalendar: Bool = false
 
     var body: some View {
         ZStack {
@@ -316,7 +347,7 @@ struct RuleTabView: View {
             // something to rest on instead of a blank panel.
             RuleBackdrop()
 
-            ScrollView { RuleTabViewContent(model: model) }
+            ScrollView { RuleTabViewContent(model: model, pinsCalendar: pinsCalendar) }
                 .scrollContentBackgroundHidden()
         }
         .frame(maxHeight: .infinity)

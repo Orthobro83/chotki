@@ -33,6 +33,17 @@ moved to `PrayerScreen` in core. Following a word into the glossary destroys and
 rebuilds the view, and losing a hundred-knot count to a lookup would be a poor
 trade.
 
+## The calendar is pinned too, where there is room (22 Aug 2026)
+
+In the window's stacked layout the calendar is pinned along with the day, so
+neither leaves the screen while the library is browsed. Losing the calendar was
+the thing rearranging the layout was meant to avoid.
+
+Not in the popover. Pinned there, the calendar and the day take about 440 of its
+600 points and the library shows two rows at a time, which is no way to read
+through twenty-five of them. The popover keeps scrolling the calendar away and
+pinning the day alone.
+
 ## The window rearranges rather than squashing (22 Aug 2026)
 
 The rule screen puts the calendar beside the day. The calendar will not shrink

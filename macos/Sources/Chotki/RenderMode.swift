@@ -201,6 +201,7 @@ enum RenderMode {
                 resize(to: 665)
             }
             shot("window-narrow-library") { model.libraryOnRule = true }
+            shot("window-narrow-scrolled") { scrollDown(host, by: 420) }
             shot("window-min-width") {
                 model.libraryOnRule = false
                 resize(to: 620)
