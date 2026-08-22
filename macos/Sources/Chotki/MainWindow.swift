@@ -10,7 +10,7 @@ enum MainSection: String, CaseIterable, Hashable {
     case prayers = "Prayers"
     case progress = "Progress"
     case library = "Library"
-    case terms = "Terms"
+    case glossary = "Glossary"
     case settings = "Settings"
 
     var symbol: String {
@@ -20,7 +20,7 @@ enum MainSection: String, CaseIterable, Hashable {
         case .progress: return "chart.line.uptrend.xyaxis"
         case .library: return "square.grid.2x2"
         case .prayers: return "hands.sparkles"
-        case .terms: return "text.book.closed"
+        case .glossary: return "text.book.closed"
         case .settings: return "gearshape"
         }
     }
@@ -100,7 +100,7 @@ struct MainWindowView: View {
                 go(to: target)
             case .glossary(let slug):
                 pendingSlug = slug
-                go(to: .terms)
+                go(to: .glossary)
             case .editor(let ruleID):
                 editing = EditorTarget(ruleID: ruleID)
             case .prayers(let ruleID):
@@ -146,7 +146,7 @@ struct MainWindowView: View {
         case .progress: scrolling { ProgressTabViewContent(model: model) }
         case .library: scrolling { LibraryViewContent(model: model) }
         case .prayers: PrayerRopeView(model: model)
-        case .terms:
+        case .glossary:
             VStack(spacing: 0) {
                 // A term is nearly always opened from somewhere — a word in a
                 // prayer, the day's fasting note — and the way back matters more
@@ -167,9 +167,24 @@ struct MainWindowView: View {
         }
     }
 
-    /// The one layout that genuinely benefits from the extra width: calendar
-    /// beside the day rather than above it.
+    /// Side by side needs room for both: the calendar will not shrink below its
+    /// grid, so everything taken off the window comes out of the day, and past a
+    /// point the rule titles wrap one letter to a line.
+    private static let sideBySideWidth: CGFloat = 660
+
+    /// Calendar beside the day when there is room for both, above it when there
+    /// is not — which is how the popover shows it at 400 points.
     private var ruleSection: some View {
+        GeometryReader { proxy in
+            if proxy.size.width < Self.sideBySideWidth {
+                RuleTabView(model: model)
+            } else {
+                sideBySideRule
+            }
+        }
+    }
+
+    private var sideBySideRule: some View {
         HStack(alignment: .top, spacing: 0) {
             ScrollView {
                 MonthGridView(model: model)
@@ -243,7 +258,9 @@ final class MainWindowController: NSObject, NSWindowDelegate {
         window.title = "Chotki"
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 760, height: 520)
+        // The stacked layout needs about what the popover needs, plus the
+        // sidebar. Below this it is squashed however it is arranged.
+        window.minSize = NSSize(width: 620, height: 480)
         window.center()
         window.delegate = self
         window.contentView = NSHostingView(rootView: MainWindowView(model: model))

@@ -33,6 +33,21 @@ moved to `PrayerScreen` in core. Following a word into the glossary destroys and
 rebuilds the view, and losing a hundred-knot count to a lookup would be a poor
 trade.
 
+## The window rearranges rather than squashing (22 Aug 2026)
+
+The rule screen puts the calendar beside the day. The calendar will not shrink
+below its grid, so every point taken off the window came out of the day, and
+narrowed far enough the rule titles wrapped one letter to a line.
+
+Below 660 points of detail width the two now stack — calendar above the day,
+which is how the popover has always shown it at 400 points. Above it, side by
+side as before. The window's floor came down from 760×520 to 620×480, since the
+stacked layout needs about what the popover needs plus the sidebar; a floor
+alone would only have moved the squashing to just above it.
+
+"Terms" is called "Glossary" in the sidebar and in the popover's header, which
+is what it is.
+
 ## The day stays put while the library scrolls (22 Aug 2026)
 
 With the library open, the day is pinned: the date, what is already promised for

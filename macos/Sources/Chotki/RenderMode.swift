@@ -185,6 +185,27 @@ enum RenderMode {
             shot("window-rule") { }
             shot("window-library-drawer") { model.libraryOnRule = true }
             shot("window-library-scrolled") { scrollDown(host, by: 420) }
+
+            // Narrow enough that the calendar and the day cannot sit side by
+            // side. This is the shape the window was squashed into before it
+            // learned to rearrange. Taken here because the sidebar's selection
+            // is @State: once it leaves Rule, nothing outside the view can send
+            // it back.
+            func resize(to width: CGFloat) {
+                host.frame = NSRect(x: 0, y: 0, width: width, height: 660)
+                window.setContentSize(NSSize(width: width, height: 660))
+            }
+            shot("window-narrow") {
+                model.libraryOnRule = false
+                scrollDown(host, by: 0)
+                resize(to: 665)
+            }
+            shot("window-narrow-library") { model.libraryOnRule = true }
+            shot("window-min-width") {
+                model.libraryOnRule = false
+                resize(to: 620)
+            }
+            resize(to: 940)
             shot("window-prayers") {
                 model.libraryOnRule = false
                 model.prayers = PrayerScreen(selection: "morning")
@@ -197,6 +218,7 @@ enum RenderMode {
 
             shot("window-terms-back") { model.openGlossary("publican") }
             shot("window-terms-list") { model.openGlossary(nil) }
+
 
             // The popover is the surface most people use, and until now none of
             // it could be drawn: every screen in it is inside a ScrollView.
