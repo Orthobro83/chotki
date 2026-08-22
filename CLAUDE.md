@@ -89,19 +89,30 @@ core on macOS and Linux, the portability guard, and the macOS suite.
 
 ### Looking at the interface
 
-`CHOTKI_RENDER=<prefix>` makes the app draw its own views to PNG offscreen. It
-works on a throwaway copy of the database and never reads the screen. Variants:
-`CHOTKI_RENDER_LIVE=1` uses the real data untouched; `CHOTKI_EXPORT_ICON=<dir>`
-writes the iconset.
+**Reach for `CHOTKI_RENDER_WINDOW=<prefix>` first.** It puts the real
+`MainWindowView`, and then the real `RootView` at popover size, into an
+off-screen `NSWindow` and asks the view hierarchy to draw itself. Because that
+goes through AppKit rather than `ImageRenderer`, it draws **ScrollView contents
+and real AppKit controls** — which is most of this app. It also prints the items
+of every pop-up menu it finds (`menu: ...`), the one thing no screenshot can
+show. It draws the view; it never reads the display.
 
-**What it cannot do**, and these limits have caused real misses:
+`CHOTKI_RENDER=<prefix>` is the older path: `ImageRenderer` on content views in
+isolation. Still useful for a single view in a known state, but it draws every
+scrolled screen as an empty panel, which is how a missing feature once got
+signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
+`CHOTKI_EXPORT_ICON=<dir>` writes the iconset.
 
-- It does not draw `ScrollView` contents. That is why each screen is split into
-  `XView` (scroll chrome) and `XViewContent`.
-- It does not draw AppKit-backed controls — pickers and toggles render as
-  placeholders.
-- **It is not the live app.** It proves layout and copy. It cannot prove
-  clicking, typing, notifications, or that a view is reachable at all.
+**What neither can do:**
+
+- `ImageRenderer` (`CHOTKI_RENDER`) draws no `ScrollView` contents and no AppKit
+  controls. That is why each screen is split into `XView` (scroll chrome) and
+  `XViewContent`.
+- **Neither is the live app.** They prove layout and copy. They cannot prove
+  clicking, typing, notifications, or that a view is reachable at all. An
+  animation or a `ScrollViewReader` scroll may simply not appear — if it does
+  not, that is not evidence either way, so do not ship it on the strength of a
+  render.
 
 ## Mistakes already made here — do not repeat them
 
@@ -122,6 +133,11 @@ writes the iconset.
   no-oped and looked successful. Always `assert old in s`.
 - **Never mask build output.** `>/dev/null` hid a failing build and shipped a
   stale bundle.
+- **A new file in `core/` is invisible to the `macos/` build.** SwiftPM caches
+  the dependency's source list, so the build compiles ChotkiCore *without* the
+  new file and reports `cannot find 'X' in scope` for a public type that is
+  plainly there. `swift package --package-path macos clean` fixes it; touching
+  `Package.swift` does not.
 - **The database is WAL mode.** A file-level copy must include `-wal` and
   `-shm` or it silently loses recent data.
 

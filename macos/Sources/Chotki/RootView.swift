@@ -32,7 +32,7 @@ struct RootView: View {
                 SettingsView(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
             case .glossary(let slug):
-                Header(title: "Terms") { model.screen = .main }
+                Header(title: "Terms") { model.screen = model.glossaryReturn }
                 GlossaryView(model: model, initialSlug: slug)
                     .frame(maxHeight: .infinity, alignment: .top)
             case .editor(let ruleID):

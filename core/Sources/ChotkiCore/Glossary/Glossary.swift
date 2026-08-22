@@ -165,6 +165,41 @@ public struct Glossary: Sendable {
         return matches.sorted { $0.range.lowerBound < $1.range.lowerBound }
     }
 
+    /// Scans a run of paragraphs, keeping each term only the first time it
+    /// appears.
+    ///
+    /// Running text takes `scan` and lights up every occurrence, which is right
+    /// for a one-line commemoration. A prayer is different: "Holy Spirit" can
+    /// appear four times in the Creed, and underlining all four turns a text
+    /// meant to be prayed into a page of hyperlinks. The first one is the one
+    /// that helps; the rest are noise the reader has to look past.
+    ///
+    /// Paragraphs are scanned as a group rather than one at a time, so a term
+    /// explained in the first paragraph is not linked again in the third.
+    public func scanOnce(_ paragraphs: [String]) -> [[TermMatch]] {
+        var seen: Set<String> = []
+        return paragraphs.map { paragraph in
+            scan(paragraph).filter { match in
+                seen.insert(match.slug).inserted
+            }
+        }
+    }
+
+    /// The same, over several prayers read as one sitting.
+    ///
+    /// A rule is read straight through. Scanning each prayer separately links
+    /// "Amen" at the end of all six of them, which is exactly the noise
+    /// `scanOnce` exists to avoid — the run, not the prayer, is the unit the
+    /// reader experiences.
+    public func scanOnce(across groups: [[String]]) -> [[[TermMatch]]] {
+        var seen: Set<String> = []
+        return groups.map { paragraphs in
+            paragraphs.map { paragraph in
+                scan(paragraph).filter { seen.insert($0.slug).inserted }
+            }
+        }
+    }
+
     private static func sitsOnWordBoundaries(_ range: Range<String.Index>, in text: String) -> Bool {
         func isWordCharacter(_ character: Character) -> Bool {
             character.isLetter || character.isNumber

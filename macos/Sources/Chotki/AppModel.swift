@@ -26,6 +26,23 @@ final class AppModel: ObservableObject {
     @Published var selectedDate: CalendarDate
     @Published var visibleMonth: CalendarDate
     @Published var screen: Screen = .main
+    /// Where the Terms screen goes back to.
+    ///
+    /// Every route into the glossary is a detour from something else — the day's
+    /// fasting note, a word in a prayer, a rule in the library. Returning the
+    /// reader to the main screen instead of where they were loses their place,
+    /// and in a prayer it loses it mid-sentence.
+    @Published private(set) var glossaryReturn: Screen = .main
+    /// Whether the library is open underneath the day on the rule screen.
+    ///
+    /// Kept here rather than in a view because the button that toggles it lives
+    /// inside the day panel, and the drawer itself hangs below the scrolling
+    /// area — two different views in both shells.
+    @Published var libraryOnRule = false
+    /// The prayers screen. Kept here rather than in the view because following a
+    /// word into the glossary rebuilds the view, and a rope count is not
+    /// something to lose to a lookup.
+    @Published var prayers = PrayerScreen()
     @Published private(set) var loadError: String?
     /// A neutral note, not an error. Cleared when the popover reopens.
     @Published var notice: String?
@@ -48,6 +65,19 @@ final class AppModel: ObservableObject {
     private var driver: ReminderDriver?
 
     var today: CalendarDate { CalendarDate(Date(), in: .current) }
+
+    /// Opens a term, remembering what to come back to.
+    ///
+    /// Going from one term to another keeps the original destination, so
+    /// following a chain of cross-references still returns you to the prayer you
+    /// started from rather than to the term before it.
+    func openGlossary(_ slug: String?) {
+        switch screen {
+        case .glossary: break
+        default: glossaryReturn = screen
+        }
+        screen = .glossary(slug)
+    }
 
     // MARK: setup
 

@@ -42,6 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        if let prefix = ProcessInfo.processInfo.environment["CHOTKI_RENDER_WINDOW"] {
+            RenderMode.runWindow(prefix: prefix)
+            return
+        }
         if let prefix = ProcessInfo.processInfo.environment["CHOTKI_RENDER"] {
             RenderMode.run(prefix: prefix)
             return

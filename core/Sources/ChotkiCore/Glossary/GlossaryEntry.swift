@@ -1,7 +1,7 @@
 import Foundation
 
 public enum GlossaryCategory: String, Sendable, Hashable, Codable, CaseIterable {
-    case calendar, fasting, services, prayer, scripture, saints, things
+    case calendar, fasting, services, prayer, faith, scripture, saints, things
 
     public var displayName: String {
         switch self {
@@ -9,6 +9,7 @@ public enum GlossaryCategory: String, Sendable, Hashable, Codable, CaseIterable 
         case .fasting: return "Fasting"
         case .services: return "Services"
         case .prayer: return "Prayer"
+        case .faith: return "The Faith"
         case .scripture: return "Scripture"
         case .saints: return "Saints and titles"
         case .things: return "Objects and places"

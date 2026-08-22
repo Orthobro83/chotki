@@ -40,13 +40,13 @@ enum RenderMode {
                        to: "\(prefix)-prayers.png")
             }
 
-            render(RopeWords(selection: "morning").padding(20), to: "\(prefix)-ropewords.png")
+            render(RopeWords(model: model, selection: "morning").padding(20), to: "\(prefix)-ropewords.png")
 
             // The rope follows the prayer: shown for a counted one, hidden for a
             // rule that is read through, shown when nothing is chosen.
-            for (selection, name) in [("jesus-prayer", "rope"), ("morning", "rope-read"), ("none", "rope-alone")] {
-                render(PrayerRopeView(model: model, startingAt: 21, showing: selection)
-                        .frame(height: Theme.popoverHeight),
+            for (selection, name) in [("jesus-prayer", "rope"), ("morning", "rope-read"), (nil, "rope-alone")] {
+                model.prayers = PrayerScreen(selection: selection, count: 21)
+                render(PrayerRopeView(model: model).frame(height: Theme.popoverHeight),
                        to: "\(prefix)-\(name).png")
             }
 
@@ -143,6 +143,111 @@ enum RenderMode {
             }
         }
         return store
+    }
+
+    /// Renders the real window, through AppKit rather than ImageRenderer.
+    ///
+    /// `ImageRenderer` cannot draw the contents of a ScrollView, nor AppKit
+    /// controls like a Picker's menu button. That covers most of this app: the
+    /// library, the glossary, the prayers and the whole window are scrolled, and
+    /// the harness has silently drawn them as empty panels — which is how a
+    /// missing feature once got signed off here.
+    ///
+    /// Putting the view in a real window and asking the view hierarchy to draw
+    /// itself gets all of it. The window is positioned far off any screen and
+    /// never ordered in front of anything: this draws the view, it does not
+    /// capture the display.
+    static func runWindow(prefix: String) {
+        do {
+            let store = try seededStore()
+            let model = AppModel(
+                store: store, notifier: NullNotifier(), launchAtLogin: NullLaunchAtLogin()
+            )
+            try? model.liturgical.loadSnapshot(around: model.today)
+
+            let size = NSSize(width: 940, height: 660)
+            let host = NSHostingView(rootView: MainWindowView(model: model))
+            host.frame = NSRect(origin: .zero, size: size)
+
+            let window = NSWindow(
+                contentRect: host.frame,
+                styleMask: [.titled, .resizable, .fullSizeContentView],
+                backing: .buffered, defer: false
+            )
+            window.contentView = host
+            window.setFrameOrigin(NSPoint(x: -30_000, y: -30_000))
+            window.orderFrontRegardless()
+
+            func shot(_ name: String, _ arrange: () -> Void) {
+                draw(host, name, prefix: prefix, arrange)
+            }
+
+            shot("window-rule") { }
+            shot("window-library-drawer") { model.libraryOnRule = true }
+            shot("window-prayers") {
+                model.libraryOnRule = false
+                model.prayers = PrayerScreen(selection: "morning")
+                model.screen = .prayerRope
+            }
+            // A drawn menu button shows only its selected title, so the chooser's
+            // contents were the one thing a screenshot could not confirm. Ask the
+            // control itself, while the prayers screen is still up.
+            describeMenus(in: host)
+
+            shot("window-terms-back") { model.openGlossary("publican") }
+
+            // The popover is the surface most people use, and until now none of
+            // it could be drawn: every screen in it is inside a ScrollView.
+            model.screen = .main
+            model.libraryOnRule = false
+            let popover = NSHostingView(rootView: RootView(model: model))
+            popover.frame = NSRect(
+                x: 0, y: 0, width: Theme.popoverWidth, height: Theme.popoverHeight
+            )
+            window.contentView = popover
+            window.setContentSize(popover.frame.size)
+
+            draw(popover, "popover-rule", prefix: prefix) { }
+            draw(popover, "popover-library-drawer", prefix: prefix) { model.libraryOnRule = true }
+            draw(popover, "popover-prayers", prefix: prefix) {
+                model.libraryOnRule = false
+                model.prayers = PrayerScreen(selection: "jesus-prayer", count: 12)
+                model.screen = .prayerRope
+            }
+            draw(popover, "popover-terms-back", prefix: prefix) { model.openGlossary("amen") }
+
+            FileHandle.standardOutput.write(Data("rendered\n".utf8))
+        } catch {
+            FileHandle.standardError.write(Data("window render failed: \(error)\n".utf8))
+        }
+        NSApp.terminate(nil)
+    }
+
+    /// Arrange, let SwiftUI settle, then ask the view to draw itself.
+    private static func draw(
+        _ host: NSView, _ name: String, prefix: String, _ arrange: () -> Void
+    ) {
+        arrange()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
+        host.layoutSubtreeIfNeeded()
+        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        guard let png = rep.representation(using: .png, properties: [:]) else { return }
+        try? png.write(to: URL(fileURLWithPath: "\(prefix)-\(name).png"))
+        FileHandle.standardOutput.write(Data("\(name)\n".utf8))
+    }
+
+    /// Prints what any pop-up menu in the hierarchy actually offers.
+    private static func describeMenus(in view: NSView) {
+        if let popup = view as? NSPopUpButton {
+            let titles = popup.itemArray.map { item -> String in
+                if item.isSeparatorItem { return "──" }
+                return item.title.isEmpty ? "(blank)" : item.title
+            }
+            let line = "menu: " + titles.joined(separator: " | ") + "\n"
+            FileHandle.standardOutput.write(Data(line.utf8))
+        }
+        for subview in view.subviews { describeMenus(in: subview) }
     }
 
     private static func render(_ view: some View, to path: String) {

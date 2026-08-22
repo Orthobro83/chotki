@@ -5,6 +5,49 @@ A menu bar app for keeping an Orthodox prayer rule, and honestly measuring wheth
 Status: design complete. No code written yet.
 Started 2026-08-19.
 
+## Terms inside the prayers (22 Aug 2026)
+
+Unfamiliar words in a prayer now link to the glossary, and the glossary's back
+button returns to whatever the reader was on rather than to the main screen.
+
+Scanning the bundled prayers against the glossary first found **three** links,
+all of them the word Theotokos: the glossary had grown out of the calendar —
+feasts, fasts, service names — and the prayers use another vocabulary
+altogether. Thirteen entries were written for the words that actually appear in
+the prayers this app displays: Amen; Thee, Thou and Thy; Holy Trinity; the
+Symbol of Faith; Comforter; Only-begotten; Cherubim; Seraphim; Guardian Angel;
+Publican; and Saints Ephrem, Macarius and Ioannikios, whose prayers are in the
+rules. They need the same priestly review as the rest of the glossary, and the
+new `.faith` category with them.
+
+Each term links on its **first appearance only, across the whole rule** — not
+per prayer. The morning rule ends nearly every prayer with "Amen", and linking
+all six was the first thing that looked wrong on screen. The rule is what the
+reader experiences, so the rule is the unit. Links in prayers are set in dimmed
+gold with a dotted underline rather than the solid one used elsewhere: under a
+line being prayed, a solid rule reads as emphasis on words that are not
+emphasised.
+
+The prayers screen's state — the chosen prayer, the count, the rope override —
+moved to `PrayerScreen` in core. Following a word into the glossary destroys and
+rebuilds the view, and losing a hundred-knot count to a lookup would be a poor
+trade.
+
+## The library on the rule page (22 Aug 2026)
+
+The Library button on the rule screen now opens the library **underneath the
+day** instead of navigating to it. Deciding what to take on is a judgement about
+how much is already there; on a screen of its own you are choosing in the
+abstract. The calendar and the day's obligations stay where they are.
+
+It sits inside the day's own scroll rather than in a pane of its own, so it
+grows from exactly where the button was pressed and nothing jumps to make room.
+An earlier attempt used a fixed-height drawer below the scroll area, which in
+the popover left one obligation visible — the opposite of the point — and needed
+a `ScrollViewReader` to haul the day back into view, which could not be shown to
+work. The full library remains a screen of its own, from the sidebar or from
+"Open in full" in the header.
+
 ## The rope follows the prayer (21 Aug 2026)
 
 The Prayers section shows the rope when what is chosen is traditionally counted

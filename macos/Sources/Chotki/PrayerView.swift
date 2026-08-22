@@ -15,8 +15,14 @@ struct PrayerViewContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let rule, rule.hasPrayers {
+                // Scanned across the whole rule, not prayer by prayer — it is
+                // read in one sitting.
+                let found = Glossary
+                    .shared(for: model.settings.jurisdiction.tradition)
+                    .scanOnce(across: rule.prayers.map(\.paragraphs))
+
                 ForEach(Array(rule.prayers.enumerated()), id: \.element.id) { index, prayer in
-                    prayerBlock(prayer)
+                    prayerBlock(prayer, matches: found[index])
                     if index < rule.prayers.count - 1 {
                         Rectangle().fill(Theme.lineSoft).frame(height: 1)
                             .padding(.horizontal, 16)
@@ -30,7 +36,7 @@ struct PrayerViewContent: View {
         .padding(.vertical, 12)
     }
 
-    private func prayerBlock(_ prayer: Prayer) -> some View {
+    private func prayerBlock(_ prayer: Prayer, matches: [[TermMatch]]) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(prayer.title)
                 .font(.system(size: 11))
@@ -42,13 +48,10 @@ struct PrayerViewContent: View {
                     .italic()
                     .fixedSize(horizontal: false, vertical: true)
             }
-            ForEach(prayer.paragraphs, id: \.self) { paragraph in
-                Text(paragraph)
-                    .font(.custom("Cardo", size: 15))
-                    .foregroundStyle(Theme.parchment)
-                    .lineSpacing(5)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            PrayerProse(
+                model: model, paragraphs: prayer.paragraphs,
+                size: 15, spacing: 5, matches: matches
+            )
             PrayerAttribution(prayer: prayer)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

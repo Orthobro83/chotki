@@ -28,8 +28,12 @@ struct DayPanel: View {
             }
             Rectangle().fill(Theme.lineSoft).frame(height: 1)
             footer
+            if model.libraryOnRule {
+                InlineLibrary(model: model)
+            }
         }
         .animation(.easeInOut(duration: 0.45), value: model.thanksgiving)
+        .animation(.easeInOut(duration: 0.2), value: model.libraryOnRule)
         .onChange(of: model.selectedDate) { _ in model.clearThanksgiving() }
     }
 
@@ -97,15 +101,19 @@ struct DayPanel: View {
             Button { model.screen = .editor(nil) } label: {
                 Label("Add", systemImage: "plus")
             }
-            Button { model.screen = .library } label: {
+            // Opens underneath rather than navigating away, so the calendar
+            // and the day's list stay in view while you consider taking
+            // something else on. The full library is still a screen of its own.
+            Button { model.libraryOnRule.toggle() } label: {
                 Label("Library", systemImage: "square.grid.2x2")
             }
+            .foregroundStyle(model.libraryOnRule ? Theme.parchment : Theme.gold)
             Spacer()
             Button { model.screen = .prayerRope } label: {
                 Image(systemName: "circle.hexagonpath")
             }
             .help("Prayers")
-            Button { model.screen = .glossary(nil) } label: {
+            Button { model.openGlossary(nil) } label: {
                 Image(systemName: "text.book.closed")
             }
             Button { model.screen = .settings } label: {

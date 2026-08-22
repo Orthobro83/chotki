@@ -801,3 +801,100 @@ struct ThanksgivingTests {
         #expect(model.thanksgiving == nil)
     }
 }
+
+/// Following a term out of what you were reading, and getting back to it.
+@Suite("Opening a term")
+@MainActor
+struct GlossaryReturnTests {
+
+    @Test("comes back to the screen it was opened from")
+    func returnsToWhereItStarted() throws {
+        let model = try makeModel()
+        model.screen = .prayerRope
+
+        model.openGlossary("publican")
+        #expect(model.screen == .glossary("publican"))
+        #expect(model.glossaryReturn == .prayerRope)
+    }
+
+    // Following "Publican" to "Jesus Prayer" to "Chotki" and pressing back
+    // should land on the prayer, not walk back through the terms.
+    @Test("a chain of terms still returns to the start")
+    func chainKeepsTheOrigin() throws {
+        let model = try makeModel()
+        model.screen = .prayers(UUID())
+        let origin = model.screen
+
+        model.openGlossary("publican")
+        model.openGlossary("jesus-prayer")
+        model.openGlossary("chotki")
+
+        #expect(model.glossaryReturn == origin)
+    }
+
+    @Test("opened from the main screen it returns there")
+    func fromMain() throws {
+        let model = try makeModel()
+        #expect(model.screen == .main)
+        model.openGlossary(nil)
+        #expect(model.glossaryReturn == .main)
+    }
+
+    @Test("the library remembers it too")
+    func fromLibrary() throws {
+        let model = try makeModel()
+        model.screen = .library
+        model.openGlossary("great-lent")
+        #expect(model.glossaryReturn == .library)
+    }
+}
+
+/// The prayers screen keeps its place across a detour.
+@Suite("The prayers screen survives navigation")
+@MainActor
+struct PrayerStateTests {
+
+    @Test("a rope count is not lost to looking a word up")
+    func countSurvives() throws {
+        let model = try makeModel()
+        model.prayers = PrayerScreen(selection: "jesus-prayer", count: 0, target: 100)
+        for _ in 0..<40 { model.prayers.advance() }
+
+        model.openGlossary("jesus-prayer")
+        model.screen = model.glossaryReturn
+
+        #expect(model.prayers.count == 40)
+        #expect(model.prayers.selection == "jesus-prayer")
+    }
+
+    @Test("nor is the chosen prayer")
+    func selectionSurvives() throws {
+        let model = try makeModel()
+        model.prayers.choose("morning")
+        model.prayers.showRope(true)
+
+        model.openGlossary("symbol-of-faith")
+        model.screen = model.glossaryReturn
+
+        #expect(model.prayers.selection == "morning")
+        #expect(model.prayers.showsRope(), "the override survives too")
+    }
+}
+
+/// The library opened underneath the day rather than instead of it.
+@Suite("The library on the rule screen")
+@MainActor
+struct LibraryDrawerTests {
+
+    @Test("starts closed")
+    func startsClosed() throws {
+        #expect(try makeModel().libraryOnRule == false)
+    }
+
+    @Test("opening it does not navigate away from the rule")
+    func staysOnTheRule() throws {
+        let model = try makeModel()
+        model.libraryOnRule = true
+        #expect(model.screen == .main, "the day and its calendar are still on screen")
+    }
+}

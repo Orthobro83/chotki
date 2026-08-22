@@ -320,3 +320,72 @@ struct RopeBelongsTests {
         #expect(!book.notForRope().isEmpty)
     }
 }
+
+/// The prayers screen's state, which outlives the view it is drawn in.
+@Suite("The prayers screen")
+struct PrayerScreenTests {
+
+    @Test("the rope follows the prayer")
+    func ropeFollowsSelection() {
+        var screen = PrayerScreen(selection: nil)
+        #expect(screen.showsRope(), "nothing chosen shows the rope")
+
+        screen.choose("jesus-prayer")
+        #expect(screen.showsRope())
+
+        screen.choose("morning")
+        #expect(!screen.showsRope(), "a rule is read, not counted")
+    }
+
+    @Test("the reader can overrule it")
+    func overrule() {
+        var screen = PrayerScreen(selection: "morning")
+        #expect(!screen.showsRope())
+        screen.showRope(true)
+        #expect(screen.showsRope())
+    }
+
+    // Otherwise "hide" pressed once on the Creed would silently hide the rope
+    // behind the Jesus Prayer chosen ten minutes later.
+    @Test("choosing again goes back to following the prayer")
+    func choosingClearsTheOverride() {
+        var screen = PrayerScreen(selection: "jesus-prayer")
+        screen.showRope(false)
+        #expect(!screen.showsRope())
+
+        screen.choose("publican")
+        #expect(screen.showsRope())
+    }
+
+    @Test("choosing what is already chosen changes nothing")
+    func reChoosingIsInert() {
+        var screen = PrayerScreen(selection: "jesus-prayer")
+        screen.showRope(false)
+        screen.choose("jesus-prayer")
+        #expect(!screen.showsRope(), "the override survives")
+    }
+
+    @Test("counting stops at the target and reports the knot")
+    func counting() {
+        var screen = PrayerScreen(count: 0, target: 3)
+        #expect(screen.advance() == false)
+        #expect(screen.advance() == false)
+        #expect(screen.advance() == true, "the third completes it")
+        #expect(screen.isComplete)
+        #expect(screen.advance() == false, "no further")
+        #expect(screen.count == 3)
+    }
+
+    @Test("a new target starts the count again")
+    func aiming() {
+        var screen = PrayerScreen(count: 40, target: 50)
+        screen.aim(at: 33)
+        #expect(screen.count == 0, "40 of 33 would show a knot already complete")
+        #expect(screen.target == 33)
+    }
+
+    @Test("the offered targets are the traditional ones")
+    func targets() {
+        #expect(PrayerScreen.targets == [33, 50, 100])
+    }
+}

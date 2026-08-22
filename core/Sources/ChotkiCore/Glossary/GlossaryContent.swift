@@ -9,7 +9,7 @@ import Foundation
 // preparation for communion should come from a priest rather than an app.
 extension Glossary {
 
-    public static let bundled: [GlossaryEntry] = general + russianPractice
+    public static let bundled: [GlossaryEntry] = general + prayerWords + russianPractice
 
     static let general: [GlossaryEntry] = [
 

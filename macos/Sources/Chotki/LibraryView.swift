@@ -85,7 +85,7 @@ struct TemplateRow: View {
                 if !template.glossarySlugs.isEmpty, hovering {
                     HStack(spacing: 6) {
                         ForEach(template.glossarySlugs.prefix(3), id: \.self) { slug in
-                            Button { model.screen = .glossary(slug) } label: {
+                            Button { model.openGlossary(slug) } label: {
                                 Text(slug.replacingOccurrences(of: "-", with: " "))
                                     .font(.system(size: 10))
                                     .foregroundStyle(Theme.goldDim)
@@ -117,6 +117,53 @@ struct TemplateRow: View {
         .padding(.horizontal, 14).padding(.vertical, 6)
         .background(hovering ? Theme.panel : .clear)
         .onHover { hovering = $0 }
+    }
+}
+
+/// The library opened underneath the day, on the rule screen.
+///
+/// Deciding what to take on is a judgement about how much is already there. Sent
+/// to a screen of its own you are choosing in the abstract; opened below the
+/// day, the calendar and the list of what you have already promised are a scroll
+/// away rather than a navigation away.
+///
+/// It sits inside the day's own scroll rather than in a pane of its own, so it
+/// grows from exactly where the button was pressed and nothing has to jump to
+/// make room for it.
+struct InlineLibrary: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Rectangle().fill(Theme.line).frame(height: 1)
+
+            HStack(spacing: 10) {
+                Text("Library")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Theme.parchment)
+                Spacer()
+                Button {
+                    model.libraryOnRule = false
+                    model.screen = .library
+                } label: {
+                    Text("Open in full")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.gold)
+                }
+                .buttonStyle(.plain)
+                Button { model.libraryOnRule = false } label: {
+                    Image(systemName: "xmark").font(.system(size: 9))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.faint)
+                .help("Close the library")
+            }
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(Theme.panel)
+
+            LibraryViewContent(model: model)
+        }
+        .background(Theme.ground)
     }
 }
 

@@ -64,13 +64,17 @@ private struct EditorTarget: Identifiable {
 struct MainWindowView: View {
     @ObservedObject var model: AppModel
     @State private var section: MainSection = .rule
+    /// Where the sidebar was before the current section, so Terms can go back to
+    /// it. Cleared when it is used, otherwise pressing back on Terms would
+    /// return to Terms.
+    @State private var previousSection: MainSection?
     @State private var editing: EditorTarget?
     @State private var reading: EditorTarget?
     @State private var pendingSlug: String?
 
     var body: some View {
         NavigationSplitView {
-            List(MainSection.allCases, id: \.self, selection: $section) { item in
+            List(MainSection.allCases, id: \.self, selection: sidebarSelection) { item in
                 Label(item.rawValue, systemImage: item.symbol)
                     .font(.system(size: 13))
                     .tag(item)
@@ -93,10 +97,10 @@ struct MainWindowView: View {
             case .stay:
                 return
             case .section(let target):
-                section = target
+                go(to: target)
             case .glossary(let slug):
                 pendingSlug = slug
-                section = .terms
+                go(to: .terms)
             case .editor(let ruleID):
                 editing = EditorTarget(ruleID: ruleID)
             case .prayers(let ruleID):
@@ -124,6 +128,17 @@ struct MainWindowView: View {
         }
     }
 
+    /// Records where the reader was before moving, so a detour can be undone.
+    private var sidebarSelection: Binding<MainSection> {
+        Binding(get: { section }, set: { go(to: $0) })
+    }
+
+    private func go(to target: MainSection) {
+        guard target != section else { return }
+        previousSection = section
+        section = target
+    }
+
     @ViewBuilder private var detail: some View {
         switch section {
         case .rule: ruleSection
@@ -132,10 +147,22 @@ struct MainWindowView: View {
         case .library: scrolling { LibraryViewContent(model: model) }
         case .prayers: PrayerRopeView(model: model)
         case .terms:
-            // Re-created when a different term is requested, so the glossary
-            // seeds itself on the new slug.
-            GlossaryView(model: model, initialSlug: pendingSlug)
-                .id(pendingSlug ?? "all")
+            VStack(spacing: 0) {
+                // A term is nearly always opened from somewhere — a word in a
+                // prayer, the day's fasting note — and the way back matters more
+                // here than on a section the reader chose deliberately.
+                if let previousSection {
+                    SectionBackRow(title: previousSection.rawValue) {
+                        let target = previousSection
+                        self.previousSection = nil
+                        section = target
+                    }
+                }
+                // Re-created when a different term is requested, so the glossary
+                // seeds itself on the new slug.
+                GlossaryView(model: model, initialSlug: pendingSlug)
+                    .id(pendingSlug ?? "all")
+            }
         case .settings: scrolling { SettingsViewContent(model: model) }
         }
     }
@@ -175,6 +202,26 @@ struct MainWindowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollContentBackgroundHidden()
+    }
+}
+
+/// Back to the section the reader came from, shown above the glossary.
+private struct SectionBackRow: View {
+    let title: String
+    let back: () -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Button(action: back) {
+                Label("Back to \(title)", systemImage: "chevron.left")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.muted)
+            }
+            .buttonStyle(.plain)
+            Spacer()
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .overlay(alignment: .bottom) { Rectangle().fill(Theme.lineSoft).frame(height: 1) }
     }
 }
 

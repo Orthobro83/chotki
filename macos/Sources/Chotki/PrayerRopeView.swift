@@ -15,30 +15,8 @@ import ChotkiCore
 struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
 
-    @State private var count: Int
-    @State private var target = 33
-    @State private var selection: String
-    /// nil follows the prayer; true or false is the person's own decision.
-    @State private var ropeOverride: Bool?
-
-    private let targets = [33, 50, 100]
-    /// Chosen when nothing is selected: the rope on its own.
-    private static let nothing = "none"
-
-    init(model: AppModel, startingAt count: Int = 0, showing selection: String = "jesus-prayer") {
-        self.model = model
-        _count = State(initialValue: count)
-        _selection = State(initialValue: selection)
-    }
-
-    // MARK: what is shown
-
-    /// The rope follows the prayer unless the person has said otherwise.
-    private var showsRope: Bool {
-        ropeOverride ?? PrayerBook.shared.ropeBelongs(
-            with: selection == Self.nothing ? nil : selection
-        )
-    }
+    private var screen: PrayerScreen { model.prayers }
+    private var showsRope: Bool { screen.showsRope() }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -55,10 +33,10 @@ struct PrayerRopeView: View {
                     .padding(.top, 7).padding(.bottom, 14)
             }
 
-            if selection != Self.nothing {
+            if let selection = screen.selection {
                 Rectangle().fill(Theme.lineSoft).frame(height: 1)
                 ScrollView {
-                    RopeWords(selection: selection)
+                    RopeWords(model: model, selection: selection)
                         .padding(.horizontal, 22).padding(.vertical, 14)
                 }
                 .scrollContentBackgroundHidden()
@@ -75,14 +53,14 @@ struct PrayerRopeView: View {
 
     private var counter: some View {
         VStack(spacing: 4) {
-            Text("\(count)")
+            Text("\(screen.count)")
                 .font(.system(size: 54, weight: .light))
                 .foregroundStyle(Theme.gold)
                 .monospacedDigit()
                 .contentTransition(.numericText())
-            Text(count >= target ? "the knot is complete" : "of \(target)")
+            Text(screen.isComplete ? "the knot is complete" : "of \(screen.target)")
                 .font(.system(size: 12))
-                .foregroundStyle(count >= target ? Theme.goldDim : Theme.muted)
+                .foregroundStyle(screen.isComplete ? Theme.goldDim : Theme.muted)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 2).padding(.bottom, 16)
@@ -107,22 +85,23 @@ struct PrayerRopeView: View {
     private var prayerChooser: some View {
         let book = PrayerBook.shared.scoped(to: model.settings.jurisdiction.tradition)
         return HStack {
-            Picker("", selection: $selection) {
-                Text("The rope alone").tag(Self.nothing)
-                Divider()
+            Picker("", selection: chosen) {
+                Text("The rope alone").tag(String?.none)
+                // No Divider here: each Section draws its own, and the two
+                // together put a double rule under the first item.
                 Section("Rules") {
                     ForEach(PrayerBook.shared.sequences, id: \.id) { sequence in
-                        Text(sequence.title).tag(sequence.id)
+                        Text(sequence.title).tag(String?.some(sequence.id))
                     }
                 }
                 Section("On the rope") {
                     ForEach(book.forRope(), id: \.id) { prayer in
-                        Text(prayer.title).tag(prayer.id)
+                        Text(prayer.title).tag(String?.some(prayer.id))
                     }
                 }
                 Section("Read") {
                     ForEach(book.notForRope(), id: \.id) { prayer in
-                        Text(prayer.title).tag(prayer.id)
+                        Text(prayer.title).tag(String?.some(prayer.id))
                     }
                 }
             }
@@ -133,28 +112,31 @@ struct PrayerRopeView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 14).padding(.bottom, 10)
-        // Choosing again returns to following the prayer, rather than leaving
-        // an earlier decision stuck to everything chosen afterwards.
-        .onChange(of: selection) { _ in ropeOverride = nil }
+    }
+
+    /// Writes through `PrayerScreen.choose`, which is what clears an earlier
+    /// decision about the rope.
+    private var chosen: Binding<String?> {
+        Binding(get: { model.prayers.selection }, set: { model.prayers.choose($0) })
     }
 
     private var footer: some View {
         HStack(spacing: 8) {
             if showsRope {
-                ForEach(targets, id: \.self) { value in
-                    Button { target = value; count = 0 } label: {
+                ForEach(PrayerScreen.targets, id: \.self) { value in
+                    Button { model.prayers.aim(at: value) } label: {
                         Text("\(value)")
                             .font(.system(size: 11))
-                            .foregroundStyle(target == value ? Theme.ground : Theme.muted)
+                            .foregroundStyle(screen.target == value ? Theme.ground : Theme.muted)
                             .frame(width: 42, height: 22)
                             .background {
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(target == value ? Theme.gold : Theme.panel)
+                                    .fill(screen.target == value ? Theme.gold : Theme.panel)
                             }
                     }
                     .buttonStyle(.plain)
                 }
-                Button { count = 0 } label: {
+                Button { model.prayers.startAgain() } label: {
                     Text("Start again")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.muted)
@@ -164,7 +146,7 @@ struct PrayerRopeView: View {
 
             Spacer()
 
-            Button { ropeOverride = !showsRope } label: {
+            Button { model.prayers.showRope(!showsRope) } label: {
                 Text(showsRope ? "Hide rope" : "Show rope")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.gold)
@@ -177,23 +159,24 @@ struct PrayerRopeView: View {
 
     /// One dot per knot, filling as it goes.
     private var knots: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: min(target, 10))
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: min(screen.target, 10))
         return LazyVGrid(columns: columns, spacing: 5) {
-            ForEach(0..<target, id: \.self) { index in
+            ForEach(0..<screen.target, id: \.self) { index in
                 Circle()
-                    .fill(index < count ? Theme.gold : Theme.panel)
+                    .fill(index < screen.count ? Theme.gold : Theme.panel)
                     .frame(height: 7)
             }
         }
     }
 
     private func advance() {
-        guard count < target else { return }
-        count += 1
+        let wasCounted = model.prayers.count
+        let completed = model.prayers.advance()
+        guard model.prayers.count != wasCounted else { return }
 
         // The chime marks completion; the tick only confirms a press landed.
         // Never both at once — with your eyes closed they would run together.
-        if count == target {
+        if completed {
             if model.settings.chimeOnCompletion { sound.playBell() }
         } else if model.settings.tickEachKnot {
             sound.playTick()
@@ -209,38 +192,41 @@ struct PrayerRopeView: View {
 /// ImageRenderer does not draw ScrollView contents, and a view that cannot be
 /// looked at is one that gets shipped broken.
 struct RopeWords: View {
+    @ObservedObject var model: AppModel
     let selection: String
 
     @ViewBuilder var body: some View {
         if let sequence = PrayerBook.shared.sequence(id: selection) {
+            // A rule is read straight through, so it is scanned as one document:
+            // otherwise "Amen" is linked at the end of every prayer in it.
+            let prayers = PrayerBook.shared.prayers(of: sequence)
+            let found = Glossary
+                .shared(for: model.settings.jurisdiction.tradition)
+                .scanOnce(across: prayers.map(\.paragraphs))
+
             VStack(alignment: .leading, spacing: 16) {
-                ForEach(PrayerBook.shared.prayers(of: sequence), id: \.id) { prayer in
+                ForEach(Array(prayers.enumerated()), id: \.element.id) { index, prayer in
                     VStack(alignment: .leading, spacing: 5) {
                         Text(prayer.title)
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.gold)
-                        ForEach(prayer.paragraphs, id: \.self) { paragraph in
-                            Text(paragraph)
-                                .font(.custom("Cardo", size: 14))
-                                .foregroundStyle(Theme.parchment)
-                                .lineSpacing(4)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                        PrayerProse(
+                            model: model, paragraphs: prayer.paragraphs,
+                            size: 14, spacing: 4, matches: found[index]
+                        )
                     }
                 }
-                if let first = PrayerBook.shared.prayers(of: sequence).first {
+                if let first = prayers.first {
                     PrayerAttribution(prayer: first)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } else if let prayer = PrayerBook.shared.prayer(id: selection) {
             VStack(spacing: 4) {
-                Text(prayer.text)
-                    .font(.custom("Cardo", size: 15))
-                    .foregroundStyle(Theme.parchment)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
+                PrayerProse(
+                    model: model, paragraphs: prayer.paragraphs,
+                    size: 15, spacing: 4, centred: true
+                )
                 PrayerAttribution(prayer: prayer)
             }
             .frame(maxWidth: .infinity)
