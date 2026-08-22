@@ -38,7 +38,8 @@ extension PrayerBook {
             paragraphs: [
                 "O Heavenly King, the Comforter, the Spirit of Truth, Who art everywhere present and fillest all things; Treasury of good things and Giver of life: come and abide in us, and cleanse us from every impurity, and save our souls, O Good One."
             ],
-            source: "Hapgood, Service Book, 1906"
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
         ),
         Prayer(
             id: "trisagion",
@@ -48,7 +49,8 @@ extension PrayerBook {
                 "Holy God, Holy Mighty, Holy Immortal, have mercy on us.",
                 "Glory to the Father, and to the Son, and to the Holy Spirit, both now and ever, and unto ages of ages. Amen."
             ],
-            source: "Hapgood, Service Book, 1906"
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
         ),
         Prayer(
             id: "all-holy-trinity",
@@ -58,7 +60,8 @@ extension PrayerBook {
                 "Lord, have mercy. Lord, have mercy. Lord, have mercy.",
                 "Glory to the Father, and to the Son, and to the Holy Spirit, both now and ever, and unto ages of ages. Amen."
             ],
-            source: "Hapgood, Service Book, 1906"
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
         ),
         Prayer(
             id: "our-father",
@@ -79,7 +82,8 @@ extension PrayerBook {
             paragraphs: [
                 "Having risen from sleep, I thank Thee, O Holy Trinity, that for the sake of Thy great goodness and long-suffering Thou hast not been wroth with me, slothful and sinful as I am, neither hast Thou destroyed me in my transgressions; but Thou hast shown Thy usual love for mankind, and hast raised me up as I lay in heedlessness, that I might rise early and glorify Thy sovereignty."
             ],
-            source: "Hapgood, Service Book, 1906"
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
         ),
         Prayer(
             id: "evening-forgiveness",
@@ -89,7 +93,8 @@ extension PrayerBook {
                 "O Lord our God, if during this day I have sinned, whether in word or deed or thought, forgive me all, for Thou art good and lovest mankind.",
                 "Grant me peaceful and undisturbed sleep, and deliver me from all the influence and temptation of the evil one. Raise me up again in due time, that I may glorify Thee; for Thou art blessed, with Thine only-begotten Son and Thine all-holy Spirit, unto ages of ages. Amen."
             ],
-            source: "Hapgood, Service Book, 1906"
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
         ),
         Prayer(
             id: "guardian-angel",
@@ -109,6 +114,7 @@ extension PrayerBook {
                 "Rejoice, O Virgin Theotokos, Mary full of grace, the Lord is with thee. Blessed art thou among women, and blessed is the fruit of thy womb, for thou hast borne the Saviour of our souls."
             ],
             source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg",
             isForRope: true
         ),
         Prayer(
@@ -118,7 +124,8 @@ extension PrayerBook {
                 "It is truly meet to bless thee, O Theotokos, ever-blessed and most blameless, and Mother of our God.",
                 "More honourable than the cherubim, and beyond compare more glorious than the seraphim, who without corruption gavest birth to God the Word: true Theotokos, we magnify thee."
             ],
-            source: "Hapgood, Service Book, 1906"
+            source: "Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
         ),
 
         // MARK: for the rope

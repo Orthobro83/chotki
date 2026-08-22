@@ -21,6 +21,8 @@ public struct Prayer: Sendable, Hashable, Identifiable {
     public let paragraphs: [String]
     /// Where this wording comes from, so it can be checked.
     public let source: String
+    /// Where to read that source, where it is online.
+    public let sourceURL: String?
     /// Short enough to pray repeatedly on a rope.
     public let isForRope: Bool
     /// Empty means every tradition.
@@ -28,13 +30,15 @@ public struct Prayer: Sendable, Hashable, Identifiable {
 
     public init(
         id: String, title: String, rubric: String? = nil, paragraphs: [String],
-        source: String, isForRope: Bool = false, traditions: Set<Tradition> = []
+        source: String, sourceURL: String? = nil,
+        isForRope: Bool = false, traditions: Set<Tradition> = []
     ) {
         self.id = id
         self.title = title
         self.rubric = rubric
         self.paragraphs = paragraphs
         self.source = source
+        self.sourceURL = sourceURL
         self.isForRope = isForRope
         self.traditions = traditions
     }

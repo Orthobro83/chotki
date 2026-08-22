@@ -140,3 +140,59 @@ struct RulePrayerTests {
         #expect(!loaded.hasPrayers)
     }
 }
+
+/// The places to read prayers beyond the ones bundled here. They are
+/// references, not the source of the app's wording — almost all publish modern
+/// translations, which are under copyright however freely they can be read.
+@Suite("Where to read more")
+struct PrayerSourceTests {
+
+    @Test("every reference is complete")
+    func wellFormed() {
+        #expect(PrayerSources.further.count >= 20)
+        for source in PrayerSources.further {
+            #expect(!source.title.isEmpty)
+            #expect(!source.organisation.isEmpty, "\(source.url) does not say whose it is")
+        }
+    }
+
+    @Test("every reference is a usable link")
+    func linksParse() {
+        for source in PrayerSources.further {
+            let url = URL(string: source.url)
+            #expect(url != nil, "\(source.url) will not open")
+            #expect(url?.host != nil, "\(source.url) has no host")
+            #expect(["http", "https"].contains(url?.scheme ?? ""), "\(source.url)")
+        }
+    }
+
+    @Test("no reference is listed twice")
+    func noDuplicates() {
+        let urls = PrayerSources.further.map(\.url)
+        #expect(Set(urls).count == urls.count)
+    }
+
+    // Attribution that does not open is worse than none: it looks checkable
+    // and is not.
+    @Test("a prayer that cites a link has one that works")
+    func prayerLinksParse() {
+        for prayer in PrayerBook.shared.prayers {
+            guard let link = prayer.sourceURL else { continue }
+            let url = URL(string: link)
+            #expect(url != nil, "\(prayer.id) has an unusable source link")
+            #expect(url?.host != nil, "\(prayer.id)")
+        }
+    }
+
+    // The bundled wording is public domain. If a prayer ever cites one of these
+    // sites as its *source*, the text almost certainly came from there too.
+    @Test("no bundled prayer claims one of these sites as its source")
+    func bundledTextIsNotTakenFromThem() {
+        let referenceHosts = Set(PrayerSources.further.compactMap { URL(string: $0.url)?.host })
+        for prayer in PrayerBook.shared.prayers {
+            guard let host = prayer.sourceURL.flatMap({ URL(string: $0)?.host }) else { continue }
+            #expect(!referenceHosts.contains(host),
+                    "\(prayer.id) cites \(host), whose translation is under copyright")
+        }
+    }
+}

@@ -282,6 +282,10 @@ The wording is older public-domain liturgical English, chiefly the Hapgood Servi
 
 What is bundled is a **core set, not a full prayer rule**. The morning and evening rules are long and differ between prayer books, so what a rule carries is the prayers common to almost every form of it — and the screen says so in as many words, because the difference between "these are the prayers" and "these are some of the prayers" matters to someone learning a rule.
 
+Every prayer shows, in fine print beneath it, where its wording came from and a link to that source. Attribution that does not open is worse than none — it looks checkable and is not — so a test asserts every link parses.
+
+The prayer screen also lists two dozen places to read prayers online, from parishes and jurisdictions. **These are references, not sources.** Almost all publish modern translations, which are under copyright however freely they can be read: being on a public web page is not the same as being in the public domain. They are there so someone can compare this wording against their own jurisdiction's and find the fuller rules the app does not carry. A test asserts that no bundled prayer cites one of those hosts as its source — if one ever did, the text almost certainly came from there too.
+
 A rule reaches its prayers from a mark on the row, always shown rather than only on hover, since the words are the reason the rule exists. The prayer rope carries a chooser of the short prayers — the Jesus Prayer in two forms, the Publican's prayer, Lord have mercy, and Rejoice O Virgin, which is what the Rule of the Theotokos repeats — and shows the chosen one above the count.
 
 ## Fixed facts

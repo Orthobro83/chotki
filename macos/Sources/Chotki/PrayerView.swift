@@ -49,6 +49,7 @@ struct PrayerViewContent: View {
                     .lineSpacing(5)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            PrayerAttribution(prayer: prayer)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -57,13 +58,39 @@ struct PrayerViewContent: View {
     /// Said plainly, because the difference between "these are the prayers" and
     /// "these are some of the prayers" matters to someone learning a rule.
     private var note: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 10) {
             Rectangle().fill(Theme.line).frame(height: 1)
             Text("These are the prayers common to almost every form of this rule. Prayer books differ, and the full rule is settled with your priest.")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.faint)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 8)
+
+            Text("Where to read more")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.muted)
+
+            // References, not the source of the wording above. Almost all
+            // publish modern translations, which are under copyright however
+            // freely they can be read.
+            VStack(alignment: .leading, spacing: 5) {
+                ForEach(PrayerSources.further) { source in
+                    if let url = URL(string: source.url) {
+                        Link(destination: url) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(source.title)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Theme.goldDim)
+                                Text(source.organisation)
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(Theme.faint)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.bottom, 6)
         }
         .padding(.horizontal, 16).padding(.top, 6)
     }
@@ -80,6 +107,30 @@ struct PrayerViewContent: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24).padding(.vertical, 40)
+    }
+}
+
+/// The fine print under a prayer: where its wording comes from, and where to
+/// read that source. Deliberately quiet — it should be findable, not intrusive.
+struct PrayerAttribution: View {
+    let prayer: Prayer
+
+    var body: some View {
+        Group {
+            if let link = prayer.sourceURL, let url = URL(string: link) {
+                Link(destination: url) {
+                    Text("Source · \(prayer.source)")
+                        .underline()
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text("Source · \(prayer.source)")
+            }
+        }
+        .font(.system(size: 10))
+        .foregroundStyle(Theme.faint)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.top, 3)
     }
 }
 

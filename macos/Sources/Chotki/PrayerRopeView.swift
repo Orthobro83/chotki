@@ -24,18 +24,6 @@ struct PrayerRopeView: View {
         VStack(spacing: 0) {
             prayerChooser
 
-            if let prayer = PrayerBook.shared.prayer(id: prayerID) {
-                // The words, above the count. Praying them is the point; the
-                // number is only a place to keep.
-                Text(prayer.text)
-                    .font(.custom("Cardo", size: 15))
-                    .foregroundStyle(Theme.parchment)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 26).padding(.top, 4).padding(.bottom, 14)
-            }
-
             VStack(spacing: 4) {
                 Text("\(count)")
                     .font(.system(size: 54, weight: .light))
@@ -50,7 +38,23 @@ struct PrayerRopeView: View {
             .padding(.top, 2).padding(.bottom, 16)
 
             knots
-                .padding(.horizontal, 22).padding(.bottom, 20)
+                .padding(.horizontal, 22).padding(.bottom, 16)
+
+            if let prayer = PrayerBook.shared.prayer(id: prayerID) {
+                // The words below the count and the rope: the number is a
+                // place to keep, and the eye should land on it first, but the
+                // prayer is what stays on screen while it is said.
+                Text(prayer.text)
+                    .font(.custom("Cardo", size: 15))
+                    .foregroundStyle(Theme.parchment)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 26).padding(.top, 4)
+
+                PrayerAttribution(prayer: prayer)
+                    .padding(.bottom, 12)
+            }
 
             Button { advance() } label: {
                 Text("Count")
