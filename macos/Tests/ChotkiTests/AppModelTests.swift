@@ -266,7 +266,7 @@ struct WindowRoutingTests {
         #expect(WindowRoute.route(for: .settings) == .section(.settings))
         #expect(WindowRoute.route(for: .glossary("pascha")) == .glossary("pascha"))
         #expect(WindowRoute.route(for: .editor(nil)) == .editor(nil))
-        #expect(WindowRoute.route(for: .prayerRope) == .section(.rope))
+        #expect(WindowRoute.route(for: .prayerRope) == .section(.prayers))
         let ruleID = UUID()
         #expect(WindowRoute.route(for: .prayers(ruleID)) == .prayers(ruleID))
     }

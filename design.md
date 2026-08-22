@@ -5,6 +5,28 @@ A menu bar app for keeping an Orthodox prayer rule, and honestly measuring wheth
 Status: design complete. No code written yet.
 Started 2026-08-19.
 
+## The rope follows the prayer (21 Aug 2026)
+
+The Prayers section shows the rope when what is chosen is traditionally counted
+on one — the Jesus Prayer, "Lord, have mercy", the publican's prayer, "Rejoice,
+O Virgin" — and hides it when the chosen thing is read through once, like the
+morning rule or the Creed. Choosing nothing shows the rope on its own, for
+someone who has the prayer by heart and only wants somewhere to keep the count.
+
+A "Show rope" / "Hide rope" button always overrules this, and choosing a
+different prayer returns to following the prayer rather than leaving one
+decision stuck to everything after it.
+
+The reason for the override: the marking says what the tradition generally does,
+not what anyone must do. Practice varies, and a person may well count something
+we have not marked. The app should not argue with them about their own rule.
+
+The judgement itself lives in `PrayerBook.ropeBelongs(with:)` in core, so the
+Android version inherits it rather than reinventing it. `Prayer.isForRope` is
+the data behind it. Saint Ioannikios' prayer was marked counted when the prayers
+were first added; it closes the evening rule and is said once, so it was
+corrected.
+
 ## The problem
 
 A calendar app tells you what is scheduled. It does not tell you what you actually kept, and mixing a prayer rule into a work calendar buries it. The product insight: the value is not the schedule, it is the honest record of consistency over months — recorded in a way that does not turn the practice into a scoreboard.

@@ -104,7 +104,7 @@ struct DayPanel: View {
             Button { model.screen = .prayerRope } label: {
                 Image(systemName: "circle.hexagonpath")
             }
-            .help("Prayer rope")
+            .help("Prayers")
             Button { model.screen = .glossary(nil) } label: {
                 Image(systemName: "text.book.closed")
             }

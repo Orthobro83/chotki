@@ -134,8 +134,7 @@ extension PrayerBook {
                 "My hope is the Father, my refuge the Son, my protection the Holy Spirit: O Holy Trinity, glory to Thee."
             ],
             source: "Hapgood, Service Book, 1906",
-            sourceURL: "https://archive.org/details/servicebookofhol00hapg",
-            isForRope: true
+            sourceURL: "https://archive.org/details/servicebookofhol00hapg"
         ),
 
         // MARK: to the Theotokos

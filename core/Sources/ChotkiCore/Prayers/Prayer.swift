@@ -23,7 +23,8 @@ public struct Prayer: Sendable, Hashable, Identifiable {
     public let source: String
     /// Where to read that source, where it is online.
     public let sourceURL: String?
-    /// Short enough to pray repeatedly on a rope.
+    /// Traditionally counted on a prayer rope — said over and over, rather
+    /// than read once. Governs whether the rope is shown alongside it.
     public let isForRope: Bool
     /// Empty means every tradition.
     public let traditions: Set<Tradition>
@@ -67,9 +68,30 @@ public struct PrayerBook: Sendable {
         ids.compactMap { prayer(id: $0) }
     }
 
-    /// Short prayers suitable for a prayer rope.
+    /// Prayers traditionally counted on a rope.
     public func forRope(tradition: Tradition? = nil) -> [Prayer] {
         prayers.filter { $0.isForRope && (tradition.map($0.appliesTo) ?? true) }
+    }
+
+    /// Prayers that are read rather than counted.
+    public func notForRope(tradition: Tradition? = nil) -> [Prayer] {
+        prayers.filter { !$0.isForRope && (tradition.map($0.appliesTo) ?? true) }
+    }
+
+    /// Whether the rope belongs alongside a given selection.
+    ///
+    /// Counted prayers bring the rope; rules read through do not. Choosing
+    /// nothing brings it too — for someone who has the prayer by heart and only
+    /// wants somewhere to keep the count.
+    ///
+    /// This is what the tradition does, not what anyone must do: the interface
+    /// lets a person overrule it, because practice varies and the app should
+    /// not argue.
+    public func ropeBelongs(with selection: String?) -> Bool {
+        guard let selection, !selection.isEmpty else { return true }
+        if sequence(id: selection) != nil { return false }
+        guard let prayer = prayer(id: selection) else { return true }
+        return prayer.isForRope
     }
 
     public func scoped(to tradition: Tradition) -> PrayerBook {

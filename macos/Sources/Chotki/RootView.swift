@@ -44,7 +44,7 @@ struct RootView: View {
                 PrayerView(model: model, ruleID: ruleID)
                     .frame(maxHeight: .infinity, alignment: .top)
             case .prayerRope:
-                Header(title: "Prayer rope") { model.screen = .main }
+                Header(title: "Prayers") { model.screen = .main }
                 PrayerRopeView(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
             }

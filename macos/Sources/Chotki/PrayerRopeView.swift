@@ -1,76 +1,146 @@
 import SwiftUI
 import ChotkiCore
 
-/// A chotki, for counting the Jesus Prayer.
+/// The prayers, and the rope.
 ///
-/// The app is named for this. It counts and nothing else: no timing, no record
-/// kept, no score. Losing count is not an event worth reporting.
+/// Named for the app, and the reason for it. The rope is shown when the chosen
+/// prayer is one traditionally counted on it — the Jesus Prayer and its kin —
+/// and hidden when the chosen thing is read instead, like the morning rule.
+/// Choosing nothing shows the rope, for someone who has the prayer by heart and
+/// only wants somewhere to keep the count.
+///
+/// A person can always overrule that. The judgement about which prayers are
+/// counted belongs to the tradition, not to this app, and someone's practice
+/// may differ from what is written here.
 struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
+
     @State private var count: Int
     @State private var target = 33
-    @State private var selection = "jesus-prayer"
-    private let sound = SoundPlayer.shared
-    @FocusState private var focused: Bool
+    @State private var selection: String
+    /// nil follows the prayer; true or false is the person's own decision.
+    @State private var ropeOverride: Bool?
 
     private let targets = [33, 50, 100]
+    /// Chosen when nothing is selected: the rope on its own.
+    private static let nothing = "none"
 
-    init(model: AppModel, startingAt count: Int = 0) {
+    init(model: AppModel, startingAt count: Int = 0, showing selection: String = "jesus-prayer") {
         self.model = model
         _count = State(initialValue: count)
+        _selection = State(initialValue: selection)
+    }
+
+    // MARK: what is shown
+
+    /// The rope follows the prayer unless the person has said otherwise.
+    private var showsRope: Bool {
+        ropeOverride ?? PrayerBook.shared.ropeBelongs(
+            with: selection == Self.nothing ? nil : selection
+        )
     }
 
     var body: some View {
         VStack(spacing: 0) {
             prayerChooser
 
-            VStack(spacing: 4) {
-                Text("\(count)")
-                    .font(.system(size: 54, weight: .light))
-                    .foregroundStyle(Theme.gold)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                Text(count >= target ? "the knot is complete" : "of \(target)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(count >= target ? Theme.goldDim : Theme.muted)
+            if showsRope {
+                counter
+                knots
+                    .padding(.horizontal, 22).padding(.bottom, 16)
+                countButton
+                Text("Click, or press space.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.faint)
+                    .padding(.top, 7).padding(.bottom, 14)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 2).padding(.bottom, 16)
 
-            knots
-                .padding(.horizontal, 22).padding(.bottom, 16)
-
-            Button { advance() } label: {
-                Text("Count")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.ground)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Theme.gold))
+            if selection != Self.nothing {
+                Rectangle().fill(Theme.lineSoft).frame(height: 1)
+                ScrollView {
+                    RopeWords(selection: selection)
+                        .padding(.horizontal, 22).padding(.vertical, 14)
+                }
+                .scrollContentBackgroundHidden()
+                .frame(maxHeight: .infinity)
+            } else {
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
-            .keyboardShortcut(.space, modifiers: [])
-            .padding(.horizontal, 22)
-
-            Text("Click, or press space.")
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.faint)
-                .padding(.top, 7).padding(.bottom, 14)
 
             Rectangle().fill(Theme.lineSoft).frame(height: 1)
+            footer
+        }
+        .animation(.easeInOut(duration: 0.2), value: showsRope)
+    }
 
-            // The words fill the lower half. A sequence is long, so this
-            // scrolls while the count and the rope stay put above it.
-            ScrollView {
-                RopeWords(selection: selection)
-                    .padding(.horizontal, 22).padding(.vertical, 14)
+    private var counter: some View {
+        VStack(spacing: 4) {
+            Text("\(count)")
+                .font(.system(size: 54, weight: .light))
+                .foregroundStyle(Theme.gold)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+            Text(count >= target ? "the knot is complete" : "of \(target)")
+                .font(.system(size: 12))
+                .foregroundStyle(count >= target ? Theme.goldDim : Theme.muted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 2).padding(.bottom, 16)
+    }
+
+    private var countButton: some View {
+        Button { advance() } label: {
+            Text("Count")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.ground)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Theme.gold))
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut(.space, modifiers: [])
+        .padding(.horizontal, 22)
+    }
+
+    /// What is being prayed. Grouped, because a rule said through and a prayer
+    /// repeated are different things done with the same screen.
+    private var prayerChooser: some View {
+        let book = PrayerBook.shared.scoped(to: model.settings.jurisdiction.tradition)
+        return HStack {
+            Picker("", selection: $selection) {
+                Text("The rope alone").tag(Self.nothing)
+                Divider()
+                Section("Rules") {
+                    ForEach(PrayerBook.shared.sequences, id: \.id) { sequence in
+                        Text(sequence.title).tag(sequence.id)
+                    }
+                }
+                Section("On the rope") {
+                    ForEach(book.forRope(), id: \.id) { prayer in
+                        Text(prayer.title).tag(prayer.id)
+                    }
+                }
+                Section("Read") {
+                    ForEach(book.notForRope(), id: \.id) { prayer in
+                        Text(prayer.title).tag(prayer.id)
+                    }
+                }
             }
-            .scrollContentBackgroundHidden()
-            .frame(maxHeight: .infinity)
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .font(.system(size: 11))
+            .frame(maxWidth: 250)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 14).padding(.bottom, 10)
+        // Choosing again returns to following the prayer, rather than leaving
+        // an earlier decision stuck to everything chosen afterwards.
+        .onChange(of: selection) { _ in ropeOverride = nil }
+    }
 
-            Rectangle().fill(Theme.lineSoft).frame(height: 1)
-
-            HStack(spacing: 8) {
+    private var footer: some View {
+        HStack(spacing: 8) {
+            if showsRope {
                 ForEach(targets, id: \.self) { value in
                     Button { target = value; count = 0 } label: {
                         Text("\(value)")
@@ -84,7 +154,6 @@ struct PrayerRopeView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                Spacer()
                 Button { count = 0 } label: {
                     Text("Start again")
                         .font(.system(size: 11))
@@ -92,32 +161,18 @@ struct PrayerRopeView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 22).padding(.bottom, 16)
-        }
-    }
 
-    /// Which prayer is being said. The rope is for repeating one prayer, so
-    /// this is a choice made once and then left alone.
-    private var prayerChooser: some View {
-        HStack {
-            Picker("", selection: $selection) {
-                ForEach(PrayerBook.shared.forRope(), id: \.id) { prayer in
-                    Text(prayer.title).tag(prayer.id)
-                }
-                Divider()
-                // A rule said through while counting, rather than one prayer
-                // repeated. Both are ways the rope is used.
-                ForEach(PrayerBook.shared.sequences, id: \.id) { sequence in
-                    Text(sequence.title).tag(sequence.id)
-                }
+            Spacer()
+
+            Button { ropeOverride = !showsRope } label: {
+                Text(showsRope ? "Hide rope" : "Show rope")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.gold)
             }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .font(.system(size: 11))
-            .frame(maxWidth: 250)
+            .buttonStyle(.plain)
+            .help("The rope follows the prayer unless you say otherwise")
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 14).padding(.bottom, 2)
+        .padding(.horizontal, 22).padding(.vertical, 14)
     }
 
     /// One dot per knot, filling as it goes.
@@ -144,6 +199,8 @@ struct PrayerRopeView: View {
             sound.playTick()
         }
     }
+
+    private let sound = SoundPlayer.shared
 }
 
 /// What the rope shows: one short prayer, or a whole rule said through.

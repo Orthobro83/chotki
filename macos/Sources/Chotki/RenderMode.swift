@@ -42,8 +42,13 @@ enum RenderMode {
 
             render(RopeWords(selection: "morning").padding(20), to: "\(prefix)-ropewords.png")
 
-            render(PrayerRopeView(model: model, startingAt: 21).frame(height: Theme.popoverHeight),
-                   to: "\(prefix)-rope.png")
+            // The rope follows the prayer: shown for a counted one, hidden for a
+            // rule that is read through, shown when nothing is chosen.
+            for (selection, name) in [("jesus-prayer", "rope"), ("morning", "rope-read"), ("none", "rope-alone")] {
+                render(PrayerRopeView(model: model, startingAt: 21, showing: selection)
+                        .frame(height: Theme.popoverHeight),
+                       to: "\(prefix)-\(name).png")
+            }
 
             FileHandle.standardOutput.write(Data("rendered\n".utf8))
         } catch {

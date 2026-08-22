@@ -7,9 +7,9 @@ import ChotkiCore
 enum MainSection: String, CaseIterable, Hashable {
     case rule = "Rule"
     case reading = "Reading"
+    case prayers = "Prayers"
     case progress = "Progress"
     case library = "Library"
-    case rope = "Prayer rope"
     case terms = "Terms"
     case settings = "Settings"
 
@@ -19,7 +19,7 @@ enum MainSection: String, CaseIterable, Hashable {
         case .reading: return "book"
         case .progress: return "chart.line.uptrend.xyaxis"
         case .library: return "square.grid.2x2"
-        case .rope: return "circle.hexagonpath"
+        case .prayers: return "hands.sparkles"
         case .terms: return "text.book.closed"
         case .settings: return "gearshape"
         }
@@ -49,7 +49,7 @@ enum WindowRoute: Equatable {
         case .settings: return .section(.settings)
         case .glossary(let slug): return .glossary(slug)
         case .editor(let ruleID): return .editor(ruleID)
-        case .prayerRope: return .section(.rope)
+        case .prayerRope: return .section(.prayers)
         case .prayers(let ruleID): return .prayers(ruleID)
         }
     }
@@ -130,7 +130,7 @@ struct MainWindowView: View {
         case .reading: scrolling { ReadingViewContent(model: model) }
         case .progress: scrolling { ProgressTabViewContent(model: model) }
         case .library: scrolling { LibraryViewContent(model: model) }
-        case .rope: PrayerRopeView(model: model)
+        case .prayers: PrayerRopeView(model: model)
         case .terms:
             // Re-created when a different term is requested, so the glossary
             // seeds itself on the new slug.

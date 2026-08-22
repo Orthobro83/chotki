@@ -267,3 +267,56 @@ struct PrayerSequenceTests {
         }
     }
 }
+
+/// Whether the rope belongs alongside what is being prayed.
+@Suite("When the rope belongs")
+struct RopeBelongsTests {
+    let book = PrayerBook.shared
+
+    @Test("choosing nothing brings the rope")
+    func nothingChosen() {
+        #expect(book.ropeBelongs(with: nil))
+        #expect(book.ropeBelongs(with: ""))
+    }
+
+    @Test("a counted prayer brings the rope", arguments: [
+        "jesus-prayer", "jesus-prayer-short", "publican", "lord-have-mercy", "rejoice-o-virgin"
+    ])
+    func countedPrayers(id: String) {
+        #expect(book.prayer(id: id)?.isForRope == true, "\(id) should be marked as counted")
+        #expect(book.ropeBelongs(with: id))
+    }
+
+    // A rule is read through from beginning to end, not repeated.
+    @Test("a rule does not", arguments: PrayerSequence.all.map(\.id))
+    func rulesDoNot(id: String) {
+        #expect(!book.ropeBelongs(with: id))
+    }
+
+    // Saint Ioannikios closes the evening rule; it is said once. It was wrongly
+    // marked as counted when it was added.
+    @Test("a prayer that is read does not", arguments: ["creed", "ephrem", "ioannikios", "it-is-truly-meet"])
+    func readPrayersDoNot(id: String) {
+        #expect(book.prayer(id: id) != nil, "\(id) should exist")
+        #expect(!book.ropeBelongs(with: id))
+    }
+
+    @Test("an unknown selection brings the rope rather than nothing")
+    func unknownSelection() {
+        #expect(book.ropeBelongs(with: "no-such-prayer"))
+    }
+
+    @Test("every counted prayer is a single breath")
+    func countedPrayersAreShort() {
+        for prayer in book.forRope() {
+            #expect(prayer.paragraphs.count == 1, "\(prayer.id)")
+        }
+    }
+
+    @Test("the two groups together are every prayer")
+    func groupsPartitionTheBook() {
+        #expect(book.forRope().count + book.notForRope().count == book.prayers.count)
+        #expect(!book.forRope().isEmpty)
+        #expect(!book.notForRope().isEmpty)
+    }
+}
