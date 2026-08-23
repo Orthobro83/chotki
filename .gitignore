@@ -18,3 +18,11 @@ dist/
 
 # macos
 .DS_Store
+
+# Android, from 23 August 2026
+android/.gradle/
+android/build/
+android/*/build/
+android/local.properties
+android/.idea/
+android/.kotlin/

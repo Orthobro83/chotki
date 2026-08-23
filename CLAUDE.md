@@ -4,6 +4,12 @@ Read this before changing anything. It is the orientation document; `design.md`
 holds the reasoning, `checklist.md` the build order, and `context.local.md` the
 personal context (gitignored — never commit it, never quote it publicly).
 
+`retrospective.md` is the other one to read first: what went wrong building the
+macOS app, which assumptions caused it, and the working rules that came out of
+it. The section below on mistakes is the short version; the retrospective says
+why they happened. `android/` holds the port plan and the specification the
+Kotlin reimplementation is written against.
+
 ## What this is
 
 A macOS app for keeping an Orthodox prayer rule and honestly measuring whether
@@ -46,7 +52,8 @@ unchanged and rewrite only the interface. **Swift does not run on Android in
 any practical way** — an Android version means a Kotlin reimplementation.
 
 That makes core more important, not less. Core plus its test suites is the
-*specification* a reimplementation is written against: every decision stated
+*specification* a reimplementation is written against — inventoried, with the
+parity gate, in `android/PARITY.md`, and sequenced in `android/PORT.md`: every decision stated
 once, with tests that say what it must do. Behaviour left in the platform layer
 has to be rediscovered by whoever writes the port, and it is exactly the layer
 where every bug found by hand has been.
