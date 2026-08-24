@@ -62,22 +62,23 @@ platform and build tools — allow twenty minutes and several gigabytes.
 Worth doing tonight if the machine is free, so tomorrow starts at Phase 0
 instead of at a download.
 
-## Provisional stack
+## The stack
 
-Recommendations, not decisions. Phase 0 settles them.
+Settled by the answers below, except where a row says otherwise.
 
 | | Proposed | Why |
 |---|---|---|
 | Language | Kotlin | The only sane option; Swift is out |
 | Modules | `:core` (pure Kotlin/JVM), `:app` (Android) | Mirrors the Swift split, and the same CI guard applies |
 | UI | Jetpack Compose, Material 3 | Declarative, closest to the SwiftUI already written |
-| Database | SQLDelight, or raw `androidx.sqlite` | Keeps the existing schema and migration ladder verbatim. **Not Room**, which wants to own a schema this one already has |
+| Database | SQLDelight, or raw `androidx.sqlite` | Same schema and migration ladder as macOS. **Not Room**, which wants to own a schema this one already has. No longer needed for file interchange — kept because the schema is part of the specification |
 | Dates | No date library | `CalendarDate` is timezone-free integer arithmetic and depends on nothing. Keep it that way |
 | HTTP | OkHttp or Ktor, behind `HttpFetching` | Same interface as Swift, so tests stay offline |
 | JSON | kotlinx.serialization | Orthocal decoding, and possibly shared content |
 | Reminders | `AlarmManager` + `NotificationManager` | Exact alarms need permission from Android 12 |
 | Background | `WorkManager` | Daily liturgical fetch, backups |
-| Min SDK | 26 (Android 8) | Covers essentially every live device; nothing here needs newer |
+| Min SDK | **26 (Android 8)** — see the note under question 2 | The floor, not the target. Covers essentially every device in use; the test device runs far newer |
+| Target SDK | Latest stable | Required by Play eventually, and it is what the runtime-permission behaviour is written against |
 | Tests | JUnit + `kotlin.test`; Compose UI tests | The 280 core tests translate; UI must be *driven*, not screenshotted |
 | Repo | This one, as `android/` | One history, one licence, shared content in view |
 
@@ -121,6 +122,77 @@ Answers change the work; guesses would be expensive.
 
 
  My answer: I've yet to find a priest running Apple Silicon. Part of why I'm moving forward with the Android SDK now is that this will make it more accessible to more priests -- it'll help me find one to review it.
+
+## What the answers settle — and what they do not
+
+**Settled.** Full feature parity. One device, no sync. Direct APK. Content moves
+to a single shared source. The priest review waits on Android reaching a priest.
+
+**Three things need doing before any code**, and all three are Ryan's:
+
+1. **Android Studio and the SDK.** Still not installed. `brew install --cask
+   android-studio`, then let its first run fetch the SDK. The licences are
+   Google's and have to be accepted by him.
+2. **A JDK the Android Gradle Plugin supports.** The only JDK here is 26, which
+   it will not build with. Android Studio's bundled runtime covers the IDE;
+   `brew install openjdk@21 gradle` covers the command line, which is where the
+   work actually happens.
+3. **USB debugging on the S21 FE**, if it is to be tested on the real device
+   rather than only an emulator. It should be — see the OneUI note below.
+
+### The minimum version needs correcting
+
+The answer to question 2 says Android 13 is "fairly old" and would suffice as a
+minimum. It is the reverse: Android 13 is from 2022 and sits on the *new* side
+of what is in use. Setting the floor there would exclude a large share of
+devices, including most that are more than a few years old — the opposite of
+the stated goal.
+
+`minSdk` is a **floor, not a target**. At 26 the app runs on Android 8 and
+everything above it, the S21 FE included. So: floor at 26, build against the
+latest, and test on Android 13 because that is the device in hand. Android
+Studio shows Google's current distribution figures when a project is created;
+worth a look then rather than trusting either of our guesses.
+
+### Three risks specific to that device
+
+Named because each one fails *silently*, which is this project's recurring way
+of going wrong.
+
+- **`POST_NOTIFICATIONS` is a runtime permission from Android 13.** Not
+  requested, notifications simply never appear — no error, no crash. The test
+  device is exactly the version where this starts to matter.
+- **Exact alarms need permission from Android 12.** A prayer reminder that
+  arrives whenever the system feels like it is not a reminder for a rule kept at
+  a set hour.
+- **OneUI kills background work aggressively.** Samsung's battery optimisation
+  is well known for stopping alarms on apps it decides are idle. The app will
+  need to ask for an exemption and explain why, and reminders must be verified
+  over several real days on the real device, not once on an emulator.
+
+### Two things the answers do not cover
+
+- **His existing history.** "No sync" is settled, but he has had a rule going on
+  the Mac since 19 August, and if the phone becomes *the* device that record
+  should go with it. A one-time export and import is a fraction of the work of
+  sync, and the schema is identical, so it is nearly free — but it has to be
+  decided before the Android store is written, not after.
+- **What replaces the menu bar.** Full parity means the features, not the
+  shapes: Android has no menu bar popover and no login items. The natural
+  equivalent is a home-screen widget showing today's rule. Worth knowing whether
+  that belongs in v1 or later.
+
+### The shared-content decision needs one more turn
+
+Question 5 asked whether content should move to shared JSON; the answer says to
+handle cross-platform updates in the most efficient way. That points at one
+source of truth — prayers, glossary, rule library and patristic readings
+extracted to JSON, shipped as a resource, decoded by both platforms. It is the
+right answer for an app that will keep changing on two platforms, and it is what
+stops the prayer texts drifting apart.
+
+It also means **changing the macOS app, which currently works**, and that is not
+a change to make on an inference. Confirm before Phase 1.
 
 ## Still outstanding on macOS
 
