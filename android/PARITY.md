@@ -118,8 +118,21 @@ error is a real error, not a typo.
 - The rule library templates
 - Patristic readings (ANF/NPNF, public domain)
 
-**Move these mechanically.** Generate the Kotlin sources from the Swift ones
-with a script, or — better, and a decision for Ryan — export them to JSON that
-both platforms read, so they can never drift apart. Do not copy prayer text by
-hand.
+**Done at phase 8, mechanically.** A Swift test writes the whole of it to
+`android/core/src/main/resources/content/*.json` and **fails if what is
+committed no longer matches the Swift content**, so the two platforms cannot
+say different things without CI noticing.
+
+The Swift literals stay the place content is authored. They carry the provenance
+in their comments — Hapgood 1906, ANF and NPNF, which prayers are counted on a
+rope and why — and JSON holds none of that.
+
+The wire shape is designed rather than dumped. Swift's own encoding of a
+recurrence is `{"liturgical":{"_0":{"season":{"_0":"greatLent"}}}}`, which is
+unreadable and awkward to decode elsewhere — and is also the shape already
+written into the `recurrence` column of every existing database, so it could not
+have been changed even if it were pleasant.
+
+To regenerate after editing content:
+`CHOTKI_WRITE_CONTENT=1 swift test --package-path core --filter ContentExport`
 

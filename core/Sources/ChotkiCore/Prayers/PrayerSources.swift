@@ -1,7 +1,7 @@
 import Foundation
 
 /// A place to read prayers online.
-public struct PrayerSource: Sendable, Hashable, Identifiable {
+public struct PrayerSource: Sendable, Hashable, Codable, Identifiable {
     public let title: String
     public let organisation: String
     public let url: String

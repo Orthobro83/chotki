@@ -1,0 +1,218 @@
+[
+  {
+    "author" : "Saint Athanasius the Great",
+    "id" : "athanasius-incarnation-54",
+    "source" : "On the Incarnation, 54",
+    "text" : "He was made man that we might be made God."
+  },
+  {
+    "author" : "Saint Irenaeus of Lyons",
+    "id" : "irenaeus-glory",
+    "source" : "Against Heresies, IV.20.7",
+    "text" : "The glory of God is a living man, and the life of man consists in beholding God."
+  },
+  {
+    "author" : "Saint John Chrysostom",
+    "id" : "chrysostom-honour-body",
+    "source" : "Homilies on Matthew, 50",
+    "text" : "Do you wish to honour the body of Christ? Do not despise him when he is naked. Do not honour him here in the church with silken garments while neglecting him outside, where he suffers cold and nakedness."
+  },
+  {
+    "author" : "Saint Basil the Great",
+    "id" : "basil-bread",
+    "source" : "Homily on the saying of the Gospel, I will pull down my barns",
+    "text" : "The bread which you keep belongs to the hungry; the coat which you guard in your wardrobe, to the naked; the shoes which are rotting in your possession, to the shoeless."
+  },
+  {
+    "author" : "Saint Ignatius of Antioch",
+    "id" : "ignatius-wheat",
+    "source" : "Epistle to the Romans, 4",
+    "text" : "I am the wheat of God, and let me be ground by the teeth of the wild beasts, that I may be found the pure bread of Christ."
+  },
+  {
+    "author" : "Saint Anthony the Great",
+    "id" : "anthony-humility",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "I saw the snares that the enemy spreads out over the world, and I said groaning, What can get through from such snares? Then I heard a voice saying to me, Humility."
+  },
+  {
+    "author" : "Abba Poemen",
+    "id" : "poemen-heart",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "Do not give your heart to that which does not satisfy your heart."
+  },
+  {
+    "author" : "Saint Gregory the Theologian",
+    "id" : "gregory-nazianzus-become",
+    "source" : "Oration 1, On Pascha",
+    "text" : "Let us become like Christ, since Christ became like us."
+  },
+  {
+    "author" : "Saint John Chrysostom",
+    "id" : "chrysostom-prayer-light",
+    "source" : "Homilies on the Statues",
+    "text" : "Prayer is the light of the soul, giving us true knowledge of God. It is a mediator between God and man."
+  },
+  {
+    "author" : "Saint Ephrem the Syrian",
+    "id" : "ephrem-lenten-prayer",
+    "source" : "The Lenten Prayer",
+    "text" : "O Lord and Master of my life, take from me the spirit of sloth, faint-heartedness, lust of power, and idle talk. But give rather the spirit of chastity, humility, patience and love to Thy servant."
+  },
+  {
+    "author" : "Saint Cyprian of Carthage",
+    "id" : "cyprian-unity",
+    "source" : "On the Unity of the Church, 6",
+    "text" : "He can no longer have God for his Father, who has not the Church for his mother."
+  },
+  {
+    "author" : "Saint Polycarp of Smyrna",
+    "id" : "polycarp-endurance",
+    "source" : "Epistle to the Philippians, 6",
+    "text" : "Let us then serve Him in fear, and with all reverence, even as He Himself has commanded us."
+  },
+  {
+    "author" : "Abba Moses",
+    "id" : "moses-cell",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "Go, sit in your cell, and your cell will teach you everything."
+  },
+  {
+    "author" : "Abba Agathon",
+    "id" : "agathon-tongue",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "If an angry man raises the dead, God is still displeased with his anger."
+  },
+  {
+    "author" : "Saint John Chrysostom",
+    "id" : "chrysostom-almsgiving",
+    "source" : "Homilies on Lazarus, 2",
+    "text" : "Not to share our own wealth with the poor is theft from the poor and deprivation of their means of life."
+  },
+  {
+    "author" : "Saint Basil the Great",
+    "id" : "basil-time",
+    "source" : "Letters",
+    "text" : "A tree is known by its fruit; a man by his deeds. A good deed is never lost."
+  },
+  {
+    "author" : "Abba Sisoes",
+    "id" : "sisoes-beginning",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "A brother asked Abba Sisoes, What shall I do? He said, What you seek is great humility."
+  },
+  {
+    "author" : "Saint Augustine of Hippo",
+    "id" : "augustine-restless",
+    "source" : "Confessions, I.1",
+    "text" : "Thou hast made us for Thyself, and our heart is restless until it rests in Thee."
+  },
+  {
+    "author" : "Saint Gregory of Nyssa",
+    "id" : "gregory-nyssa-ascent",
+    "source" : "The Life of Moses",
+    "text" : "This is truly the vision of God: never to be satisfied in the desire to see Him."
+  },
+  {
+    "author" : "Saint John of Damascus",
+    "id" : "john-damascus-icons",
+    "source" : "On the Divine Images, I.16",
+    "text" : "I do not worship matter, but I worship the Creator of matter, who became matter for my sake."
+  },
+  {
+    "author" : "Saint John Chrysostom",
+    "id" : "chrysostom-scripture",
+    "source" : "Homilies on Matthew",
+    "text" : "The Scriptures were not given us that we should enclose them in books, but that we should engrave them upon our hearts."
+  },
+  {
+    "author" : "Saint Macarius the Great",
+    "id" : "macarius-heart",
+    "source" : "Fifty Spiritual Homilies, 43",
+    "text" : "The heart itself is but a small vessel, and yet dragons are there, and there are also lions; there are poisonous beasts and all the treasures of evil. But there too is God, the angels, the life and the kingdom."
+  },
+  {
+    "author" : "The Shepherd of Hermas",
+    "id" : "hermas-simplicity",
+    "source" : "Commandment Second",
+    "text" : "Be simple and guileless, and thou shalt be as the children who know not the wickedness that ruins the life of men."
+  },
+  {
+    "author" : "Saint Clement of Rome",
+    "id" : "clement-rome-humility",
+    "source" : "Epistle to the Corinthians, 13",
+    "text" : "Let us be humble-minded, laying aside all haughtiness and pride and folly and angry feelings."
+  },
+  {
+    "author" : "Amma Syncletica",
+    "id" : "syncletica-beginning",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "In the beginning there are a great many battles and a good deal of suffering for those who are advancing towards God, and afterwards, ineffable joy."
+  },
+  {
+    "author" : "Saint John Chrysostom",
+    "id" : "chrysostom-thanksgiving",
+    "source" : "attributed, his last words",
+    "text" : "Glory to God for all things."
+  },
+  {
+    "author" : "Saint Justin Martyr",
+    "id" : "justin-truth",
+    "source" : "Second Apology, 13",
+    "text" : "Whatever things were rightly said among all men, are the property of us Christians."
+  },
+  {
+    "author" : "Saint Athanasius the Great",
+    "id" : "athanasius-scripture",
+    "source" : "Against the Heathen",
+    "text" : "For not only does the divine Scripture speak, but the whole creation confesses its Maker."
+  },
+  {
+    "author" : "Abba Arsenius",
+    "id" : "arsenius-silence",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "I have often repented of having spoken, but never of having held my peace."
+  },
+  {
+    "author" : "Abba John the Short",
+    "id" : "john-short-patience",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "We have put the light burden on one side, that is to say, self-accusation, and we have loaded ourselves with a heavy one, that is to say, self-justification."
+  },
+  {
+    "author" : "Saint Basil the Great",
+    "id" : "basil-prayer-constant",
+    "source" : "Homily on the Martyr Julitta",
+    "text" : "Prayer is a request for what is good, offered by the devout to God."
+  },
+  {
+    "author" : "Saint Gregory the Theologian",
+    "id" : "gregory-theologian-word",
+    "source" : "Oration 27, First Theological Oration",
+    "text" : "It is more important that we should remember God than that we should breathe."
+  },
+  {
+    "author" : "Saint Ambrose of Milan",
+    "id" : "ambrose-word",
+    "source" : "Exposition on Psalm 118",
+    "text" : "When we speak about wisdom, we are speaking of Christ. When we speak about virtue, we are speaking of Christ."
+  },
+  {
+    "author" : "Saint Isaac the Syrian",
+    "id" : "isaac-mercy",
+    "source" : "Ascetical Homilies",
+    "text" : "Be persecuted, rather than be a persecutor. Be crucified, rather than be a crucifier. Be treated unjustly, rather than treat anyone unjustly."
+  },
+  {
+    "author" : "Abba Pambo",
+    "id" : "pambo-conscience",
+    "source" : "Sayings of the Desert Fathers",
+    "text" : "If you have a heart, you can be saved."
+  },
+  {
+    "author" : "Saint John Chrysostom",
+    "id" : "chrysostom-anger",
+    "source" : "Homilies on Matthew, 16",
+    "text" : "He who is angry without cause shall be in danger; but he who is angry with cause shall not be in danger; for without anger, teaching would be useless."
+  }
+]

@@ -1,0 +1,2105 @@
+[
+  {
+    "aliases" : [
+      "Holy Pascha",
+      "Orthodox Easter"
+    ],
+    "category" : "calendar",
+    "full" : "Pascha is the Resurrection, and the centre of the whole church year. Everything movable in the calendar is measured from it: Great Lent before, Pentecost fifty days after.\n\nIts date is worked out on the Julian reckoning by nearly every Orthodox church, including those that otherwise use the New Calendar. That is why Orthodox Pascha often falls on a different Sunday from Western Easter, and why Old and New Calendar Orthodox nevertheless keep it on the same day as each other.",
+    "pronunciation" : "PAS-kha",
+    "related" : [
+      "great-lent",
+      "pentecost",
+      "bright-week",
+      "pascha-distance"
+    ],
+    "short" : "The Resurrection of Christ — the greatest feast of the year.",
+    "slug" : "pascha",
+    "term" : "Pascha",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Great Feasts",
+      "Major feast",
+      "Twelve Great Feasts",
+      "Major Feast of the Lord",
+      "Major Feast of the Theotokos"
+    ],
+    "category" : "calendar",
+    "full" : "Twelve feasts stand above the rest of the calendar. They divide into Feasts of the Lord — the Nativity, Theophany, Transfiguration and others — and Feasts of the Theotokos, such as her Dormition and Annunciation.\n\nPascha is not counted among the twelve. It stands alone, above them.\n\nEach Great Feast has days of preparation before it and an afterfeast following, ending in its leavetaking. So a Great Feast is a season in miniature rather than a single day.",
+    "related" : [
+      "theotokos",
+      "leavetaking",
+      "pascha",
+      "feast-rank"
+    ],
+    "short" : "The twelve principal feasts of the year, with Pascha above them all.",
+    "slug" : "great-feast",
+    "term" : "Great Feast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Most-Holy Theotokos",
+      "Birth-giver of God",
+      "God-bearer"
+    ],
+    "category" : "calendar",
+    "full" : "The word is Greek: *Theos*, God, and *tokos*, birth-giver.\n\nIt was affirmed at the Council of Ephesus in 431, and the argument was about Christ rather than about Mary. To say she gave birth only to a man would divide Christ into two persons. Calling her Theotokos insists that the one she bore is a single person, fully God and fully man.\n\nYou will hear it constantly in the services. It is not a claim that Mary is the origin of the divine nature — it is a statement about who her son is.",
+    "pronunciation" : "thee-oh-TOH-kos",
+    "related" : [
+      "great-feast",
+      "dormition",
+      "annunciation"
+    ],
+    "short" : "A title of the Virgin Mary meaning \"the one who gives birth to God\".",
+    "slug" : "theotokos",
+    "term" : "Theotokos",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Tone 1",
+      "Octoechos",
+      "the eight tones"
+    ],
+    "category" : "calendar",
+    "full" : "Orthodox hymns are sung in eight tones — eight melodic patterns, each with its own character. The church moves through them one per week, so the cycle takes eight weeks and then begins again.\n\nThe collection of hymns arranged this way is called the Octoechos, \"eight tones\". When the calendar says \"Tone 2\", it is telling you which set of melodies the week's hymns are sung to.\n\nYou do not need to know this to pray. It becomes useful when you start following services in a book.",
+    "related" : [
+      "vespers",
+      "matins"
+    ],
+    "short" : "One of eight melodies the church cycles through, a new one each week.",
+    "slug" : "tone",
+    "term" : "Tone",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Apodosis",
+      "leave-taking"
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast is not kept for one day. It has an afterfeast lasting several days or more, during which its hymns continue to appear in the services.\n\nThe leavetaking is the final day of that afterfeast. The feast's hymns are sung once more in full, and then the calendar moves on. The Greek word is *apodosis*, \"giving back\".",
+    "related" : [
+      "great-feast",
+      "nativity"
+    ],
+    "short" : "The last day a feast is celebrated, when its hymns are sung a final time.",
+    "slug" : "leavetaking",
+    "term" : "Leavetaking",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Julian calendar",
+      "Julian reckoning",
+      "Old Style",
+      "o.s."
+    ],
+    "category" : "calendar",
+    "full" : "Most Orthodox Christians — the Russian, Serbian, Georgian and Jerusalem churches among others — keep fixed feasts on the Julian calendar, which now runs thirteen days behind the civil one. So the Nativity falls on 7 January by the wall calendar, not 25 December.\n\nTwo things it does *not* change. Days of the week are identical: Wednesday is Wednesday everywhere. And Pascha, with everything measured from it, is the same for Old and New Calendar Orthodox alike, because nearly all of them compute it the Julian way regardless.\n\nSo the disagreement between calendars clusters around the Nativity and Theophany rather than spreading through the year.",
+    "related" : [
+      "new-calendar",
+      "pascha",
+      "nativity",
+      "theophany"
+    ],
+    "short" : "The older reckoning, thirteen days behind the civil calendar for fixed feasts.",
+    "slug" : "old-calendar",
+    "term" : "Old Calendar",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Revised Julian",
+      "New Style",
+      "n.s."
+    ],
+    "category" : "calendar",
+    "full" : "Adopted in the 1920s by the Greek, Romanian, Bulgarian and Antiochian churches among others. Fixed feasts fall on the same dates as the civil calendar, so the Nativity is 25 December.\n\nAlmost every church that adopted it kept the old way of computing Pascha, so Pascha and everything measured from it stay in step with the Old Calendar churches. Only fixed feasts moved.",
+    "related" : [
+      "old-calendar",
+      "pascha"
+    ],
+    "short" : "The newer reckoning, on which fixed feasts match the civil calendar.",
+    "slug" : "new-calendar",
+    "term" : "New Calendar",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "pascha distance"
+    ],
+    "category" : "calendar",
+    "full" : "Much of the calendar is not fixed to a date but to a distance from Pascha: Great Lent before it, Pentecost fifty days after, the Apostles' Fast beginning after that.\n\nCounting days from Pascha is how those are located in any given year.",
+    "related" : [
+      "pascha",
+      "pentecost",
+      "apostles-fast"
+    ],
+    "short" : "How far the day sits from Pascha, which places every movable feast.",
+    "slug" : "pascha-distance",
+    "term" : "Days since Pascha",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "calendar",
+    "full" : "Fifty days after Pascha, the Holy Spirit descended on the apostles. The church counts weeks from it for the rest of the year — which is why the calendar says things like \"Wednesday of the 12th week after Pentecost\".",
+    "related" : [
+      "pascha",
+      "apostles-fast"
+    ],
+    "short" : "The descent of the Holy Spirit on the apostles, fifty days after Pascha.",
+    "slug" : "pentecost",
+    "term" : "Pentecost",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Epiphany"
+    ],
+    "category" : "calendar",
+    "full" : "Celebrated on 6 January — 19 January by the wall calendar for Old Calendar churches. The name means \"manifestation of God\": at the baptism the Father is heard, the Spirit descends as a dove, and the Son stands in the water.\n\nWater is blessed on this feast, and people take it home.",
+    "pronunciation" : "thee-OFF-uh-nee",
+    "related" : [
+      "great-feast",
+      "nativity",
+      "old-calendar"
+    ],
+    "short" : "The baptism of Christ in the Jordan, and one of the Great Feasts.",
+    "slug" : "theophany",
+    "term" : "Theophany",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Nativity of Christ",
+      "Christmas"
+    ],
+    "category" : "calendar",
+    "full" : "One of the Great Feasts, preceded by a forty-day fast. Old Calendar churches keep it on 7 January by the wall calendar, New Calendar churches on 25 December — the same feast on the same church date, differently placed against the civil year.",
+    "related" : [
+      "nativity-fast",
+      "great-feast",
+      "old-calendar",
+      "leavetaking"
+    ],
+    "short" : "The birth of Christ — 25 December, which is 7 January on the Old Calendar.",
+    "slug" : "nativity",
+    "term" : "Nativity",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Dormition of the Theotokos",
+      "Falling asleep"
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast, preceded by a two-week fast. \"Dormition\" means falling asleep — the church's ordinary way of speaking about the death of a Christian, and here about the end of the Theotokos's earthly life.",
+    "related" : [
+      "theotokos",
+      "dormition-fast",
+      "great-feast"
+    ],
+    "short" : "The falling-asleep of the Theotokos, kept on 15 August.",
+    "slug" : "dormition",
+    "term" : "Dormition",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast. Christ took Peter, James and John up the mountain and was transfigured before them, his face shining. Grapes and other first fruits are blessed on this day.",
+    "related" : [
+      "great-feast",
+      "dormition-fast"
+    ],
+    "short" : "Christ shining with uncreated light on the mountain, kept on 6 August.",
+    "slug" : "transfiguration",
+    "term" : "Transfiguration",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast of the Theotokos: the archangel Gabriel announces to Mary that she will bear Christ, and she consents. It falls during Great Lent almost every year, and the fast is relaxed for it.",
+    "related" : [
+      "theotokos",
+      "great-feast",
+      "great-lent"
+    ],
+    "short" : "The angel's announcement to the Theotokos, kept on 25 March.",
+    "slug" : "annunciation",
+    "term" : "Annunciation",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "calendar",
+    "full" : "The seven days after Pascha are kept as one continuous feast. No fasting at all, including on the Wednesday and Friday that would normally be fast days. The royal doors of the icon screen stand open all week.",
+    "related" : [
+      "pascha",
+      "fast-free",
+      "wednesday-friday-fast"
+    ],
+    "short" : "The week following Pascha — entirely fast-free, even Wednesday and Friday.",
+    "slug" : "bright-week",
+    "term" : "Bright Week",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Polyeleos",
+      "typikon symbol",
+      "Red cross",
+      "Black squiggle"
+    ],
+    "category" : "calendar",
+    "full" : "Not every commemoration is equal. Service books grade days with small printed symbols — a black squiggle for a modest commemoration, a red cross for a more festal one, a red cross in a circle for the highest ranks.\n\nThe rank tells the clergy which hymns and which parts of the services to use. For most people it is simply a signal of how significant the day is.",
+    "related" : [
+      "great-feast",
+      "typikon",
+      "matins"
+    ],
+    "short" : "How solemnly a day is kept, marked in service books by small symbols.",
+    "slug" : "feast-rank",
+    "term" : "Feast rank",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Wed/Fri fast",
+      "the weekly fast"
+    ],
+    "category" : "fasting",
+    "full" : "Wednesday recalls the betrayal of Christ, Friday the crucifixion. Together they are the most common fast in the Orthodox year, kept outside fast-free periods.\n\nThe days of the week are the same under both calendars, so this rhythm is identical whichever reckoning your parish keeps.",
+    "related" : [
+      "fast-free",
+      "wine-and-oil",
+      "old-calendar"
+    ],
+    "short" : "The ordinary weekly fast, kept most Wednesdays and Fridays of the year.",
+    "slug" : "wednesday-friday-fast",
+    "term" : "Wednesday and Friday fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Lenten Fast",
+      "Lent"
+    ],
+    "category" : "fasting",
+    "full" : "Forty days, followed by Holy Week. It is the most strictly kept fast in the calendar and is as much about prayer, almsgiving and confession as about food.\n\nThe services change substantially during it, including the Presanctified Liturgy on weekdays.",
+    "related" : [
+      "pascha",
+      "presanctified-liturgy",
+      "forgiveness-sunday"
+    ],
+    "short" : "The long fast before Holy Week and Pascha — the most demanding of the year.",
+    "slug" : "great-lent",
+    "term" : "Great Lent",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Advent fast",
+      "Philip's Fast"
+    ],
+    "category" : "fasting",
+    "full" : "Begins forty days before the Nativity and is kept less strictly than Great Lent, with fish permitted on many days. Sometimes called Philip's Fast, because it starts the day after the feast of the Apostle Philip.",
+    "related" : [
+      "nativity",
+      "great-lent"
+    ],
+    "short" : "Forty days of fasting before the Nativity.",
+    "slug" : "nativity-fast",
+    "term" : "Nativity Fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Apostles Fast",
+      "Peter and Paul Fast"
+    ],
+    "category" : "fasting",
+    "full" : "It begins the Monday after All Saints — which depends on Pascha — and always ends on 29 June, the feast of the Apostles Peter and Paul. Because the start moves and the end does not, its length changes every year, from a few days to several weeks.\n\nAn early Pascha makes it long; a late Pascha makes it short.",
+    "related" : [
+      "pentecost",
+      "pascha",
+      "pascha-distance"
+    ],
+    "short" : "A fast of variable length, ending on the feast of Saints Peter and Paul.",
+    "slug" : "apostles-fast",
+    "term" : "Apostles' Fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "fasting",
+    "full" : "1 to 14 August, before the feast of the Dormition. Short but kept fairly strictly. The Transfiguration falls inside it, and the fast is relaxed for that day.",
+    "related" : [
+      "dormition",
+      "transfiguration",
+      "theotokos"
+    ],
+    "short" : "Two weeks of fasting before the Dormition of the Theotokos.",
+    "slug" : "dormition-fast",
+    "term" : "Dormition Fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Fast Free",
+      "no fast"
+    ],
+    "category" : "fasting",
+    "full" : "Certain periods lift fasting entirely: Bright Week after Pascha, the days between the Nativity and Theophany, the week after Pentecost, and the week following the Sunday of the Publican and Pharisee.\n\nOn these days the usual Wednesday and Friday fast does not apply.",
+    "related" : [
+      "bright-week",
+      "wednesday-friday-fast",
+      "nativity"
+    ],
+    "short" : "A day with no fasting at all, including Wednesday and Friday.",
+    "slug" : "fast-free",
+    "term" : "Fast free",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Fish, Wine and Oil are Allowed",
+      "wine and oil"
+    ],
+    "category" : "fasting",
+    "full" : "Fasting in the Orthodox tradition has degrees rather than being on or off. The strictest days set aside meat, fish, dairy, eggs, wine and oil. A feast falling within a fast often permits some of these back — commonly wine and oil, sometimes fish as well.\n\nSo \"fish, wine and oil are allowed\" means the fast continues in a gentler form, not that it has been suspended.",
+    "related" : [
+      "fast-free",
+      "great-feast",
+      "xerophagy"
+    ],
+    "short" : "A relaxation of a fast for a feast — not the lifting of it.",
+    "slug" : "wine-and-oil",
+    "term" : "Wine and oil are allowed",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "fasting",
+    "full" : "Literally \"dry eating\". Appointed on the strictest days of Great Lent. It is the far end of the fasting scale and is not what most people keep.\n\nHow much of the traditional discipline any individual keeps is settled with a priest, taking health, work and circumstances into account. It is not a competition, and it is not the point.",
+    "pronunciation" : "zeh-ROFF-uh-jee",
+    "related" : [
+      "great-lent",
+      "wine-and-oil"
+    ],
+    "short" : "The strictest form of fasting: uncooked food, without oil or wine.",
+    "slug" : "xerophagy",
+    "term" : "Xerophagy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Liturgy"
+    ],
+    "category" : "services",
+    "full" : "The central service of the church, served on Sundays and feast days. The Eucharist is celebrated and the faithful receive communion.\n\nPreparation for receiving — fasting beforehand, confession, prayers — varies between parishes and is something to settle with a priest rather than to work out alone.",
+    "related" : [
+      "vespers",
+      "matins",
+      "presanctified-liturgy",
+      "antidoron"
+    ],
+    "short" : "The principal service, at which communion is given.",
+    "slug" : "divine-liturgy",
+    "term" : "Divine Liturgy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "services",
+    "full" : "The liturgical day starts at sunset, not midnight — so Vespers on Saturday evening is already the beginning of Sunday. This is why Saturday evening services matter, and why a feast is celebrated from the evening before.",
+    "related" : [
+      "matins",
+      "vigil",
+      "divine-liturgy"
+    ],
+    "short" : "The evening service, which begins the church's day.",
+    "slug" : "vespers",
+    "term" : "Vespers",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Orthros"
+    ],
+    "category" : "services",
+    "full" : "The long morning service. In many parishes it is joined to Vespers and served the evening before as an All-Night Vigil, rather than at dawn.",
+    "related" : [
+      "vespers",
+      "vigil",
+      "tone"
+    ],
+    "short" : "The morning service, often served the evening before as part of a vigil.",
+    "slug" : "matins",
+    "term" : "Matins",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Vigil"
+    ],
+    "category" : "services",
+    "full" : "Despite the name it rarely lasts all night now — usually two to three hours on a Saturday evening or the eve of a great feast.",
+    "related" : [
+      "vespers",
+      "matins",
+      "great-feast"
+    ],
+    "short" : "Vespers and Matins joined together on the eve of a Sunday or feast.",
+    "slug" : "vigil",
+    "term" : "All-Night Vigil",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "services",
+    "full" : "The full Divine Liturgy is not served on the weekdays of Great Lent, because it is always a celebration. So that people may still receive communion, the Presanctified Liturgy distributes gifts consecrated on the previous Sunday.",
+    "related" : [
+      "great-lent",
+      "divine-liturgy"
+    ],
+    "short" : "A Lenten evening service giving communion from gifts consecrated earlier.",
+    "slug" : "presanctified-liturgy",
+    "term" : "Presanctified Liturgy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "services",
+    "full" : "The name means \"not sitting\" — it is sung standing throughout. The best known is the Akathist to the Theotokos, sung during Great Lent, but there are akathists to many saints and feasts.",
+    "pronunciation" : "uh-KAH-thist",
+    "related" : [
+      "theotokos",
+      "great-lent"
+    ],
+    "short" : "A long hymn of praise, sung standing.",
+    "slug" : "akathist",
+    "term" : "Akathist",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "services",
+    "full" : "The Typikon settles what is sung and read on any given day, how feasts combine when they coincide, and how the fasts are kept. It is a reference book for clergy and readers rather than something most people consult.",
+    "pronunciation" : "TIP-ee-kon",
+    "related" : [
+      "feast-rank",
+      "tone"
+    ],
+    "short" : "The book of rules governing how services are put together.",
+    "slug" : "typikon",
+    "term" : "Typikon",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "rule of prayer",
+      "kanon"
+    ],
+    "category" : "prayer",
+    "full" : "A rule is personal. It usually includes morning and evening prayers and grows over time — and it is meant to be settled with a priest, who will normally suggest starting with far less than a newcomer expects.\n\nA small rule kept faithfully is worth more than a large one abandoned. Reducing a rule is a normal and sometimes necessary act, not a failure.",
+    "related" : [
+      "jesus-prayer",
+      "chotki",
+      "trisagion"
+    ],
+    "short" : "The set of prayers a person keeps daily, agreed with their priest.",
+    "slug" : "prayer-rule",
+    "term" : "Prayer rule",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "A single short prayer, repeated. It can be said anywhere, silently, at any time, and is often counted on a prayer rope.\n\nTraditions around it vary considerably, and the deeper practices are meant to be taken up under guidance rather than from a book.",
+    "related" : [
+      "chotki",
+      "prayer-rule"
+    ],
+    "short" : "\"Lord Jesus Christ, Son of God, have mercy on me, a sinner.\"",
+    "slug" : "jesus-prayer",
+    "term" : "Jesus Prayer",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "prayer rope",
+      "komboskini",
+      "komvoschoinion"
+    ],
+    "category" : "prayer",
+    "full" : "A loop of wool tied in knots — commonly 33, 50 or 100 — used to count repetitions of the Jesus Prayer without having to keep track mentally.\n\nThe Russian name is *chotki*, the Greek *komboskini*. Each knot is traditionally tied in a pattern of interlocking crosses.",
+    "pronunciation" : "KHOT-kee",
+    "related" : [
+      "jesus-prayer",
+      "prayer-rule"
+    ],
+    "short" : "A knotted wool rope used for counting the Jesus Prayer.",
+    "slug" : "chotki",
+    "term" : "Chotki",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "The name means \"thrice holy\". The prayer is said three times, and it opens a great many services and private prayer rules — often as part of a short set of opening prayers called the Trisagion Prayers.",
+    "pronunciation" : "tri-SAH-gee-on",
+    "related" : [
+      "prayer-rule",
+      "divine-liturgy"
+    ],
+    "short" : "\"Holy God, Holy Mighty, Holy Immortal, have mercy on us.\"",
+    "slug" : "trisagion",
+    "term" : "Trisagion",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Apostol"
+    ],
+    "category" : "scripture",
+    "full" : "Each day has appointed readings. The Epistle comes from the letters of the apostles or from Acts, and is read before the Gospel at the Divine Liturgy.\n\nThe book containing these readings in their appointed order is called the Apostol.",
+    "related" : [
+      "gospel",
+      "divine-liturgy"
+    ],
+    "short" : "The day's reading from the New Testament letters or Acts.",
+    "slug" : "epistle",
+    "term" : "Epistle",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "scripture",
+    "full" : "Read after the Epistle at the Divine Liturgy, and at Matins on Sundays and feasts. The church works through the Gospels on a fixed yearly cycle, so the reading is appointed rather than chosen.",
+    "related" : [
+      "epistle",
+      "divine-liturgy",
+      "matins"
+    ],
+    "short" : "The day's reading from Matthew, Mark, Luke or John.",
+    "slug" : "gospel",
+    "term" : "Gospel",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Ven.",
+      "Righteous"
+    ],
+    "category" : "saints",
+    "full" : "Marks a saint who followed the monastic life. In Greek usage the equivalent is *Hosios*. It says how the saint lived rather than how they died.",
+    "related" : [
+      "martyr",
+      "wonderworker"
+    ],
+    "short" : "A title for a saint who lived as a monk or nun.",
+    "slug" : "venerable",
+    "term" : "Venerable",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Virgin Martyr"
+    ],
+    "category" : "saints",
+    "full" : "The word means \"witness\". Martyrs are among the earliest saints venerated by the church, and the calendar is full of them.",
+    "related" : [
+      "greatmartyr",
+      "hieromartyr",
+      "confessor"
+    ],
+    "short" : "A saint who was killed for confessing Christ.",
+    "slug" : "martyr",
+    "term" : "Martyr",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Great Martyr",
+      "Greatmartyrs"
+    ],
+    "category" : "saints",
+    "full" : "Reserved for martyrs whose sufferings were especially severe or whose veneration spread especially widely — Saint George and Saint Barbara among them.",
+    "related" : [
+      "martyr",
+      "hieromartyr"
+    ],
+    "short" : "A martyr of particular renown, often one who suffered at length.",
+    "slug" : "greatmartyr",
+    "term" : "Greatmartyr",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "*Hiero-* means priestly. The title marks a martyr who held holy orders. The equivalent for a monastic martyr is Venerable Martyr.",
+    "pronunciation" : "HIGH-ero-martyr",
+    "related" : [
+      "martyr",
+      "venerable"
+    ],
+    "short" : "A martyr who was a bishop or priest.",
+    "slug" : "hieromartyr",
+    "term" : "Hieromartyr",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "Confessors were imprisoned, tortured or exiled and survived. The title was much used in the twentieth century of those who endured persecution under communist governments.",
+    "related" : [
+      "martyr"
+    ],
+    "short" : "A saint who suffered for the faith but was not killed.",
+    "slug" : "confessor",
+    "term" : "Confessor",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "Applied to saints through whom many miracles were worked, in life or after death — Saint Nicholas and Saint Spyridon among the best known.",
+    "related" : [
+      "venerable",
+      "unmercenaries"
+    ],
+    "short" : "A saint particularly known for miracles.",
+    "slug" : "wonderworker",
+    "term" : "Wonderworker",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Unmercenary",
+      "Holy Unmercenaries"
+    ],
+    "category" : "saints",
+    "full" : "The best known are Cosmas and Damian. The title means they took no fee — the healing was given freely, as a gift received freely.",
+    "related" : [
+      "wonderworker"
+    ],
+    "short" : "Saints, often physicians, who healed without taking payment.",
+    "slug" : "unmercenaries",
+    "term" : "Unmercenaries",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "A Greek term for a senior military officer. When the calendar says \"Martyr Andrew Stratelates\", it is telling you he was a general who was martyred, not giving him a second name.",
+    "pronunciation" : "strat-eh-LAH-tees",
+    "related" : [
+      "martyr",
+      "greatmartyr"
+    ],
+    "short" : "\"Commander\" — a military rank, used as part of a saint's name.",
+    "slug" : "stratelates",
+    "term" : "Stratelates",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "Leavened bread baked for the Liturgy and marked with a seal. Portions are cut from it during the preparation service, one of which becomes the Eucharist while others are offered for the living and the departed.",
+    "pronunciation" : "PROS-fo-ra",
+    "related" : [
+      "divine-liturgy",
+      "antidoron"
+    ],
+    "short" : "The bread offered for the Liturgy, stamped with a seal.",
+    "slug" : "prosphora",
+    "term" : "Prosphora",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "The name means \"instead of the gift\". It is what remains of the prosphora after the portion for communion is taken, blessed but not consecrated.\n\nAnyone present may receive it, including those who did not take communion. It is a common first point of contact for a visitor.",
+    "pronunciation" : "an-TID-o-ron",
+    "related" : [
+      "prosphora",
+      "divine-liturgy"
+    ],
+    "short" : "Blessed bread given out at the end of the Liturgy — not communion.",
+    "slug" : "antidoron",
+    "term" : "Antidoron",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "icon screen",
+      "royal doors"
+    ],
+    "category" : "things",
+    "full" : "A wall of icons separating the altar from the body of the church, with a central pair of royal doors and doors to either side. Its icons follow a customary arrangement: Christ to the right of the royal doors, the Theotokos to the left.",
+    "pronunciation" : "eye-ko-no-STAH-sis",
+    "related" : [
+      "theotokos",
+      "divine-liturgy",
+      "bright-week"
+    ],
+    "short" : "The screen of icons between the nave and the altar.",
+    "slug" : "iconostasis",
+    "term" : "Iconostasis",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "The Orthodox Church is one communion made up of self-governing churches, usually organised by nation or historic see. A parish belongs to one of them, and that determines which calendar it keeps and which local saints appear on it.\n\nIf you are unsure which yours is, the parish website or your priest will say.",
+    "related" : [
+      "old-calendar",
+      "new-calendar"
+    ],
+    "short" : "The church body a parish belongs to — Russian, Greek, Antiochian and so on.",
+    "slug" : "jurisdiction",
+    "term" : "Jurisdiction",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Cheesefare Sunday",
+      "Meatfare Sunday",
+      "Cheesefare",
+      "Meatfare"
+    ],
+    "category" : "calendar",
+    "full" : "Lent is approached in stages. Meatfare Sunday is the last day meat is eaten; Cheesefare Sunday, a week later, the last for dairy — and that evening, at Forgiveness Vespers, the congregation asks forgiveness of one another individually before the fast begins.",
+    "related" : [
+      "great-lent",
+      "vespers"
+    ],
+    "short" : "The Sunday Great Lent begins, when people ask forgiveness of one another.",
+    "slug" : "forgiveness-sunday",
+    "term" : "Forgiveness Sunday",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "abstentions",
+      "what is abstained from"
+    ],
+    "category" : "fasting",
+    "full" : "The church calendar marks each fast day with what is customarily set aside. The strictest days list all six: meat, fish, dairy, eggs, wine and oil. Lesser days relax some of them, so a feast falling in a fast may allow fish, wine and oil.\n\n\"Wine\" and \"oil\" are older categories covering alcohol and cooking oil generally rather than those two items alone.\n\nThis is what the calendar marks, not an instruction. What any individual keeps is settled with a priest, and health, work and circumstance are ordinary reasons for it to look different.",
+    "related" : [
+      "wednesday-friday-fast",
+      "fast-free",
+      "great-lent"
+    ],
+    "short" : "The foods a given fast day sets aside — meat, fish, dairy, eggs, wine and oil.",
+    "slug" : "abstention",
+    "term" : "Abstention",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "The book of saints' lives arranged by the day they are commemorated, and by extension the short life read at Matins for whoever is remembered today.\n\nReading the day's life is a common part of a rule, and it is how most people gradually learn who the saints are — one at a time, on their own day, rather than all at once.",
+    "pronunciation" : "sin-ak-SAR-ee-on",
+    "related" : [
+      "matins",
+      "patron-saint",
+      "wonderworker"
+    ],
+    "short" : "The collection of saints' lives, and the account read for the day's commemoration.",
+    "slug" : "synaxarion",
+    "term" : "Synaxarion",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "Amen is not punctuation. It is assent: the person praying puts their name to the words, and means them.\n\nThis is clearest in the services, where the priest prays and the people answer \"Amen\". The prayer is not finished until they have agreed to it. Said alone at the end of a prayer, it does the same thing more quietly.\n\nIt is one of a handful of words the Church never translated, kept in Hebrew from the beginning.",
+    "pronunciation" : "AH-meen",
+    "related" : [
+      "divine-liturgy",
+      "prayer-rule"
+    ],
+    "short" : "A Hebrew word meaning \"so be it\" — agreement with what has just been said.",
+    "slug" : "amen",
+    "term" : "Amen",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Thou",
+      "Thee",
+      "Thy",
+      "Thine"
+    ],
+    "category" : "prayer",
+    "full" : "Thou is the subject — Thou art, Thou hast. Thee is the object — we praise Thee. Thy and Thine are the possessives, thine before a vowel. Verbs that follow thou usually end in -est, and third-person verbs in -eth: He giveth.\n\nThese are often heard as stiff or formal. They are the reverse. In older English thou was the singular and familiar form, used with one person you were close to, and \"you\" was the plural and the distant one. It survives in prayer partly by habit of translation, but it does something the modern word cannot: it keeps the address unmistakably singular. God is spoken to as one, and as near.\n\nNothing turns on using it. Many English-speaking Orthodox pray in modern English, and both are in print.",
+    "related" : [
+      "church-slavonic",
+      "prayer-rule"
+    ],
+    "short" : "The old English forms kept in prayer. They mean \"you\" and \"your\", to one person.",
+    "slug" : "thee-and-thou",
+    "term" : "Thee, Thou and Thy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Trinity",
+      "Most Holy Trinity"
+    ],
+    "category" : "faith",
+    "full" : "The Church confesses one God in three persons: Father, Son and Holy Spirit, of one essence and undivided. Not three Gods, and not one person appearing in three guises — three who are distinct, and one God.\n\nIt is the shape of almost everything said in the services. Prayers commonly end by glorifying all three together, \"now and ever, and unto ages of ages\". The three joined fingers of the sign of the cross confess the same thing before a word is said.\n\nThe doctrine is not an explanation. It is a description of what was revealed, held to without being resolved into something more manageable.",
+    "related" : [
+      "symbol-of-faith",
+      "trisagion",
+      "comforter"
+    ],
+    "short" : "One God in three persons — Father, Son and Holy Spirit.",
+    "slug" : "holy-trinity",
+    "term" : "Holy Trinity",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Nicene Creed",
+      "Creed",
+      "Nicene-Constantinopolitan Creed"
+    ],
+    "category" : "faith",
+    "full" : "Agreed at the council of Nicaea in 325 and completed at Constantinople in 381, in answer to disputes about who Christ is. \"Symbol\" here means a token or badge — the thing you produce to show whose you are.\n\nIt is said by everyone at the Divine Liturgy, and it stands in the morning rule of most prayer books. Learning it by heart is usually the first thing a catechumen is asked to do.\n\nThe Orthodox text is the original one. The Western version adds \"and the Son\" to the clause on the procession of the Holy Spirit — the Filioque — which the Orthodox churches have never accepted. It is the single best-known difference between the two texts.",
+    "related" : [
+      "holy-trinity",
+      "divine-liturgy",
+      "catechumen"
+    ],
+    "short" : "The statement of belief agreed in 325 and 381, said at every Liturgy.",
+    "slug" : "symbol-of-faith",
+    "term" : "Symbol of Faith",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Paraclete"
+    ],
+    "category" : "faith",
+    "full" : "The Greek is Parakletos — one called alongside, to stand with someone and speak for them. English versions render it Comforter, Advocate, or Helper, and none of them quite carries it.\n\nComforter is the oldest of those, and it is worth knowing that \"comfort\" once meant to strengthen rather than to soothe — the same root as fortify. The prayer \"O Heavenly King\", which opens most rules, addresses the Holy Spirit by this name.",
+    "related" : [
+      "holy-trinity"
+    ],
+    "short" : "A title of the Holy Spirit: the one called to your side.",
+    "slug" : "comforter",
+    "term" : "Comforter",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Only-begotten Son",
+      "Only begotten"
+    ],
+    "category" : "faith",
+    "full" : "The Greek is monogenes: the only one of His kind. The Creed spells out what it guards against — \"begotten, not made\" — because to call the Son made would put Him on the creature's side of the line.\n\nBegetting here has nothing to do with time or with bodies. It says the Son is of the Father's own being, eternally, as light is of a flame.",
+    "related" : [
+      "symbol-of-faith",
+      "holy-trinity"
+    ],
+    "short" : "A title of Christ — the Son born of the Father, not made by Him.",
+    "slug" : "only-begotten",
+    "term" : "Only-begotten",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Cherub",
+      "Cherubims"
+    ],
+    "category" : "saints",
+    "full" : "Angels are traditionally spoken of in nine ranks, drawn from Scripture and set out by Saint Dionysius. Cherubim and Seraphim are the two nearest to God, and so they are the ones the hymns reach for when they want to say \"higher than anything created\".\n\nThat is the force of the line said daily of the Mother of God: more honourable than the Cherubim, and beyond compare more glorious than the Seraphim. It is not a comparison of ranks so much as a way of saying there is nothing left to compare her to.",
+    "pronunciation" : "CHAIR-oo-vim",
+    "related" : [
+      "seraphim",
+      "theotokos",
+      "guardian-angel"
+    ],
+    "short" : "One of the highest ranks of angels, named constantly in the hymns.",
+    "slug" : "cherubim",
+    "term" : "Cherubim",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Seraph",
+      "Seraphims"
+    ],
+    "category" : "saints",
+    "full" : "The name means the burning ones. Isaiah saw them above the throne, each with six wings, calling to one another \"Holy, holy, holy is the Lord of hosts\" — the cry the Church still takes up at the Liturgy.\n\nWith the Cherubim they are the highest of the angelic ranks, which is why the two are so often named together.",
+    "pronunciation" : "SER-a-fim",
+    "related" : [
+      "cherubim",
+      "theotokos"
+    ],
+    "short" : "The angels Isaiah saw around the throne, crying \"Holy, holy, holy\".",
+    "slug" : "seraphim",
+    "term" : "Seraphim",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "It is the common teaching that each person is given an angel to guard them, and most prayer books close the evening rule with a short prayer to one's own — asking forgiveness for having grieved him during the day, and his covering through the night.\n\nThe ground for it is Christ's word that the angels of the little ones always behold the face of the Father.",
+    "related" : [
+      "cherubim",
+      "prayer-rule"
+    ],
+    "short" : "The angel given to watch over a person, addressed at the end of the evening prayers.",
+    "slug" : "guardian-angel",
+    "term" : "Guardian Angel",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "tax collector"
+    ],
+    "category" : "scripture",
+    "full" : "Publicans collected taxes for Rome from their own people, and were despised for it.\n\nIn the parable, one goes up to the temple to pray beside a Pharisee. The Pharisee thanks God for what he is not. The publican will not lift his eyes, and says only: God be merciful to me a sinner. Christ says it was the publican who went home justified.\n\nThose few words are prayed in their own right, often on the rope, and the parable opens the weeks of preparation before Great Lent.",
+    "related" : [
+      "jesus-prayer",
+      "great-lent",
+      "chotki"
+    ],
+    "short" : "A tax collector — in the parable, the man whose prayer is the model for ours.",
+    "slug" : "publican",
+    "term" : "Publican",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Ephrem",
+      "Saint Ephraim",
+      "Ephraim the Syrian",
+      "Ephraim"
+    ],
+    "category" : "saints",
+    "full" : "He lived in Nisibis and then Edessa, and died in 373. A deacon rather than a priest, and above all a hymnographer: much of what he wrote was sung.\n\nHis prayer — O Lord and Master of my life — is said at nearly every service of Great Lent, and by many at home through the fast. It asks to be spared the spirit of sloth, faint-heartedness, lust of power and idle talk, and given instead chastity, humility, patience and love. Prostrations are made with it.",
+    "pronunciation" : "EF-rem",
+    "related" : [
+      "great-lent",
+      "prostration",
+      "prayer-rule"
+    ],
+    "short" : "A fourth-century deacon and poet, whose Lenten prayer is said with prostrations.",
+    "slug" : "saint-ephrem",
+    "term" : "Saint Ephrem the Syrian",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Macarius",
+      "Saint Macarius of Egypt",
+      "Macarius of Egypt"
+    ],
+    "category" : "saints",
+    "full" : "He went into the Egyptian desert at Scetis in the fourth century and spent sixty years there. He is one of the fathers whose sayings make up the desert collections.\n\nThe morning rule in Slavic prayer books opens with prayers attributed to him. As with much ancient material, the attribution is traditional rather than certain, which changes nothing about how the prayers are used.",
+    "pronunciation" : "ma-KAR-ee-us",
+    "related" : [
+      "prayer-rule"
+    ],
+    "short" : "A fourth-century desert father. Several of the morning prayers carry his name.",
+    "slug" : "saint-macarius",
+    "term" : "Saint Macarius the Great",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Ioannikios",
+      "Saint Joannicius",
+      "Joannicius"
+    ],
+    "category" : "saints",
+    "full" : "A soldier who became a monk on Mount Olympus in Bithynia, and one of the defenders of the icons during the second iconoclast persecution. He died in 846.\n\nThe prayer that carries his name is a single sentence — my hope is the Father, my refuge the Son, my protection the Holy Spirit — and it stands at the very end of the evening prayers, after everything else has been said.",
+    "pronunciation" : "yo-a-NEE-kee-os",
+    "related" : [
+      "holy-trinity",
+      "prayer-rule"
+    ],
+    "short" : "A ninth-century ascetic. His one-line prayer closes the evening rule.",
+    "slug" : "saint-ioannikios",
+    "term" : "Saint Ioannikios the Great",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Russian Orthodox Church Outside Russia",
+      "Russian Orthodox Church Abroad",
+      "Church Abroad"
+    ],
+    "category" : "things",
+    "full" : "After the Russian Revolution, bishops and faithful who had fled Russia organised themselves abroad, unable to communicate freely with a church under Soviet control. That body became the Russian Orthodox Church Outside Russia.\n\nIt remained administratively separate from the Moscow Patriarchate for most of the twentieth century. In 2007 the two were reconciled by the Act of Canonical Communion: ROCOR is now a self-governing part of the Russian Orthodox Church, keeping its own synod, bishops and traditions.\n\nIt keeps the Old Calendar, and its practice is generally more traditional than that of many other jurisdictions.",
+    "related" : [
+      "act-of-canonical-communion",
+      "old-calendar",
+      "jurisdiction",
+      "new-martyrs",
+      "jordanville"
+    ],
+    "short" : "The Russian Orthodox Church Outside Russia, formed by exiles after 1917.",
+    "slug" : "rocor",
+    "term" : "ROCOR",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "Signed on 17 May 2007, it restored full communion between the Russian Orthodox Church Outside Russia and the Moscow Patriarchate after decades of separation.\n\nROCOR did not dissolve into the Moscow Patriarchate. It remains self-governing, with its own First Hierarch and Synod of Bishops, while being part of the wider Russian Orthodox Church.",
+    "related" : [
+      "rocor",
+      "jurisdiction"
+    ],
+    "short" : "The 2007 agreement reconciling ROCOR with the Moscow Patriarchate.",
+    "slug" : "act-of-canonical-communion",
+    "term" : "Act of Canonical Communion",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+      "New Martyrs",
+      "New Martyrs and Confessors"
+    ],
+    "category" : "saints",
+    "full" : "Clergy, monastics and laypeople who were executed, imprisoned or exiled during the Soviet persecutions — many thousands of them, of whom a great number have been canonised.\n\nROCOR canonised them in 1981, before the Moscow Patriarchate was able to. They are central to the identity of the Church Abroad, and are commemorated together as well as individually.",
+    "related" : [
+      "rocor",
+      "martyr",
+      "confessor"
+    ],
+    "short" : "Those killed or persecuted for the faith under Soviet rule.",
+    "slug" : "new-martyrs",
+    "term" : "New Martyrs and Confessors of Russia",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Kursk Icon",
+      "Protectress of the Russian Diaspora"
+    ],
+    "category" : "things",
+    "full" : "Found in the forest near Kursk in 1295, at the root of a tree — hence the name. It left Russia after the Revolution and has travelled with the diaspora ever since, which is why it is called the Protectress of the Russian Diaspora.\n\nIt is kept at the Synodal Cathedral of the Sign in New York and travels to ROCOR parishes through the year. Saint John of Shanghai died while praying before it.",
+    "related" : [
+      "rocor",
+      "john-of-shanghai",
+      "theotokos"
+    ],
+    "short" : "A wonderworking icon of the Theotokos, carried with the Russian exiles.",
+    "slug" : "kursk-root-icon",
+    "term" : "Kursk Root Icon",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+      "St John of Shanghai",
+      "John Maximovitch",
+      "St John the Wonderworker"
+    ],
+    "category" : "saints",
+    "full" : "A bishop who served in Shanghai, western Europe and finally San Francisco, known for extreme asceticism — he did not sleep lying down — and for a great many miracles during his life and after.\n\nHe reposed in 1966 while praying before the Kursk Root Icon, and was canonised by ROCOR in 1994. His relics are in the cathedral in San Francisco.",
+    "related" : [
+      "rocor",
+      "kursk-root-icon",
+      "wonderworker"
+    ],
+    "short" : "A twentieth-century ROCOR bishop and wonderworker, canonised in 1994.",
+    "slug" : "john-of-shanghai",
+    "term" : "Saint John of Shanghai and San Francisco",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Holy Trinity Monastery",
+      "Holy Trinity Seminary"
+    ],
+    "category" : "things",
+    "full" : "Holy Trinity Monastery at Jordanville, New York, has been the intellectual and liturgical centre of the Church Abroad for decades. Its seminary trains much of the clergy, and its press produced the English service books and prayer books most widely used in ROCOR parishes.",
+    "related" : [
+      "rocor",
+      "jordanville-prayer-book",
+      "church-slavonic"
+    ],
+    "short" : "ROCOR's monastery and seminary in upstate New York, and its publishing house.",
+    "slug" : "jordanville",
+    "term" : "Jordanville",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Holy Trinity Prayer Book"
+    ],
+    "category" : "prayer",
+    "full" : "Published by Holy Trinity Monastery, it contains the morning and evening prayers, the Order of Preparation for Holy Communion, the canons, and much else. When a ROCOR priest refers to \"the prayer book\", this is usually the one meant.",
+    "related" : [
+      "jordanville",
+      "prayer-rule",
+      "preparation-for-communion"
+    ],
+    "short" : "The standard English prayer book in ROCOR parishes.",
+    "slug" : "jordanville-prayer-book",
+    "term" : "Jordanville Prayer Book",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "Not the same as modern Russian: an older liturgical language, related but distinct, developed for the Slavic churches and still used in services.\n\nMany parishes outside Russia serve partly or wholly in English. Others alternate, or keep Slavonic for the fixed parts and use English for the readings.",
+    "related" : [
+      "rocor",
+      "jordanville",
+      "divine-liturgy"
+    ],
+    "short" : "The old liturgical language of the Slavic churches, still widely used.",
+    "slug" : "church-slavonic",
+    "term" : "Church Slavonic",
+    "traditions" : [
+      "russian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Communion",
+      "Holy Communion",
+      "the Mysteries",
+      "Eucharist"
+    ],
+    "category" : "services",
+    "full" : "\"Mystery\" is the Orthodox word where the West says \"sacrament\". The Holy Mysteries most often means communion itself.\n\nPreparation is taken seriously and the expectations differ between jurisdictions. In Russian practice they are relatively demanding — see the entry on preparing for communion — and they are always something to settle with a priest rather than to work out alone.",
+    "related" : [
+      "preparation-for-communion",
+      "confession",
+      "divine-liturgy",
+      "eucharistic-fast",
+      "zapivka"
+    ],
+    "short" : "Communion — the Body and Blood of Christ, received at the Divine Liturgy.",
+    "slug" : "holy-mysteries",
+    "term" : "Holy Mysteries",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Sacrament of Confession",
+      "Repentance"
+    ],
+    "category" : "services",
+    "full" : "The penitent confesses before Christ, with the priest as witness, and receives absolution.\n\nRussian practice, ROCOR included, generally expects confession before each communion from around the age of seven, most often at the evening service the night before rather than during the Liturgy itself. This is noticeably stricter than Greek practice, where confession is less frequently tied to each communion — a common source of confusion when someone moves between parishes.\n\nA first confession is a normal thing to be nervous about, and priests expect newcomers. Ask yours how he would like you to prepare.",
+    "related" : [
+      "holy-mysteries",
+      "preparation-for-communion",
+      "vespers",
+      "rocor"
+    ],
+    "short" : "Confessing sins before a priest — expected before communion in Russian practice.",
+    "slug" : "confession",
+    "term" : "Confession",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Order of Preparation",
+      "preparation rule",
+      "communion prayers"
+    ],
+    "category" : "prayer",
+    "full" : "In Russian practice the preparation usually includes: confession beforehand; nothing to eat or drink from midnight; the Order of Preparation for Holy Communion from the prayer book; and commonly three canons and an akathist read the evening before.\n\nThat is the full traditional shape. What any individual actually keeps is settled with a priest, who will take health, work, family and how new you are into account — and who will very often ask for less at the start. Asking is the normal thing to do, not a sign of not managing.",
+    "related" : [
+      "confession",
+      "holy-mysteries",
+      "eucharistic-fast",
+      "canon",
+      "akathist",
+      "jordanville-prayer-book"
+    ],
+    "short" : "The prayers, fasting and confession kept before receiving communion.",
+    "slug" : "preparation-for-communion",
+    "term" : "Preparation for Holy Communion",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "fasting before communion",
+      "fast from midnight"
+    ],
+    "category" : "fasting",
+    "full" : "Distinct from the calendar fasts. It is a complete abstention from food and drink from midnight until communion.\n\nNecessary medication is an ordinary exception, as are conditions such as diabetes. These are pastoral matters, discussed with a priest — not something to be worked out alone or quietly skipped.",
+    "related" : [
+      "preparation-for-communion",
+      "holy-mysteries",
+      "wednesday-friday-fast"
+    ],
+    "short" : "Taking no food or drink from midnight before receiving communion.",
+    "slug" : "eucharistic-fast",
+    "term" : "Eucharistic fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "services",
+    "full" : "Literally \"washing down\". After receiving, communicants are given a little blessed bread and wine diluted with warm water, so that nothing of the Holy Mysteries remains in the mouth.\n\nIt is a practical reverence, not a second communion. A newcomer usually meets it as a small table beside the chalice that everyone visits on their way back.",
+    "pronunciation" : "za-PEEV-ka",
+    "related" : [
+      "holy-mysteries",
+      "antidoron",
+      "divine-liturgy"
+    ],
+    "short" : "Bread and warm diluted wine taken immediately after communion.",
+    "slug" : "zapivka",
+    "term" : "Zapivka",
+    "traditions" : [
+      "bulgarian",
+      "russian",
+      "serbian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Canon of Repentance",
+      "the three canons"
+    ],
+    "category" : "prayer",
+    "full" : "A canon is built of odes, each modelled on a biblical hymn. Canons appear in Matins and in preparation for communion — the \"three canons\" commonly read beforehand are those to the Saviour, the Theotokos and the Guardian Angel.\n\nNote the word does double duty: canons are also the church's disciplinary rules. Context distinguishes them.",
+    "related" : [
+      "preparation-for-communion",
+      "matins",
+      "great-canon",
+      "akathist"
+    ],
+    "short" : "A long structured hymn of nine odes, read in services and in private prayer.",
+    "slug" : "canon",
+    "term" : "Canon",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Great Canon"
+    ],
+    "category" : "prayer",
+    "full" : "Written by Saint Andrew of Crete, it walks through the whole of scripture, turning each episode into self-examination. It is read in four parts across the first week of Great Lent and again in full in the fifth week.\n\nIt is long, and it is meant to be. Standing through it is many people's first real encounter with Lenten services.",
+    "related" : [
+      "great-lent",
+      "canon",
+      "prostration"
+    ],
+    "short" : "A long penitential canon read during the first week of Great Lent.",
+    "slug" : "great-canon",
+    "term" : "Great Canon of Saint Andrew",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Panikhida service",
+      "memorial service"
+    ],
+    "category" : "services",
+    "full" : "Served for the dead, commonly on the third, ninth and fortieth days after a death, then on anniversaries. It may be served in church or at the grave.\n\nKolivo — boiled wheat with honey — is often prepared for it, an image of the seed that must fall into the ground before it rises.",
+    "pronunciation" : "pa-NEE-khi-da",
+    "related" : [
+      "radonitsa",
+      "saturday-of-souls",
+      "molieben",
+      "kolivo"
+    ],
+    "short" : "A memorial service for the departed.",
+    "slug" : "panikhida",
+    "term" : "Panikhida",
+    "traditions" : [
+      "bulgarian",
+      "russian",
+      "serbian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Moleben",
+      "service of supplication"
+    ],
+    "category" : "services",
+    "full" : "A flexible service asking for help or giving thanks — before travel, at the start of a school year, in illness, or in honour of a particular saint. Often served after the Liturgy.\n\nAny parishioner may ask for one. It is a normal request, not an imposition.",
+    "pronunciation" : "mo-LYEH-ben",
+    "related" : [
+      "panikhida",
+      "divine-liturgy"
+    ],
+    "short" : "A short service of supplication or thanksgiving, to Christ, the Theotokos or a saint.",
+    "slug" : "molieben",
+    "term" : "Molieben",
+    "traditions" : [
+      "bulgarian",
+      "russian",
+      "serbian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Day of Rejoicing"
+    ],
+    "category" : "calendar",
+    "full" : "The church does not serve memorials during Bright Week, because the whole week is Pascha. Radonitsa, on the Tuesday after Thomas Sunday, is when the commemoration resumes — and it is done with the Paschal greeting, announcing the Resurrection at the graves.\n\nDistinctly Slavic, and widely kept: families visit cemeteries that day.",
+    "pronunciation" : "ra-DON-it-sa",
+    "related" : [
+      "pascha",
+      "bright-week",
+      "thomas-sunday",
+      "panikhida"
+    ],
+    "short" : "The Tuesday after Thomas Sunday, when the dead are commemorated with Paschal joy.",
+    "slug" : "radonitsa",
+    "term" : "Radonitsa",
+    "traditions" : [
+      "bulgarian",
+      "russian",
+      "serbian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Soul Saturday",
+      "Memorial Saturday"
+    ],
+    "category" : "calendar",
+    "full" : "Several Saturdays in the year are appointed for a general commemoration of the dead, most of them before and during Great Lent. Names of the departed are given in for reading at these services.",
+    "related" : [
+      "panikhida",
+      "great-lent",
+      "radonitsa"
+    ],
+    "short" : "Saturdays set aside in the calendar for commemorating all the departed.",
+    "slug" : "saturday-of-souls",
+    "term" : "Saturday of Souls",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "metania",
+      "bows",
+      "full prostration"
+    ],
+    "category" : "prayer",
+    "full" : "A full prostration means the sign of the cross, then kneeling and touching the forehead to the ground. A metania, or bow from the waist with the hand touching the floor, is the lesser form.\n\nProstrations are not made on Sundays or during the Paschal season, when the church stands to mark the Resurrection. They come thick during Great Lent, especially at the Prayer of Saint Ephraim.\n\nPeople with bad knees or backs bow instead, and nobody minds.",
+    "related" : [
+      "great-lent",
+      "great-canon",
+      "divine-liturgy"
+    ],
+    "short" : "Bowing to the ground in prayer — used heavily during Great Lent.",
+    "slug" : "prostration",
+    "term" : "Prostration",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "The customary greeting to a priest or bishop: hands crossed right over left, palms up, saying \"Father, bless\". He blesses and you kiss his hand.\n\nBlessings are also asked before undertakings — travel, a change of work, taking on a larger prayer rule. Asking one is ordinary, and it is how much of Orthodox practice is meant to be settled: in conversation, not alone.",
+    "related" : [
+      "prayer-rule",
+      "confession",
+      "preparation-for-communion"
+    ],
+    "short" : "Approaching a priest with cupped hands to receive a blessing.",
+    "slug" : "blessing",
+    "term" : "Asking a blessing",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "patronal feast",
+      "angel day"
+    ],
+    "category" : "things",
+    "full" : "Orthodox Christians take the name of a saint at baptism, and that saint's feast becomes their name day. In Russian tradition it is often marked more warmly than a birthday: people commune that day, and are congratulated.\n\nIf several saints share your name, your own is usually the one nearest your baptism or the one your priest names.",
+    "related" : [
+      "patron-saint",
+      "chrismation",
+      "holy-mysteries"
+    ],
+    "short" : "The feast of the saint whose name you bear — celebrated more than a birthday.",
+    "slug" : "name-day",
+    "term" : "Name day",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "Your patron is asked to pray for you, and their icon usually sits in the icon corner at home. Their life is worth reading — it is the particular example given to you.",
+    "related" : [
+      "name-day",
+      "icon-corner",
+      "chrismation"
+    ],
+    "short" : "The saint whose name you took, asked for as an intercessor.",
+    "slug" : "patron-saint",
+    "term" : "Patron saint",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "A formal state, not just an intention: a catechumen is prayed for by name in the Liturgy and is being instructed toward reception.\n\nHow long it lasts varies — often a year or more. There is no standard timetable, and being told to wait is normal rather than a judgement.",
+    "pronunciation" : "kat-eh-KYOO-men",
+    "related" : [
+      "chrismation",
+      "godparent",
+      "divine-liturgy"
+    ],
+    "short" : "Someone being prepared for baptism or reception into the Church.",
+    "slug" : "catechumen",
+    "term" : "Catechumen",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "Anointing with chrism, a consecrated oil, conferring the gift of the Holy Spirit. It follows baptism immediately, and is also the usual way a Christian baptised elsewhere is received into Orthodoxy.\n\nWhether a particular convert is baptised or chrismated is a decision for the bishop and priest.",
+    "related" : [
+      "catechumen",
+      "godparent",
+      "name-day"
+    ],
+    "short" : "Anointing with holy chrism — how most converts are received into the Church.",
+    "slug" : "chrismation",
+    "term" : "Chrismation",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "sponsor"
+    ],
+    "category" : "things",
+    "full" : "A godparent makes the baptismal confession on behalf of an infant, or stands with an adult, and is responsible thereafter for their spiritual upbringing.\n\nFor an adult convert the godparent is often the person who has been showing them the ropes, and the relationship usually continues as exactly that.",
+    "related" : [
+      "chrismation",
+      "catechumen",
+      "patron-saint"
+    ],
+    "short" : "The person who stands for you at baptism and answers for you afterwards.",
+    "slug" : "godparent",
+    "term" : "Godparent",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "red corner",
+      "krasny ugol",
+      "beautiful corner"
+    ],
+    "category" : "things",
+    "full" : "Traditionally the east corner of the main room, holding icons of Christ and the Theotokos and usually a patron saint, with a lampada burning before them.\n\nIt is where the morning and evening prayers of a rule are said. Setting one up is often a newcomer's first concrete step.",
+    "related" : [
+      "lampada",
+      "prayer-rule",
+      "patron-saint"
+    ],
+    "short" : "The corner of a home where icons are kept and prayers are said.",
+    "slug" : "icon-corner",
+    "term" : "Icon corner",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "icon lamp",
+      "vigil lamp"
+    ],
+    "category" : "things",
+    "full" : "A hanging or standing lamp burning olive oil before the icons, at home or in church. Many households light it for prayers and on feast days, some keep it burning continually.",
+    "related" : [
+      "icon-corner",
+      "iconostasis"
+    ],
+    "short" : "The small oil lamp kept burning before icons.",
+    "slug" : "lampada",
+    "term" : "Lampada",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "koliva",
+      "kutia"
+    ],
+    "category" : "things",
+    "full" : "Wheat boiled and sweetened, often with honey, raisins and nuts, blessed at memorial services. The wheat is the image: a seed must fall into the ground and die before it rises.",
+    "related" : [
+      "panikhida",
+      "saturday-of-souls"
+    ],
+    "short" : "Boiled wheat with honey, prepared for memorial services.",
+    "slug" : "kolivo",
+    "term" : "Kolivo",
+    "traditions" : [
+      "bulgarian",
+      "russian",
+      "serbian"
+    ]
+  },
+  {
+    "aliases" : [
+      "First Hour",
+      "Third Hour",
+      "Sixth Hour",
+      "Ninth Hour"
+    ],
+    "category" : "services",
+    "full" : "The First, Third, Sixth and Ninth Hours correspond roughly to 6am, 9am, noon and 3pm. In parish practice the Third and Sixth are usually read immediately before the Divine Liturgy while the clergy prepare.\n\nIf you arrive and hear someone reading psalms before the Liturgy begins, this is what it is.",
+    "related" : [
+      "divine-liturgy",
+      "compline",
+      "psalter"
+    ],
+    "short" : "Four short services marking points of the day, often read before the Liturgy.",
+    "slug" : "hours",
+    "term" : "The Hours",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Great Compline",
+      "Small Compline"
+    ],
+    "category" : "services",
+    "full" : "Small Compline is short and often read at home. Great Compline is a much longer form served on weekdays of Great Lent and on the eves of certain great feasts.",
+    "related" : [
+      "great-lent",
+      "hours",
+      "vespers"
+    ],
+    "short" : "The last service of the day, before sleep.",
+    "slug" : "compline",
+    "term" : "Compline",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "kathisma",
+      "kathismata"
+    ],
+    "category" : "scripture",
+    "full" : "The Psalter is divided into twenty kathismata, read through in the services across a week — and twice a week during Great Lent. Many people also read a kathisma daily as part of a rule.\n\nThe numbering follows the Greek Septuagint, so it is usually one behind the numbering in most English Bibles.",
+    "related" : [
+      "matins",
+      "vespers",
+      "prayer-rule",
+      "great-lent"
+    ],
+    "short" : "The Book of Psalms as the church reads it, divided into twenty sections.",
+    "slug" : "psalter",
+    "term" : "Psalter",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Hexapsalmos"
+    ],
+    "category" : "services",
+    "full" : "Read at the beginning of Matins with the lights lowered and no movement in the church — traditionally one does not walk about or sit during them. They are understood as an image of standing before God at the judgement.",
+    "related" : [
+      "matins",
+      "psalter",
+      "vigil"
+    ],
+    "short" : "Six psalms read in near-darkness at the start of Matins, in complete silence.",
+    "slug" : "six-psalms",
+    "term" : "Six Psalms",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "services",
+    "full" : "Served during the Vigil before a feast. Five loaves are blessed along with wheat, wine and oil, recalling the feeding of the five thousand, and the bread is distributed to those present.",
+    "pronunciation" : "LEE-tya",
+    "related" : [
+      "vigil",
+      "great-feast",
+      "prosphora"
+    ],
+    "short" : "A procession and blessing of bread, wheat, wine and oil at festal vigils.",
+    "slug" : "litya",
+    "term" : "Litya",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Theophany water",
+      "blessing of the waters"
+    ],
+    "category" : "services",
+    "full" : "Served at Theophany, when a cross is immersed in the water and it is blessed with a long set of prayers. People take it home, drink a little of it, and keep it — traditionally it does not spoil.\n\nPriests also bless homes with it in the weeks after the feast.",
+    "related" : [
+      "theophany",
+      "great-feast"
+    ],
+    "short" : "The blessing of water at Theophany, taken home and kept through the year.",
+    "slug" : "great-blessing-of-water",
+    "term" : "Great Blessing of Water",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Entry into Jerusalem"
+    ],
+    "category" : "calendar",
+    "full" : "One of the Great Feasts. Willow branches are usually blessed and held in Slavic practice rather than palms, which is why it is sometimes called Willow Sunday. It opens Holy Week.",
+    "related" : [
+      "great-feast",
+      "holy-week",
+      "pascha"
+    ],
+    "short" : "Christ's entry into Jerusalem, the Sunday before Pascha.",
+    "slug" : "palm-sunday",
+    "term" : "Palm Sunday",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Passion Week",
+      "Great Week"
+    ],
+    "category" : "calendar",
+    "full" : "Services almost every day, following the events of Christ's passion. The great ones are the Bridegroom Matins early in the week, the Twelve Passion Gospels on Thursday evening, the Burial Shroud on Friday, and the Paschal service late on Saturday night.\n\nAttendance expectations vary and few people manage everything. Going to what you can is the ordinary case.",
+    "related" : [
+      "pascha",
+      "palm-sunday",
+      "great-lent",
+      "bright-week"
+    ],
+    "short" : "The week between Palm Sunday and Pascha, the most intense of the year.",
+    "slug" : "holy-week",
+    "term" : "Holy Week",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast, and always a Thursday, because it falls forty days after Pascha. Christ blesses the disciples and is taken up; they are told he will return in the same way.\n\nThe ten days between Ascension and Pentecost are the church's brief interval of waiting.",
+    "related" : [
+      "great-feast",
+      "pascha",
+      "pentecost"
+    ],
+    "short" : "Christ's ascent into heaven, forty days after Pascha.",
+    "slug" : "ascension",
+    "term" : "Ascension",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Exaltation of the Cross",
+      "Universal Elevation"
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast commemorating the discovery of the Cross in Jerusalem. Unusually for a feast, it is kept as a strict fast day — the Cross is venerated with mourning rather than feasting.",
+    "related" : [
+      "great-feast",
+      "wednesday-friday-fast"
+    ],
+    "short" : "The finding and raising of the Cross, kept on 14 September with a strict fast.",
+    "slug" : "elevation-of-the-cross",
+    "term" : "Elevation of the Cross",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Entry into the Temple",
+      "Presentation of the Theotokos"
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast of the Theotokos, falling within the Nativity Fast. Her parents bring her to the Temple as a small child to be raised there, in fulfilment of a vow.\n\nBecause it lands inside a fast, the fast is relaxed for the day rather than lifted.",
+    "related" : [
+      "theotokos",
+      "great-feast",
+      "nativity-fast"
+    ],
+    "short" : "The Theotokos brought to the Temple as a child, kept on 21 November.",
+    "slug" : "entry-into-the-temple",
+    "term" : "Entry of the Theotokos into the Temple",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Presentation of Christ",
+      "Candlemas",
+      "Sretenie"
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast, forty days after the Nativity. The elder Simeon takes the child in his arms and says the words the church sings at every Vespers: \"Now lettest thou thy servant depart in peace.\"",
+    "related" : [
+      "great-feast",
+      "nativity",
+      "vespers"
+    ],
+    "short" : "The infant Christ met by Simeon in the Temple, kept on 2 February.",
+    "slug" : "meeting-of-the-lord",
+    "term" : "Meeting of the Lord",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "calendar",
+    "full" : "A Great Feast, and the first of the twelve in the church year — which begins on 1 September, not in January.\n\nThe year therefore opens with the birth of the Theotokos and closes with her Dormition.",
+    "related" : [
+      "theotokos",
+      "great-feast",
+      "church-new-year"
+    ],
+    "short" : "The birth of the Virgin Mary, kept on 8 September.",
+    "slug" : "nativity-of-the-theotokos",
+    "term" : "Nativity of the Theotokos",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Indiction",
+      "ecclesiastical new year"
+    ],
+    "category" : "calendar",
+    "full" : "The liturgical year runs from 1 September, so the first Great Feast of the year is the Nativity of the Theotokos and the last is her Dormition — the year opens with her birth and closes with her falling asleep.",
+    "related" : [
+      "nativity-of-the-theotokos",
+      "dormition",
+      "great-feast"
+    ],
+    "short" : "The church year begins on 1 September, not in January.",
+    "slug" : "church-new-year",
+    "term" : "Church New Year",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Protection of the Theotokos",
+      "Intercession of the Theotokos"
+    ],
+    "category" : "calendar",
+    "full" : "Commemorates the appearance of the Theotokos at Blachernae in Constantinople, spreading her veil over the people as a sign of protection.\n\nNot one of the Twelve Great Feasts, but among the most loved feasts in Russian and Slavic practice — many parishes and monasteries are dedicated to it.",
+    "pronunciation" : "po-KROF",
+    "related" : [
+      "theotokos",
+      "great-feast",
+      "rocor"
+    ],
+    "short" : "The Protection of the Theotokos, beloved in Slavic practice, kept on 1 October.",
+    "slug" : "pokrov",
+    "term" : "Pokrov",
+    "traditions" : [
+      "bulgarian",
+      "russian",
+      "serbian"
+    ]
+  },
+  {
+    "aliases" : [
+      "Triumph of Orthodoxy"
+    ],
+    "category" : "calendar",
+    "full" : "Commemorates the end of the iconoclast controversy in 843 and the restoration of icons to the churches. Parishes usually hold a procession in which everyone carries an icon.",
+    "related" : [
+      "great-lent",
+      "iconostasis"
+    ],
+    "short" : "The first Sunday of Great Lent, marking the restoration of the icons.",
+    "slug" : "sunday-of-orthodoxy",
+    "term" : "Sunday of Orthodoxy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Antipascha",
+      "St Thomas Sunday"
+    ],
+    "category" : "calendar",
+    "full" : "Also called Antipascha — not \"against Pascha\" but \"in place of\", because it repeats the Paschal celebration a week on. It closes Bright Week. Radonitsa follows two days later.",
+    "related" : [
+      "pascha",
+      "bright-week",
+      "radonitsa"
+    ],
+    "short" : "The Sunday after Pascha, when Thomas touches the risen Christ.",
+    "slug" : "thomas-sunday",
+    "term" : "Thomas Sunday",
+    "traditions" : [
+
+    ]
+  }
+]

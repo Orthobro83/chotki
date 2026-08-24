@@ -6,7 +6,7 @@ import Foundation
 /// the two cannot drift apart. What each contains is the prayers common to
 /// almost every form of that rule, not any one prayer book's full order; prayer
 /// books differ and the full rule is settled with a priest.
-public struct PrayerSequence: Sendable, Hashable, Identifiable {
+public struct PrayerSequence: Sendable, Hashable, Codable, Identifiable {
     public let id: String
     public let title: String
     public let prayerIDs: [String]

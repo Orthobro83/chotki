@@ -1,0 +1,46 @@
+[
+  {
+    "id" : "morning",
+    "prayerIDs" : [
+      "opening-prayer",
+      "beginning",
+      "heavenly-king",
+      "trisagion",
+      "all-holy-trinity",
+      "our-father",
+      "macarius",
+      "having-risen",
+      "guardian-angel",
+      "rejoice-o-virgin",
+      "it-is-truly-meet"
+    ],
+    "title" : "Morning prayers"
+  },
+  {
+    "id" : "evening",
+    "prayerIDs" : [
+      "opening-prayer",
+      "beginning",
+      "heavenly-king",
+      "trisagion",
+      "all-holy-trinity",
+      "our-father",
+      "evening-forgiveness",
+      "ioannikios",
+      "guardian-angel",
+      "it-is-truly-meet"
+    ],
+    "title" : "Evening prayers"
+  },
+  {
+    "id" : "trisagion-prayers",
+    "prayerIDs" : [
+      "beginning",
+      "heavenly-king",
+      "trisagion",
+      "all-holy-trinity",
+      "our-father"
+    ],
+    "title" : "The Trisagion prayers"
+  }
+]

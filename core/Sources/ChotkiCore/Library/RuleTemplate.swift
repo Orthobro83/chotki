@@ -6,7 +6,7 @@ import Foundation
 /// so the copy can be renamed, retimed and rewritten freely — a rule taken from
 /// the library and a rule written from scratch are the same kind of thing
 /// afterwards, with no second-class citizens.
-public struct RuleTemplate: Sendable, Hashable, Identifiable {
+public struct RuleTemplate: Sendable, Hashable, Codable, Identifiable {
     public let id: String
     public let title: String
     /// Shown under the title in the library, explaining what taking it on means.

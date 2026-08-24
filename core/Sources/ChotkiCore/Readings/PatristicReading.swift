@@ -1,7 +1,7 @@
 import Foundation
 
 /// A short passage from the Fathers, shown alongside the day's scripture.
-public struct PatristicReading: Sendable, Hashable, Identifiable {
+public struct PatristicReading: Sendable, Hashable, Codable, Identifiable {
     public let id: String
     public let text: String
     public let author: String

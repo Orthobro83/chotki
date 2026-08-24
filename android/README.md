@@ -173,7 +173,7 @@ Answers change the work; guesses would be expensive.
 | 5 — Practice and progress | **Done.** 113 tests, including a 141-day scoring fixture |
 | 6 — The liturgical layer | **Done.** 158 tests, against the same recorded orthocal responses |
 | 7 — Reminders | **Done.** 196 tests. Everything that decides *when* is now ported |
-| 8 — Content | Not started. The last phase before Android itself |
+| 8 — Content | **Done.** 214 tests. Generated from Swift, drift caught by CI |
 | 9 onwards | Not started |
 
 ## Decisions — settled 24 August 2026

@@ -10,7 +10,7 @@ import Foundation
 /// public-domain English, in the same tradition as the patristic passages —
 /// modern prayer books, the Jordanville book included, remain in copyright and
 /// must not be pasted in.
-public struct Prayer: Sendable, Hashable, Identifiable {
+public struct Prayer: Sendable, Hashable, Codable, Identifiable {
     public let id: String
     public let title: String
     /// Shown under the title where it helps — "said three times", or what the

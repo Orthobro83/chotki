@@ -1,0 +1,656 @@
+[
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "prayer-rule",
+      "trisagion",
+      "icon-corner"
+    ],
+    "id" : "morning-prayers",
+    "prayerIDs" : [
+      "opening-prayer",
+      "beginning",
+      "heavenly-king",
+      "trisagion",
+      "all-holy-trinity",
+      "our-father",
+      "macarius",
+      "having-risen",
+      "guardian-angel",
+      "rejoice-o-virgin",
+      "it-is-truly-meet"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The morning prayers from the prayer book, on rising.",
+    "timeOfDay" : "06:30",
+    "title" : "Morning prayers",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "prayer-rule",
+      "compline",
+      "icon-corner"
+    ],
+    "id" : "evening-prayers",
+    "prayerIDs" : [
+      "opening-prayer",
+      "beginning",
+      "heavenly-king",
+      "trisagion",
+      "all-holy-trinity",
+      "our-father",
+      "evening-forgiveness",
+      "ioannikios",
+      "guardian-angel",
+      "it-is-truly-meet"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The evening prayers, before sleep.",
+    "timeOfDay" : "21:30",
+    "title" : "Evening prayers",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "jesus-prayer",
+      "chotki",
+      "prayer-rule"
+    ],
+    "id" : "jesus-prayer",
+    "note" : "Start with a number you can keep. It is meant to grow slowly.",
+    "prayerIDs" : [
+      "jesus-prayer"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+
+      ]
+    },
+    "summary" : "A set number of repetitions, often counted on a prayer rope.",
+    "title" : "The Jesus Prayer",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "trisagion",
+      "prayer-rule"
+    ],
+    "id" : "trisagion-prayers",
+    "prayerIDs" : [
+      "beginning",
+      "heavenly-king",
+      "trisagion",
+      "all-holy-trinity",
+      "our-father"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The short opening prayers — a complete rule in itself when time is short.",
+    "title" : "The Trisagion prayers",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+
+    ],
+    "id" : "prayer-before-meals",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Grace before eating.",
+    "title" : "Prayer before meals",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "akathist",
+      "theotokos"
+    ],
+    "id" : "akathist",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "days" : [
+        "saturday"
+      ],
+      "kind" : "weekly"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "A hymn of praise, most often to the Theotokos or a saint.",
+    "title" : "An akathist",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "psalter",
+      "prayer-rule"
+    ],
+    "id" : "psalter-kathisma",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "One of the twenty sections the Psalms are divided into.",
+    "title" : "A kathisma of the Psalter",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "fasting",
+    "glossarySlugs" : [
+      "wednesday-friday-fast",
+      "fast-free",
+      "abstention"
+    ],
+    "id" : "wednesday-friday-fast",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "days" : [
+        "friday",
+        "wednesday"
+      ],
+      "kind" : "weekly"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The weekly fast, lifted by the Church in a few stretches of the year.",
+    "title" : "The Wednesday and Friday fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "fasting",
+    "glossarySlugs" : [
+      "great-lent",
+      "pascha",
+      "great-canon",
+      "prostration"
+    ],
+    "id" : "great-lent",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "liturgical",
+      "season" : "greatLent",
+      "trigger" : "season"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The fast of the weeks before Pascha.",
+    "title" : "Great Lent",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "fasting",
+    "glossarySlugs" : [
+      "nativity-fast",
+      "nativity"
+    ],
+    "id" : "nativity-fast",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "liturgical",
+      "season" : "nativityFast",
+      "trigger" : "season"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The forty days before the Nativity.",
+    "title" : "The Nativity Fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "fasting",
+    "glossarySlugs" : [
+      "apostles-fast",
+      "pentecost"
+    ],
+    "id" : "apostles-fast",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "liturgical",
+      "season" : "apostlesFast",
+      "trigger" : "season"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The fast after Pentecost, of variable length each year.",
+    "title" : "The Apostles' Fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "fasting",
+    "glossarySlugs" : [
+      "dormition-fast",
+      "dormition",
+      "theotokos"
+    ],
+    "id" : "dormition-fast",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "liturgical",
+      "season" : "dormitionFast",
+      "trigger" : "season"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The two weeks before the Dormition of the Theotokos.",
+    "title" : "The Dormition Fast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "services",
+    "glossarySlugs" : [
+      "divine-liturgy",
+      "holy-mysteries",
+      "antidoron"
+    ],
+    "id" : "sunday-liturgy",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "days" : [
+        "sunday"
+      ],
+      "kind" : "weekly"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "oneHour",
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The Divine Liturgy on Sunday morning.",
+    "timeOfDay" : "09:30",
+    "title" : "Sunday Liturgy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "services",
+    "glossarySlugs" : [
+      "vespers",
+      "vigil",
+      "confession"
+    ],
+    "id" : "saturday-vigil",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "days" : [
+        "saturday"
+      ],
+      "kind" : "weekly"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "oneHour",
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Vespers or the All-Night Vigil before Sunday.",
+    "timeOfDay" : "17:00",
+    "title" : "Saturday evening service",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "services",
+    "glossarySlugs" : [
+      "great-feast",
+      "divine-liturgy"
+    ],
+    "id" : "great-feast-liturgy",
+    "note" : "Not everyone lives within reach of a parish. This can be left off, or kept for the feasts you can get to.",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "liturgical",
+      "trigger" : "greatFeast"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "oneHour",
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The Liturgy on the Twelve Great Feasts, where you are able to attend.",
+    "timeOfDay" : "09:30",
+    "title" : "Liturgy on a Great Feast",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "services",
+    "glossarySlugs" : [
+      "confession",
+      "preparation-for-communion",
+      "holy-mysteries"
+    ],
+    "id" : "confession",
+    "note" : "The app cannot know when you next commune, so this is a regular reminder rather than a rule. How often is settled with your priest.",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "day" : 1,
+      "kind" : "monthly",
+      "whenShort" : "lastDay"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Monthly to begin with. Russian practice expects it before each communion.",
+    "title" : "Confession",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "services",
+    "glossarySlugs" : [
+      "holy-mysteries",
+      "preparation-for-communion",
+      "eucharistic-fast",
+      "zapivka"
+    ],
+    "id" : "communion",
+    "note" : "Frequency and preparation are settled with your priest.",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "days" : [
+        "sunday"
+      ],
+      "kind" : "weekly"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Receiving the Holy Mysteries.",
+    "title" : "Holy Communion",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "reading",
+    "glossarySlugs" : [
+      "gospel",
+      "epistle"
+    ],
+    "id" : "daily-gospel",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The Gospel reading appointed for today.",
+    "timeOfDay" : "12:00",
+    "title" : "The day's Gospel",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "reading",
+    "glossarySlugs" : [
+      "epistle",
+      "gospel"
+    ],
+    "id" : "daily-epistle",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The Epistle reading appointed for today.",
+    "timeOfDay" : "12:00",
+    "title" : "The day's Epistle",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "reading",
+    "glossarySlugs" : [
+      "synaxarion",
+      "patron-saint"
+    ],
+    "id" : "lives-of-saints",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+
+      ]
+    },
+    "summary" : "Read about whoever is commemorated today.",
+    "title" : "The life of the day's saint",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "life",
+    "glossarySlugs" : [
+
+    ],
+    "id" : "almsgiving",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "days" : [
+        "sunday"
+      ],
+      "kind" : "weekly"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Giving, in whatever form you have settled on.",
+    "title" : "Almsgiving",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "life",
+    "glossarySlugs" : [
+
+    ],
+    "id" : "spiritual-reading",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+
+      ]
+    },
+    "summary" : "A set time with the Fathers or a life of a saint.",
+    "title" : "Spiritual reading",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "life",
+    "glossarySlugs" : [
+      "panikhida",
+      "radonitsa",
+      "saturday-of-souls"
+    ],
+    "id" : "prayer-for-the-departed",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Remembering your dead by name.",
+    "title" : "Prayer for the departed",
+    "traditions" : [
+      "bulgarian",
+      "russian",
+      "serbian"
+    ]
+  }
+]
