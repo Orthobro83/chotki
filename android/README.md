@@ -162,6 +162,14 @@ Answers change the work; guesses would be expensive.
 
  My answer: I've yet to find a priest running Apple Silicon. Part of why I'm moving forward with the Android SDK now is that this will make it more accessible to more priests -- it'll help me find one to review it.
 
+## Progress
+
+| Phase | State |
+|---|---|
+| 1 — Scaffolding and the guard | **Done.** Gradle 9.7.1, Kotlin 2.4.0, `:core` only, green on Linux CI |
+| 2 — `CalendarDate` and time | **Done.** 17 tests: the 14 from the Swift suite, plus 3 differential |
+| 3 onwards | Not started |
+
 ## Decisions — settled 24 August 2026
 
 | | |

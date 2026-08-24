@@ -51,6 +51,28 @@ tests including the DST and leap-day cases.
 nonexistent local time returns null rather than a guess — passes for the same
 reason it does in Swift.
 
+### Proving a translation, rather than believing it
+
+Phase 2 established the technique the rest of the port should use. The Swift core
+and the Kotlin one are on the same machine, so agreement between them can be
+*measured*:
+
+1. A throwaway Swift test emits a fixture — inputs and what the specification
+   answers for each.
+2. The fixture is committed under `android/core/src/test/resources/`.
+3. A Kotlin test reads it and asserts the port agrees, case for case.
+
+`date-parity.tsv` is the first: 1,985 dates from 1900 to 2100, with the ISO form
+and weekday Foundation computed for each. It exists because the Kotlin
+`CalendarDate` is deliberately *not* a line-by-line translation — it replaces two
+Foundation calls with arithmetic, which is a better design and a fresh chance to
+be subtly wrong.
+
+Worth doing wherever the answer is a value rather than a behaviour: recurrence
+expansion over a year, scoring over a generated history, the glossary's term
+scan. Not worth it where the Swift test already states the rule plainly enough
+to translate.
+
 ## Phase 3 — The model and recurrence
 
 `Rule`, `Activation`, `Occurrence`, `Recurrence`, `RecurrenceEngine`,
