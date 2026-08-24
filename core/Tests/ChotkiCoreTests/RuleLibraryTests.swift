@@ -214,3 +214,88 @@ struct RestoredPrayersTests {
         }
     }
 }
+
+/// Rules of one's own, kept so they can be taken up again.
+@Suite("The custom library")
+struct CustomLibraryTests {
+
+    private func own(_ title: String, days: Int = 0, hidden: Bool? = nil) -> Rule {
+        Rule(
+            title: title, recurrence: .daily,
+            createdAt: Date().addingTimeInterval(TimeInterval(days) * 86_400),
+            hiddenFromLibrary: hidden
+        )
+    }
+
+    @Test("a rule of one's own is one the bundled library does not have")
+    func isOwn() {
+        #expect(CustomLibrary.isOwn(own("Cold plunge")))
+        #expect(CustomLibrary.isOwn(own("Workout")))
+        #expect(!CustomLibrary.isOwn(own("Evening prayers")), "that one is the library's")
+        #expect(!CustomLibrary.isOwn(own("evening PRAYERS")), "and case does not change it")
+    }
+
+    // source looks like provenance and is not: it is a free-text note the
+    // person edits, so it cannot be trusted to say where a rule came from.
+    @Test("the free-text source is not what decides it")
+    func sourceIsNotProvenance() {
+        var rule = own("Cold plunge")
+        rule.source = "the library"
+        #expect(CustomLibrary.isOwn(rule), "still his own, whatever the note says")
+    }
+
+    @Test("entries are newest first")
+    func newestFirst() {
+        let entries = CustomLibrary.entries(from: [
+            own("Older", days: -3), own("Newest", days: -1), own("Oldest", days: -9),
+        ])
+        #expect(entries.map(\.title) == ["Newest", "Older", "Oldest"])
+    }
+
+    @Test("the library's own rules are not offered as custom")
+    func bundledExcluded() {
+        let entries = CustomLibrary.entries(from: [own("Cold plunge"), own("Evening prayers")])
+        #expect(entries.map(\.title) == ["Cold plunge"])
+    }
+
+    @Test("a rule set aside is not offered")
+    func setAsideExcluded() {
+        let entries = CustomLibrary.entries(from: [own("Cold plunge", hidden: true), own("Kathisma")])
+        #expect(entries.map(\.title) == ["Kathisma"])
+    }
+
+    @Test("setting aside touches nothing else")
+    func settingAsideIsNarrow() {
+        var rule = own("Cold plunge")
+        rule.archivedAt = nil
+        let aside = CustomLibrary.settingAside(rule)
+        #expect(aside.hiddenFromLibrary == true)
+        #expect(aside.id == rule.id)
+        #expect(aside.title == rule.title)
+        #expect(aside.recurrence == rule.recurrence)
+        #expect(aside.createdAt == rule.createdAt)
+        #expect(aside.archivedAt == nil, "still on the rule; only the listing changed")
+    }
+
+    // The reason the whole feature exists: the same rule, with its history,
+    // rather than a fresh one that splits the record in two.
+    @Test("taking one up again keeps its identity")
+    func takingUpKeepsIdentity() {
+        var rule = own("Cold plunge")
+        rule.archivedAt = Date()
+        rule.hiddenFromLibrary = true
+
+        let restored = CustomLibrary.takingUp(rule)
+        #expect(restored.id == rule.id, "the same rule, so its history follows it")
+        #expect(restored.archivedAt == nil)
+        #expect(restored.hiddenFromLibrary == nil, "back in the library too")
+        #expect(restored.createdAt == rule.createdAt)
+    }
+
+    @Test("an archived rule of one's own is still offered")
+    func archivedStillOffered() {
+        var rule = own("Cold plunge")
+        rule.archivedAt = Date()
+        #expect(CustomLibrary.entries(from: [rule]).count == 1, "that is the point")
+    }
+}

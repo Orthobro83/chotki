@@ -23,6 +23,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var rules: [Rule] = []
     @Published private(set) var activations: [Activation] = []
     @Published private(set) var occurrences: [Occurrence] = []
+    /// Rules of his own, offered in the library to take up again. Archived ones
+    /// included — those are exactly the ones worth offering.
+    @Published private(set) var customEntries: [Rule] = []
     @Published var selectedDate: CalendarDate
     @Published var visibleMonth: CalendarDate
     @Published var screen: Screen = .main
@@ -140,6 +143,7 @@ final class AppModel: ObservableObject {
             rules = try store.rules(includeArchived: false)
             activations = try store.activations(ruleID: nil)
             occurrences = try store.occurrences(ruleID: nil, from: nil, through: nil)
+            customEntries = CustomLibrary.entries(from: try store.rules(includeArchived: true))
             loadError = nil
         } catch {
             loadError = "Could not read your rules. \(error)"
@@ -297,6 +301,46 @@ final class AppModel: ObservableObject {
             reload()
         } catch {
             loadError = "Could not update that. \(error)"
+        }
+    }
+
+    /// Whether a rule is in force: not removed, and with an open activation.
+    /// A rule whose activations were all closed is still a rule — it is simply
+    /// not being kept at the moment, which is exactly what the library offers
+    /// to undo.
+    func isOnTheRule(_ rule: Rule) -> Bool {
+        !rule.isArchived && !practice.isPaused(rule)
+    }
+
+    /// Puts a rule of his own back on the rule, from today.
+    ///
+    /// The same rule, not a copy: its history follows it, and the gap shows as
+    /// a gap rather than as two unrelated rules with the record split between
+    /// them.
+    func takeUp(_ rule: Rule) {
+        do {
+            try store.save(CustomLibrary.takingUp(rule))
+            if practice.isPaused(rule) {
+                try store.save(Activation(ruleID: rule.id, from: today))
+            }
+            reload()
+            notice = "\(rule.title) is back on your rule. What you kept of it before is still counted."
+        } catch {
+            loadError = "Could not take that on again. \(error)"
+        }
+    }
+
+    /// Takes a rule of his own out of the library's Custom list.
+    ///
+    /// Nothing else changes: if it is on his rule it stays there, and its
+    /// history is untouched either way.
+    func setAside(_ rule: Rule) {
+        do {
+            try store.save(CustomLibrary.settingAside(rule))
+            reload()
+            notice = "\(rule.title) is no longer offered in the library. It is still on your rule if you had taken it on, and nothing it has kept is lost."
+        } catch {
+            loadError = "Could not change the library. \(error)"
         }
     }
 

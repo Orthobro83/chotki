@@ -185,6 +185,8 @@ enum RenderMode {
             shot("window-rule") { }
             shot("window-library-drawer") { model.libraryOnRule = true }
             shot("window-library-scrolled") { scrollDown(host, by: 420) }
+            // Far enough to reach Custom, which sits at the foot of the library.
+            shot("window-library-bottom") { scrollDown(host, by: 4000) }
 
             // Narrow enough that the calendar and the day cannot sit side by
             // side. This is the shape the window was squashed into before it
@@ -283,7 +285,11 @@ enum RenderMode {
             ($0.documentView?.bounds.height ?? 0) < ($1.documentView?.bounds.height ?? 0)
         }) else { return false }
 
-        scroll.contentView.scroll(to: NSPoint(x: 0, y: amount))
+        // `scroll(to:)` does not clamp: ask for more than there is and it goes
+        // straight past the end into blank space, which looks exactly like a
+        // view that failed to draw.
+        let travel = (scroll.documentView?.bounds.height ?? 0) - scroll.contentView.bounds.height
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: max(0, min(amount, travel))))
         scroll.reflectScrolledClipView(scroll.contentView)
         return true
     }

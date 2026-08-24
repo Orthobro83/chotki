@@ -240,7 +240,7 @@ struct SchemaMigrationTests {
         // and again at version 5 — because a new migration was added without
         // teaching this fixture to reverse it. If you add a migration, add its
         // reversal to this list.
-        for column in ["reminders", "prayer_ids"] {
+        for column in ["reminders", "prayer_ids", "hidden_from_library"] {
             try? store.exec("ALTER TABLE rule DROP COLUMN \(column);")
         }
         try store.exec("DROP TABLE IF EXISTS app_settings;")

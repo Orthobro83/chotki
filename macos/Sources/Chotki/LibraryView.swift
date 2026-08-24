@@ -34,6 +34,8 @@ struct LibraryViewContent: View {
                 }
             }
 
+            if !model.customEntries.isEmpty { custom }
+
             Rectangle().fill(Theme.line).frame(height: 1).padding(.top, 12)
             Button { model.screen = .editor(nil) } label: {
                 Label("Write your own rule", systemImage: "plus")
@@ -46,8 +48,91 @@ struct LibraryViewContent: View {
     
     }
 
+    /// His own rules, kept so they can be taken up again without being written
+    /// out a second time.
+    private var custom: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Custom")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.gold)
+                .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 3)
+
+            // Descriptive, not instructing: it says what is usually so, and
+            // leaves the decision where it belongs.
+            Text("Custom routines are usually taken on the advice of your priest.")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.faint)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 14).padding(.bottom, 4)
+
+            ForEach(model.customEntries) { rule in
+                CustomRow(model: model, rule: rule)
+            }
+        }
+    }
+
     private func isTaken(_ template: RuleTemplate) -> Bool {
         model.rules.contains { $0.title == template.title }
+    }
+}
+
+/// One rule of his own in the library.
+///
+/// The cross removes it from this list only. It is drawn always rather than on
+/// hover — a control that appears under the cursor makes the row reflow and
+/// moves whatever was beside it out from under a click already on its way.
+struct CustomRow: View {
+    @ObservedObject var model: AppModel
+    let rule: Rule
+    @State private var hovering = false
+
+    private var isOnTheRule: Bool { model.isOnTheRule(rule) }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(rule.title)
+                    .font(.system(size: 12))
+                    .foregroundStyle(isOnTheRule ? Theme.muted : Theme.parchment)
+                Text(rule.timeOfDay.map(Format.time) ?? "all day")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.faint)
+                if let note = rule.note, !note.isEmpty {
+                    Text(note)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.faint.opacity(0.85))
+                        .italic()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Spacer(minLength: 4)
+
+            if isOnTheRule {
+                Text("On your rule")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Theme.goldDim)
+            } else {
+                Button { model.takeUp(rule) } label: {
+                    Text("Take on")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.gold)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.goldDim))
+                }
+                .buttonStyle(.plain)
+            }
+
+            Button { model.setAside(rule) } label: {
+                Image(systemName: "xmark").font(.system(size: 9))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(hovering ? Theme.muted : Theme.faint)
+            .help("Remove from the library. The rule and everything it has kept stay as they are.")
+        }
+        .padding(.horizontal, 14).padding(.vertical, 6)
+        .background(hovering ? Theme.panel : .clear)
+        .onHover { hovering = $0 }
     }
 }
 

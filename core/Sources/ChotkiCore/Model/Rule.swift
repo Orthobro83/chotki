@@ -23,6 +23,10 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     public var createdAt: Date
     /// Set when the rule is removed. Never deleted, so history survives.
     public var archivedAt: Date?
+    /// Set when a rule of one's own is taken out of the library's Custom list.
+    /// The rule and its history are untouched; it is only no longer offered.
+    /// Optional so a rule written before this existed decodes as still offered.
+    public var hiddenFromLibrary: Bool?
 
     public init(
         id: UUID = UUID(),
@@ -35,7 +39,8 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         reminders: RuleReminders? = nil,
         prayerIDs: [String]? = nil,
         createdAt: Date = Date(),
-        archivedAt: Date? = nil
+        archivedAt: Date? = nil,
+        hiddenFromLibrary: Bool? = nil
     ) {
         self.id = id
         self.title = title
@@ -48,6 +53,7 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         self.prayerIDs = prayerIDs
         self.createdAt = createdAt
         self.archivedAt = archivedAt
+        self.hiddenFromLibrary = hiddenFromLibrary
     }
 
     public var isArchived: Bool { archivedAt != nil }
