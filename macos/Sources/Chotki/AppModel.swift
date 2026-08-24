@@ -144,9 +144,29 @@ final class AppModel: ObservableObject {
         } catch {
             loadError = "Could not read your rules. \(error)"
         }
+        restorePrayersOnOlderRules()
         reconcileObservances()
         reconcileFirstRun()
         rearmReminders()
+    }
+
+    /// Gives back the prayers to rules taken from the library before rules
+    /// carried prayers. Decided in core; this only writes the result.
+    ///
+    /// Unscoped by tradition on purpose: a rule may well have been taken on
+    /// under a different jurisdiction from the one now selected, and it should
+    /// still find its way to its own words.
+    private func restorePrayersOnOlderRules() {
+        let repaired = RuleLibrary.shared.restoringPrayers(in: rules)
+        guard !repaired.isEmpty else { return }
+        do {
+            for rule in repaired { try store.save(rule) }
+            rules = try store.rules(includeArchived: false)
+        } catch {
+            // Not worth an error in front of him: the rules are all still
+            // there, they are only missing their link to the words.
+            loadError = nil
+        }
     }
 
     /// Turns on any observance a rule depends on. What is needed is decided in

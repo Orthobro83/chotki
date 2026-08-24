@@ -84,6 +84,38 @@ public struct RuleLibrary: Sendable {
     }
 
     /// Grouped for display, in category order, skipping empty groups.
+    /// The prayers a rule ought to carry, for one taken from the library before
+    /// rules carried prayers at all.
+    ///
+    /// `prayer_ids` arrived in schema 5 as a nullable column with nothing to
+    /// fill it in, so every rule taken on before that reads as having no
+    /// prayers: no way through to the words, on the rules most likely to want
+    /// them. The first Evening prayers found this — taken on 20 August, two days
+    /// before the prayers existed.
+    ///
+    /// Matched on the title, which `makeRule` copies from the template verbatim.
+    /// A renamed rule is left alone rather than guessed at, and so is a rule
+    /// whose prayers were set to none deliberately: only `nil`, meaning never
+    /// set, is treated as missing.
+    public func restoredPrayerIDs(for rule: Rule) -> [String]? {
+        guard rule.prayerIDs == nil else { return nil }
+        guard let template = templates.first(where: {
+            $0.title.compare(rule.title, options: .caseInsensitive) == .orderedSame
+        }) else { return nil }
+        return template.prayerIDs.isEmpty ? nil : template.prayerIDs
+    }
+
+    /// The rules that need repairing, already repaired. Rules needing nothing
+    /// are left out, so the caller writes only what changed.
+    public func restoringPrayers(in rules: [Rule]) -> [Rule] {
+        rules.compactMap { rule in
+            guard let ids = restoredPrayerIDs(for: rule) else { return nil }
+            var repaired = rule
+            repaired.prayerIDs = ids
+            return repaired
+        }
+    }
+
     public func byCategory() -> [(RuleCategory, [RuleTemplate])] {
         RuleCategory.ordered.compactMap { category in
             let matching = templates.filter { $0.category == category }

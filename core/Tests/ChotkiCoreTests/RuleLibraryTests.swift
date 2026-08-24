@@ -137,3 +137,80 @@ struct AppSettingsTests {
         #expect(try JSONDecoder().decode(AppSettings.self, from: data) == settings)
     }
 }
+
+/// Rules taken from the library before rules carried prayers.
+@Suite("Restoring prayers to older rules")
+struct RestoredPrayersTests {
+    let library = RuleLibrary.shared
+
+    private func rule(_ title: String, prayers: [String]? = nil) -> Rule {
+        Rule(title: title, recurrence: .daily, prayerIDs: prayers)
+    }
+
+    // The rule that found this: taken on 20 August, two days before prayers
+    // existed, so its column was null and it offered no way to the words.
+    @Test("evening prayers gets the evening rule back")
+    func eveningPrayers() {
+        let restored = library.restoredPrayerIDs(for: rule("Evening prayers"))
+        #expect(restored == PrayerSequence.evening.prayerIDs)
+        #expect(!(restored ?? []).isEmpty)
+    }
+
+    @Test("so does every template that carries prayers")
+    func everyTemplateWithPrayers() {
+        for template in library.templates where !template.prayerIDs.isEmpty {
+            let restored = library.restoredPrayerIDs(for: rule(template.title))
+            #expect(restored == template.prayerIDs, "\(template.id)")
+        }
+    }
+
+    @Test("a rule that already has prayers is left alone")
+    func alreadySet() {
+        #expect(library.restoredPrayerIDs(for: rule("Evening prayers", prayers: ["jesus-prayer"])) == nil)
+    }
+
+    // Empty is a decision — someone cleared them — and nil is an absence.
+    @Test("prayers deliberately set to none are not overwritten")
+    func deliberatelyEmpty() {
+        #expect(library.restoredPrayerIDs(for: rule("Evening prayers", prayers: [])) == nil)
+    }
+
+    @Test("a rule of one's own is not guessed at")
+    func ownRule() {
+        #expect(library.restoredPrayerIDs(for: rule("Morning Prayer")) == nil, "singular: his own rule")
+        #expect(library.restoredPrayerIDs(for: rule("Workout")) == nil)
+    }
+
+    @Test("the title match ignores case")
+    func caseInsensitive() {
+        #expect(library.restoredPrayerIDs(for: rule("evening PRAYERS")) == PrayerSequence.evening.prayerIDs)
+    }
+
+    @Test("a template without prayers restores nothing")
+    func noPrayers() {
+        #expect(library.restoredPrayerIDs(for: rule("The Wednesday and Friday fast")) == nil)
+    }
+
+    @Test("only what changed comes back")
+    func onlyChanged() {
+        let repaired = library.restoringPrayers(in: [
+            rule("Evening prayers"),
+            rule("Workout"),
+            rule("Morning prayers"),
+            rule("The Jesus Prayer", prayers: ["jesus-prayer"]),
+        ])
+        #expect(repaired.count == 2)
+        #expect(repaired.allSatisfy { !($0.prayerIDs ?? []).isEmpty })
+        #expect(repaired.contains { $0.title == "Evening prayers" })
+        #expect(repaired.contains { $0.title == "Morning prayers" })
+    }
+
+    @Test("every restored id is a prayer that exists")
+    func restoredIDsResolve() {
+        for template in library.templates {
+            for id in template.prayerIDs {
+                #expect(PrayerBook.shared.prayer(id: id) != nil, "\(template.id) → \(id)")
+            }
+        }
+    }
+}

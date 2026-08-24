@@ -272,13 +272,15 @@ struct EntryRow: View {
                 .help("Read the prayers")
             }
 
-            if hovering {
-                Button { model.screen = .editor(entry.rule.id) } label: {
-                    Image(systemName: "pencil").font(.system(size: 10))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Theme.muted)
+            // Always drawn, never only on hover. Appearing on hover made the
+            // row reflow under the cursor, so the prayers icon beside it moved
+            // out from under a click that was already on its way.
+            Button { model.screen = .editor(entry.rule.id) } label: {
+                Image(systemName: "pencil").font(.system(size: 10))
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(hovering ? Theme.muted : Theme.faint)
+            .help("Edit this rule")
         }
         .padding(.horizontal, 4).padding(.vertical, 5)
         .rowBackground(hovering)
