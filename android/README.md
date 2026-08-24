@@ -87,22 +87,40 @@ Answers change the work; guesses would be expensive.
 
 1. **Feature scope for v1** — everything the Mac app does, or a subset to start?
    Launch-at-login has no Android equivalent and drops out either way.
+
+   My answer: everything the Mac app has, please.
+
 2. **Which device**, and which Android version does it run? That sets the real
    minimum, and the emulator profile to test against.
+
+    My answer: The app should run cleanly on the largest number of Android devices currently in use today. I have an S21 FE running Android 13 (Kernel version 4.19.113-29223811) and OneUI 5.1. To my understanding this is fairly old, and should suffice as a minimum requirement sicne most Android devices in use today will have at least this versionor above.
+
 3. **Should the database be interchangeable** with the macOS one — copy the file
    across and it opens? That is nearly free if decided now, and awkward later.
    Note this is *not* sync; syncing between devices is a separate, much larger
    feature.
+
+    My answer: We're not going to worry about sync at all for now. The idea will be that you'll run it on one device, and this device will *the* device the user uses for this app.
+
 4. **Distribution to the Brotherhood** — a direct APK, as with the Mac alpha, or
    the Play Store? Play means a developer account, a review process, and a
    privacy policy; direct means asking people to permit installing from an
    unknown source.
+
+    My answer: Direct APK for now. I will worry about a developer account and the rest later.
+
 5. **Shared content as JSON?** Exporting prayers, glossary, library and readings
    to JSON that both platforms read would make drift impossible — but it changes
    the macOS app too. Worth it if Windows and Linux ports are still planned.
+
+ My answer: As the app may see feature updates and changes that will have to be implemented across platforms, we should account for this in the most efficient way going forward.
+
 6. **Where the priest review stands.** The glossary and prayer texts still need
    it, and duplicating unreviewed content onto a second platform doubles what
    has to be corrected later.
+
+
+ My answer: I've yet to find a priest running Apple Silicon. Part of why I'm moving forward with the Android SDK now is that this will make it more accessible to more priests -- it'll help me find one to review it.
 
 ## Still outstanding on macOS
 
