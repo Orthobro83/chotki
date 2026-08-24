@@ -174,7 +174,8 @@ Answers change the work; guesses would be expensive.
 | 6 — The liturgical layer | **Done.** 158 tests, against the same recorded orthocal responses |
 | 7 — Reminders | **Done.** 196 tests. Everything that decides *when* is now ported |
 | 8 — Content | **Done.** 214 tests. Generated from Swift, drift caught by CI |
-| 9 onwards | Not started |
+| 9 — Android platform layer | **In progress.** The app builds, installs and runs; the store is verified on an API 33 device |
+| 10 onwards | Not started |
 
 ## Decisions — settled 24 August 2026
 

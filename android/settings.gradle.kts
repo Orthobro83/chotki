@@ -12,14 +12,25 @@
 rootProject.name = "chotki"
 
 include(":core")
+include(":app")
 
 pluginManagement {
     repositories {
+        google()
         gradlePluginPortal()
         mavenCentral()
+    }
+    plugins {
+        // The last stable Android Gradle Plugin. The Studio installed here is a
+        // preview build shipping 9.4.0-dev; there is no reason to found the port
+        // on a -dev toolchain that moves under it.
+        id("com.android.application") version "9.3.0"
     }
 }
 
 dependencyResolutionManagement {
-    repositories { mavenCentral() }
+    repositories {
+        google()
+        mavenCentral()
+    }
 }

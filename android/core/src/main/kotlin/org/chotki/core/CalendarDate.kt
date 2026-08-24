@@ -158,7 +158,7 @@ class CalendarDate private constructor(
         // A gap is not reported as an error: the time is moved forward instead.
         // Comparing it back is what catches that, exactly as the Swift version
         // re-reads the components it asked for.
-        if (zoned.toLocalDateTime() != local) return null
+        if (!zoned.toLocalDateTime().isEqual(local)) return null
         return zoned.toInstant()
     }
 

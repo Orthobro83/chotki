@@ -1,6 +1,11 @@
 plugins {
-    kotlin("jvm") version "2.4.0"
-    kotlin("plugin.serialization") version "2.4.0"
+    // Pinned to what the Android plugin brings with it. AGP 9.3.0 has Kotlin
+    // built in at 2.2.0, and a `:core` compiled with anything newer produces
+    // metadata `:app` cannot read — "expected version 2.2.0", on every class.
+    // One Kotlin version for the whole project, chosen by the constraint that
+    // is not ours to move.
+    kotlin("jvm") version "2.2.0"
+    kotlin("plugin.serialization") version "2.2.0"
 }
 
 // 17 rather than the JDK that happens to be running Gradle: this module becomes
