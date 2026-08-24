@@ -125,6 +125,50 @@ counts between platforms, not by reading.
 **Done when:** ids and counts match Swift exactly, the glossary's cross
 references all resolve, and the prayer-scanning tests pass.
 
+### Phase 8a — Making reminders actually arrive
+
+Its own step because it is the most likely thing to fail silently on a real
+phone, and because three separate systems have to say yes before a reminder
+appears at all:
+
+1. **`POST_NOTIFICATIONS`** — a runtime permission from Android 13. Refused or
+   never asked, nothing appears and nothing errors.
+2. **Exact alarms** — permission from Android 12. Without it a reminder for a
+   rule kept at 06:30 arrives whenever the system finds convenient.
+3. **Battery optimisation** — Doze will defer an unexempted app's alarms, and
+   Samsung's OneUI goes further with its own sleeping-apps list on top.
+
+So: a first-run screen that asks for all three, in plain language, saying what
+each is for. `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` puts the exemption
+one tap away; `PowerManager.isIgnoringBatteryOptimizations` reads back whether
+it took.
+
+**Two things that cannot be done for the user.** Samsung's "sleeping apps" list
+is separate from the standard exemption and cannot be set or even read
+programmatically — being exempt from Doze does not remove an app from it. On a
+Samsung build (`Build.MANUFACTURER`) the screen has to show the route by hand:
+Settings → Battery → Background usage limits → Never sleeping apps.
+
+**And a standing diagnostic in Settings**, not just a first-run wizard: which of
+the three are granted, which are not, and what to do about each. Permissions get
+revoked, phones get replaced, and OEM updates reset these lists. An app whose
+whole point is honest measurement should be able to say plainly whether its
+reminders are actually going to arrive — and should say so rather than quietly
+not firing.
+
+Asked once, plainly, and skippable. Never nagged: a wall of permission dialogues
+on first run is exactly the tone this app does not take.
+
+**One caveat for later.** Google Play restricts
+`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` to apps with a qualifying use case. It
+does not apply to a direct APK, but it would need answering if the Play Store
+ever comes up. The fallback that is always permitted is
+`ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`, which opens the list and lets the
+user find the app themselves.
+
+**Done when:** the diagnostic reports all three states correctly on the
+emulator, and a reminder fires on time across a reboot.
+
 ## Phase 9 — The Android platform layer
 
 Now, and not before: notifications and channels, `AlarmManager` for timed

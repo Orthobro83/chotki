@@ -63,6 +63,33 @@ When the time comes, Developer options can be switched off again between
 sessions; most apps that object check at launch. That is Ryan's call to make
 then, not a reason to enable it now.
 
+### The emulator that exists — verified 24 August 2026
+
+`adb` works end to end: `devices`, `exec-out screencap` (a valid 1440x3120 PNG)
+and `input` injection all confirmed. The interface can be driven from the shell,
+which is the requirement.
+
+The AVD itself is **Pixel_7_Pro, arm64, 1440x3120 at 560dpi**, running
+`system-images/android-37.2-beta3/google_apis_playstore_ps16k`. Three things
+about that image are worth knowing:
+
+- **API 37, not 33.** Four versions above the target phone. Useful — newer
+  Android is stricter, so anything passing here will very likely pass on 13 —
+  but it is not the device being aimed at.
+- **A beta-channel image** (`37.2-beta3`), though the build reports itself as
+  released. Not what to settle a behaviour question on.
+- **The Play Store variant**, which is locked: no `adb root`.
+
+**Not blocking.** Phases 1 to 7 are pure Kotlin and need no device at all. But
+before Phase 8 there should be a second AVD: **API 33, `google_apis` rather than
+`google_apis_playstore`, arm64**. That is the one that matches the phone, and
+the one reminder behaviour gets judged on.
+
+Also worth noting for later: `ps16k` is a 16 KB page-size image, which is
+stricter than most real devices. Any native library the app pulls in — a bundled
+SQLite, for instance — must be 16 KB aligned or it will not load. An argument
+for using the platform's own SQLite and shipping no native code at all.
+
 ### Command-line tools
 
 Not installed, and not obvious in the interface. **Settings (⌘,) → Languages &
