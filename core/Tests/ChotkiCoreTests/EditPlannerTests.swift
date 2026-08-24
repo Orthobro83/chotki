@@ -186,3 +186,63 @@ struct EditPlannerTests {
         #expect(due.filter { $0 > d(2026, 5, 10) && $0 < d(2026, 6, 1) }.isEmpty)
     }
 }
+
+/// What an edit must carry across, beyond the fields the form puts on screen.
+///
+/// A rule is more than its title and its recurrence: it holds the prayers it is
+/// said with and its own reminder settings. Both were being dropped whenever an
+/// edit produced a new rule — "this day and after", and "just this day" —
+/// because the successor was built from a handful of named fields rather than
+/// from the rule.
+@Suite("An edit carries the whole rule")
+struct EditCarriesEverythingTests {
+    let planner = EditPlanner()
+
+    private func fixture() -> (Rule, [Activation]) {
+        var rule = Rule(
+            title: "Morning prayers",
+            recurrence: .daily,
+            timeOfDay: TimeOfDay(hour: 6, minute: 30),
+            reminders: RuleReminders.forService,
+            prayerIDs: PrayerSequence.morning.prayerIDs
+        )
+        rule.note = "on rising"
+        return (rule, [Activation(ruleID: rule.id, from: CalendarDate(year: 2026, month: 3, day: 1)!)])
+    }
+
+    @Test("this day and after keeps the prayers and the reminders", arguments: [
+        EditScope.thisAndFuture, EditScope.thisDay
+    ])
+    func successorKeepsEverything(scope: EditScope) throws {
+        let (rule, activations) = fixture()
+        var changes = rule
+        changes.timeOfDay = TimeOfDay(hour: 7, minute: 0)
+
+        let plan = planner.edit(
+            rule: rule, changes: changes, activations: activations,
+            on: CalendarDate(year: 2026, month: 8, day: 19)!, scope: scope
+        )
+
+        let successor = try #require(plan.newRules.first)
+        #expect(successor.prayerIDs == rule.prayerIDs, "the prayers went with it")
+        #expect(successor.hasPrayers)
+        #expect(successor.reminders == rule.reminders, "and so did the reminder settings")
+        #expect(successor.note == "on rising")
+        #expect(successor.timeOfDay == TimeOfDay(hour: 7, minute: 0), "the edit still applied")
+    }
+
+    @Test("the whole series keeps them too, having never lost them")
+    func wholeSeriesKeepsEverything() throws {
+        let (rule, activations) = fixture()
+        var changes = rule
+        changes.timeOfDay = TimeOfDay(hour: 7, minute: 0)
+
+        let plan = planner.edit(
+            rule: rule, changes: changes, activations: activations,
+            on: CalendarDate(year: 2026, month: 8, day: 19)!, scope: .wholeSeries
+        )
+        let updated = try #require(plan.updatedRules.first)
+        #expect(updated.prayerIDs == rule.prayerIDs)
+        #expect(updated.reminders == rule.reminders)
+    }
+}

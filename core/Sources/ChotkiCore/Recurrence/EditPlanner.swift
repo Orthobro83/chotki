@@ -97,6 +97,13 @@ public struct EditPlanner: Sendable {
                 recurrence: changes.recurrence,
                 timeOfDay: changes.timeOfDay,
                 category: changes.category,
+                // Everything the rule carried, not only the fields the form
+                // shows. Leaving these off dropped a rule's prayers and its
+                // reminder settings on any edit from today onwards — the same
+                // silent loss as a library rule that predated prayer_ids,
+                // arriving by a different route.
+                reminders: changes.reminders,
+                prayerIDs: changes.prayerIDs,
                 createdAt: rule.createdAt
             )
             plan.newRules.append(successor)
@@ -113,7 +120,9 @@ public struct EditPlanner: Sendable {
                 source: changes.source,
                 recurrence: .once(date),
                 timeOfDay: changes.timeOfDay,
-                category: changes.category
+                category: changes.category,
+                reminders: changes.reminders,
+                prayerIDs: changes.prayerIDs
             )
             plan.newRules.append(oneOff)
             plan.newActivations.append(Activation(ruleID: oneOff.id, from: date, to: date))
