@@ -40,21 +40,39 @@ Checked, not assumed:
 phase can end the way `PORT.md` says it should — with something demonstrated
 rather than asserted.
 
-### Closing it needs one of two things, and ideally both
+### Emulator first, the phone later (decided 24 August 2026)
 
-**The real device, first choice.** Enable Developer options and USB debugging on
-the S21 FE, plug it in, and accept the authorisation prompt on the phone. This
-is the one that matters: OneUI's battery handling decides for itself when to
-stop background work, and no emulator will reproduce that.
+The S21 FE is Ryan's daily driver and carries financial apps that refuse to run
+while Developer options are enabled. That is a real constraint and a common one,
+not something to talk him out of: the port is built and verified against an
+emulator, and the phone comes in near the end.
 
-**An emulator, for the short loop.** Studio's Device Manager will create one and
-fetch an **arm64** system image with it. Faster to iterate against than a phone
-on a cable.
+**Match the emulator to the phone: an arm64 system image at API 33** (Android
+13). Not the newest available — the whole point is to reproduce what the target
+device does, and API 33 is where `POST_NOTIFICATIONS` becomes a runtime
+permission. A newer image would hide exactly the behaviour worth catching.
 
-Worth adding at the same time, from Studio's SDK Manager: **Android SDK
-Command-line Tools**. Without it there is no `sdkmanager` or `avdmanager`, which
-means emulators and SDK packages can only be managed through the GUI — by Ryan,
-rather than from the shell.
+**What this defers, and it must not be forgotten.** OneUI decides for itself
+when to stop an app's background work, and no emulator reproduces it. So
+reminder *reliability on the actual phone* stays unverified until Phase 11 —
+which means it is a real risk carried the whole way, not a detail. Everything
+else about reminders can be proved on the emulator: whether they are scheduled,
+what they say, when they fire, what happens across a reboot.
+
+When the time comes, Developer options can be switched off again between
+sessions; most apps that object check at launch. That is Ryan's call to make
+then, not a reason to enable it now.
+
+### Command-line tools
+
+Not installed, and not obvious in the interface. **Settings (⌘,) → Languages &
+Frameworks → Android SDK → the *SDK Tools* tab → "Android SDK Command-line
+Tools (latest)"**. From the welcome screen instead: **More Actions → SDK
+Manager**, same tab. Tick "Show Package Details" if the entry is not visible.
+
+Without it there is no `sdkmanager` or `avdmanager`, so SDK packages and
+emulators can only be managed through the GUI — which makes Ryan the bottleneck
+for something that should be a shell command.
 
 ## The stack
 
