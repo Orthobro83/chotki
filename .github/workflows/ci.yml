@@ -24,6 +24,24 @@ jobs:
       - name: Test
         run: swift test --package-path core
 
+  # The Kotlin core, held to the same standard as the Swift one. It is a plain
+  # JVM module with no Android dependency, so there is nothing Android to import
+  # even by accident — the rule the Swift core needs a grep job to enforce is
+  # enforced here by the compiler. What this job adds is that it builds and
+  # passes away from the machine it was written on.
+  android-core:
+    name: core — Kotlin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Test
+        working-directory: android
+        run: ./gradlew :core:test --no-daemon
+
   core-macos:
     name: core — macOS
     runs-on: macos-15
