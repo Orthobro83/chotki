@@ -1,10 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- A runtime permission from Android 13. Without it nothing appears and
+         nothing errors, which is the most likely way for reminders to fail
+         silently on the device this is aimed at. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- A rule kept at 06:30 reminded "sometime this morning" is not a
+         reminder. Requested from Android 12; without it the system quietly
+         downgrades to an inexact alarm rather than refusing. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Alarms do not survive a restart. Without this a phone rebooted
+         overnight comes back with nothing scheduled. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Doze defers an unexempted app's alarms. Asked for once, plainly, and
+         skippable. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <application
         android:label="Chotki"
         android:allowBackup="false"
         android:supportsRtl="true">
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -13,5 +32,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".platform.ReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".platform.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

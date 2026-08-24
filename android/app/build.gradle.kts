@@ -34,6 +34,10 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    // NotificationCompat only — the notification API has changed enough between
+    // 8 and 13 that hand-rolling it would be a source of bugs on exactly the
+    // versions hardest to test.
+    implementation("androidx.core:core-ktx:1.17.0")
 
     // The interface will be driven, not photographed. Every macOS bug in this
     // project was a control that drew correctly and did nothing.

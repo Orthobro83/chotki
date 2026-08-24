@@ -26,7 +26,12 @@ java {
 dependencies {
     // Multiplatform and Android-free: the guard is against depending on the
     // platform, not against depending on anything.
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    //
+    // `api` rather than `implementation`: the generated serialisers are part of
+    // what this module offers. The app encodes a NotificationRequest to carry it
+    // on an alarm, and would otherwise have to declare the same dependency and
+    // keep its version in step by hand.
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
     testImplementation(kotlin("test"))
     // Only the tests reach a real database. The store itself talks to `Db`,
