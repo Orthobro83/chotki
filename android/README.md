@@ -18,61 +18,43 @@ stated there once. A Kotlin core that passes a translation of those tests is the
 same application underneath, and anything left undone shows up as a missing
 test rather than as a bug Ryan finds three weeks later.
 
-## Toolchain on this machine, as of 22 August 2026
+## Toolchain on this machine — verified 24 August 2026
 
 Checked, not assumed:
 
 | | |
 |---|---|
-| JDK | **26.0.2 (Temurin)** — the only one installed |
-| Android Studio | Not installed |
-| Android SDK / `adb` | Not installed |
-| Gradle | Not installed |
-| Kotlin compiler | Not installed |
-| Homebrew | Present, at `/opt/homebrew` |
-| Space on the 2TB volume | 1.8 TB free |
+| Android Studio | ✅ 2026.1 |
+| SDK | ✅ `~/Library/Android/sdk`, 1.8 GB, licences accepted |
+| Platform | ✅ `android-37.0`, `android.jar` present |
+| Build tools | ✅ 36.0.0 |
+| `adb` | ✅ 1.0.41 (37.0.1) |
+| JDK | ✅ JetBrains Runtime **25**, bundled in Studio |
+| Emulator binary | ✅ present |
+| **System images** | ❌ **none — the emulator has nothing to boot** |
+| **AVDs** | ❌ none |
+| **Command-line tools** | ❌ no `sdkmanager`, no `avdmanager` |
+| **Connected device** | ❌ nothing on `adb devices` |
 
-**The one real problem: JDK 26 is too new.** The Android Gradle Plugin supports
-JDK 17 and 21; it will not build against 26. So a second JDK is needed
-regardless of what else is installed — either the one Android Studio bundles
-(JetBrains Runtime, currently 21) or a standalone `openjdk@21`.
+**We can build. We cannot yet run anything.** That gap has to close before any
+phase can end the way `PORT.md` says it should — with something demonstrated
+rather than asserted.
 
-### What needs installing — revised 24 August, after Studio arrived
+### Closing it needs one of two things, and ideally both
 
-Android Studio **2026.1 is installed**. It has not been launched, so the SDK is
-not on disk: no platform, no build tools, no `adb`. Those come down during the
-first-run wizard.
+**The real device, first choice.** Enable Developer options and USB debugging on
+the S21 FE, plug it in, and accept the authorisation prompt on the phone. This
+is the one that matters: OneUI's battery handling decides for itself when to
+stop background work, and no emulator will reproduce that.
 
-**One thing left, and it is Ryan's:** open Android Studio and complete the setup
-wizard. Accept Google's SDK licences, and let it fetch the SDK platform, the
-build tools and the platform tools. Several gigabytes; there is room.
+**An emulator, for the short loop.** Studio's Device Manager will create one and
+fetch an **arm64** system image with it. Faster to iterate against than a phone
+on a cable.
 
-Worth adding while the wizard is open: an **arm64 system image** for the
-emulator. The real device is what reminders must finally be proved on — OneUI
-decides for itself when to stop background work — but an emulator makes the
-short loop much shorter.
-
-Two things from the earlier version of this file are **no longer needed**:
-
-- `brew install openjdk@21`. Studio 2026.1 bundles a JetBrains Runtime at
-  **JDK 25**, and pointing command-line builds at the same JDK the IDE uses is
-  better than having two. If the Android Gradle Plugin turns out not to accept
-  25, install 21 then — but do not install it on spec.
-  `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`
-- `brew install gradle`. Gradle projects carry their own wrapper; `./gradlew`
-  is the right way to build, and it pins the version in the repo rather than
-  depending on whatever is on the machine.
-
-### How the work will be verified
-
-There is no Android simulator tool here as there is for iOS, so verification
-goes through `adb` from the command line: `adb shell input tap`, `adb exec-out
-screencap`, and Compose UI tests through `./gradlew connectedAndroidTest`.
-
-That is enough to *drive* the interface rather than photograph it, which is the
-one thing this project has repeatedly got wrong. On-device testing needs USB
-debugging enabled on the S21 FE and the authorisation prompt accepted on the
-phone itself.
+Worth adding at the same time, from Studio's SDK Manager: **Android SDK
+Command-line Tools**. Without it there is no `sdkmanager` or `avdmanager`, which
+means emulators and SDK packages can only be managed through the GUI — by Ryan,
+rather than from the shell.
 
 ## The stack
 
