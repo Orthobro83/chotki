@@ -169,7 +169,8 @@ Answers change the work; guesses would be expensive.
 | 1 — Scaffolding and the guard | **Done.** Gradle 9.7.1, Kotlin 2.4.0, `:core` only, green on Linux CI |
 | 2 — `CalendarDate` and time | **Done.** 17 tests: the 14 from the Swift suite, plus 3 differential |
 | 3 — The model and recurrence | **Done.** 50 tests, including two differential fixtures |
-| 4 onwards | Not started |
+| 4 — The store | **Done.** 73 tests. Settings and the liturgical cache wait for their types |
+| 5 onwards | Not started |
 
 ## Decisions — settled 24 August 2026
 

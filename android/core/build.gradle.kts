@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.4.0"
+    kotlin("plugin.serialization") version "2.4.0"
 }
 
 // 17 rather than the JDK that happens to be running Gradle: this module becomes
@@ -18,7 +19,16 @@ java {
 }
 
 dependencies {
+    // Multiplatform and Android-free: the guard is against depending on the
+    // platform, not against depending on anything.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
     testImplementation(kotlin("test"))
+    // Only the tests reach a real database. The store itself talks to `Db`,
+    // which Android implements over its own SQLite and the tests implement over
+    // JDBC — so the SQL and the migration ladder are exercised on every CI run
+    // without `:core` knowing what a driver is.
+    testImplementation("org.xerial:sqlite-jdbc:3.50.1.0")
 }
 
 tasks.test {

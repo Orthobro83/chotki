@@ -1,5 +1,12 @@
 package org.chotki.core
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -23,6 +30,7 @@ import java.time.ZoneId
  * both; doing the arithmetic directly means this type depends on nothing at all,
  * which is the property that makes it safe to port in the first place.
  */
+@Serializable(with = CalendarDateSerializer::class)
 class CalendarDate private constructor(
     val year: Int,
     val month: Int,
@@ -168,6 +176,25 @@ class CalendarDate private constructor(
         "%04d-%02d-%02d".format(year, month, day)
 }
 
+/**
+ * Written as "YYYY-MM-DD", the same form the database columns use — it sorts
+ * lexicographically, so SQLite can order and range-scan dates without any date
+ * handling of its own.
+ */
+object CalendarDateSerializer : KSerializer<CalendarDate> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("CalendarDate", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: CalendarDate) =
+        encoder.encodeString(value.iso)
+
+    override fun deserialize(decoder: Decoder): CalendarDate {
+        val text = decoder.decodeString()
+        return CalendarDate.parse(text) ?: error("not a date: $text")
+    }
+}
+
+@Serializable
 enum class Weekday(val number: Int) {
     SUNDAY(1), MONDAY(2), TUESDAY(3), WEDNESDAY(4),
     THURSDAY(5), FRIDAY(6), SATURDAY(7);

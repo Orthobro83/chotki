@@ -85,7 +85,16 @@ Plus, with no protocol behind them, the two deliberate platform-glue types:
 
 ## The database
 
-One SQLite file, WAL mode, schema at **version 5** with a forward-only
+Ported at phase 4. `:core` holds the schema, the ladder and every query behind a
+four-method `Db` interface, so the SQL runs on JDBC in the tests and on
+Android's own SQLite later, and `:core` still depends on nothing platform-bound.
+
+**The schema is identical; the contents of the JSON columns are not.** Kotlin
+writes its own encoding for `recurrence`, `time_of_day` and `prayer_ids`, so a
+macOS database does not open on Android. That follows from ruling out sync, and
+is written down because the matching schema invites the opposite assumption.
+
+One SQLite file, WAL mode, schema at **version 6** with a forward-only
 migration ladder in `SQLiteStore.migrate()` (five steps, each stamping
 `schema_version`). Tables: `rule`, `activation`, `occurrence`, `app_settings`,
 `liturgical_day`, `schema_version`.

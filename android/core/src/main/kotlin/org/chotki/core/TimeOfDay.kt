@@ -1,5 +1,13 @@
 package org.chotki.core
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
 /**
  * A wall-clock time with no date and no time zone.
  *
@@ -7,6 +15,7 @@ package org.chotki.core
  * it falls, in whatever zone the user is in — storing that as an instant is how
  * tasks silently shift by an hour across a DST boundary.
  */
+@Serializable(with = TimeOfDaySerializer::class)
 class TimeOfDay private constructor(
     val hour: Int,
     val minute: Int,
@@ -31,4 +40,24 @@ class TimeOfDay private constructor(
     override fun hashCode(): Int = minutesSinceMidnight
 
     override fun toString(): String = "%02d:%02d".format(hour, minute)
+}
+
+/** Written as "HH:mm", on a 24-hour clock and never a localised one. */
+object TimeOfDaySerializer : KSerializer<TimeOfDay> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("TimeOfDay", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: TimeOfDay) =
+        encoder.encodeString("%02d:%02d".format(value.hour, value.minute))
+
+    override fun deserialize(decoder: Decoder): TimeOfDay {
+        val text = decoder.decodeString()
+        val parts = text.split(':')
+        val time = if (parts.size == 2) {
+            TimeOfDay.of(parts[0].toInt(), parts[1].toInt())
+        } else {
+            null
+        }
+        return time ?: error("not a time: $text")
+    }
 }
