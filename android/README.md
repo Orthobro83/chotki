@@ -37,30 +37,42 @@ JDK 17 and 21; it will not build against 26. So a second JDK is needed
 regardless of what else is installed — either the one Android Studio bundles
 (JetBrains Runtime, currently 21) or a standalone `openjdk@21`.
 
-### What needs installing, in order
+### What needs installing — revised 24 August, after Studio arrived
 
-Android Studio is the shortest path: it brings the SDK, the emulator, and a
-compatible JDK in one install, and the SDK licences have to be accepted
-interactively anyway.
+Android Studio **2026.1 is installed**. It has not been launched, so the SDK is
+not on disk: no platform, no build tools, no `adb`. Those come down during the
+first-run wizard.
 
-```bash
-brew install --cask android-studio
-```
+**One thing left, and it is Ryan's:** open Android Studio and complete the setup
+wizard. Accept Google's SDK licences, and let it fetch the SDK platform, the
+build tools and the platform tools. Several gigabytes; there is room.
 
-Then, for building and testing from the command line without going through the
-IDE:
+Worth adding while the wizard is open: an **arm64 system image** for the
+emulator. The real device is what reminders must finally be proved on — OneUI
+decides for itself when to stop background work — but an emulator makes the
+short loop much shorter.
 
-```bash
-brew install openjdk@21 gradle
-```
+Two things from the earlier version of this file are **no longer needed**:
 
-**These are Ryan's to run, not mine.** The Android SDK requires accepting
-Google's licence agreements, which is not something to click through on someone
-else's behalf. Once Android Studio is installed, its first run downloads the SDK
-platform and build tools — allow twenty minutes and several gigabytes.
+- `brew install openjdk@21`. Studio 2026.1 bundles a JetBrains Runtime at
+  **JDK 25**, and pointing command-line builds at the same JDK the IDE uses is
+  better than having two. If the Android Gradle Plugin turns out not to accept
+  25, install 21 then — but do not install it on spec.
+  `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`
+- `brew install gradle`. Gradle projects carry their own wrapper; `./gradlew`
+  is the right way to build, and it pins the version in the repo rather than
+  depending on whatever is on the machine.
 
-Worth doing tonight if the machine is free, so tomorrow starts at Phase 0
-instead of at a download.
+### How the work will be verified
+
+There is no Android simulator tool here as there is for iOS, so verification
+goes through `adb` from the command line: `adb shell input tap`, `adb exec-out
+screencap`, and Compose UI tests through `./gradlew connectedAndroidTest`.
+
+That is enough to *drive* the interface rather than photograph it, which is the
+one thing this project has repeatedly got wrong. On-device testing needs USB
+debugging enabled on the S21 FE and the authorisation prompt accepted on the
+phone itself.
 
 ## The stack
 
