@@ -56,10 +56,9 @@ class SqliteStore(private val db: Db) : Store {
                 rule.category?.name,
                 rule.createdAt.toString(),
                 rule.archivedAt?.toString(),
-                // Reminders arrive at phase 7. The column is written null rather
-                // than dropped, so the row shape stays right and nothing has to
-                // migrate again when they do.
-                null,
+                rule.reminders?.let {
+                    json.encodeToString(org.chotki.core.scheduling.RuleReminders.serializer(), it)
+                },
                 rule.prayerIDs?.let { json.encodeToString(it) },
                 // Only when set, so absent goes on meaning "still offered".
                 if (rule.hiddenFromLibrary == true) "1" else null,
@@ -92,6 +91,9 @@ class SqliteStore(private val db: Db) : Store {
             timeOfDay = row.string(5)?.let { json.decodeFromString(TimeOfDay.serializer(), it) },
             category = row.string(6)?.let { name ->
                 RuleCategory.entries.firstOrNull { it.name == name }
+            },
+            reminders = row.string(9)?.let {
+                json.decodeFromString(org.chotki.core.scheduling.RuleReminders.serializer(), it)
             },
             prayerIDs = row.string(10)?.let { json.decodeFromString<List<String>>(it) },
             createdAt = Instant.parse(

@@ -46,6 +46,7 @@ class StoreTest {
             recurrence = Recurrence.Weekly(setOf(Weekday.WEDNESDAY, Weekday.FRIDAY)),
             timeOfDay = TimeOfDay.of(6, 30),
             category = RuleCategory.PRAYER,
+            reminders = org.chotki.core.scheduling.RuleReminders.FOR_SERVICE,
             prayerIDs = listOf("opening-prayer", "our-father"),
             createdAt = Instant.parse("2026-03-01T05:00:00Z"),
             hiddenFromLibrary = true,
@@ -56,6 +57,10 @@ class StoreTest {
         assertNotNull(loaded)
         // Whole-value equality, so a column dropped on the way out fails here.
         assertEquals(original, loaded)
+        assertEquals(
+            org.chotki.core.scheduling.RuleReminders.FOR_SERVICE, loaded.reminders,
+            "the reminders column was written null for a whole phase",
+        )
     }
 
     @Test

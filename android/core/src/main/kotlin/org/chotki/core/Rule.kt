@@ -16,6 +16,11 @@ data class Rule(
     val recurrence: Recurrence,
     val timeOfDay: TimeOfDay? = null,
     val category: RuleCategory? = null,
+    /**
+     * Optional on purpose: a backup written before this existed decodes to null
+     * rather than failing, and [effectiveReminders] supplies the default.
+     */
+    val reminders: org.chotki.core.scheduling.RuleReminders? = null,
     /** The prayers this rule carries, in the order they are said. */
     val prayerIDs: List<String>? = null,
     val createdAt: Instant = Instant.now(),
@@ -30,6 +35,9 @@ data class Rule(
     val isArchived: Boolean get() = archivedAt != null
 
     val hasPrayers: Boolean get() = !prayerIDs.isNullOrEmpty()
+
+    val effectiveReminders: org.chotki.core.scheduling.RuleReminders
+        get() = reminders ?: org.chotki.core.scheduling.RuleReminders.DEFAULT
 
     /**
      * Fasting rules are subject to the Church's dispensations. Keyed on the

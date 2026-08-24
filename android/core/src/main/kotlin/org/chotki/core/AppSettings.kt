@@ -8,9 +8,7 @@ import kotlinx.serialization.Serializable
  * Lives in core so the settings someone has chosen move with their data rather
  * than being tied to one platform's preferences system.
  *
- * `reminders` arrives with the scheduler at phase 7; everything else the ported
- * code reads is here. Every field has a default, which is the property that
- * matters: the Swift version threw on a missing key, so each new setting made
+ * Every field has a default, which is the property that matters: the Swift version threw on a missing key, so each new setting made
  * every record written before it unreadable, and this app has already lost
  * someone's settings once.
  */
@@ -18,6 +16,8 @@ import kotlinx.serialization.Serializable
 data class AppSettings(
     val jurisdiction: Jurisdiction = Jurisdiction.DEFAULT,
     val observances: ObservanceSettings = ObservanceSettings.DEFAULT,
+    val reminders: org.chotki.core.scheduling.ReminderPolicy =
+        org.chotki.core.scheduling.ReminderPolicy.DEFAULT,
     /** Cleared once the first rules have been taken on. */
     val hasCompletedFirstRun: Boolean = false,
     val clockStyle: ClockStyle = ClockStyle.TWENTY_FOUR_HOUR,
