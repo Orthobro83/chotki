@@ -33,6 +33,28 @@ moved to `PrayerScreen` in core. Following a word into the glossary destroys and
 rebuilds the view, and losing a hundred-knot count to a lookup would be a poor
 trade.
 
+## The clock is a setting, because 10:30 is not a time (24 Aug 2026)
+
+Times are written on a 24-hour clock or a 12-hour one, chosen in settings. The
+24-hour clock stays the default.
+
+This is a correctness setting rather than a formatting one. A rule meant for the
+evening and set to 10:30 shows as "10:30", which reads as the morning to anyone
+thinking in twelve hours — and nothing else looks wrong, because the day's list
+is sorted by time and stays in order either way. Evening prayers sat at half past
+ten in the morning on the author's own rule for days before it was noticed, and
+what he noticed was the ordering, which was correct.
+
+So the hour picker in the editor is labelled in the same clock: "10 PM" rather
+than "22". A list of bare numbers from 00 to 23 is what allows the wrong one to
+look right.
+
+While adding it, `AppSettings` gained a decoder that treats every key as
+optional and every absence as a default. Synthesised decoding throws on a
+missing key, so adding a setting made every record written before it unreadable
+— and this app has already lost someone's settings once, which is how fasting
+rules silently stopped appearing.
+
 ## The calendar is its own setting (24 Aug 2026)
 
 Choosing a church still sets the calendar to whatever that church keeps, which

@@ -25,7 +25,29 @@ public enum Format {
         String(months[month - 1].prefix(3))
     }
 
-    public static func time(_ time: TimeOfDay) -> String {
-        String(format: "%02d:%02d", time.hour, time.minute)
+    /// One hour, for a picker that has to be unambiguous on its own.
+    ///
+    /// A list of bare numbers from 00 to 23 is what let an evening rule be set
+    /// to half past ten in the morning: 10 looks like the right answer to
+    /// someone thinking in twelve hours, and nothing afterwards says otherwise.
+    public static func hourLabel(_ hour: Int, _ style: ClockStyle = .twentyFourHour) -> String {
+        switch style {
+        case .twentyFourHour:
+            return String(format: "%02d", hour)
+        case .twelveHour:
+            let display = hour % 12 == 0 ? 12 : hour % 12
+            return "\(display) \(hour < 12 ? "AM" : "PM")"
+        }
+    }
+
+    public static func time(_ time: TimeOfDay, _ style: ClockStyle = .twentyFourHour) -> String {
+        switch style {
+        case .twentyFourHour:
+            return String(format: "%02d:%02d", time.hour, time.minute)
+        case .twelveHour:
+            let hour = time.hour % 12 == 0 ? 12 : time.hour % 12
+            let meridiem = time.hour < 12 ? "AM" : "PM"
+            return String(format: "%d:%02d %@", hour, time.minute, meridiem)
+        }
     }
 }

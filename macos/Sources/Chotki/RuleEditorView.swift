@@ -166,8 +166,13 @@ struct RuleEditorView: View {
             if hasTime {
                 HStack(spacing: 4) {
                     Picker("", selection: $hour) {
-                        ForEach(0...23, id: \.self) { Text(String(format: "%02d", $0)).tag($0) }
-                    }.labelsHidden().frame(width: 60)
+                        // Labelled in whichever clock the person reads, so an
+                        // evening rule cannot be set to the morning by picking
+                        // the number that looks right.
+                        ForEach(0...23, id: \.self) {
+                            Text(Format.hourLabel($0, model.settings.clockStyle)).tag($0)
+                        }
+                    }.labelsHidden().frame(width: model.settings.clockStyle == .twelveHour ? 76 : 60)
                     Text(":").foregroundStyle(Theme.muted)
                     Picker("", selection: $minute) {
                         ForEach([0, 15, 30, 45], id: \.self) { Text(String(format: "%02d", $0)).tag($0) }

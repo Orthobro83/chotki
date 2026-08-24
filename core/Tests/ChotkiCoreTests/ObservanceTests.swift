@@ -279,3 +279,96 @@ struct FastFreeReasonTests {
         #expect(d.fastFreeReason == nil)
     }
 }
+
+/// How a time is written, and why it is a setting.
+@Suite("Clock style")
+struct ClockStyleTests {
+
+    private func t(_ h: Int, _ m: Int) -> TimeOfDay { TimeOfDay(hour: h, minute: m)! }
+
+    @Test("the 24-hour clock pads and never wraps")
+    func twentyFourHour() {
+        #expect(Format.time(t(6, 30), .twentyFourHour) == "06:30")
+        #expect(Format.time(t(21, 0), .twentyFourHour) == "21:00")
+        #expect(Format.time(t(0, 0), .twentyFourHour) == "00:00")
+        #expect(Format.time(t(12, 0), .twentyFourHour) == "12:00")
+        #expect(Format.time(t(23, 59), .twentyFourHour) == "23:59")
+    }
+
+    // Midnight and noon are where twelve-hour clocks go wrong: both are 12,
+    // and neither is 0.
+    @Test("the 12-hour clock gets midnight and noon right")
+    func twelveHour() {
+        #expect(Format.time(t(0, 0), .twelveHour) == "12:00 AM")
+        #expect(Format.time(t(0, 30), .twelveHour) == "12:30 AM")
+        #expect(Format.time(t(11, 59), .twelveHour) == "11:59 AM")
+        #expect(Format.time(t(12, 0), .twelveHour) == "12:00 PM")
+        #expect(Format.time(t(12, 30), .twelveHour) == "12:30 PM")
+        #expect(Format.time(t(13, 0), .twelveHour) == "1:00 PM")
+        #expect(Format.time(t(21, 0), .twelveHour) == "9:00 PM")
+        #expect(Format.time(t(23, 59), .twelveHour) == "11:59 PM")
+    }
+
+    // The mistake this exists to prevent: 22:30 shown as "10:30" reads as the
+    // morning, and the list stays in order, so nothing looks wrong.
+    @Test("morning and evening are never written the same way")
+    func morningAndEveningDiffer() {
+        for hour in 0..<12 {
+            let morning = Format.time(t(hour, 30), .twelveHour)
+            let evening = Format.time(t(hour + 12, 30), .twelveHour)
+            #expect(morning != evening, "\(hour):30 and \(hour + 12):30 read alike")
+        }
+    }
+
+    @Test("24 hours all round the clock, in both styles")
+    func everyHourIsDistinct() {
+        for style in ClockStyle.allCases {
+            let all = (0..<24).flatMap { h in [0, 30].map { Format.time(t(h, $0), style) } }
+            #expect(Set(all).count == all.count, "\(style) writes two different times alike")
+        }
+    }
+
+    @Test("the default is the 24-hour clock, as it always was")
+    func defaultIsUnchanged() {
+        #expect(AppSettings.default.clockStyle == .twentyFourHour)
+        #expect(Format.time(t(21, 0)) == "21:00")
+    }
+}
+
+/// Settings written before a setting existed.
+@Suite("Settings decode across versions")
+struct SettingsForwardCompatibilityTests {
+
+    // The whole record used to be lost when a key was missing, which is how
+    // fasting rules once stopped appearing without explanation.
+    @Test("a record that predates a setting keeps everything else")
+    func missingKeysFallBack() throws {
+        let legacy = """
+        {"showOldStyleDates":true,"launchAtLogin":true,"hasCompletedFirstRun":true}
+        """
+        let settings = try JSONDecoder().decode(AppSettings.self, from: Data(legacy.utf8))
+
+        #expect(settings.showOldStyleDates, "what was written is kept")
+        #expect(settings.launchAtLogin)
+        #expect(settings.hasCompletedFirstRun)
+        #expect(settings.clockStyle == .twentyFourHour, "and what was not gets a default")
+        #expect(settings.observances == ObservanceSettings.default)
+        #expect(settings.jurisdiction == Jurisdiction.default)
+    }
+
+    @Test("an empty record is every default rather than an error")
+    func emptyRecord() throws {
+        let settings = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
+        #expect(settings == AppSettings.default)
+    }
+
+    @Test("a full round trip changes nothing")
+    func roundTrip() throws {
+        var settings = AppSettings.default
+        settings.clockStyle = .twelveHour
+        settings.jurisdiction.reckoning = .revisedJulian
+        settings.showConsistencyNumber = false
+        let data = try JSONEncoder().encode(settings)
+        #expect(try JSONDecoder().decode(AppSettings.self, from: data) == settings)
+    }
+}

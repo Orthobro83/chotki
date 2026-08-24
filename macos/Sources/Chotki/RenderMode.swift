@@ -227,6 +227,9 @@ enum RenderMode {
             shot("window-settings-other-calendar") {
                 model.update { $0.jurisdiction.reckoning = .revisedJulian }
             }
+            shot("window-settings-twelve-hour") {
+                model.update { $0.clockStyle = .twelveHour }
+            }
 
 
             // The popover is the surface most people use, and until now none of

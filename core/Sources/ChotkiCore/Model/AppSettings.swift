@@ -24,6 +24,8 @@ public struct AppSettings: Sendable, Hashable, Codable {
     public var tickEachKnot: Bool
     /// Cleared once the first rules have been taken on.
     public var hasCompletedFirstRun: Bool
+    /// Whether times read as 06:30 or as 6:30 AM.
+    public var clockStyle: ClockStyle
 
     public init(
         jurisdiction: Jurisdiction = .default,
@@ -35,7 +37,8 @@ public struct AppSettings: Sendable, Hashable, Codable {
         showInDock: Bool = true,
         chimeOnCompletion: Bool = true,
         tickEachKnot: Bool = true,
-        hasCompletedFirstRun: Bool = false
+        hasCompletedFirstRun: Bool = false,
+        clockStyle: ClockStyle = .twentyFourHour
     ) {
         self.jurisdiction = jurisdiction
         self.observances = observances
@@ -47,6 +50,33 @@ public struct AppSettings: Sendable, Hashable, Codable {
         self.chimeOnCompletion = chimeOnCompletion
         self.tickEachKnot = tickEachKnot
         self.hasCompletedFirstRun = hasCompletedFirstRun
+        self.clockStyle = clockStyle
+    }
+
+    /// Every key optional, every absence a default.
+    ///
+    /// Synthesised decoding throws when a key is missing, so adding a setting
+    /// would make every record written before it unreadable — and this app has
+    /// already lost a person's settings once, which is how fasting rules
+    /// silently stopped appearing. A record that predates a setting is not
+    /// corrupt; it simply has not got one yet.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = AppSettings.default
+        func value<T: Decodable>(_ key: CodingKeys, _ default: T) throws -> T {
+            try container.decodeIfPresent(T.self, forKey: key) ?? `default`
+        }
+        jurisdiction = try value(.jurisdiction, fallback.jurisdiction)
+        observances = try value(.observances, fallback.observances)
+        reminders = try value(.reminders, fallback.reminders)
+        showOldStyleDates = try value(.showOldStyleDates, fallback.showOldStyleDates)
+        showConsistencyNumber = try value(.showConsistencyNumber, fallback.showConsistencyNumber)
+        launchAtLogin = try value(.launchAtLogin, fallback.launchAtLogin)
+        showInDock = try value(.showInDock, fallback.showInDock)
+        chimeOnCompletion = try value(.chimeOnCompletion, fallback.chimeOnCompletion)
+        tickEachKnot = try value(.tickEachKnot, fallback.tickEachKnot)
+        hasCompletedFirstRun = try value(.hasCompletedFirstRun, fallback.hasCompletedFirstRun)
+        clockStyle = try value(.clockStyle, fallback.clockStyle)
     }
 
     public static let `default` = AppSettings()

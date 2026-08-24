@@ -31,6 +31,7 @@ struct SettingsViewContent: View {
                 set: { new in model.update { $0.showOldStyleDates = new } }
             )
 
+            clockStylePicker
             section("Reminders")
             toggleRow(
                 "Notifications",
@@ -169,6 +170,33 @@ struct SettingsViewContent: View {
         .labelsHidden()
         .font(.system(size: 12))
         .padding(.horizontal, 14).padding(.top, 6)
+    }
+
+    /// How times are written, everywhere they are written.
+    ///
+    /// Not decoration. On the 24-hour clock an evening rule set to the morning
+    /// looks entirely correct — the list stays in order, so nothing draws the
+    /// eye — and that is exactly how Evening prayers came to sit at half past
+    /// ten in the morning here for several days.
+    private var clockStylePicker: some View {
+        HStack {
+            Text("Clock")
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.parchment)
+            Spacer()
+            Picker("", selection: Binding(
+                get: { model.settings.clockStyle },
+                set: { chosen in model.update { $0.clockStyle = chosen } }
+            )) {
+                ForEach(ClockStyle.allCases, id: \.self) { style in
+                    Text(style.displayName).tag(style)
+                }
+            }
+            .labelsHidden()
+            .font(.system(size: 12))
+            .frame(width: 170)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 4)
     }
 
     private var practiceNotes: some View {
