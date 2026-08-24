@@ -162,6 +162,44 @@ Answers change the work; guesses would be expensive.
 
  My answer: I've yet to find a priest running Apple Silicon. Part of why I'm moving forward with the Android SDK now is that this will make it more accessible to more priests -- it'll help me find one to review it.
 
+## Decisions — settled 24 August 2026
+
+| | |
+|---|---|
+| Scope | Everything the Mac app does |
+| Content | **Shared JSON**, adopted during development so later additions land on every platform at once |
+| History | **No import.** Android starts blank. The Mac stays Ryan's personal instance; Android is the beta, and goes to other testers |
+| Sync | None, now or planned |
+| Widget | Not in v1 |
+| Menu-bar equivalent | See below |
+| `minSdk` | **26.** Build against the latest, test on 33 |
+| Distribution | Direct APK |
+| Priest review | Pending; Android is partly how a reviewer gets found |
+
+### What replaces the menu bar (my call, as asked)
+
+**Nothing extra in v1.** The menu bar gave two things: the rule always within
+reach, and a glance without opening anything. On Android those are already
+covered — the launcher icon reaches the app in one tap, and the *glance* is what
+a notification is for. Building a second always-on surface would duplicate the
+reminders rather than add to them.
+
+So: the app opens on today's rule, exactly as the popover did. If a true
+equivalent is wanted later, it is a **Quick Settings tile** rather than a
+widget — that is the system-level "always there" affordance on Android, it is
+far less work than a widget, and it can be added without disturbing anything.
+
+### One consequence of starting blank
+
+No import means no real data on Android, and this app's harder bugs have all
+been about accumulated history — progress that stops at yesterday, activation
+windows, the three-way edit. A fresh install exercises none of it.
+
+So the Kotlin core needs **generated history in its tests** — the Swift suite's
+"A simulated month" does exactly this — and the emulator needs a seeded
+database to develop against. Otherwise the first real test of the scoring is
+whoever installs the APK.
+
 ## What the answers settle — and what they do not
 
 **Settled.** Full feature parity. One device, no sync. Direct APK. Content moves
