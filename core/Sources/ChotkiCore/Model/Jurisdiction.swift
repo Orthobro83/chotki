@@ -51,6 +51,24 @@ public struct Jurisdiction: Sendable, Hashable, Codable {
         self.practice = practice ?? .customary(for: tradition)
     }
 
+    /// This jurisdiction as the app ships it, when the name is one it knows.
+    public var asShipped: Jurisdiction? {
+        Jurisdiction.known.first { $0.name == name }
+    }
+
+    /// True when the calendar has been set away from the one this jurisdiction
+    /// customarily keeps.
+    ///
+    /// Not an error and not a warning. Jurisdictions are not uniform: parishes
+    /// within one sometimes keep a different calendar from the body they belong
+    /// to, and a convert may be attached to a parish rather than to a
+    /// jurisdiction's norm. The app records what is actually kept and says
+    /// plainly that it differs, rather than correcting anyone.
+    public var reckoningDiffersFromJurisdiction: Bool {
+        guard let asShipped else { return false }
+        return asShipped.reckoning != reckoning
+    }
+
     /// True when this jurisdiction's practice has been adjusted away from its
     /// tradition's norm — a parish sometimes differs, and the app should show
     /// what was actually set rather than what the tradition usually does.

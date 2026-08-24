@@ -134,3 +134,48 @@ struct GlossaryScopingTests {
         #expect(scoped.entries.allSatisfy { $0.appliesTo(tradition) })
     }
 }
+
+/// The calendar is its own setting, because a parish is not always its
+/// jurisdiction.
+@Suite("Setting the calendar apart from the jurisdiction")
+struct ReckoningOverrideTests {
+
+    @Test("a known jurisdiction kept as it ships differs from nothing")
+    func unchanged() {
+        for jurisdiction in Jurisdiction.known {
+            #expect(!jurisdiction.reckoningDiffersFromJurisdiction, "\(jurisdiction.name)")
+        }
+    }
+
+    @Test("changing only the calendar is recorded as a difference")
+    func changed() {
+        var rocor = Jurisdiction.default
+        #expect(rocor.reckoning == .julian)
+        rocor.reckoning = .revisedJulian
+        #expect(rocor.reckoningDiffersFromJurisdiction)
+        #expect(rocor.tradition == .russian, "the practice family is untouched")
+    }
+
+    @Test("setting it back stops it being a difference")
+    func changedBack() {
+        var jurisdiction = Jurisdiction.default
+        jurisdiction.reckoning = .revisedJulian
+        jurisdiction.reckoning = .julian
+        #expect(!jurisdiction.reckoningDiffersFromJurisdiction)
+    }
+
+    // Someone may type their own parish in rather than pick from the list.
+    @Test("a jurisdiction the app does not know differs from nothing")
+    func unknownJurisdiction() {
+        let mine = Jurisdiction(name: "St Nicholas, somewhere", reckoning: .revisedJulian, tradition: .russian)
+        #expect(!mine.reckoningDiffersFromJurisdiction)
+        #expect(mine.asShipped == nil)
+    }
+
+    @Test("both calendars reach the right orthocal endpoint")
+    func endpoints() {
+        #expect(Reckoning.julian.endpointPath == "julian")
+        #expect(Reckoning.revisedJulian.endpointPath == "gregorian")
+        #expect(Reckoning.allCases.count == 2)
+    }
+}

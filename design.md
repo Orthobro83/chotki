@@ -33,6 +33,29 @@ moved to `PrayerScreen` in core. Following a word into the glossary destroys and
 rebuilds the view, and losing a hundred-knot count to a lookup would be a poor
 trade.
 
+## The calendar is its own setting (24 Aug 2026)
+
+Choosing a church still sets the calendar to whatever that church keeps, which
+is right nearly always. But it can now be set on its own, because jurisdictions
+are not uniform: a parish sometimes keeps a different calendar from the body it
+belongs to, and someone may be attached to a parish rather than to a
+jurisdiction's norm. The model always allowed it — `Jurisdiction.reckoning` is a
+separate axis and its own comment says the jurisdiction list is "a starting
+point, never an authority" — but nothing in settings offered it.
+
+This is the setting that decides which days the fasts and feasts fall on. Wrong,
+it moves a fortnight of someone's year: on the Julian reckoning the Dormition
+Fast runs 14 to 27 August by the civil calendar, and on the Revised Julian it
+runs 1 to 14 August.
+
+When it differs from what the chosen church keeps, the app says so and stops
+there — "Georgian Orthodox Church usually keeps the Old Calendar (Julian)."
+Stated, not corrected. Someone who has set it has a reason the app does not
+know, and it is not the app's place to argue about their parish.
+
+Changing it refetches the calendar, since the cache is keyed by reckoning and
+holds nothing for the other one.
+
 ## The calendar is pinned too, where there is room (22 Aug 2026)
 
 In the window's stacked layout the calendar is pinned along with the day, so

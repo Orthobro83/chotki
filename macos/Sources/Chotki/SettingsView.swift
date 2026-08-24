@@ -10,6 +10,7 @@ struct SettingsViewContent: View {
         VStack(alignment: .leading, spacing: 0) {
             section("Your church")
             jurisdictionPicker
+            reckoningPicker
             practiceNotes
 
             section("The calendar")
@@ -148,11 +149,39 @@ struct SettingsViewContent: View {
         .padding(.horizontal, 14)
     }
 
+    /// The calendar, set apart from the jurisdiction.
+    ///
+    /// Picking a church sets this to whatever that church usually keeps, and
+    /// that is right nearly always. But jurisdictions are not uniform — a parish
+    /// sometimes keeps a different calendar from the body it belongs to — and
+    /// the app should record what is actually kept rather than what is usual.
+    /// It is the setting that decides which days the fasts and feasts fall on,
+    /// so getting it wrong moves a fortnight of someone's year.
+    private var reckoningPicker: some View {
+        Picker("", selection: Binding(
+            get: { model.settings.jurisdiction.reckoning },
+            set: { chosen in model.update { $0.jurisdiction.reckoning = chosen } }
+        )) {
+            ForEach(Reckoning.allCases, id: \.self) { reckoning in
+                Text(reckoning.displayName).tag(reckoning)
+            }
+        }
+        .labelsHidden()
+        .font(.system(size: 12))
+        .padding(.horizontal, 14).padding(.top, 6)
+    }
+
     private var practiceNotes: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(model.settings.jurisdiction.reckoning.displayName)
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.goldDim)
+            if model.settings.jurisdiction.reckoningDiffersFromJurisdiction,
+               let usual = model.settings.jurisdiction.asShipped {
+                // Stated, never corrected. Someone who has set this has a reason
+                // the app does not know.
+                Text("\(usual.name) usually keeps the \(usual.reckoning.displayName).")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.goldDim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             ForEach(model.settings.jurisdiction.practice.notes, id: \.self) { note in
                 Text(note)
                     .font(.system(size: 11))

@@ -221,6 +221,12 @@ enum RenderMode {
 
             shot("window-terms-back") { model.openGlossary("publican") }
             shot("window-terms-list") { model.openGlossary(nil) }
+            shot("window-settings") { model.screen = .settings }
+            describeMenus(in: host)
+            // The calendar set away from what the chosen jurisdiction keeps.
+            shot("window-settings-other-calendar") {
+                model.update { $0.jurisdiction.reckoning = .revisedJulian }
+            }
 
 
             // The popover is the surface most people use, and until now none of
