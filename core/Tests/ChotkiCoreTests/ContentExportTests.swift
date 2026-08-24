@@ -27,8 +27,18 @@ import Foundation
 @Suite("Content export")
 struct ContentExportTests {
 
-    private static let directory =
-        "/Volumes/2TB/claude-vault/projects/chotki/android/core/src/main/resources/content"
+    /// Derived from this file's own location, so it is right on a CI checkout
+    /// as well as on the machine it was written on. An absolute path here made
+    /// the Linux and macOS jobs fail while every local run passed.
+    private static let directory: String = {
+        URL(fileURLWithPath: #filePath)               // .../core/Tests/ChotkiCoreTests/this.swift
+            .deletingLastPathComponent()              // ChotkiCoreTests
+            .deletingLastPathComponent()              // Tests
+            .deletingLastPathComponent()              // core
+            .deletingLastPathComponent()              // the repository
+            .appendingPathComponent("android/core/src/main/resources/content")
+            .path
+    }()
 
     // MARK: the wire shape
 
