@@ -1,5 +1,7 @@
 package org.chotki.core
 
+import kotlinx.serialization.Serializable
+
 /**
  * How much a part of the church calendar participates in this person's rule.
  *
@@ -12,6 +14,7 @@ package org.chotki.core
  * something they can attend. Neither is a failure, and the app must not be able
  * to represent it as one.
  */
+@Serializable
 enum class Observance {
     /** Not shown anywhere. The calendar looks like an ordinary calendar. */
     HIDDEN,
@@ -37,6 +40,7 @@ enum class Observance {
  * you what the day is, and taking something on is always a deliberate act. That
  * is the same principle as shipping with no rules enabled.
  */
+@Serializable
 data class ObservanceSettings(
     val fasting: Observance = Observance.SHOWN,
     val feasts: Observance = Observance.SHOWN,
