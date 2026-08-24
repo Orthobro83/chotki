@@ -74,14 +74,22 @@ public struct ScoringEngine: Sendable {
         occurrences: [Occurrence],
         from: CalendarDate,
         through: CalendarDate,
-        now: Date = Date()
+        now: Date = Date(),
+        /// The day the calendar was changed, if it was.
+        ///
+        /// Before it, a liturgical rule is judged only by what was actually
+        /// kept — never by where the *new* calendar would have put the fast.
+        /// A rule whose due days come from outside the app must not have its
+        /// past rewritten when that outside thing changes.
+        liturgicalHistoryFrom: CalendarDate? = nil
     ) -> ProgressReport {
         let today = CalendarDate(now, in: timeZone)
         var scores: [RuleScore] = []
 
         for rule in rules {
-            let due = engine.dueDates(
-                rule: rule, activations: activations, from: from, through: through
+            let due = dueDates(
+                rule: rule, activations: activations, occurrences: occurrences,
+                from: from, through: through, liturgicalHistoryFrom: liturgicalHistoryFrom
             )
 
             guard !due.isEmpty else {
@@ -150,6 +158,33 @@ public struct ScoringEngine: Sendable {
             perRule: scores.sorted { $0.title < $1.title },
             summary: Prose.summary(for: scores)
         )
+    }
+
+    /// The days to judge a rule on.
+    ///
+    /// Normally the pattern, intersected with the activations. For a liturgical
+    /// rule reaching back past a change of calendar, the days before that change
+    /// come from the record instead: what was kept is kept, and a day the new
+    /// calendar would have made a fast day is not held against someone who was
+    /// keeping a different one at the time.
+    private func dueDates(
+        rule: Rule, activations: [Activation], occurrences: [Occurrence],
+        from: CalendarDate, through: CalendarDate, liturgicalHistoryFrom: CalendarDate?
+    ) -> [CalendarDate] {
+        let due = engine.dueDates(
+            rule: rule, activations: activations, from: from, through: through
+        )
+        guard case .liturgical = rule.recurrence, let cutoff = liturgicalHistoryFrom,
+              cutoff > from
+        else { return due }
+
+        let keptBefore = occurrences
+            .filter {
+                $0.ruleID == rule.id && $0.date >= from && $0.date < cutoff
+                    && ($0.status == .completed || $0.status == .completedLate)
+            }
+            .map(\.date)
+        return (keptBefore + due.filter { $0 >= cutoff }).sorted()
     }
 
     /// A day counts only once its moment has passed. Anything still ahead is not

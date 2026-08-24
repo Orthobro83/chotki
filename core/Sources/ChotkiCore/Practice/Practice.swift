@@ -131,7 +131,8 @@ public struct Practice: Sendable {
         let through = Practice.progressThrough(today: today)
         return ScoringEngine(engine: engine, timeZone: timeZone).report(
             rules: rules, activations: activations, occurrences: occurrences,
-            from: through.adding(days: -(days - 1)), through: through, now: now
+            from: through.adding(days: -(days - 1)), through: through, now: now,
+            liturgicalHistoryFrom: settings.reckoningChangedOn
         )
     }
 }

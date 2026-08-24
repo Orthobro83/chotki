@@ -33,6 +33,37 @@ moved to `PrayerScreen` in core. Following a word into the glossary destroys and
 rebuilds the view, and losing a hundred-knot count to a lookup would be a poor
 trade.
 
+## Changing the calendar cannot rewrite the past (24 Aug 2026)
+
+A liturgical rule is the only kind whose due days come from outside the app.
+Moving between the Old and New Calendar shifts them by thirteen days, and
+scoring re-derives the past from whichever calendar is current — so a Dormition
+Fast kept in full went from fourteen kept and none missed to **one kept and
+thirteen missed**, at seven per cent. Measured, not imagined.
+
+That is the app saying someone failed a fortnight of days they in fact kept,
+which is the one thing it must never be able to do.
+
+So settings record the day the calendar changed, and before that day a
+liturgical rule is judged only by what was actually kept: the record supplies
+the days, not the new calendar. Nothing before the change can become a miss, and
+nothing already kept stops counting. Civil rules are untouched — a Wednesday is
+a Wednesday under either reckoning.
+
+The change is also announced rather than made silently, since it moves a
+fortnight of someone's year.
+
+## Only the checkbox marks a rule kept (24 Aug 2026)
+
+The whole row used to be the tap target. That fixed a real problem — an
+unchecked box filled with `Color.clear` is not hit-testable, so only its 1pt
+outline responded — and created a worse one: the prayers link and the edit
+pencil sit inside that row, so reaching for either also ticked the rule off.
+
+The answer to a small target is padding around it, not a tap gesture over
+everything else. The box draws at 14 points and responds across 26, and the row
+itself has no gesture at all.
+
 ## The clock is a setting, because 10:30 is not a time (24 Aug 2026)
 
 Times are written on a 24-hour clock or a 12-hour one, chosen in settings. The

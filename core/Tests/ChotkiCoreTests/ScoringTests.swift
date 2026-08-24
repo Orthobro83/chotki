@@ -341,3 +341,108 @@ struct TodayCountsTests {
         #expect(report.perRule[0].missed == 2, "the 18th and 19th are over; the 20th is not")
     }
 }
+
+/// Changing the calendar must not rewrite what someone kept.
+///
+/// A liturgical rule is the only kind whose due days come from outside the app.
+/// Switching between the Old and New Calendar moves them thirteen days, and
+/// scoring re-derives the past from whatever calendar is current — so a fast
+/// kept faithfully read as a fortnight of failures. Measured before this was
+/// fixed: fourteen kept and none missed became one kept and thirteen missed.
+@Suite("Changing the calendar")
+struct ReckoningChangeTests {
+
+    /// The Dormition Fast as each reckoning places it, thirteen days apart.
+    private struct Cal: LiturgicalDayProvider {
+        let julian: Bool
+        func isFastDay(_ date: CalendarDate) -> Bool { season(date) != nil }
+        func isGreatFeast(_ date: CalendarDate) -> Bool { false }
+        func season(_ date: CalendarDate) -> FastingSeason? {
+            guard date.month == 8 else { return nil }
+            return (julian ? 14...27 : 1...14).contains(date.day) ? .dormitionFast : nil
+        }
+        func fastFreeReason(_ date: CalendarDate) -> String? { nil }
+    }
+
+    private let rule = Rule(
+        title: "The Dormition Fast",
+        recurrence: .liturgical(.season(.dormitionFast)),
+        category: RuleCategory.fasting.rawValue
+    )
+
+    private func score(julian: Bool, changedOn: CalendarDate? = nil) -> RuleScore {
+        let kept = (14...27).map {
+            Occurrence(ruleID: rule.id, date: d(2026, 8, $0), status: .completed)
+        }
+        return ScoringEngine(
+            engine: RecurrenceEngine(
+                liturgical: Cal(julian: julian),
+                observances: ObservanceSettings(fasting: .observed)
+            ),
+            timeZone: zone
+        ).report(
+            rules: [rule],
+            activations: [Activation(ruleID: rule.id, from: d(2026, 1, 1))],
+            occurrences: kept,
+            from: d(2026, 8, 1), through: d(2026, 8, 31),
+            now: d(2026, 9, 1).dueInstant(at: TimeOfDay(hour: 10, minute: 0)!, in: zone)!,
+            liturgicalHistoryFrom: changedOn
+        ).perRule[0]
+    }
+
+    @Test("kept in full under the calendar it was kept on")
+    func beforeAnyChange() {
+        let before = score(julian: true)
+        #expect(before.kept == 14)
+        #expect(before.missed == 0)
+        #expect(before.ratio == 1.0)
+    }
+
+    // The bug, stated as the test that would have caught it.
+    @Test("changing the calendar invents no misses at all")
+    func noRetroactiveMisses() {
+        let after = score(julian: false, changedOn: d(2026, 9, 1))
+        #expect(after.missed == 0, "a fortnight of failures appeared from nowhere")
+        #expect(after.missedDates.isEmpty)
+    }
+
+    @Test("and what was kept is still kept")
+    func creditSurvives() {
+        let after = score(julian: false, changedOn: d(2026, 9, 1))
+        #expect(after.kept == 14, "the record is what happened; the calendar changing does not undo it")
+        #expect(after.ratio == 1.0)
+    }
+
+    @Test("days after the change follow the new calendar")
+    func futureFollowsTheNewCalendar() {
+        // Changed part way through August: before the 20th the record rules,
+        // after it the new calendar does.
+        let after = score(julian: false, changedOn: d(2026, 8, 20))
+        #expect(after.kept == 6, "the 14th to the 19th, the days kept before the change")
+        #expect(after.missed == 0, "and on the new calendar nothing from the 20th is a fast")
+    }
+
+    // Only liturgical rules are affected: a civil rule means the same day
+    // whatever calendar the fasts are reckoned by.
+    @Test("a civil rule is untouched by any of this")
+    func civilRulesUnaffected() {
+        let civil = Rule(title: "Workout", recurrence: .daily)
+        let report = ScoringEngine(timeZone: zone).report(
+            rules: [civil],
+            activations: [Activation(ruleID: civil.id, from: d(2026, 8, 1))],
+            occurrences: [],
+            from: d(2026, 8, 1), through: d(2026, 8, 19),
+            now: d(2026, 9, 1).dueInstant(at: TimeOfDay(hour: 10, minute: 0)!, in: zone)!,
+            liturgicalHistoryFrom: d(2026, 8, 20)
+        ).perRule[0]
+        #expect(report.missed == 19, "a daily rule is still daily")
+    }
+
+    @Test("with no change ever recorded, nothing behaves differently")
+    func nilChangesNothing() {
+        let a = score(julian: true, changedOn: nil)
+        let b = score(julian: true, changedOn: d(2026, 1, 1))
+        #expect(a.kept == b.kept)
+        #expect(a.missed == b.missed)
+    }
+}

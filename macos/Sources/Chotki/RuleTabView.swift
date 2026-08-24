@@ -210,10 +210,17 @@ struct EntryRow: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            // Indicator only. The whole row is the target — a 14pt box is a
-            // mean thing to ask someone to hit, and an unchecked box drawn with
-            // a clear fill is not hit-testable at all: only its 1pt outline was
-            // clickable, which is why this appeared to do nothing.
+            // The box, and only the box, marks a rule kept.
+            //
+            // The whole row used to be the target, which fixed a real problem —
+            // an unchecked box filled with `Color.clear` is not hit-testable at
+            // all, so only its 1pt outline responded — and created a worse one:
+            // the prayers link and the edit pencil sit inside that row, so
+            // reaching for either of them also ticked the rule off.
+            //
+            // The answer to a 14pt target is padding around it, not a tap
+            // gesture over everything else. The box draws at 14pt and responds
+            // across 26.
             ZStack {
                 if breathing {
                     RoundedRectangle(cornerRadius: 5)
@@ -232,6 +239,19 @@ struct EntryRow: View {
                 }
             }
             .frame(width: 14, height: 14)
+            .padding(6)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                let wasKept = entry.isKept
+                model.toggleKept(entry)
+                if !wasKept, !entry.isDispensed { breathe() }
+            }
+            .help(
+                entry.isDispensed
+                    ? "The Church lifts this today"
+                    : (entry.isKept ? "Click to mark as not kept" : "Click to mark as kept")
+            )
+            .padding(.trailing, -6)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.rule.title)
@@ -282,17 +302,11 @@ struct EntryRow: View {
             .foregroundStyle(hovering ? Theme.muted : Theme.faint)
             .help("Edit this rule")
         }
-        .padding(.horizontal, 4).padding(.vertical, 5)
+        .padding(.horizontal, 4).padding(.vertical, 1)
         .rowBackground(hovering)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            let wasKept = entry.isKept
-            model.toggleKept(entry)
-            if !wasKept, !entry.isDispensed { breathe() }
-        }
-        .allowsHitTesting(true)
+        // Deliberately no tap gesture on the row. Everything else here either
+        // does its own thing — the prayers, the pencil — or does nothing at all.
         .onHover { hovering = $0 }
-        .help(entry.isDispensed ? "The Church lifts this today" : (entry.isKept ? "Click to mark as not kept" : "Click to mark as kept"))
         .contextMenu {
             if entry.isDispensed {
                 Text("Lifted by the Church today")

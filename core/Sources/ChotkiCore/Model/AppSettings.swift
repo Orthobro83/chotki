@@ -26,6 +26,14 @@ public struct AppSettings: Sendable, Hashable, Codable {
     public var hasCompletedFirstRun: Bool
     /// Whether times read as 06:30 or as 6:30 AM.
     public var clockStyle: ClockStyle
+    /// The day the calendar was last changed, if it ever was.
+    ///
+    /// Liturgical rules are the only ones whose due days come from outside the
+    /// app, and changing the reckoning moves them by thirteen days. Without
+    /// this, a fast kept faithfully under one calendar is re-scored against the
+    /// other and reads as a fortnight of failures — which the app must never be
+    /// able to say. See `ScoringEngine.report`.
+    public var reckoningChangedOn: CalendarDate?
 
     public init(
         jurisdiction: Jurisdiction = .default,
@@ -38,7 +46,8 @@ public struct AppSettings: Sendable, Hashable, Codable {
         chimeOnCompletion: Bool = true,
         tickEachKnot: Bool = true,
         hasCompletedFirstRun: Bool = false,
-        clockStyle: ClockStyle = .twentyFourHour
+        clockStyle: ClockStyle = .twentyFourHour,
+        reckoningChangedOn: CalendarDate? = nil
     ) {
         self.jurisdiction = jurisdiction
         self.observances = observances
@@ -51,6 +60,7 @@ public struct AppSettings: Sendable, Hashable, Codable {
         self.tickEachKnot = tickEachKnot
         self.hasCompletedFirstRun = hasCompletedFirstRun
         self.clockStyle = clockStyle
+        self.reckoningChangedOn = reckoningChangedOn
     }
 
     /// Every key optional, every absence a default.
@@ -77,6 +87,9 @@ public struct AppSettings: Sendable, Hashable, Codable {
         tickEachKnot = try value(.tickEachKnot, fallback.tickEachKnot)
         hasCompletedFirstRun = try value(.hasCompletedFirstRun, fallback.hasCompletedFirstRun)
         clockStyle = try value(.clockStyle, fallback.clockStyle)
+        reckoningChangedOn = try container.decodeIfPresent(
+            CalendarDate.self, forKey: .reckoningChangedOn
+        )
     }
 
     public static let `default` = AppSettings()

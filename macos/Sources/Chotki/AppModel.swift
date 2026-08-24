@@ -465,8 +465,18 @@ final class AppModel: ObservableObject {
         var updated = settings
         change(&updated)
         let jurisdictionChanged = updated.jurisdiction != settings.jurisdiction
+        let reckoningChanged = updated.jurisdiction.reckoning != settings.jurisdiction.reckoning
+        if reckoningChanged { updated.reckoningChangedOn = today }
         settings = updated
         persist(updated)
+
+        if reckoningChanged {
+            // Said out loud, because the calendar moving is a large change and
+            // a silent one. What was kept stays kept: scoring stops re-deriving
+            // liturgical days from before today, so a fast kept on the old
+            // calendar cannot read as a fortnight of failures on the new one.
+            notice = "The calendar is now the \(updated.jurisdiction.reckoning.displayName). Fasts and feasts move by thirteen days from today. What you have already kept is untouched."
+        }
 
         if jurisdictionChanged {
             try? liturgical.setJurisdiction(updated.jurisdiction, around: today)
