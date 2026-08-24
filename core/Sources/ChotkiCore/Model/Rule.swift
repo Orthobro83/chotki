@@ -1,7 +1,10 @@
 import Foundation
 
 public struct Rule: Sendable, Hashable, Codable, Identifiable {
-    public let id: UUID
+    /// Settable only through `becomingANewRule()`, which exists so that a
+    /// successor can be made by copying the whole rule rather than by listing
+    /// the fields to keep.
+    public private(set) var id: UUID
     public var title: String
     /// Free text from the user.
     public var note: String?
@@ -67,6 +70,23 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     public var hasPrayers: Bool { !(prayerIDs ?? []).isEmpty }
 
     public var isFastingRule: Bool { category == RuleCategory.fasting.rawValue }
+
+    /// A copy of this rule with a fresh identity, ready to stand as a successor
+    /// or a one-off.
+    ///
+    /// The point is that it enumerates nothing. Building a successor by naming
+    /// the fields to carry is how an edit scoped to "this day and after"
+    /// silently dropped a rule's prayers and its reminder settings — and it
+    /// would have happened again the next time a field was added, because
+    /// nothing makes you revisit that list. Copying the whole value and
+    /// clearing the few things a new rule must not inherit cannot fail that way.
+    public func becomingANewRule() -> Rule {
+        var fresh = self
+        fresh.id = UUID()
+        fresh.archivedAt = nil
+        fresh.hiddenFromLibrary = nil
+        return fresh
+    }
 }
 
 /// A stretch during which a rule is actually in force.

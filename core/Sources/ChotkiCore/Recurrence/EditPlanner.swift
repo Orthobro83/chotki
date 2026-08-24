@@ -90,22 +90,10 @@ public struct EditPlanner: Sendable {
             // carrying the change. History keeps reporting the old shape,
             // which is the point.
             plan.merge(closing: mine, at: date)
-            let successor = Rule(
-                title: changes.title,
-                note: changes.note,
-                source: changes.source,
-                recurrence: changes.recurrence,
-                timeOfDay: changes.timeOfDay,
-                category: changes.category,
-                // Everything the rule carried, not only the fields the form
-                // shows. Leaving these off dropped a rule's prayers and its
-                // reminder settings on any edit from today onwards — the same
-                // silent loss as a library rule that predated prayer_ids,
-                // arriving by a different route.
-                reminders: changes.reminders,
-                prayerIDs: changes.prayerIDs,
-                createdAt: rule.createdAt
-            )
+            // The whole rule, with a new identity — never a list of fields to
+            // carry. See `becomingANewRule()`.
+            var successor = changes.becomingANewRule()
+            successor.createdAt = rule.createdAt
             plan.newRules.append(successor)
             plan.newActivations.append(Activation(ruleID: successor.id, from: date))
 
@@ -114,16 +102,8 @@ public struct EditPlanner: Sendable {
             plan.newOccurrences.append(
                 Occurrence(ruleID: rule.id, date: date, status: .cancelled)
             )
-            let oneOff = Rule(
-                title: changes.title,
-                note: changes.note,
-                source: changes.source,
-                recurrence: .once(date),
-                timeOfDay: changes.timeOfDay,
-                category: changes.category,
-                reminders: changes.reminders,
-                prayerIDs: changes.prayerIDs
-            )
+            var oneOff = changes.becomingANewRule()
+            oneOff.recurrence = .once(date)
             plan.newRules.append(oneOff)
             plan.newActivations.append(Activation(ruleID: oneOff.id, from: date, to: date))
         }

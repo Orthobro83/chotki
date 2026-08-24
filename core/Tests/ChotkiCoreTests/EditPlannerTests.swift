@@ -246,3 +246,88 @@ struct EditCarriesEverythingTests {
         #expect(updated.reminders == rule.reminders)
     }
 }
+
+/// Guards the shape of a successor rather than a list of its fields.
+///
+/// The bug these exist for was not a wrong value; it was a field nobody
+/// remembered to add to a call. A test naming the fields would have the same
+/// blind spot as the code, so this one enumerates them by reflection: add a
+/// property to `Rule` and forget to carry it, and this fails without anyone
+/// having thought about it.
+@Suite("A successor is the whole rule")
+struct SuccessorShapeTests {
+
+    /// Every field set to something distinctive, so a dropped one is visible.
+    private func fullyPopulated() -> Rule {
+        var rule = Rule(
+            title: "Morning prayers",
+            note: "on rising",
+            source: "my godfather",
+            recurrence: .daily,
+            timeOfDay: TimeOfDay(hour: 6, minute: 30),
+            category: RuleCategory.prayer.rawValue,
+            reminders: .forService,
+            prayerIDs: PrayerSequence.morning.prayerIDs
+        )
+        rule.archivedAt = Date(timeIntervalSince1970: 1)
+        rule.hiddenFromLibrary = true
+        return rule
+    }
+
+    private func fields(of rule: Rule) -> [String: String] {
+        Dictionary(uniqueKeysWithValues: Mirror(reflecting: rule).children.compactMap {
+            guard let label = $0.label else { return nil }
+            return (label, String(describing: $0.value))
+        })
+    }
+
+    /// The three a new rule must not inherit.
+    private let reset: Set<String> = ["id", "archivedAt", "hiddenFromLibrary"]
+
+    @Test("the fixture really does populate everything, or this proves nothing")
+    func fixtureIsComplete() {
+        let all = fields(of: fullyPopulated())
+        #expect(all.count >= 12, "reflection found only \(all.count) fields")
+        for (label, value) in all where !reset.contains(label) {
+            #expect(value != "nil", "\(label) is nil, so dropping it would be invisible")
+        }
+    }
+
+    @Test("a successor carries every field, including any added later")
+    func carriesEveryField() {
+        let original = fullyPopulated()
+        let fresh = original.becomingANewRule()
+
+        #expect(fresh.id != original.id)
+        #expect(fresh.archivedAt == nil, "a new rule is not born archived")
+        #expect(fresh.hiddenFromLibrary == nil, "nor hidden from the library")
+
+        let before = fields(of: original)
+        let after = fields(of: fresh)
+        for (label, value) in before where !reset.contains(label) {
+            #expect(after[label] == value, "\(label) was dropped")
+        }
+    }
+
+    @Test("and it survives the planner, at both scopes", arguments: [
+        EditScope.thisAndFuture, EditScope.thisDay
+    ])
+    func survivesThePlanner(scope: EditScope) throws {
+        let original = fullyPopulated()
+        let activations = [Activation(ruleID: original.id, from: CalendarDate(year: 2026, month: 3, day: 1)!)]
+        let plan = EditPlanner().edit(
+            rule: original, changes: original, activations: activations,
+            on: CalendarDate(year: 2026, month: 8, day: 19)!, scope: scope
+        )
+
+        let successor = try #require(plan.newRules.first)
+        let before = fields(of: original)
+        let after = fields(of: successor)
+        // `recurrence` legitimately changes for a one-off, and `createdAt` for
+        // a successor that inherits the original's.
+        let mayDiffer = reset.union(["recurrence", "createdAt"])
+        for (label, value) in before where !mayDiffer.contains(label) {
+            #expect(after[label] == value, "\(scope) dropped \(label)")
+        }
+    }
+}

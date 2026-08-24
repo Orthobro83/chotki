@@ -229,6 +229,54 @@ class EditCarriesEverythingTest {
         assertEquals(rule.prayerIDs, updated.prayerIDs)
     }
 
+    /**
+     * The structural version of the same guard the Swift suite makes by
+     * reflection: assert the successor equals the edited rule in *every* field
+     * but the ones deliberately changed. A data class compares all its
+     * properties, so a field added later is covered without anyone remembering
+     * to add it here.
+     */
+    @Test
+    fun `a successor differs from the edit in nothing but its identity`() {
+        val (rule, activations) = fixture()
+        val changes = rule.copy(timeOfDay = TimeOfDay.of(7, 0), note = "changed")
+        val plan = planner.edit(
+            rule, changes, activations, day(2026, 8, 19), EditScope.THIS_AND_FUTURE,
+        )
+        val successor = plan.newRules.first()
+
+        assertEquals(
+            changes.copy(
+                id = successor.id,
+                createdAt = rule.createdAt,
+                archivedAt = null,
+                hiddenFromLibrary = null,
+            ),
+            successor,
+            "a field was dropped or altered on the way through the planner",
+        )
+    }
+
+    @Test
+    fun `a one-off differs from the edit in nothing but its identity and its recurrence`() {
+        val (rule, activations) = fixture()
+        val changes = rule.copy(timeOfDay = TimeOfDay.of(18, 0))
+        val d = day(2026, 8, 19)
+        val plan = planner.edit(rule, changes, activations, d, EditScope.THIS_DAY)
+        val oneOff = plan.newRules.first()
+
+        assertEquals(
+            changes.copy(
+                id = oneOff.id,
+                recurrence = Recurrence.Once(d),
+                createdAt = oneOff.createdAt,
+                archivedAt = null,
+                hiddenFromLibrary = null,
+            ),
+            oneOff,
+        )
+    }
+
     // A successor is a new rule, so it starts offered in the library rather
     // than inheriting a decision made about the rule it replaced.
     @Test
