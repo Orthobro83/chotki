@@ -107,12 +107,12 @@ struct MonthGridView: View {
     private var legend: some View {
         HStack(spacing: 11) {
             if model.settings.observances.feasts.isVisible {
-                LegendDot(colour: Theme.gold, label: "feast")
+                LegendDot(colour: Theme.gold, label: "Feast")
             }
             if model.settings.observances.fasting.isVisible {
-                LegendDot(colour: Theme.violet, label: "fast")
+                LegendDot(colour: Theme.violet, label: "Fast")
             }
-            LegendDot(colour: Theme.ochre, label: "liturgy")
+            LegendDot(colour: Theme.ochre, label: "Liturgy")
             Spacer()
         }
         .font(.system(size: 11))

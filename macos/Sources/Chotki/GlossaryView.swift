@@ -108,7 +108,7 @@ struct GlossaryView: View {
             let related = glossary.related(to: entry)
             if !related.isEmpty {
                 Rectangle().fill(Theme.lineSoft).frame(height: 1).padding(.vertical, 2)
-                Text("see also")
+                Text("See also")
                     .font(.system(size: 10))
                     .foregroundStyle(Theme.faint)
                 ForEach(related) { other in

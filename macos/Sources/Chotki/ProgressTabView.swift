@@ -65,7 +65,7 @@ struct ProgressTabViewContent: View {
                 Text("\(Int((overall * 100).rounded()))%")
                     .font(.system(size: 26))
                     .foregroundStyle(Theme.gold)
-                Text("kept, over the 30 days to then")
+                Text("Kept, over the 30 days to then")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.muted)
             }
@@ -77,7 +77,7 @@ struct ProgressTabViewContent: View {
 
     private func perRule(_ report: ProgressReport) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("by rule")
+            Text("By rule")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.muted)
                 .padding(.top, 10).padding(.bottom, 5)

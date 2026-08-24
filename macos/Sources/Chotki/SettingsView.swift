@@ -126,7 +126,7 @@ struct SettingsViewContent: View {
     // MARK: pieces
 
     private func section(_ title: String) -> some View {
-        Text(title.lowercased())
+        Text(title)
             .font(.system(size: 11))
             .foregroundStyle(Theme.muted)
             .padding(.horizontal, 14).padding(.top, 14).padding(.bottom, 4)

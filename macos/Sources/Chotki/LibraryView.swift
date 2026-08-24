@@ -94,7 +94,7 @@ struct CustomRow: View {
                 Text(rule.title)
                     .font(.system(size: 12))
                     .foregroundStyle(isOnTheRule ? Theme.muted : Theme.parchment)
-                Text(rule.timeOfDay.map(Format.time) ?? "all day")
+                Text(rule.timeOfDay.map(Format.time) ?? "All day")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.faint)
                 if let note = rule.note, !note.isEmpty {

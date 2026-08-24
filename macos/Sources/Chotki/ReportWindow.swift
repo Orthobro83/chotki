@@ -30,7 +30,7 @@ struct ReportWindowView: View {
                         Text("\(Int((overall * 100).rounded()))%")
                             .font(.system(size: 34))
                             .foregroundStyle(Theme.gold)
-                        Text("kept")
+                        Text("Kept")
                             .font(.system(size: 13))
                             .foregroundStyle(Theme.muted)
                     }

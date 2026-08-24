@@ -247,7 +247,7 @@ struct EntryRow: View {
                         .fixedSize(horizontal: false, vertical: true)
                 } else if entry.isStoodDown {
                     // Neutral wording: stood down, not skipped or missed.
-                    Text("stood down")
+                    Text("Stood down")
                         .font(.system(size: 10))
                         .foregroundStyle(Theme.faint)
                 }
@@ -257,7 +257,7 @@ struct EntryRow: View {
 
             // "all day" rather than "anytime": a fast is not optional, and
             // "anytime" reads as though it were.
-            Text(entry.rule.timeOfDay.map(Format.time) ?? "all day")
+            Text(entry.rule.timeOfDay.map(Format.time) ?? "All day")
                 .font(.system(size: 11))
                 .foregroundStyle(entry.isKept ? Theme.faint : Theme.muted)
 

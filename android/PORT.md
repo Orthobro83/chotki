@@ -238,3 +238,7 @@ Mac app to check something.
 5. **Practice questions go to Ryan or a priest**, stated as questions.
 6. **No test may touch a real device's storage.**
 7. **Say what you could not check**, every time.
+8. **A fix goes everywhere the problem is**, not only where it was reported.
+   Labels and headings in Compose take their capitalisation from the shared
+   content, which is already correct — do not lower-case them in the view, which
+   is how the macOS app acquired the habit in six separate places.

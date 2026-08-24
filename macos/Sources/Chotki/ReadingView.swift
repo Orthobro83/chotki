@@ -69,7 +69,7 @@ struct ReadingViewContent: View {
             if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
                 Rectangle().fill(Theme.line).frame(height: 1)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("from the fathers")
+                    Text("From the fathers")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.muted)
                     Text(patristic.text)

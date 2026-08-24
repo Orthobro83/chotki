@@ -155,6 +155,17 @@ the library was asked about, because leaving them mismatched would have looked
 like an oversight. That was probably right — but it was said out loud, with an
 offer to revert, rather than slipped in.
 
+**A fix goes everywhere the problem is.** Lower-cased headings were reported in
+the library. They were fixed there and in the glossary, and settings was flagged
+as having the same fault and left alone — a judgement that these were "form
+labels rather than content headings", which is exactly the kind of distinction
+that matters to nobody looking at the screen. The complaint came back two days
+later, with the reasonable observation that this keeps happening.
+
+The report is a sample, not the scope. Search for the pattern, fix all of it,
+and if something genuinely should be excluded, do the rest first and then say
+what was left out. Flagging an omission is not the same as finishing.
+
 **Do not moralise, do not pad, do not re-litigate.** Corrections get one line.
 
 **Rebase, always.** Ryan edits `README.md` directly on GitHub mid-session. Four
