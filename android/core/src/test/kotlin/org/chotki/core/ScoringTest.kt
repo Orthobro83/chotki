@@ -363,3 +363,114 @@ class TodayCountsTest {
         assertEquals(2, report.perRule[0].missed, "the 18th and 19th are over; the 20th is not")
     }
 }
+
+/**
+ * Changing the calendar must not rewrite what someone kept.
+ *
+ * A liturgical rule is the only kind whose due days come from outside the app.
+ * Switching between the Old and New Calendar moves them thirteen days, and
+ * scoring re-derives the past from whatever calendar is current — so a fast kept
+ * faithfully read as a fortnight of failures. Measured on the Swift side before
+ * it was fixed: fourteen kept and none missed became one kept and thirteen
+ * missed, at seven per cent.
+ *
+ * Translated from suite "Changing the calendar".
+ */
+class ReckoningChangeTest {
+
+    /** The Dormition Fast as each reckoning places it, thirteen days apart. */
+    private class Cal(val julian: Boolean) : LiturgicalDayProvider {
+        override fun isFastDay(date: CalendarDate) = season(date) != null
+        override fun isGreatFeast(date: CalendarDate) = false
+        override fun season(date: CalendarDate): FastingSeason? {
+            if (date.month != 8) return null
+            val range = if (julian) 14..27 else 1..14
+            return if (date.day in range) FastingSeason.DORMITION_FAST else null
+        }
+        override fun fastFreeReason(date: CalendarDate): String? = null
+    }
+
+    private val rule = Rule(
+        title = "The Dormition Fast",
+        recurrence = Recurrence.Liturgical(LiturgicalTrigger.Season(FastingSeason.DORMITION_FAST)),
+        category = RuleCategory.FASTING,
+    )
+
+    private fun score(julian: Boolean, changedOn: CalendarDate? = null): RuleScore {
+        val kept = (14..27).map {
+            Occurrence(ruleID = rule.id, date = d(2026, 8, it), status = OccurrenceStatus.COMPLETED)
+        }
+        return ScoringEngine(
+            engine = RecurrenceEngine(
+                Cal(julian), ObservanceSettings(fasting = Observance.OBSERVED),
+            ),
+            zone = zone,
+        ).report(
+            rules = listOf(rule),
+            activations = listOf(Activation(ruleID = rule.id, from = d(2026, 1, 1))),
+            occurrences = kept,
+            from = d(2026, 8, 1),
+            through = d(2026, 8, 31),
+            now = d(2026, 9, 1).dueInstant(TimeOfDay.of(10, 0)!!, zone)!!,
+            liturgicalHistoryFrom = changedOn,
+        ).perRule[0]
+    }
+
+    @Test
+    fun `kept in full under the calendar it was kept on`() {
+        val before = score(julian = true)
+        assertEquals(14, before.kept)
+        assertEquals(0, before.missed)
+        assertEquals(1.0, before.ratio)
+    }
+
+    // The bug, stated as the test that would have caught it.
+    @Test
+    fun `changing the calendar invents no misses at all`() {
+        val after = score(julian = false, changedOn = d(2026, 9, 1))
+        assertEquals(0, after.missed, "a fortnight of failures appeared from nowhere")
+        assertTrue(after.missedDates.isEmpty())
+    }
+
+    @Test
+    fun `and what was kept is still kept`() {
+        val after = score(julian = false, changedOn = d(2026, 9, 1))
+        assertEquals(
+            14, after.kept,
+            "the record is what happened; the calendar changing does not undo it",
+        )
+        assertEquals(1.0, after.ratio)
+    }
+
+    @Test
+    fun `days after the change follow the new calendar`() {
+        val after = score(julian = false, changedOn = d(2026, 8, 20))
+        assertEquals(6, after.kept, "the 14th to the 19th, the days kept before the change")
+        assertEquals(0, after.missed, "and on the new calendar nothing from the 20th is a fast")
+    }
+
+    // Only liturgical rules are affected: a civil rule means the same day
+    // whatever calendar the fasts are reckoned by.
+    @Test
+    fun `a civil rule is untouched by any of this`() {
+        val civil = Rule(title = "Workout", recurrence = Recurrence.Daily)
+        val report = ScoringEngine(zone = zone).report(
+            rules = listOf(civil),
+            activations = listOf(Activation(ruleID = civil.id, from = d(2026, 8, 1))),
+            occurrences = emptyList(),
+            from = d(2026, 8, 1),
+            through = d(2026, 8, 19),
+            now = d(2026, 9, 1).dueInstant(TimeOfDay.of(10, 0)!!, zone)!!,
+            liturgicalHistoryFrom = d(2026, 8, 20),
+        ).perRule[0]
+        assertEquals(19, report.missed, "a daily rule is still daily")
+    }
+
+    @Test
+    fun `with no change ever recorded, nothing behaves differently`() {
+        val a = score(julian = true, changedOn = null)
+        val b = score(julian = true, changedOn = d(2026, 1, 1))
+        assertEquals(a.kept, b.kept)
+        assertEquals(a.missed, b.missed)
+    }
+}

@@ -3,7 +3,10 @@ package org.chotki.core.store
 import org.chotki.core.Activation
 import org.chotki.core.CalendarDate
 import org.chotki.core.EditPlan
+import org.chotki.core.AppSettings
+import org.chotki.core.LiturgicalDay
 import org.chotki.core.Occurrence
+import org.chotki.core.Reckoning
 import org.chotki.core.Rule
 import java.util.UUID
 
@@ -15,10 +18,6 @@ class StoreException(message: String, cause: Throwable? = null) : Exception(mess
  * [apply] exists so a three-way edit lands atomically — a split that closed the
  * old stretch but failed to open the new one would make a rule silently vanish.
  *
- * Settings and the liturgical cache are not here yet. Their tables are created
- * by the migration ladder, because the ladder must match step for step, but
- * `AppSettings` and `LiturgicalDay` are not ported until phases 5 and 6 and
- * there is nothing honest to store until they are.
  */
 interface Store {
     fun save(rule: Rule)
@@ -47,6 +46,25 @@ interface Store {
     fun removeOccurrence(ruleID: UUID, date: CalendarDate)
 
     fun apply(plan: EditPlan)
+
+    fun saveLiturgicalDay(day: LiturgicalDay)
+    fun liturgicalDay(civilDate: CalendarDate, reckoning: Reckoning): LiturgicalDay?
+    fun liturgicalDays(
+        reckoning: Reckoning,
+        from: CalendarDate,
+        through: CalendarDate,
+    ): List<LiturgicalDay>
+
+    /** Passing null clears every reckoning. */
+    fun clearLiturgicalCache(reckoning: Reckoning? = null)
+
+    /**
+     * Settings live beside the data rather than in a platform preferences
+     * system, so what someone has chosen travels with their record, survives a
+     * move between machines, and is included in a backup.
+     */
+    fun loadSettings(): AppSettings?
+    fun saveSettings(settings: AppSettings)
 
     fun close()
 }

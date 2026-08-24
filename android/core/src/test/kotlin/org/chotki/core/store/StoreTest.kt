@@ -254,3 +254,74 @@ class StoreTest {
         assertTrue(store.occurrences().isEmpty())
     }
 }
+
+/**
+ * Settings live beside the data rather than in a platform preferences system.
+ *
+ * The Swift app lost a person's settings once, because they were written to a
+ * preferences domain that did not exist — which is how fasting rules silently
+ * stopped appearing. These tests are why that cannot happen quietly here.
+ */
+class SettingsStoreTest {
+    private val db = JdbcDb.inMemory()
+    private val store = SqliteStore(db)
+
+    @AfterTest fun tearDown() = store.close()
+
+    @Test
+    fun `a fresh database has no settings rather than wrong ones`() {
+        assertNull(store.loadSettings())
+    }
+
+    @Test
+    fun `settings round-trip whole`() {
+        val settings = org.chotki.core.AppSettings(
+            jurisdiction = org.chotki.core.Jurisdiction.KNOWN
+                .first { it.name == "Georgian Orthodox Church" },
+            observances = org.chotki.core.ObservanceSettings(
+                fasting = org.chotki.core.Observance.OBSERVED,
+                feasts = org.chotki.core.Observance.HIDDEN,
+            ),
+            hasCompletedFirstRun = true,
+            clockStyle = org.chotki.core.ClockStyle.TWELVE_HOUR,
+            reckoningChangedOn = d(2026, 8, 24),
+        )
+        store.saveSettings(settings)
+        assertEquals(settings, store.loadSettings())
+    }
+
+    @Test
+    fun `saving twice replaces rather than duplicating`() {
+        store.saveSettings(org.chotki.core.AppSettings.DEFAULT)
+        store.saveSettings(
+            org.chotki.core.AppSettings.DEFAULT.copy(hasCompletedFirstRun = true),
+        )
+        assertEquals(1, db.query("SELECT COUNT(*) FROM app_settings;") { it.int(0) }.single())
+        assertEquals(true, store.loadSettings()?.hasCompletedFirstRun)
+    }
+
+    // A record written before a setting existed must keep everything else and
+    // default the rest, never fail and take the whole thing with it.
+    @Test
+    fun `a record that predates a setting keeps what it has`() {
+        db.update(
+            "INSERT INTO app_settings (id, payload) VALUES (1, ?);",
+            listOf("""{"hasCompletedFirstRun":true,"clockStyle":"TWELVE_HOUR"}"""),
+        )
+        val loaded = store.loadSettings()
+        assertNotNull(loaded)
+        assertEquals(true, loaded.hasCompletedFirstRun, "what was written is kept")
+        assertEquals(org.chotki.core.ClockStyle.TWELVE_HOUR, loaded.clockStyle)
+        assertEquals(
+            org.chotki.core.Jurisdiction.DEFAULT, loaded.jurisdiction,
+            "and what was not gets a default",
+        )
+        assertNull(loaded.reckoningChangedOn)
+    }
+
+    @Test
+    fun `an empty record is every default rather than an error`() {
+        db.update("INSERT INTO app_settings (id, payload) VALUES (1, ?);", listOf("{}"))
+        assertEquals(org.chotki.core.AppSettings.DEFAULT, store.loadSettings())
+    }
+}

@@ -111,6 +111,7 @@ class Practice(
             from = through.plusDays(-(days - 1)),
             through = through,
             now = now,
+            liturgicalHistoryFrom = settings.reckoningChangedOn,
         )
     }
 

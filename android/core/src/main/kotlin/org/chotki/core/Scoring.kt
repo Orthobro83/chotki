@@ -78,10 +78,19 @@ class ScoringEngine(
         from: CalendarDate,
         through: CalendarDate,
         now: Instant = Instant.now(),
+        /**
+         * The day the calendar was changed, if it was.
+         *
+         * Before it, a liturgical rule is judged only by what was actually
+         * kept — never by where the *new* calendar would have put the fast. A
+         * rule whose due days come from outside the app must not have its past
+         * rewritten when that outside thing changes.
+         */
+        liturgicalHistoryFrom: CalendarDate? = null,
     ): ProgressReport {
         val today = CalendarDate.from(now, zone)
         val scores = rules.map { rule ->
-            score(rule, activations, occurrences, from, through, now, today)
+            score(rule, activations, occurrences, from, through, now, today, liturgicalHistoryFrom)
         }
 
         val scoreable = scores.filter { it.hasAnythingDue }
@@ -108,8 +117,9 @@ class ScoringEngine(
         through: CalendarDate,
         now: Instant,
         today: CalendarDate,
+        liturgicalHistoryFrom: CalendarDate?,
     ): RuleScore {
-        val due = engine.dueDates(rule, activations, from, through)
+        val due = dueDates(rule, activations, occurrences, from, through, liturgicalHistoryFrom)
         if (due.isEmpty()) {
             return RuleScore(rule.id, rule.title, 0, 0, 0, 0, 0, null, emptyList())
         }
@@ -172,6 +182,36 @@ class ScoringEngine(
             ratio = if (weight > 0) weighted / weight else null,
             missedDates = missedDates,
         )
+    }
+
+    /**
+     * The days to judge a rule on.
+     *
+     * Normally the pattern, intersected with the activations. For a liturgical
+     * rule reaching back past a change of calendar, the days before that change
+     * come from the record instead: what was kept is kept, and a day the new
+     * calendar would have made a fast day is not held against someone who was
+     * keeping a different one at the time.
+     */
+    private fun dueDates(
+        rule: Rule,
+        activations: List<Activation>,
+        occurrences: List<Occurrence>,
+        from: CalendarDate,
+        through: CalendarDate,
+        liturgicalHistoryFrom: CalendarDate?,
+    ): List<CalendarDate> {
+        val due = engine.dueDates(rule, activations, from, through)
+        if (rule.recurrence !is Recurrence.Liturgical) return due
+        val cutoff = liturgicalHistoryFrom ?: return due
+        if (cutoff <= from) return due
+
+        val keptBefore = occurrences.filter {
+            it.ruleID == rule.id && it.date >= from && it.date < cutoff &&
+                (it.status == OccurrenceStatus.COMPLETED ||
+                    it.status == OccurrenceStatus.COMPLETED_LATE)
+        }.map { it.date }
+        return (keptBefore + due.filter { it >= cutoff }).sorted()
     }
 
     /**

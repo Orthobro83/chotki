@@ -3,8 +3,11 @@ package org.chotki.core.store
 import kotlinx.serialization.json.Json
 import org.chotki.core.Activation
 import org.chotki.core.CalendarDate
+import org.chotki.core.AppSettings
 import org.chotki.core.EditPlan
+import org.chotki.core.LiturgicalDay
 import org.chotki.core.Occurrence
+import org.chotki.core.Reckoning
 import org.chotki.core.OccurrenceStatus
 import org.chotki.core.Recurrence
 import org.chotki.core.Rule
@@ -198,6 +201,75 @@ class SqliteStore(private val db: Db) : Store {
         db.update(
             "DELETE FROM occurrence WHERE rule_id = ? AND date = ?;",
             listOf(ruleID.toString(), date.iso),
+        )
+    }
+
+    // MARK: the church calendar
+
+    override fun saveLiturgicalDay(day: LiturgicalDay) {
+        db.update(
+            """
+            INSERT INTO liturgical_day (civil_date, reckoning, payload, fetched_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(civil_date, reckoning) DO UPDATE SET
+                payload = excluded.payload, fetched_at = excluded.fetched_at;
+            """.trimIndent(),
+            listOf(
+                day.civilDate.iso,
+                day.reckoning.name,
+                json.encodeToString(LiturgicalDay.serializer(), day),
+                day.fetchedAt.toString(),
+            ),
+        )
+    }
+
+    override fun liturgicalDay(civilDate: CalendarDate, reckoning: Reckoning): LiturgicalDay? =
+        db.query(
+            "SELECT payload FROM liturgical_day WHERE civil_date = ? AND reckoning = ?;",
+            listOf(civilDate.iso, reckoning.name),
+        ) { readDay(it) }.firstOrNull()
+
+    override fun liturgicalDays(
+        reckoning: Reckoning,
+        from: CalendarDate,
+        through: CalendarDate,
+    ): List<LiturgicalDay> = db.query(
+        """
+        SELECT payload FROM liturgical_day
+        WHERE reckoning = ? AND civil_date >= ? AND civil_date <= ?
+        ORDER BY civil_date;
+        """.trimIndent(),
+        listOf(reckoning.name, from.iso, through.iso),
+    ) { readDay(it) }
+
+    private fun readDay(row: Row): LiturgicalDay =
+        json.decodeFromString(
+            LiturgicalDay.serializer(),
+            row.string(0) ?: throw StoreException("a cached day with no payload"),
+        )
+
+    override fun clearLiturgicalCache(reckoning: Reckoning?) {
+        if (reckoning == null) {
+            db.update("DELETE FROM liturgical_day;")
+        } else {
+            db.update("DELETE FROM liturgical_day WHERE reckoning = ?;", listOf(reckoning.name))
+        }
+    }
+
+    // MARK: settings
+
+    override fun loadSettings(): AppSettings? =
+        db.query("SELECT payload FROM app_settings WHERE id = 1;") { row ->
+            json.decodeFromString(AppSettings.serializer(), row.string(0)!!)
+        }.firstOrNull()
+
+    override fun saveSettings(settings: AppSettings) {
+        db.update(
+            """
+            INSERT INTO app_settings (id, payload) VALUES (1, ?)
+            ON CONFLICT(id) DO UPDATE SET payload = excluded.payload;
+            """.trimIndent(),
+            listOf(json.encodeToString(AppSettings.serializer(), settings)),
         )
     }
 
