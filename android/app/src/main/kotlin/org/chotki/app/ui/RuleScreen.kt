@@ -17,6 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +37,8 @@ import org.chotki.core.CalendarDate
 import org.chotki.core.ClockStyle
 import org.chotki.core.DayEntry
 import org.chotki.core.Format
+import org.chotki.core.RuleReference
+import org.chotki.core.reference
 
 /**
  * The day, and what is on the rule for it.
@@ -47,26 +54,48 @@ fun RuleScreen(
     state: AppState,
     modifier: Modifier = Modifier,
     onReadPrayers: (DayEntry) -> Unit = {},
+    onReadReading: () -> Unit = {},
     onEdit: (DayEntry) -> Unit = {},
 ) {
     val entries = state.entries(state.selectedDate)
+    val list = rememberLazyListState()
 
-    Column(modifier.fillMaxSize().background(Chotki.ground)) {
-        MonthGrid(state)
-        DayHeader(state.selectedDate)
+    // Folded as soon as the rules are moved at all, and unfolded only back at
+    // the very top. A threshold in the middle would flap: folding gives the
+    // list more room, which moves it, which would unfold it again.
+    val collapsed by remember {
+        derivedStateOf {
+            list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 0
+        }
+    }
 
-        if (entries.isEmpty()) {
-            EmptyDay()
-        } else {
-            LazyColumn(Modifier.fillMaxWidth()) {
-                items(entries, key = { it.id }) { entry ->
-                    EntryRow(
-                        entry = entry,
-                        clock = state.settings.clockStyle,
-                        onToggle = { state.toggleKept(entry) },
-                        onReadPrayers = { onReadPrayers(entry) },
-                        onEdit = { onEdit(entry) },
-                    )
+    BoxWithConstraints(modifier.fillMaxSize().background(Chotki.ground)) {
+        // Half, and no more. The calendar used to take whatever it wanted and
+        // the rules it sits above were pushed off the bottom of the screen,
+        // where nothing could reach them because this column does not scroll.
+        val cap = this@BoxWithConstraints.maxHeight / 2
+
+        Column(Modifier.fillMaxSize()) {
+            Calendar(state, collapsed = collapsed, maxHeight = cap)
+            DayHeader(state.selectedDate)
+
+            if (entries.isEmpty()) {
+                EmptyDay()
+            } else {
+                // The weight is the fix. Without it this takes whatever height
+                // is left over, which can be none, and a list of zero height
+                // scrolls nowhere.
+                LazyColumn(Modifier.fillMaxWidth().weight(1f), state = list) {
+                    items(entries, key = { it.id }) { entry ->
+                        EntryRow(
+                            entry = entry,
+                            clock = state.settings.clockStyle,
+                            onToggle = { state.toggleKept(entry) },
+                            onReadPrayers = { onReadPrayers(entry) },
+                            onReadReading = onReadReading,
+                            onEdit = { onEdit(entry) },
+                        )
+                    }
                 }
             }
         }
@@ -107,6 +136,7 @@ private fun EntryRow(
     clock: ClockStyle,
     onToggle: () -> Unit,
     onReadPrayers: () -> Unit,
+    onReadReading: () -> Unit,
     onEdit: () -> Unit,
 ) {
     Row(
@@ -161,19 +191,20 @@ private fun EntryRow(
             fontSize = 13.sp,
         )
 
-        // The way to the words, which is the point of a prayer rule. Shown only
-        // when the rule actually carries prayers, and always when it does.
-        if (entry.rule.hasPrayers) {
-            Text(
-                "☰",
-                color = Chotki.goldDim,
-                fontSize = 16.sp,
-                modifier = Modifier
-                    .size(44.dp)
-                    .wrapContentSize()
-                    .clickable(onClick = onReadPrayers)
-                    .semantics { contentDescription = "Read the prayers for ${entry.rule.title}" },
+        // The way to the words, which is the point of the rule. Shown whenever
+        // the app holds the text the rule names — the reading rules had no way
+        // through for months because this asked only about prayers, and the
+        // day's Gospel is no less a text for not being one.
+        when (entry.rule.reference) {
+            RuleReference.PRAYERS -> Reference(
+                "Read the prayers for ${entry.rule.title}",
+                onReadPrayers,
             )
+            RuleReference.READING -> Reference(
+                "Read ${entry.rule.title.replaceFirstChar { it.lowercase() }}",
+                onReadReading,
+            )
+            RuleReference.NONE -> Unit
         }
 
         Text(
@@ -200,3 +231,18 @@ private val weekdays = listOf(
 
 internal fun longDate(date: CalendarDate): String =
     "${weekdays[date.weekday.number - 1]} ${date.day} ${months[date.month - 1]}"
+
+/** The three lines that lead to the text, wherever that text lives. */
+@Composable
+private fun Reference(description: String, onTap: () -> Unit) {
+    Text(
+        "☰",
+        color = Chotki.goldDim,
+        fontSize = 16.sp,
+        modifier = Modifier
+            .size(44.dp)
+            .wrapContentSize()
+            .clickable(onClick = onTap)
+            .semantics { contentDescription = description },
+    )
+}

@@ -115,6 +115,8 @@ fun Shell(state: AppState) {
                         state = state,
                         modifier = Modifier.weight(1f),
                         onReadPrayers = { journey = journey.push(Screen.RulePrayers(it.rule.id)) },
+                        // The day's readings already have a place of their own.
+                        onReadReading = { journey = journey.go(Place.READING) },
                         onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
                     )
                     Text(
