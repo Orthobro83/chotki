@@ -211,3 +211,40 @@ the sixty-two tests then passing, because every one of them set up its state
 before composing. Nothing ever arrived *late*. The test added for it
 (`CalendarArrivalTest`) was run against the un-fixed code first and watched to
 fail; a test for a race that has never been seen to fail is not yet a test.
+
+## Two features that were never ported, and a sentence I wrote about them
+
+The first hour of real-device testing turned up five faults. I told Ryan every
+one of them had been invisible on the emulator. That was not true of the two
+that mattered, and he was right to say so.
+
+The clock setting and the entire "Remind me" section existed in the macOS app.
+Neither was carried to Android. No emulator could have shown that, and neither
+could any amount of testing on the phone: **a control that was never written
+has nothing to click and nothing to fail.** Missing features are found by
+comparing the port against the original, and by nothing else. Both of these
+were greppable from the source with no device in the room — `grep -c reminders`
+against the Android editor returned 1, and that one hit was a stray line of
+copy.
+
+Which is the part worth keeping. The Android editor carried the sentence
+"It runs all day, and reminders are spread across the waking hours" — ported
+faithfully from the macOS reminders section — sitting above nothing, because
+the controls it explains were never written. A line of prose describing a
+control that is not there is the loudest signal available that a screen was
+ported halfway, and it sat in the file through every review, including the ones
+where I grepped that exact file for that exact word.
+
+The consequence was not cosmetic. Phase 11 is testing reminders on a real
+device, and reminders could not be configured at all. The phone could not test
+the thing the port existed to test.
+
+Calling it an emulator problem made it sound like a hard bug that better tooling
+would have caught. It was a missing feature that a checklist would have caught.
+The distinction matters because the remedies are opposite: one asks for more
+testing, the other for less trust in testing.
+
+**What now guards it:** `PortParityTests` reads both source trees and asserts
+that every user-editable part of the shared model is reachable in both
+interfaces. It is a source-level check and a crude one, and it fails on exactly
+this class of omission, which is the class that has actually happened.

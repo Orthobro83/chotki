@@ -253,6 +253,15 @@ Mac app to check something.
 
 ## Guard rails, carried over
 
+1. **A port is finished when the feature surfaces match, not when it runs.**
+   Running the port cannot reveal a control that was never written — there is
+   nothing to click and nothing to fail. The clock setting and the whole
+   reminders section existed on macOS and never crossed; reminders could not be
+   configured at all, so the phone testing the port could not test what the
+   port was for. `PortParityTests` holds the two interfaces against each other
+   and names the type a control must reach for, not the field — searching for
+   the field name is what let it through, because the word `reminders` was
+   present in a line of copy above no controls.
 1. **Verify interaction, not appearance.** Drive it, or say you did not.
 1. **Anything Compose cannot observe must be announced.** The church calendar
    lives in a plain map inside `LiturgicalService`, because the recurrence
