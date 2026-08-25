@@ -96,21 +96,18 @@ class ShellTest {
             .assertIsDisplayed()
     }
 
+    // Prayers is the rope: the count, the knots, and the words beneath them.
     @Test
-    fun aPrayerCanBeOpenedAndItsSourceIsShown() {
+    fun prayersOpensTheRopeWithItsWordsBeneath() {
         show()
         compose.onNodeWithContentDescription("Go to Prayers").performClick()
-        // A LazyColumn composes only what is on screen, so the list is scrolled
-        // the way a person would scroll it.
-        compose.onNode(hasScrollAction())
-            .performScrollToNode(hasContentDescription("Open The Jesus Prayer"))
-        compose.onNodeWithContentDescription("Open The Jesus Prayer").performClick()
         compose.waitForIdle()
 
+        compose.onNodeWithContentDescription("The count").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Count a knot").assertIsDisplayed()
         compose.onNodeWithText(
             "Lord Jesus Christ, Son of God, have mercy on me, a sinner.",
         ).assertIsDisplayed()
-        compose.onNodeWithContentDescription("Back to the prayers").assertIsDisplayed()
     }
 
     @Test

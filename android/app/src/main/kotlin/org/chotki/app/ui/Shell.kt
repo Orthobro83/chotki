@@ -109,7 +109,7 @@ fun Shell(state: AppState) {
                     )
                 }
 
-                place == Place.PRAYERS -> PrayersScreen(Modifier.weight(1f))
+                place == Place.PRAYERS -> RopeScreen(state, Modifier.weight(1f))
                 place == Place.READING -> ReadingScreen(state, Modifier.weight(1f))
                 place == Place.PROGRESS -> ProgressScreen(state, Modifier.weight(1f))
                 place == Place.GLOSSARY -> GlossaryScreen(Modifier.weight(1f))

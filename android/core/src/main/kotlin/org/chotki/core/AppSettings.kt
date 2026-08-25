@@ -21,6 +21,13 @@ data class AppSettings(
     /** Cleared once the first rules have been taken on. */
     val hasCompletedFirstRun: Boolean = false,
     val clockStyle: ClockStyle = ClockStyle.TWENTY_FOUR_HOUR,
+    /** The chime when a knot of the prayer rope is complete. */
+    val chimeOnCompletion: Boolean = true,
+    /**
+     * A soft click as each knot passes, so a press is confirmed with your eyes
+     * closed.
+     */
+    val tickEachKnot: Boolean = true,
     /**
      * The day the calendar was last changed, if it ever was.
      *

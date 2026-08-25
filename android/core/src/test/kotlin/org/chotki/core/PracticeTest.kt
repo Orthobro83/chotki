@@ -310,3 +310,79 @@ class CustomLibraryTest {
         assertEquals(1, CustomLibrary.entries(listOf(rule)).size, "that is the point")
     }
 }
+
+/** The prayers screen, which outlives the view it is drawn in. */
+class PrayerScreenTest {
+
+    @Test
+    fun `the rope follows the prayer`() {
+        assertTrue(PrayerScreen(selection = null).showsRope(), "nothing chosen shows the rope")
+        assertTrue(PrayerScreen(selection = "jesus-prayer").showsRope())
+        assertTrue(
+            !PrayerScreen(selection = "morning").showsRope(),
+            "a rule is read, not counted",
+        )
+    }
+
+    @Test
+    fun `the reader can overrule it`() {
+        val screen = PrayerScreen(selection = "morning")
+        assertTrue(!screen.showsRope())
+        assertTrue(screen.showingRope(true).showsRope())
+    }
+
+    // Otherwise "hide" pressed once on the Creed would silently hide the rope
+    // behind the Jesus Prayer chosen ten minutes later.
+    @Test
+    fun `choosing again goes back to following the prayer`() {
+        val hidden = PrayerScreen(selection = "jesus-prayer").showingRope(false)
+        assertTrue(!hidden.showsRope())
+        assertTrue(hidden.choosing("publican").showsRope())
+    }
+
+    @Test
+    fun `choosing what is already chosen changes nothing`() {
+        val hidden = PrayerScreen(selection = "jesus-prayer").showingRope(false)
+        assertTrue(!hidden.choosing("jesus-prayer").showsRope(), "the override survives")
+    }
+
+    @Test
+    fun `counting stops at the target and reports the knot`() {
+        var screen = PrayerScreen(count = 0, target = 3)
+        var completed: Boolean
+        repeat(2) {
+            val (next, done) = screen.advanced()
+            screen = next
+            assertTrue(!done)
+        }
+        val (third, done) = screen.advanced()
+        screen = third
+        assertTrue(done, "the third completes it")
+        assertTrue(screen.isComplete)
+
+        val (again, more) = screen.advanced()
+        assertTrue(!more, "no further")
+        assertEquals(3, again.count)
+    }
+
+    @Test
+    fun `a new target starts the count again`() {
+        val aimed = PrayerScreen(count = 40, target = 50).aiming(33)
+        assertEquals(0, aimed.count, "40 of 33 would show a knot already complete")
+        assertEquals(33, aimed.target)
+    }
+
+    @Test
+    fun `the offered targets are the traditional ones`() {
+        assertEquals(listOf(33, 50, 100), PrayerScreen.targets)
+    }
+
+    // Saint Ioannikios closes the evening rule and is said once, not counted.
+    @Test
+    fun `only the short repeated prayers bring the rope`() {
+        assertTrue(!PrayerScreen(selection = "ioannikios").showsRope())
+        assertTrue(!PrayerScreen(selection = "creed").showsRope())
+        assertTrue(PrayerScreen(selection = "lord-have-mercy").showsRope())
+        assertTrue(PrayerScreen(selection = "no-such-prayer").showsRope(), "an unknown id is not a rule")
+    }
+}
