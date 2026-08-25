@@ -33,6 +33,16 @@ data class ReminderReadiness(
     val allClear: Boolean
         get() = notificationsAllowed && exactAlarmsAllowed && exemptFromBatteryOptimisation
 
+    /**
+     * What is wrong, as a string. A dismissal remembers this rather than a bare
+     * flag, so a *different* problem later still speaks up.
+     */
+    val signature: String
+        get() = listOf(
+            notificationsAllowed, exactAlarmsAllowed,
+            exemptFromBatteryOptimisation, hasVendorSleepList,
+        ).joinToString(",")
+
     companion object {
         fun of(context: Context): ReminderReadiness {
             val power = context.getSystemService(PowerManager::class.java)
@@ -59,6 +69,33 @@ data class ReminderReadiness(
     }
 }
 
+/**
+ * Whether this exact set of complaints has been dismissed.
+ *
+ * Keyed on what is actually wrong rather than on a single "seen it" flag, so
+ * dismissing the battery warning does not also silence a notification permission
+ * that is revoked next week. A banner that cannot be put away is one people stop
+ * reading; a banner that never comes back is one that fails quietly.
+ *
+ * In Android's own preferences rather than in `AppSettings`, because it is about
+ * this phone's permissions and has no meaning on any other platform.
+ */
+class BannerDismissals(context: Context) {
+
+    private val store = context.getSharedPreferences("readiness", Context.MODE_PRIVATE)
+
+    fun isDismissed(readiness: ReminderReadiness): Boolean =
+        store.getString(KEY, null) == readiness.signature
+
+    fun dismiss(readiness: ReminderReadiness) {
+        store.edit().putString(KEY, readiness.signature).apply()
+    }
+
+    private companion object {
+        const val KEY = "dismissed"
+    }
+}
+
 /** Opens the system's own battery-optimisation dialogue for this app. */
 fun batteryExemptionIntent(context: Context): Intent =
     Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
@@ -74,6 +111,11 @@ fun batteryExemptionIntent(context: Context): Intent =
  */
 fun batteryOptimisationSettingsIntent(): Intent =
     Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+
+/** This app's own notification settings, where the permission can be restored. */
+fun notificationSettingsIntent(context: Context): Intent =
+    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
 
 fun exactAlarmSettingsIntent(context: Context): Intent? =
     if (Build.VERSION.SDK_INT >= 31) {

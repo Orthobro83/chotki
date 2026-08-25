@@ -1,5 +1,6 @@
 package org.chotki.app.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -29,9 +30,6 @@ import org.chotki.app.AppState
  * rule on is something you do while looking at what you already keep — which is
  * the judgement the whole screen exists to support.
  */
-/** A rule being written or changed. Null `rule` means a new one. */
-data class Editing(val rule: org.chotki.core.Rule?)
-
 enum class Place(val title: String) {
     RULE("Rule"),
     PRAYERS("Prayers"),
@@ -43,93 +41,107 @@ enum class Place(val title: String) {
 
 @Composable
 fun Shell(state: AppState) {
-    var place by remember { mutableStateOf(Place.RULE) }
-    var showingLibrary by remember { mutableStateOf(false) }
-    /// Set when a rule is being written or changed; null when nothing is.
-    var editing by remember { mutableStateOf<Editing?>(null) }
-    /// The rule whose prayers are open, if any.
-    var readingPrayersFor by remember { mutableStateOf<java.util.UUID?>(null) }
+    var journey by remember { mutableStateOf(Journey()) }
     val context = LocalContext.current
-    val readiness = remember(place, showingLibrary) { ReminderReadiness.of(context) }
+    val readiness = remember(journey) { ReminderReadiness.of(context) }
+    val dismissals = remember { BannerDismissals(context) }
+    var dismissed by remember(readiness) { mutableStateOf(dismissals.isDismissed(readiness)) }
+
+    // Back goes back one screen, and only leaves the app from the day itself.
+    // Without this it fell through to Android's default at every depth: three
+    // fields into the editor, back closed Chotki.
+    BackHandler(enabled = journey.canGoBack) { journey = journey.back() }
 
     Column(Modifier.fillMaxSize().background(Chotki.ground)) {
-        // Only when something is actually wrong, and only about the app's own
-        // ability to do what it said — never about the person's practice.
-        ReadinessBanner(readiness)
+        if (!dismissed) {
+            ReadinessBanner(readiness) {
+                dismissals.dismiss(readiness)
+                dismissed = true
+            }
+        }
 
         Column(Modifier.weight(1f)) {
-            val open = editing
-            val readingFor = readingPrayersFor?.let { state.rule(it) }
-            when {
-                open != null -> RuleEditor(
+            when (val screen = journey.current) {
+                is Screen.Editor -> RuleEditor(
                     state = state,
-                    existing = open.rule,
-                    onDone = { editing = null },
+                    existing = screen.rule,
+                    onDone = { journey = journey.back() },
                     modifier = Modifier.weight(1f),
                 )
 
-                readingFor != null -> RulePrayers(
-                    rule = readingFor,
-                    onBack = { readingPrayersFor = null },
-                    modifier = Modifier.weight(1f),
-                )
+                is Screen.RulePrayers -> {
+                    val rule = state.rule(screen.ruleID)
+                    if (rule == null) {
+                        journey = journey.back()
+                    } else {
+                        RulePrayers(
+                            rule = rule,
+                            onBack = { journey = journey.back() },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
 
-                showingLibrary -> {
+                Screen.Library -> {
                     Text(
                         "‹ The day",
                         color = Chotki.gold,
                         fontSize = 15.sp,
                         modifier = Modifier
-                            .clickable { showingLibrary = false }
+                            .clickable { journey = journey.back() }
                             .padding(16.dp)
                             .semantics { contentDescription = "Back to the day" },
                     )
                     LibrarySheet(
                         state = state,
                         modifier = Modifier.weight(1f),
-                        onWriteYourOwn = { editing = Editing(null) },
+                        onWriteYourOwn = { journey = journey.push(Screen.Editor(null)) },
                     )
                 }
 
-                place == Place.RULE -> {
+                Screen.Day -> {
                     RuleScreen(
                         state = state,
                         modifier = Modifier.weight(1f),
-                        onReadPrayers = { readingPrayersFor = it.rule.id },
-                        onEdit = { editing = Editing(it.rule) },
+                        onReadPrayers = { journey = journey.push(Screen.RulePrayers(it.rule.id)) },
+                        onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
                     )
                     Text(
                         "Library",
                         color = Chotki.gold,
                         fontSize = 15.sp,
                         modifier = Modifier
-                            .clickable { showingLibrary = true }
+                            .clickable { journey = journey.push(Screen.Library) }
                             .padding(16.dp)
                             .semantics { contentDescription = "Open the library" },
                     )
                 }
 
-                place == Place.PRAYERS -> RopeScreen(state, Modifier.weight(1f))
-                place == Place.READING -> ReadingScreen(state, Modifier.weight(1f))
-                place == Place.PROGRESS -> ProgressScreen(state, Modifier.weight(1f))
-                place == Place.GLOSSARY -> GlossaryScreen(Modifier.weight(1f))
-                place == Place.SETTINGS -> SettingsScreen(state, Modifier.weight(1f))
+                Screen.Rope -> RopeScreen(state, Modifier.weight(1f))
+                Screen.Reading -> ReadingScreen(state, Modifier.weight(1f))
+                Screen.Progress -> ProgressScreen(state, Modifier.weight(1f))
+                Screen.Settings -> SettingsScreen(state, Modifier.weight(1f))
+
+                is Screen.Terms -> GlossaryScreen(
+                    modifier = Modifier.weight(1f),
+                    openSlug = screen.slug,
+                    onOpen = { journey = journey.push(Screen.Terms(it)) },
+                    onBack = { journey = journey.back() },
+                )
             }
         }
 
         Row(Modifier.fillMaxWidth().background(Chotki.panel)) {
+            val lit = journey.current.place
             for (candidate in Place.entries) {
                 Text(
                     candidate.title,
-                    color = if (candidate == place) Chotki.gold else Chotki.muted,
+                    color = if (candidate == lit) Chotki.gold else Chotki.muted,
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .weight(1f)
-                        .clickable {
-                            place = candidate
-                            showingLibrary = false
-                        }
+                        .clickable { journey = journey.go(candidate) }
                         .padding(vertical = 12.dp)
                         .semantics { contentDescription = "Go to ${candidate.title}" },
                 )

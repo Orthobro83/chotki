@@ -60,6 +60,11 @@ dependencies {
 
     // The interface will be driven, not photographed. Every macOS bug in this
     // project was a control that drew correctly and did nothing.
+    // Navigation is decided by a value, so where back goes can be checked
+    // without a device — and without finishing an activity mid-suite, which
+    // crashes the instrumentation runner for everything after it.
+    testImplementation("junit:junit:4.13.2")
+
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
 }

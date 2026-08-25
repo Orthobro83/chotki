@@ -33,13 +33,17 @@ import org.chotki.core.content.GlossaryEntryJson
  * "Tone 2" — and looking each one up elsewhere breaks the thing you were doing.
  */
 @Composable
-fun GlossaryScreen(modifier: Modifier = Modifier) {
+fun GlossaryScreen(
+    modifier: Modifier = Modifier,
+    openSlug: String? = null,
+    onOpen: (String) -> Unit = {},
+    onBack: () -> Unit = {},
+) {
     var query by remember { mutableStateOf("") }
-    var openSlug by remember { mutableStateOf<String?>(null) }
     val open = openSlug?.let { slug -> Content.glossary.firstOrNull { it.slug == slug } }
 
     if (open != null) {
-        TermDetail(open) { openSlug = null }
+        TermDetail(open, onBack)
         return
     }
 
@@ -68,7 +72,7 @@ fun GlossaryScreen(modifier: Modifier = Modifier) {
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .clickable { openSlug = entry.slug }
+                        .clickable { onOpen(entry.slug) }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .semantics { contentDescription = "Open ${entry.term}" },
                 ) {

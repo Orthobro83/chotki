@@ -1,9 +1,11 @@
 package org.chotki.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -46,9 +48,21 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
         Line("Feasts — ${state.settings.observances.feasts.name.lowercase()}", Chotki.parchment)
 
         Heading("Reminders")
-        Diagnostic("Notifications", readiness.notificationsAllowed)
-        Diagnostic("Exact alarms", readiness.exactAlarmsAllowed)
-        Diagnostic("Allowed to run in the background", readiness.exemptFromBatteryOptimisation)
+        // Always here, whether or not the banner has been put away — and each
+        // one opens the screen where it is actually changed, rather than naming
+        // a setting and leaving the person to find it.
+        Diagnostic("Notifications", readiness.notificationsAllowed) {
+            context.startActivity(notificationSettingsIntent(context))
+        }
+        Diagnostic("Exact alarms", readiness.exactAlarmsAllowed) {
+            exactAlarmSettingsIntent(context)?.let(context::startActivity)
+        }
+        Diagnostic(
+            "Allowed to run in the background",
+            readiness.exemptFromBatteryOptimisation,
+        ) {
+            context.startActivity(batteryExemptionIntent(context))
+        }
         if (readiness.hasVendorSleepList) {
             Line(
                 "This phone also keeps its own list. Add Chotki to " +
@@ -84,15 +98,28 @@ private fun Line(text: String, colour: androidx.compose.ui.graphics.Color) {
 
 /**
  * Stated as a fact, never as a scolding. The app is reporting on itself.
+ *
+ * Tapping opens the system screen where the setting lives. Naming a permission
+ * and leaving someone to hunt for it through Android's settings is not help.
  */
 @Composable
-private fun Diagnostic(label: String, allowed: Boolean) {
-    Text(
-        "$label — ${if (allowed) "allowed" else "not allowed"}",
-        color = if (allowed) Chotki.parchment else Chotki.gold,
-        fontSize = 14.sp,
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 3.dp)
+private fun Diagnostic(label: String, allowed: Boolean, onOpen: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
             .semantics { contentDescription = "$label readiness" },
-    )
+    ) {
+        Text(
+            "$label — ${if (allowed) "allowed" else "not allowed"}",
+            color = if (allowed) Chotki.parchment else Chotki.gold,
+            fontSize = 14.sp,
+        )
+        Text(
+            if (allowed) "Tap to review" else "Tap to change this",
+            color = Chotki.faint,
+            fontSize = 12.sp,
+        )
+    }
 }
