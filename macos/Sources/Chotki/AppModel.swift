@@ -17,6 +17,7 @@ enum Screen: Hashable {
     case editor(UUID?)
     case prayerRope
     case prayers(UUID)
+    case psalter
 }
 
 @MainActor

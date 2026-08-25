@@ -206,6 +206,28 @@ struct ContentExportTests {
             #expect(!array.isEmpty, "\(name) exported nothing")
         }
     }
+
+    /// The Psalter is shipped, not authored, so it is not exported here — the
+    /// generator writes both copies at once. This is the guard that they are
+    /// still the same file.
+    ///
+    /// It is 388KB of psalms and neither copy is ever edited by hand, so the
+    /// only way they diverge is someone regenerating one and not committing the
+    /// other. That would leave the two platforms reading different psalms.
+    @Test("both copies of the Psalter are the same file")
+    func psalterCopiesMatch() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+
+        let swift = try Data(contentsOf: root.appendingPathComponent(
+            "core/Sources/ChotkiCore/Resources/psalter.json"))
+        let kotlin = try Data(contentsOf: root.appendingPathComponent(
+            "android/core/src/main/resources/content/psalter.json"))
+
+        #expect(swift == kotlin, "the two Psalters have drifted — rerun core/Tools/psalter-from-brenton.py")
+        #expect(swift.count > 300_000, "the Psalter looks truncated")
+    }
 }
 
 private extension Weekday {
@@ -227,4 +249,5 @@ private extension ReminderLead {
         case .theEveningBefore: return "theEveningBefore"
         }
     }
+
 }

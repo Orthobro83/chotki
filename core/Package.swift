@@ -16,7 +16,14 @@ let package = Package(
     ],
     targets: [
         .systemLibrary(name: "CSQLite", path: "Sources/CSQLite"),
-        .target(name: "ChotkiCore", dependencies: ["CSQLite"]),
+        .target(
+            name: "ChotkiCore",
+            dependencies: ["CSQLite"],
+            // The Psalter is 150 psalms of Brenton, which is a resource rather
+            // than something to author in a Swift literal. The same file is
+            // shipped byte for byte to Android; see core/Tools/.
+            resources: [.copy("Resources")]
+        ),
         .testTarget(
             name: "ChotkiCoreTests",
             dependencies: ["ChotkiCore"],

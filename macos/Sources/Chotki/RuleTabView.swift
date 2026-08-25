@@ -302,6 +302,13 @@ struct EntryRow: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
                 .help("Read the day's readings")
+            case .psalter:
+                Button { model.screen = .psalter } label: {
+                    Image(systemName: "text.alignleft").font(.system(size: 10))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
+                .help("Read today's kathisma")
             case .none:
                 EmptyView()
             }
@@ -331,6 +338,9 @@ struct EntryRow: View {
                     Divider()
                 case .reading:
                     Button("Read the day's readings") { model.tab = .reading }
+                    Divider()
+                case .psalter:
+                    Button("Read today's kathisma") { model.screen = .psalter }
                     Divider()
                 case .none:
                     EmptyView()

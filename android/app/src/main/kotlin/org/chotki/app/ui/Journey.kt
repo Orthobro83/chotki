@@ -14,6 +14,9 @@ import java.util.UUID
 sealed interface Screen {
     /** The start destination. Back from here leaves the app, as it should. */
     data object Day : Screen
+    /** The kathismata appointed for the day. */
+    data object Psalter : Screen
+
     data object Library : Screen
     data class Editor(val rule: Rule?) : Screen
     data class RulePrayers(val ruleID: UUID) : Screen
@@ -27,7 +30,7 @@ sealed interface Screen {
     val place: Place
         get() = when (this) {
             Day, Library, is Editor, is RulePrayers -> Place.RULE
-            Rope -> Place.PRAYERS
+            Rope, Psalter -> Place.PRAYERS
             Reading -> Place.READING
             Progress -> Place.PROGRESS
             is Terms -> Place.GLOSSARY

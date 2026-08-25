@@ -93,6 +93,19 @@ fun Shell(state: AppState) {
                     }
                 }
 
+                Screen.Psalter -> {
+                    Text(
+                        "‹ The day",
+                        color = Chotki.gold,
+                        fontSize = 15.sp,
+                        modifier = Modifier
+                            .clickable { journey = journey.back() }
+                            .padding(16.dp)
+                            .semantics { contentDescription = "Back to the day" },
+                    )
+                    PsalterScreen(state, Modifier.weight(1f))
+                }
+
                 Screen.Library -> {
                     Text(
                         "‹ The day",
@@ -117,6 +130,7 @@ fun Shell(state: AppState) {
                         onReadPrayers = { journey = journey.push(Screen.RulePrayers(it.rule.id)) },
                         // The day's readings already have a place of their own.
                         onReadReading = { journey = journey.go(Place.READING) },
+                        onReadPsalter = { journey = journey.push(Screen.Psalter) },
                         onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
                     )
                     Text(

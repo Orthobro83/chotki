@@ -19,8 +19,20 @@ enum class RuleReference {
     /** The day's appointed readings and its commemoration. */
     READING,
 
+    /** The kathismata appointed for the day, and the psalms in them. */
+    PSALTER,
+
     NONE,
 }
+
+/**
+ * How a rule of one's own is recognised as the Psalter rule.
+ *
+ * Matched on the title because a rule taken from the library carries no link
+ * back to its template — that is deliberate, so the rule is the person's own
+ * and stays theirs when the library changes underneath it.
+ */
+const val PSALTER_RULE_TITLE = "A kathisma of the Psalter"
 
 val Rule.reference: RuleReference
     get() = when {
@@ -28,5 +40,6 @@ val Rule.reference: RuleReference
         // The day's Gospel, the day's Epistle, the life of the day's saint —
         // all three are what the Reading screen already shows.
         category == RuleCategory.READING -> RuleReference.READING
+        title == PSALTER_RULE_TITLE -> RuleReference.PSALTER
         else -> RuleReference.NONE
     }

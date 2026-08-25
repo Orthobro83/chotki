@@ -17,8 +17,17 @@ public enum RuleReference: Sendable, Hashable {
     case prayers
     /// The day's appointed readings and its commemoration.
     case reading
+    /// The kathismata appointed for the day, and the psalms in them.
+    case psalter
     case none
 }
+
+/// How a rule of one's own is recognised as the Psalter rule.
+///
+/// Matched on the title because a rule taken from the library carries no link
+/// back to its template — that is deliberate, so the rule is the person's own
+/// and stays theirs when the library changes underneath it.
+let psalterRuleTitle = "A kathisma of the Psalter"
 
 public extension Rule {
     var reference: RuleReference {
@@ -26,6 +35,7 @@ public extension Rule {
         // The day's Gospel, the day's Epistle, the life of the day's saint —
         // all three are what the Reading screen already shows.
         if category == RuleCategory.reading.rawValue { return .reading }
+        if title == psalterRuleTitle { return .psalter }
         return .none
     }
 }

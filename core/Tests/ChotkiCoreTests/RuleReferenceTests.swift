@@ -44,4 +44,18 @@ struct RuleReferenceTests {
             }
         }
     }
+
+    @Test("the Psalter rule leads to the Psalter")
+    func thePsalterRuleLeadsToThePsalter() {
+        let rule = library.first { $0.title == psalterRuleTitle }
+        #expect(rule != nil, "the library no longer has the Psalter rule under that title")
+        #expect(rule?.reference == .psalter)
+    }
+
+    /// The title is the only handle there is, so a change to it must not
+    /// silently sever the link.
+    @Test("the library still uses the title the reference matches on")
+    func theTitleStillMatches() {
+        #expect(RuleLibrary.bundled.contains { $0.title == psalterRuleTitle })
+    }
 }

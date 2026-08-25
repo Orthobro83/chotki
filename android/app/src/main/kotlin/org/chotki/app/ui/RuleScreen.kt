@@ -55,6 +55,7 @@ fun RuleScreen(
     modifier: Modifier = Modifier,
     onReadPrayers: (DayEntry) -> Unit = {},
     onReadReading: () -> Unit = {},
+    onReadPsalter: () -> Unit = {},
     onEdit: (DayEntry) -> Unit = {},
 ) {
     val entries = state.entries(state.selectedDate)
@@ -93,6 +94,7 @@ fun RuleScreen(
                             onToggle = { state.toggleKept(entry) },
                             onReadPrayers = { onReadPrayers(entry) },
                             onReadReading = onReadReading,
+                            onReadPsalter = onReadPsalter,
                             onEdit = { onEdit(entry) },
                         )
                     }
@@ -137,6 +139,7 @@ private fun EntryRow(
     onToggle: () -> Unit,
     onReadPrayers: () -> Unit,
     onReadReading: () -> Unit,
+    onReadPsalter: () -> Unit,
     onEdit: () -> Unit,
 ) {
     Row(
@@ -204,6 +207,7 @@ private fun EntryRow(
                 "Read ${entry.rule.title.replaceFirstChar { it.lowercase() }}",
                 onReadReading,
             )
+            RuleReference.PSALTER -> Reference("Read today's kathisma", onReadPsalter)
             RuleReference.NONE -> Unit
         }
 

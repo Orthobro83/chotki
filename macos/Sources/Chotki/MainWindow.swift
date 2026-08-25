@@ -51,6 +51,8 @@ enum WindowRoute: Equatable {
         case .editor(let ruleID): return .editor(ruleID)
         case .prayerRope: return .section(.prayers)
         case .prayers(let ruleID): return .prayers(ruleID)
+        // The Psalter lives under Prayers in the window, as the rope does.
+        case .psalter: return .section(.prayers)
         }
     }
 }

@@ -42,6 +42,10 @@ struct RootView: View {
                 Header(title: "Prayers") { model.screen = .main }
                 PrayerView(model: model, ruleID: ruleID)
                     .frame(maxHeight: .infinity, alignment: .top)
+            case .psalter:
+                Header(title: "The Psalter") { model.screen = .main }
+                PsalterView(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
             case .prayerRope:
                 Header(title: "Prayers") { model.screen = .main }
                 PrayerRopeView(model: model)

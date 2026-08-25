@@ -43,6 +43,13 @@ object Content {
         json.decodeFromString(load("glossary"))
     }
     val prayers: List<PrayerJson> by lazy { json.decodeFromString(load("prayers")) }
+
+    /**
+     * Brenton's Septuagint of 1851, moved here by
+     * `core/Tools/psalter-from-brenton.py` — the same bytes the Swift package
+     * ships. 150 psalms and the supernumerary 151st.
+     */
+    val psalter: PsalterJson by lazy { json.decodeFromString(load("psalter")) }
     val prayerSequences: List<PrayerSequenceJson> by lazy {
         json.decodeFromString(load("prayer-sequences"))
     }
