@@ -175,7 +175,8 @@ Answers change the work; guesses would be expensive.
 | 7 — Reminders | **Done.** 196 tests. Everything that decides *when* is now ported |
 | 8 — Content | **Done.** 214 tests. Generated from Swift, drift caught by CI |
 | 9 — Android platform layer | **Done.** 214 JVM tests, 20 on-device. Store, notifications and alarms all verified on API 33 |
-| 10 onwards | Not started |
+| 10 — The interface | **In progress.** The day, the library and the readiness banner work on device; 28 instrumented tests. Prayers, Reading, Progress, Glossary and Settings still to come |
+| 11 — The phone | Not started |
 
 ## Decisions — settled 24 August 2026
 

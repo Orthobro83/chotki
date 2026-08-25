@@ -1,0 +1,96 @@
+package org.chotki.app.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.chotki.app.AppState
+import org.chotki.core.content.Content
+import org.chotki.core.content.RuleTemplateJson
+
+/**
+ * Rules you can take on, grouped by category.
+ *
+ * Nothing here is on by default and nothing switches itself on. Taking a rule on
+ * copies it, so it becomes yours to rename and retime — the library is a
+ * starting point, not a set of obligations.
+ */
+@Composable
+fun LibrarySheet(state: AppState, modifier: Modifier = Modifier) {
+    val grouped = Content.ruleLibrary.groupBy { it.category }
+
+    LazyColumn(modifier.fillMaxWidth().background(Chotki.ground)) {
+        item {
+            Text(
+                "Take on what you are ready for. Two or three is a good beginning.",
+                color = Chotki.faint,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(16.dp),
+            )
+        }
+        for ((category, templates) in grouped) {
+            item {
+                Text(
+                    category.replaceFirstChar { it.uppercase() },
+                    color = Chotki.gold,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp),
+                )
+            }
+            items(templates.size, key = { templates[it].id }) { index ->
+                TemplateRow(templates[index], state)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TemplateRow(template: RuleTemplateJson, state: AppState) {
+    val taken = state.isTaken(template.id)
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                template.title,
+                color = if (taken) Chotki.muted else Chotki.parchment,
+                fontSize = 15.sp,
+            )
+            Text(template.summary, color = Chotki.faint, fontSize = 13.sp)
+            val note = template.note
+            if (note != null && !taken) {
+                Text(note, color = Chotki.goldDim, fontSize = 12.sp)
+            }
+        }
+        if (taken) {
+            Text("On your rule", color = Chotki.goldDim, fontSize = 12.sp)
+        } else {
+            Text(
+                "Take on",
+                color = Chotki.gold,
+                fontSize = 13.sp,
+                modifier = Modifier
+                    .border(1.dp, Chotki.goldDim, RoundedCornerShape(4.dp))
+                    .clickable { state.take(template.id) }
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .semantics { contentDescription = "Take on ${template.title}" },
+            )
+        }
+    }
+}

@@ -2,6 +2,7 @@ plugins {
     // Kotlin support is built into the Android plugin from AGP 9; applying
     // org.jetbrains.kotlin.android alongside it is now an error.
     id("com.android.application")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -24,6 +25,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        compose = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -38,6 +43,20 @@ dependencies {
     // 8 and 13 that hand-rolling it would be a source of bugs on exactly the
     // versions hardest to test.
     implementation("androidx.core:core-ktx:1.17.0")
+
+    val compose = platform("androidx.compose:compose-bom:2025.09.00")
+    implementation(compose)
+    androidTestImplementation(compose)
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.activity:activity-compose:1.11.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    // The interface is driven, not photographed.
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 
     // The interface will be driven, not photographed. Every macOS bug in this
     // project was a control that drew correctly and did nothing.

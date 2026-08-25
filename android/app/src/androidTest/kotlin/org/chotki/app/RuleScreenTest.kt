@@ -1,0 +1,149 @@
+package org.chotki.app
+
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.chotki.app.platform.AndroidDb
+import org.chotki.app.ui.ChotkiTheme
+import org.chotki.app.ui.LibrarySheet
+import org.chotki.app.ui.RuleScreen
+import org.chotki.core.store.SqliteStore
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+
+/**
+ * The interface, driven.
+ *
+ * Every interface bug in the macOS app was a control that drew correctly and did
+ * nothing: an unclickable checkbox, buttons that set state nothing read, a whole
+ * screen unreachable. A screenshot showed none of them. These tap things and
+ * check what happened to the record underneath.
+ */
+@RunWith(AndroidJUnit4::class)
+class RuleScreenTest {
+
+    @get:Rule val compose = createComposeRule()
+
+    private fun freshState(): AppState =
+        AppState(SqliteStore(AndroidDb.inMemory()))
+
+    @Test
+    fun anEmptyRuleSaysSoRatherThanShowingNothing() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { RuleScreen(state) } }
+
+        compose.onNodeWithText("Nothing on the rule for this day.").assertIsDisplayed()
+    }
+
+    @Test
+    fun takingARuleOnFromTheLibraryPutsItOnTheDay() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { LibrarySheet(state) } }
+
+        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+
+        assertTrue("the library did not take the rule on", state.isTaken("morning-prayers"))
+        assertEquals(1, state.rules.size)
+        assertTrue(
+            "it was saved but is not due today",
+            state.entries(state.today).any { it.rule.title == "Morning prayers" },
+        )
+    }
+
+    @Test
+    fun aRuleTakenOnCarriesItsPrayersAndItsTime() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { LibrarySheet(state) } }
+
+        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+
+        val rule = state.rules.single()
+        assertTrue("the prayers did not come with it", rule.hasPrayers)
+        assertEquals(6, rule.timeOfDay?.hour)
+    }
+
+    // The bug this exists to prevent, carried from macOS: the box is the only
+    // thing that marks a rule kept.
+    @Test
+    fun tappingTheBoxMarksTheRuleKept() {
+        val state = freshState().also { it.load() }
+        state.take("morning-prayers")
+
+        compose.setContent { ChotkiTheme { RuleScreen(state) } }
+        compose.onNodeWithContentDescription("Mark Morning prayers kept").performClick()
+        compose.waitForIdle()
+
+        val entry = state.entries(state.today).single()
+        assertTrue("the box did nothing", entry.isKept)
+        assertEquals(1, state.occurrences.size)
+    }
+
+    @Test
+    fun tappingItAgainTakesTheRecordAwayRatherThanWritingSkipped() {
+        val state = freshState().also { it.load() }
+        state.take("morning-prayers")
+
+        compose.setContent { ChotkiTheme { RuleScreen(state) } }
+        compose.onNodeWithContentDescription("Mark Morning prayers kept").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Mark Morning prayers kept").performClick()
+        compose.waitForIdle()
+
+        assertTrue("un-ticking left a record behind", state.occurrences.isEmpty())
+        assertTrue(!state.entries(state.today).single().isKept)
+    }
+
+    @Test
+    fun tappingTheTitleDoesNotMarkItKept() {
+        val state = freshState().also { it.load() }
+        state.take("morning-prayers")
+
+        compose.setContent { ChotkiTheme { RuleScreen(state) } }
+        compose.onNodeWithText("Morning prayers").performClick()
+        compose.waitForIdle()
+
+        assertTrue(
+            "the row is a tap target again, which is what broke the prayers link on macOS",
+            state.occurrences.isEmpty(),
+        )
+    }
+
+    @Test
+    fun theDayIsNamedInFull() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { RuleScreen(state) } }
+        compose.onNodeWithContentDescription("The day").assertIsDisplayed()
+    }
+
+    // Taking on a rule tied to the church calendar turns the observance on, or
+    // the rule sits on the list and can never come due.
+    @Test
+    fun takingOnAFastingRuleStartsObservingFasting() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { LibrarySheet(state) } }
+
+        // A LazyColumn composes only what is on screen, so the fasting section
+        // has to be scrolled to — which is what a person does too.
+        compose.onNode(hasScrollAction())
+            .performScrollToNode(hasContentDescription("Take on Great Lent"))
+        compose.onNodeWithContentDescription("Take on Great Lent").performClick()
+        compose.waitForIdle()
+
+        assertEquals(
+            "the rule was added but could never come due",
+            org.chotki.core.Observance.OBSERVED,
+            state.settings.observances.fasting,
+        )
+    }
+}

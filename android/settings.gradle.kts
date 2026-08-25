@@ -25,6 +25,9 @@ pluginManagement {
         // preview build shipping 9.4.0-dev; there is no reason to found the port
         // on a -dev toolchain that moves under it.
         id("com.android.application") version "9.3.0"
+        // Compose's compiler is a Kotlin plugin, and must match the Kotlin that
+        // AGP brings with it rather than the newest available.
+        id("org.jetbrains.kotlin.plugin.compose") version "2.2.0"
     }
 }
 
