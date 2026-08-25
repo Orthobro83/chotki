@@ -76,6 +76,20 @@ struct PortParityTests {
                 "Android cannot change \(setting.what) — it is in the model and on the Mac"
             )
         }
+
+        // Mentioning a setting is not offering it. The church and the calendar
+        // were both named on this screen and both read-only — printed, not
+        // chosen — and the check above passed the whole time. A control writes,
+        // so count the writes.
+        let offered = android.components(separatedBy: "Dropdown(").count - 1
+        #expect(
+            offered >= editableSettings.count,
+            "Android names \(editableSettings.count) settings but offers \(offered) controls"
+        )
+        #expect(
+            android.contains("updateSettings") || android.contains("setClockStyle"),
+            "Android's settings screen never writes anything back"
+        )
     }
 
     /// The signal that gave both omissions away, had anyone looked.

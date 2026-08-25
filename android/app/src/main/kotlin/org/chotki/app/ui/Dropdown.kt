@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -34,12 +35,21 @@ fun Dropdown(
     label: String,
     chosen: String,
     options: List<String>,
+    /** The editor sets its own fields flush; Settings insets everything by 16. */
+    inset: Dp = 0.dp,
     onChoose: (Int) -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
 
-    Text(label, color = Chotki.gold, fontSize = 13.sp)
-    Box {
+    // Inset to match the lines around it. Flush to the screen edge it read as
+    // a different kind of thing from everything else on the pane.
+    Text(
+        label,
+        color = Chotki.gold,
+        fontSize = 13.sp,
+        modifier = Modifier.padding(start = inset, end = inset, top = 4.dp),
+    )
+    Box(Modifier.padding(horizontal = inset)) {
         Row(
             Modifier
                 .fillMaxWidth()

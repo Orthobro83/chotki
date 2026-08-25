@@ -25,6 +25,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
+import org.chotki.core.Jurisdiction
+import org.chotki.core.Reckoning
 import org.chotki.core.ClockStyle
 import org.chotki.app.BuildConfig
 
@@ -75,8 +77,37 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
             .verticalScroll(rememberScrollState()),
     ) {
         Heading("Your church")
-        Line(state.settings.jurisdiction.name, Chotki.parchment)
-        Line(state.settings.jurisdiction.reckoning.displayName, Chotki.goldDim)
+        // Both were read-only here: the church could not be changed and the
+        // calendar could not be chosen at all, though macOS has offered both
+        // since the day the reckoning was made configurable.
+        Dropdown(
+            label = "Church",
+            chosen = state.settings.jurisdiction.name,
+            options = Jurisdiction.KNOWN.map { it.name },
+            inset = 16.dp,
+        ) { index ->
+            state.updateSettings { it.copy(jurisdiction = Jurisdiction.KNOWN[index]) }
+        }
+
+        // Set apart from the church on purpose. Picking a church sets this to
+        // whatever that church usually keeps, which is right nearly always —
+        // but a parish sometimes differs from the body it belongs to, and the
+        // app should record what is actually kept rather than what is usual.
+        Dropdown(
+            label = "Calendar",
+            chosen = state.settings.jurisdiction.reckoning.displayName,
+            options = Reckoning.entries.map { it.displayName },
+            inset = 16.dp,
+        ) { index ->
+            state.updateSettings {
+                it.copy(jurisdiction = it.jurisdiction.copy(reckoning = Reckoning.entries[index]))
+            }
+        }
+        Line(
+            "Changing the calendar moves fasts and feasts by thirteen days from " +
+                "today. What you have already kept is untouched.",
+            Chotki.faint,
+        )
         for (note in state.settings.jurisdiction.practice.notes) Line(note, Chotki.faint)
 
         Heading("The calendar")
@@ -91,6 +122,7 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
             label = "How times are written",
             chosen = state.settings.clockStyle.displayName,
             options = ClockStyle.entries.map { it.displayName },
+            inset = 16.dp,
         ) { index -> state.setClockStyle(ClockStyle.entries[index]) }
 
         Heading("Reminders")

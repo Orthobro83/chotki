@@ -191,12 +191,36 @@ class AppState(
         load()
     }
 
-    /** How times are written, everywhere at once. */
-    fun setClockStyle(style: ClockStyle) {
-        val updated = settings.copy(clockStyle = style)
-        store.saveSettings(updated)
-        settings = updated
+    /**
+     * Any change to the settings, with the consequences that follow it.
+     *
+     * The reckoning is the one that bites. Moving it shifts every fast and
+     * feast by thirteen days, and without [AppSettings.reckoningChangedOn] the
+     * scoring re-derives the past from the new calendar — turning a fortnight
+     * someone actually kept into a fortnight of misses. Stamping the date stops
+     * scoring reaching back past it.
+     */
+    fun updateSettings(change: (AppSettings) -> AppSettings) {
+        val before = settings
+        val updated = change(before)
+        val reckoningChanged =
+            updated.jurisdiction.reckoning != before.jurisdiction.reckoning
+        val settled = if (reckoningChanged) updated.copy(reckoningChangedOn = today) else updated
+
+        store.saveSettings(settled)
+        settings = settled
+
+        if (updated.jurisdiction != before.jurisdiction) {
+            // The calendar itself has to be refetched: the same civil day is a
+            // different church day under the other reckoning.
+            liturgical?.let { runCatching { it.setJurisdiction(settled.jurisdiction, around = today, window = 21) } }
+            refreshCalendar()
+        }
+        calendarVersion += 1
     }
+
+    /** How times are written, everywhere at once. */
+    fun setClockStyle(style: ClockStyle) = updateSettings { it.copy(clockStyle = style) }
 
     fun entries(on: CalendarDate): List<DayEntry> = practice.entries(on)
 
