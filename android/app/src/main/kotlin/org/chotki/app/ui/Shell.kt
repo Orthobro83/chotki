@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -29,6 +31,15 @@ import org.chotki.app.AppState
  * The Library is reached from the day rather than living here, because taking a
  * rule on is something you do while looking at what you already keep — which is
  * the judgement the whole screen exists to support.
+ */
+/**
+ * The bar, carrying the same meanings the macOS sidebar uses.
+ *
+ * The macOS icons are SF Symbols, which cannot come across. Rather than pull in
+ * Material's whole extended icon set for six glyphs — it is large enough that
+ * it would not even dex — they are drawn here, in the app's own line weight and
+ * gold: a calendar for the rule, a rope for the prayers, an open book for the
+ * reading, a rising line for progress, a closed book for the terms.
  */
 enum class Place(val title: String) {
     RULE("Rule"),
@@ -134,17 +145,24 @@ fun Shell(state: AppState) {
         Row(Modifier.fillMaxWidth().background(Chotki.panel)) {
             val lit = journey.current.place
             for (candidate in Place.entries) {
-                Text(
-                    candidate.title,
-                    color = if (candidate == lit) Chotki.gold else Chotki.muted,
-                    fontSize = 11.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
+                val colour = if (candidate == lit) Chotki.gold else Chotki.muted
+                Column(
+                    Modifier
                         .weight(1f)
                         .clickable { journey = journey.go(candidate) }
-                        .padding(vertical = 12.dp)
+                        .padding(vertical = 8.dp)
                         .semantics { contentDescription = "Go to ${candidate.title}" },
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    PlaceIcon(candidate, colour)
+                    Text(
+                        candidate.title,
+                        color = colour,
+                        fontSize = 10.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
         }
     }

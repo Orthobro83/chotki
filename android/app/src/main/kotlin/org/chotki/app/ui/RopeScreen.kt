@@ -200,19 +200,23 @@ private fun ChooserRow(screen: PrayerScreen, onChoose: (String?) -> Unit) {
     }
 
     Column(Modifier.fillMaxWidth()) {
-        Text(
-            label,
-            color = Chotki.parchment,
-            fontSize = 15.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
+        // The chevron is what says this is a menu. Without it the title read as
+        // a heading, and there was nothing to suggest the other prayers were
+        // one tap away.
+        Row(
+            Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp)
                 .border(1.dp, Chotki.line, RoundedCornerShape(4.dp))
                 .clickable { open = !open }
-                .padding(vertical = 10.dp)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
                 .semantics { contentDescription = "Choose what to pray" },
-        )
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(label, color = Chotki.parchment, fontSize = 15.sp)
+            Text(if (open) "⌃" else "⌄", color = Chotki.gold, fontSize = 15.sp)
+        }
 
         if (open) {
             LazyColumn(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
