@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- The church calendar comes from orthocal.info, and that is the only
+         request this app makes. Without this every fetch throws a
+         SecurityException, which the refresh swallows — so the app says "no
+         reading stored for this day yet" for ever, and nothing says why. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- A runtime permission from Android 13. Without it nothing appears and
          nothing errors, which is the most likely way for reminders to fail
          silently on the device this is aimed at. -->

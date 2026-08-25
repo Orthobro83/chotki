@@ -28,6 +28,10 @@ class MainActivity : ComponentActivity() {
             askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
+        // Fills in the fortnight ahead, off the main thread. The interface shows
+        // what is already stored meanwhile rather than a spinner.
+        state.refreshCalendar()
+
         setContent {
             ChotkiTheme {
                 Shell(state)
@@ -40,6 +44,7 @@ class MainActivity : ComponentActivity() {
         if (::state.isInitialized) {
             state.load()
             state.rearmReminders(this)
+            state.refreshCalendar()
         }
     }
 }

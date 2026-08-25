@@ -74,7 +74,7 @@ platform layer, and the only places Android-specific code belongs.
 |---|---|---|
 | `Store` | `SQLiteStore` (also in core — portable) | Same schema, same migration ladder |
 | `Notifier` | `MacNotifier` (UserNotifications) | `NotificationManager` + channels |
-| `HTTPFetching` | `URLSessionFetcher` (in core) | OkHttp or Ktor behind the same interface |
+| `HTTPFetching` | `URLSessionFetcher` (in core) | `AndroidHttp` — `HttpURLConnection`, no library (one GET, per day) |
 | `LaunchAtLogin` | `MacLaunchAtLogin` (SMAppService) | No equivalent — Android has no login items |
 | `Clock` | `SystemClock` (in core) | Direct translation |
 | `LiturgicalDayProvider` | `LiturgicalService` (in core) | Direct translation |

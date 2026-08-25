@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.chotki.app.platform.AndroidDb
+import org.chotki.app.platform.AndroidHttp
 import org.chotki.app.platform.Reminders
 import org.chotki.core.Activation
 import org.chotki.core.AppSettings
@@ -15,6 +16,8 @@ import org.chotki.core.EditPlanner
 import org.chotki.core.EditScope
 import org.chotki.core.Occurrence
 import org.chotki.core.OccurrenceStatus
+import org.chotki.core.LiturgicalDay
+import org.chotki.core.NoLiturgicalData
 import org.chotki.core.Practice
 import org.chotki.core.Rule
 import org.chotki.core.content.Content
@@ -22,6 +25,8 @@ import org.chotki.core.content.model
 import org.chotki.core.content.modelCategory
 import org.chotki.core.content.modelReminders
 import org.chotki.core.content.modelTimeOfDay
+import org.chotki.core.liturgical.LiturgicalService
+import org.chotki.core.liturgical.OrthocalClient
 import org.chotki.core.store.SqliteStore
 import org.chotki.core.store.Store
 import java.time.Instant
@@ -37,10 +42,24 @@ import java.util.UUID
  * model were the ones a port would have had to rewrite, and the ones every bug
  * found by hand was in.
  */
-class AppState(private val store: Store, private val zone: ZoneId = ZoneId.systemDefault()) {
+class AppState(
+    private val store: Store,
+    private val zone: ZoneId = ZoneId.systemDefault(),
+    /**
+     * The church calendar. Null in tests that have no business reaching a
+     * network, which answers "no" to every question rather than pretending.
+     */
+    val liturgical: LiturgicalService? = null,
+) {
 
     companion object {
-        fun open(context: Context): AppState = AppState(SqliteStore(AndroidDb.open(context)))
+        fun open(context: Context): AppState {
+            val store = SqliteStore(AndroidDb.open(context))
+            return AppState(
+                store = store,
+                liturgical = LiturgicalService(store, OrthocalClient(AndroidHttp())),
+            )
+        }
     }
 
     var settings by mutableStateOf(AppSettings.DEFAULT)
@@ -57,14 +76,82 @@ class AppState(private val store: Store, private val zone: ZoneId = ZoneId.syste
     val today: CalendarDate get() = CalendarDate.from(Instant.now(), zone)
 
     private val practice: Practice
-        get() = Practice(rules, activations, occurrences, settings)
+        get() {
+            // The four lists below are snapshot state, so a screen reading
+            // through Practice redraws when a rule is taken up or a box ticked.
+            // The calendar is not — the service holds it in a plain map — so
+            // read the counter here, once, on behalf of every screen. A rule
+            // that is due only because of the church calendar (the Dormition
+            // Fast) would otherwise not appear until the app was restarted,
+            // and no screen author would think to ask for it.
+            calendarVersion
+            return Practice(
+                rules, activations, occurrences, settings,
+                liturgical ?: NoLiturgicalData,
+            )
+        }
+
+    /** The church calendar for a day, if it has been fetched. */
+    fun liturgicalDay(date: CalendarDate): LiturgicalDay? {
+        calendarVersion
+        return liturgical?.cachedDay(date)
+    }
+
+    val isOffline: Boolean get() = liturgical?.isOffline ?: false
 
     fun load() {
         settings = store.loadSettings() ?: AppSettings.DEFAULT
         rules = store.rules()
         activations = store.activations()
         occurrences = store.occurrences()
+        liturgical?.let { service ->
+            service.setJurisdiction(settings.jurisdiction, around = today, window = 21)
+        }
+        calendarVersion += 1
     }
+
+    /**
+     * Bumped whenever the calendar changes, so screens reading through
+     * [liturgicalDay] recompose. The service holds its snapshot in a plain map
+     * for the sake of the recurrence engine, which asks about forty-two days on
+     * every redraw and cannot afford to suspend — so Compose needs telling.
+     */
+    var calendarVersion by mutableStateOf(0)
+        private set
+
+    /**
+     * Fills in the fortnight ahead, off the main thread.
+     *
+     * Never throws and never blocks the interface: a failed refresh is a state
+     * the app reflects — "cached" — rather than an error shown where text should
+     * be. Opening on a plane shows the day it already has.
+     */
+    fun refreshCalendar(onDone: () -> Unit = {}) {
+        val service = liturgical ?: return
+        Thread {
+            runCatching { service.refresh(from = today.plusDays(-7), days = 28) }
+            runCatching { service.loadSnapshot(around = today, window = 21) }
+            // Snapshot state is safe to write from any thread, and this is what
+            // tells the screens the fortnight has arrived. Without it the days
+            // were fetched and stored and nothing redrew.
+            calendarVersion += 1
+            onDone()
+        }.start()
+    }
+
+    /**
+     * True when the calendar has never been fetched at all.
+     *
+     * Distinguished from "not fetched *this* day" so the empty reading can say
+     * which it is. A permission that was never declared and a network that is
+     * merely down look identical from here, and both looked like "it will fill
+     * in shortly" — which was a promise the app could not keep.
+     */
+    val hasNoCalendarAtAll: Boolean
+        get() = liturgical?.let { service ->
+            calendarVersion
+            (0..3).none { service.cachedDay(today.plusDays(it)) != null }
+        } ?: true
 
     fun entries(on: CalendarDate): List<DayEntry> = practice.entries(on)
 

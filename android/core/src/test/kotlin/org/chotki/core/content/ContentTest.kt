@@ -224,3 +224,45 @@ class ContentTest {
         }
     }
 }
+
+/** The passage for a day. */
+class PatristicReadingsTest {
+
+    private fun d(y: Int, m: Int, day: Int) = org.chotki.core.CalendarDate.of(y, m, day)!!
+
+    @Test
+    fun `every day of a year has a reading`() {
+        var date = d(2026, 1, 1)
+        repeat(365) {
+            assertNotNull(PatristicReadings.forDay(date), "no reading for $date")
+            date = date.plusDays(1)
+        }
+    }
+
+    // A reading that shuffled every time it was looked at would be a different
+    // thing to read rather than the day's reading.
+    @Test
+    fun `the same day always gives the same reading`() {
+        val once = PatristicReadings.forDay(d(2026, 8, 24))
+        val again = PatristicReadings.forDay(d(2026, 8, 24))
+        assertEquals(once, again)
+    }
+
+    @Test
+    fun `consecutive days give consecutive passages`() {
+        val first = PatristicReadings.forDay(d(2026, 3, 1))
+        val second = PatristicReadings.forDay(d(2026, 3, 2))
+        assertTrue(first != second, "two days running gave the same passage")
+    }
+
+    // Counted through the months rather than from a fixed offset, so the leap
+    // day does not shift the whole year.
+    @Test
+    fun `the day of the year is counted through the months`() {
+        // 1 February is the 32nd day, whatever the year.
+        assertEquals(
+            PatristicReadings.forDay(d(2026, 2, 1)),
+            PatristicReadings.forDay(d(2027, 2, 1)),
+        )
+    }
+}

@@ -26,3 +26,6 @@ android/*/build/
 android/local.properties
 android/.idea/
 android/.kotlin/
+
+# Heap dumps from a Gradle/dex OOM
+*.hprof

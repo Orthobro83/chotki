@@ -232,6 +232,13 @@ Mac app to check something.
 ## Guard rails, carried over
 
 1. **Verify interaction, not appearance.** Drive it, or say you did not.
+1. **Anything Compose cannot observe must be announced.** The church calendar
+   lives in a plain map inside `LiturgicalService`, because the recurrence
+   engine asks about forty-two days on every redraw and cannot suspend. Compose
+   therefore cannot see it change, and a screen reading it drew once with
+   nothing and never again. The counter that announces it is read inside
+   `AppState.practice` and `AppState.liturgicalDay`, on every screen's behalf —
+   not in the screens, where the next one written would forget.
 2. **The portability guard goes in first**, and is mechanical.
 3. **Never hand-copy liturgical text.**
 4. **Ask for a reference** on anything religious. Do not infer it.

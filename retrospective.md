@@ -188,3 +188,26 @@ half-done.
 6. Never let a test touch a real device's storage.
 7. Two surfaces means two implementations; a fix to one is not a fix.
 8. Say what you could not check, every time.
+
+## A late one, from the Android port
+
+The Reading screen said "No reading stored for this day yet" for a day and a
+half of work. Two causes, and both are the old shape wearing new clothes.
+
+`android.permission.INTERNET` was never declared. Every fetch threw
+`SecurityException` — into a `runCatching` that dropped it, so the app reported
+a calendar it had never once tried to reach in the same words it uses for a
+calendar it merely has not reached *today*. The refresh was written to be
+forgiving of a network that is down, and forgiveness made a permanent,
+structural failure look temporary.
+
+Then, with the permission added, it still said the same thing. The days were
+fetched and stored; nothing redrew. `LiturgicalService` keeps its snapshot in an
+ordinary map, so Compose has nothing to observe.
+
+Both are the pattern this document already names — something that drew
+correctly and did nothing. What is new is that the second one was invisible to
+the sixty-two tests then passing, because every one of them set up its state
+before composing. Nothing ever arrived *late*. The test added for it
+(`CalendarArrivalTest`) was run against the un-fixed code first and watched to
+fail; a test for a race that has never been seen to fail is not yet a test.
