@@ -596,7 +596,7 @@
       "chotki",
       "trisagion"
     ],
-    "short" : "The set of prayers a person keeps daily, agreed with their priest.",
+    "short" : "The set of prayers a person keeps daily, agreed with their priest or spiritual father.",
     "slug" : "prayer-rule",
     "term" : "Prayer rule",
     "traditions" : [
@@ -1434,7 +1434,7 @@
       "fast from midnight"
     ],
     "category" : "fasting",
-    "full" : "Distinct from the calendar fasts. It is a complete abstention from food and drink from midnight until communion.\n\nNecessary medication is an ordinary exception, as are conditions such as diabetes. These are pastoral matters, discussed with a priest — not something to be worked out alone or quietly skipped.",
+    "full" : "Distinct from the calendar fasts. It is a complete abstention from food and drink from midnight until communion.\n\nNecessary medication is an ordinary exception, as are conditions such as diabetes. These are pastoral matters, discussed with your priest or spiritual father — not something to be worked out alone or quietly skipped.",
     "related" : [
       "preparation-for-communion",
       "holy-mysteries",

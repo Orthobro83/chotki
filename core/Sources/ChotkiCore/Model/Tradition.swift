@@ -57,7 +57,8 @@ public enum ConfessionNorm: String, Sendable, Hashable, Codable {
 ///
 /// Everything here is **descriptive**. The app reports what is customary and
 /// says who to ask; it never tells anyone what they must do. Individual practice
-/// is settled with a priest, and every surface built on this must say so.
+/// is settled with a priest or spiritual father, and every surface built on
+/// this must say so.
 public struct PracticeProfile: Sendable, Hashable, Codable {
     public var confession: ConfessionNorm
     /// Total abstention from food and drink from midnight before communion.
@@ -88,7 +89,7 @@ public struct PracticeProfile: Sendable, Hashable, Codable {
                 notes: [
                     "Confession is customarily made before each communion from about the age of seven, most often at the evening service the night before.",
                     "The Order of Preparation for Holy Communion is customarily read beforehand, commonly with three canons and an akathist.",
-                    "Practice varies between parishes, and what any individual keeps is settled with a priest."
+                    "Practice varies between parishes, and what any individual keeps is settled with your priest or spiritual father."
                 ]
             )
         case .bulgarian, .georgian, .romanian:
@@ -97,7 +98,7 @@ public struct PracticeProfile: Sendable, Hashable, Codable {
                 preparatoryCanons: false,
                 notes: [
                     "Confession is customarily made before communion, though expectations vary between parishes.",
-                    "Ask your priest how he would like you to prepare."
+                    "Ask your priest or spiritual father how he would like you to prepare."
                 ]
             )
         case .greek, .antiochian:
@@ -106,7 +107,7 @@ public struct PracticeProfile: Sendable, Hashable, Codable {
                 preparatoryCanons: false,
                 notes: [
                     "Confession is made regularly but is not usually required before each communion.",
-                    "Preparation practice varies considerably between parishes. Ask your priest."
+                    "Preparation practice varies considerably between parishes. Ask your priest or spiritual father."
                 ]
             )
         }

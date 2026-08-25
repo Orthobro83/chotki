@@ -120,6 +120,35 @@ struct ContentExportTests {
         }
     }
 
+    /// The churches offered, and what each tradition customarily expects.
+    ///
+    /// Exported for the same reason as everything else here: these were
+    /// hand-copied into the Kotlin side once, and the first change to the
+    /// wording went into Swift only. Content that lives in two places diverges
+    /// the moment anyone edits it.
+    private func jurisdictions() -> [[String: Any]] {
+        Jurisdiction.known.map { jurisdiction in
+            [
+                "name": jurisdiction.name,
+                "reckoning": jurisdiction.reckoning.rawValue,
+                "tradition": jurisdiction.tradition.rawValue
+            ]
+        }
+    }
+
+    private func practiceProfiles() -> [[String: Any]] {
+        Tradition.allCases.map { tradition in
+            let profile = PracticeProfile.customary(for: tradition)
+            return [
+                "tradition": tradition.rawValue,
+                "confession": profile.confession.rawValue,
+                "eucharisticFastFromMidnight": profile.eucharisticFastFromMidnight,
+                "preparatoryCanons": profile.preparatoryCanons,
+                "notes": profile.notes
+            ]
+        }
+    }
+
     private func sources() -> [[String: Any]] {
         PrayerSources.further.map {
             ["title": $0.title, "organisation": $0.organisation, "url": $0.url]
@@ -140,7 +169,8 @@ struct ContentExportTests {
         [
             ("glossary", glossary()), ("prayers", prayers()),
             ("prayer-sequences", sequences()), ("rule-library", library()),
-            ("patristic-readings", readings()), ("prayer-sources", sources())
+            ("patristic-readings", readings()), ("prayer-sources", sources()),
+            ("jurisdictions", jurisdictions()), ("practice-profiles", practiceProfiles())
         ]
     }
 

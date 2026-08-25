@@ -59,7 +59,7 @@ struct LibraryViewContent: View {
 
             // Descriptive, not instructing: it says what is usually so, and
             // leaves the decision where it belongs.
-            Text("Custom routines are usually taken on the advice of your priest.")
+            Text("Custom routines are usually taken on the advice of your priest or spiritual father.")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.faint)
                 .fixedSize(horizontal: false, vertical: true)

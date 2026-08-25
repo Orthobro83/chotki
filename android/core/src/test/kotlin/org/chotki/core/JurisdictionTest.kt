@@ -135,3 +135,56 @@ class JurisdictionTest {
         assertEquals(2, Reckoning.entries.size)
     }
 }
+
+/**
+ * The churches and their customary practice, read from the shared content.
+ *
+ * These were hand-copied into Kotlin once, and the first change to the wording
+ * went into Swift alone — the Android app went on saying the old thing until a
+ * grep found it. They are generated now, and these are the tests that would have
+ * caught it.
+ */
+class SharedPracticeContentTest {
+
+    @Test
+    fun `every tradition has a customary profile in the content`() {
+        for (tradition in Tradition.entries) {
+            val profile = PracticeProfile.customary(tradition)
+            assertTrue(profile.notes.isNotEmpty(), "$tradition has no notes")
+        }
+    }
+
+    @Test
+    fun `the churches come from the content, not from a copy`() {
+        assertEquals(16, Jurisdiction.KNOWN.size)
+        assertTrue(Jurisdiction.KNOWN.any { it.name == "Georgian Orthodox Church" })
+        assertTrue(Jurisdiction.KNOWN.any { it.name == "Orthodox Church in America" })
+    }
+
+    // The change that exposed the divergence: practice is settled with a priest
+    // *or spiritual father*, and both platforms must say so.
+    @Test
+    fun `practice notes name the spiritual father as well as the priest`() {
+        val mentioning = Tradition.entries
+            .flatMap { PracticeProfile.customary(it).notes }
+            .filter { it.contains("priest", ignoreCase = true) }
+
+        assertTrue(mentioning.isNotEmpty(), "no note mentions a priest at all")
+        for (note in mentioning) {
+            assertTrue(
+                note.contains("priest or spiritual father"),
+                "a note still says priest alone: $note",
+            )
+        }
+    }
+
+    @Test
+    fun `the notes describe rather than instruct`() {
+        for (tradition in Tradition.entries) {
+            val notes = PracticeProfile.customary(tradition).notes.joinToString(" ").lowercase()
+            for (word in listOf("you must", "required to", "you should", "obliged")) {
+                assertTrue(!notes.contains(word), "$tradition instructs: $word")
+            }
+        }
+    }
+}

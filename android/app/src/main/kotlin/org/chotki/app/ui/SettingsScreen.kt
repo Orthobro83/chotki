@@ -60,7 +60,7 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
         Heading("This is an alpha")
         Line(
             "The glossary, the prayers and the readings are awaiting a priest's review. " +
-                "Nothing here tells you what you must do; what you keep is settled with your priest.",
+                "Nothing here tells you what you must do; what you keep is settled with your priest or spiritual father.",
             Chotki.faint,
         )
         Spacer(Modifier.size(32.dp))

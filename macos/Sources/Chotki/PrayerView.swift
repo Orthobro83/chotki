@@ -63,7 +63,7 @@ struct PrayerViewContent: View {
     private var note: some View {
         VStack(alignment: .leading, spacing: 10) {
             Rectangle().fill(Theme.line).frame(height: 1)
-            Text("These are the prayers common to almost every form of this rule. Prayer books differ, and the full rule is settled with your priest.")
+            Text("These are the prayers common to almost every form of this rule. Prayer books differ, and the full rule is settled with your priest or spiritual father.")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.faint)
                 .fixedSize(horizontal: false, vertical: true)

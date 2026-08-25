@@ -206,7 +206,8 @@ extension Glossary {
             midnight until communion.
 
             Necessary medication is an ordinary exception, as are conditions such as diabetes. \
-            These are pastoral matters, discussed with a priest — not something to be worked out \
+            These are pastoral matters, discussed with your priest or spiritual father — not something \
+            to be worked out \
             alone or quietly skipped.
             """,
             category: .fasting, related: ["preparation-for-communion", "holy-mysteries", "wednesday-friday-fast"]

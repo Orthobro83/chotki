@@ -445,7 +445,7 @@
       "holy-mysteries"
     ],
     "id" : "confession",
-    "note" : "The app cannot know when you next commune, so this is a regular reminder rather than a rule. How often is settled with your priest.",
+    "note" : "The app cannot know when you next commune, so this is a regular reminder rather than a rule. How often is settled with your priest or spiritual father.",
     "prayerIDs" : [
 
     ],
@@ -475,7 +475,7 @@
       "zapivka"
     ],
     "id" : "communion",
-    "note" : "Frequency and preparation are settled with your priest.",
+    "note" : "Frequency and preparation are settled with your priest or spiritual father.",
     "prayerIDs" : [
 
     ],

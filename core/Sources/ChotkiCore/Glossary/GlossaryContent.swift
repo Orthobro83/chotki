@@ -426,7 +426,7 @@ extension Glossary {
 
         GlossaryEntry(
             slug: "prayer-rule", term: "Prayer rule", aliases: ["rule of prayer", "kanon"],
-            short: "The set of prayers a person keeps daily, agreed with their priest.",
+            short: "The set of prayers a person keeps daily, agreed with their priest or spiritual father.",
             full: """
             A rule is personal. It usually includes morning and evening prayers and grows over \
             time — and it is meant to be settled with a priest, who will normally suggest starting \

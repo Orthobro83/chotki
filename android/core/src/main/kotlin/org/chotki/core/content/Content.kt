@@ -55,7 +55,25 @@ object Content {
     val prayerSources: List<PrayerSourceJson> by lazy {
         json.decodeFromString(load("prayer-sources"))
     }
+    val jurisdictions: List<JurisdictionJson> by lazy {
+        json.decodeFromString(load("jurisdictions"))
+    }
+    val practiceProfiles: List<PracticeProfileJson> by lazy {
+        json.decodeFromString(load("practice-profiles"))
+    }
 }
+
+@Serializable
+data class JurisdictionJson(val name: String, val reckoning: String, val tradition: String)
+
+@Serializable
+data class PracticeProfileJson(
+    val tradition: String,
+    val confession: String,
+    val eucharisticFastFromMidnight: Boolean,
+    val preparatoryCanons: Boolean,
+    val notes: List<String>,
+)
 
 // MARK: the wire shapes
 

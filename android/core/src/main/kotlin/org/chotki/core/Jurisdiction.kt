@@ -85,33 +85,23 @@ data class PracticeProfile(
     val notes: List<String> = emptyList(),
 ) {
     companion object {
-        fun customary(tradition: Tradition): PracticeProfile = when (tradition) {
-            Tradition.RUSSIAN, Tradition.SERBIAN -> PracticeProfile(
-                confession = ConfessionNorm.BEFORE_EACH_COMMUNION,
-                preparatoryCanons = true,
-                notes = listOf(
-                    "Confession is customarily made before each communion from about the age of seven, most often at the evening service the night before.",
-                    "The Order of Preparation for Holy Communion is customarily read beforehand, commonly with three canons and an akathist.",
-                    "Practice varies between parishes, and what any individual keeps is settled with a priest.",
-                ),
-            )
-
-            Tradition.BULGARIAN, Tradition.GEORGIAN, Tradition.ROMANIAN -> PracticeProfile(
-                confession = ConfessionNorm.BEFORE_EACH_COMMUNION,
-                preparatoryCanons = false,
-                notes = listOf(
-                    "Confession is customarily made before communion, though expectations vary between parishes.",
-                    "Ask your priest how he would like you to prepare.",
-                ),
-            )
-
-            Tradition.GREEK, Tradition.ANTIOCHIAN -> PracticeProfile(
-                confession = ConfessionNorm.PERIODIC,
-                preparatoryCanons = false,
-                notes = listOf(
-                    "Confession is made regularly but is not usually required before each communion.",
-                    "Preparation practice varies considerably between parishes. Ask your priest.",
-                ),
+        /**
+         * Read from the shared content rather than written out here.
+         *
+         * These notes were hand-copied from the Swift core once, and the first
+         * change to the wording went into Swift alone — the Android app went on
+         * saying the old thing. Content that lives in two places diverges the
+         * moment anyone edits it.
+         */
+        fun customary(tradition: Tradition): PracticeProfile {
+            val row = org.chotki.core.content.Content.practiceProfiles
+                .first { it.tradition.equals(tradition.name, ignoreCase = true) }
+            return PracticeProfile(
+                confession = ConfessionNorm.entries
+                    .first { it.name.replace("_", "").equals(row.confession, ignoreCase = true) },
+                eucharisticFastFromMidnight = row.eucharisticFastFromMidnight,
+                preparatoryCanons = row.preparatoryCanons,
+                notes = row.notes,
             )
         }
     }
@@ -153,24 +143,20 @@ data class Jurisdiction(
          * a parish sometimes differs from its jurisdiction's norm, so this is a
          * starting point, never an authority.
          */
-        val KNOWN: List<Jurisdiction> = listOf(
-            of("Russian Orthodox Church Outside Russia", Reckoning.JULIAN, Tradition.RUSSIAN),
-            of("Moscow Patriarchate", Reckoning.JULIAN, Tradition.RUSSIAN),
-            of("Serbian Orthodox Church", Reckoning.JULIAN, Tradition.SERBIAN),
-            of("Georgian Orthodox Church", Reckoning.JULIAN, Tradition.GEORGIAN),
-            of("Patriarchate of Jerusalem", Reckoning.JULIAN, Tradition.GREEK),
-            of("Polish Orthodox Church", Reckoning.JULIAN, Tradition.RUSSIAN),
-            of("Orthodox Church in America", Reckoning.REVISED_JULIAN, Tradition.RUSSIAN),
-            of("Greek Orthodox Archdiocese", Reckoning.REVISED_JULIAN, Tradition.GREEK),
-            of("Ecumenical Patriarchate", Reckoning.REVISED_JULIAN, Tradition.GREEK),
-            of("Antiochian Orthodox Archdiocese", Reckoning.REVISED_JULIAN, Tradition.ANTIOCHIAN),
-            of("Romanian Orthodox Church", Reckoning.REVISED_JULIAN, Tradition.ROMANIAN),
-            of("Bulgarian Orthodox Church", Reckoning.REVISED_JULIAN, Tradition.BULGARIAN),
-            of("Ukrainian Orthodox Church (OCU)", Reckoning.REVISED_JULIAN, Tradition.RUSSIAN),
-            of("Church of Greece", Reckoning.REVISED_JULIAN, Tradition.GREEK),
-            of("Church of Cyprus", Reckoning.REVISED_JULIAN, Tradition.GREEK),
-            of("Albanian Orthodox Church", Reckoning.REVISED_JULIAN, Tradition.GREEK),
-        )
+        /** The churches offered, from the shared content. */
+        val KNOWN: List<Jurisdiction> by lazy {
+            org.chotki.core.content.Content.jurisdictions.map { row ->
+                of(
+                    name = row.name,
+                    reckoning = Reckoning.entries.first {
+                        it.name.replace("_", "").equals(row.reckoning, ignoreCase = true)
+                    },
+                    tradition = Tradition.entries.first {
+                        it.name.equals(row.tradition, ignoreCase = true)
+                    },
+                )
+            }
+        }
     }
 
     /** This jurisdiction as the app ships it, when the name is one it knows. */

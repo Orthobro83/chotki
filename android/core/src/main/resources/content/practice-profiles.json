@@ -1,0 +1,74 @@
+[
+  {
+    "confession" : "beforeEachCommunion",
+    "eucharisticFastFromMidnight" : true,
+    "notes" : [
+      "Confession is customarily made before each communion from about the age of seven, most often at the evening service the night before.",
+      "The Order of Preparation for Holy Communion is customarily read beforehand, commonly with three canons and an akathist.",
+      "Practice varies between parishes, and what any individual keeps is settled with your priest or spiritual father."
+    ],
+    "preparatoryCanons" : true,
+    "tradition" : "russian"
+  },
+  {
+    "confession" : "periodic",
+    "eucharisticFastFromMidnight" : true,
+    "notes" : [
+      "Confession is made regularly but is not usually required before each communion.",
+      "Preparation practice varies considerably between parishes. Ask your priest or spiritual father."
+    ],
+    "preparatoryCanons" : false,
+    "tradition" : "greek"
+  },
+  {
+    "confession" : "periodic",
+    "eucharisticFastFromMidnight" : true,
+    "notes" : [
+      "Confession is made regularly but is not usually required before each communion.",
+      "Preparation practice varies considerably between parishes. Ask your priest or spiritual father."
+    ],
+    "preparatoryCanons" : false,
+    "tradition" : "antiochian"
+  },
+  {
+    "confession" : "beforeEachCommunion",
+    "eucharisticFastFromMidnight" : true,
+    "notes" : [
+      "Confession is customarily made before communion, though expectations vary between parishes.",
+      "Ask your priest or spiritual father how he would like you to prepare."
+    ],
+    "preparatoryCanons" : false,
+    "tradition" : "romanian"
+  },
+  {
+    "confession" : "beforeEachCommunion",
+    "eucharisticFastFromMidnight" : true,
+    "notes" : [
+      "Confession is customarily made before each communion from about the age of seven, most often at the evening service the night before.",
+      "The Order of Preparation for Holy Communion is customarily read beforehand, commonly with three canons and an akathist.",
+      "Practice varies between parishes, and what any individual keeps is settled with your priest or spiritual father."
+    ],
+    "preparatoryCanons" : true,
+    "tradition" : "serbian"
+  },
+  {
+    "confession" : "beforeEachCommunion",
+    "eucharisticFastFromMidnight" : true,
+    "notes" : [
+      "Confession is customarily made before communion, though expectations vary between parishes.",
+      "Ask your priest or spiritual father how he would like you to prepare."
+    ],
+    "preparatoryCanons" : false,
+    "tradition" : "bulgarian"
+  },
+  {
+    "confession" : "beforeEachCommunion",
+    "eucharisticFastFromMidnight" : true,
+    "notes" : [
+      "Confession is customarily made before communion, though expectations vary between parishes.",
+      "Ask your priest or spiritual father how he would like you to prepare."
+    ],
+    "preparatoryCanons" : false,
+    "tradition" : "georgian"
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "name" : "Russian Orthodox Church Outside Russia",
+    "reckoning" : "julian",
+    "tradition" : "russian"
+  },
+  {
+    "name" : "Moscow Patriarchate",
+    "reckoning" : "julian",
+    "tradition" : "russian"
+  },
+  {
+    "name" : "Serbian Orthodox Church",
+    "reckoning" : "julian",
+    "tradition" : "serbian"
+  },
+  {
+    "name" : "Georgian Orthodox Church",
+    "reckoning" : "julian",
+    "tradition" : "georgian"
+  },
+  {
+    "name" : "Patriarchate of Jerusalem",
+    "reckoning" : "julian",
+    "tradition" : "greek"
+  },
+  {
+    "name" : "Polish Orthodox Church",
+    "reckoning" : "julian",
+    "tradition" : "russian"
+  },
+  {
+    "name" : "Orthodox Church in America",
+    "reckoning" : "revisedJulian",
+    "tradition" : "russian"
+  },
+  {
+    "name" : "Greek Orthodox Archdiocese",
+    "reckoning" : "revisedJulian",
+    "tradition" : "greek"
+  },
+  {
+    "name" : "Ecumenical Patriarchate",
+    "reckoning" : "revisedJulian",
+    "tradition" : "greek"
+  },
+  {
+    "name" : "Antiochian Orthodox Archdiocese",
+    "reckoning" : "revisedJulian",
+    "tradition" : "antiochian"
+  },
+  {
+    "name" : "Romanian Orthodox Church",
+    "reckoning" : "revisedJulian",
+    "tradition" : "romanian"
+  },
+  {
+    "name" : "Bulgarian Orthodox Church",
+    "reckoning" : "revisedJulian",
+    "tradition" : "bulgarian"
+  },
+  {
+    "name" : "Ukrainian Orthodox Church (OCU)",
+    "reckoning" : "revisedJulian",
+    "tradition" : "russian"
+  },
+  {
+    "name" : "Church of Greece",
+    "reckoning" : "revisedJulian",
+    "tradition" : "greek"
+  },
+  {
+    "name" : "Church of Cyprus",
+    "reckoning" : "revisedJulian",
+    "tradition" : "greek"
+  },
+  {
+    "name" : "Albanian Orthodox Church",
+    "reckoning" : "revisedJulian",
+    "tradition" : "greek"
+  }
+]

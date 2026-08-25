@@ -132,14 +132,14 @@ extension RuleLibrary {
         RuleTemplate(
             id: "confession", title: "Confession",
             summary: "Monthly to begin with. Russian practice expects it before each communion.",
-            note: "The app cannot know when you next commune, so this is a regular reminder rather than a rule. How often is settled with your priest.",
+            note: "The app cannot know when you next commune, so this is a regular reminder rather than a rule. How often is settled with your priest or spiritual father.",
             recurrence: .monthly(day: 1), category: .services,
             glossarySlugs: ["confession", "preparation-for-communion", "holy-mysteries"]
         ),
         RuleTemplate(
             id: "communion", title: "Holy Communion",
             summary: "Receiving the Holy Mysteries.",
-            note: "Frequency and preparation are settled with your priest.",
+            note: "Frequency and preparation are settled with your priest or spiritual father.",
             recurrence: .weekly(days: [.sunday]), category: .services,
             glossarySlugs: ["holy-mysteries", "preparation-for-communion", "eucharistic-fast", "zapivka"]
         ),
