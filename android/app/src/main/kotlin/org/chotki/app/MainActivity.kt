@@ -6,30 +6,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.chotki.app.ui.Chotki
 import org.chotki.app.ui.ChotkiTheme
-import org.chotki.app.ui.LibrarySheet
-import org.chotki.app.ui.ReadinessBanner
-import org.chotki.app.ui.ReminderReadiness
-import org.chotki.app.ui.RuleScreen
+import org.chotki.app.ui.Shell
 
 class MainActivity : ComponentActivity() {
 
@@ -52,7 +30,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ChotkiTheme {
-                Chotki(state)
+                Shell(state)
             }
         }
     }
@@ -62,44 +40,6 @@ class MainActivity : ComponentActivity() {
         if (::state.isInitialized) {
             state.load()
             state.rearmReminders(this)
-        }
-    }
-}
-
-@androidx.compose.runtime.Composable
-private fun Chotki(state: AppState) {
-    var showingLibrary by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val readiness = remember(showingLibrary) { ReminderReadiness.of(context) }
-
-    Column(Modifier.fillMaxSize().background(Chotki.ground)) {
-        ReadinessBanner(readiness)
-
-        if (showingLibrary) {
-            Row(
-                Modifier.fillMaxWidth().padding(16.dp),
-            ) {
-                Text(
-                    "‹ The day",
-                    color = Chotki.gold,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable { showingLibrary = false }
-                        .semantics { contentDescription = "Back to the day" },
-                )
-            }
-            LibrarySheet(state, Modifier.weight(1f))
-        } else {
-            RuleScreen(state, Modifier.weight(1f))
-            Text(
-                "Library",
-                color = Chotki.gold,
-                fontSize = 15.sp,
-                modifier = Modifier
-                    .clickable { showingLibrary = true }
-                    .padding(16.dp)
-                    .semantics { contentDescription = "Open the library" },
-            )
         }
     }
 }

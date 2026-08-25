@@ -46,6 +46,7 @@ fun RuleScreen(state: AppState, modifier: Modifier = Modifier) {
     val entries = state.entries(state.selectedDate)
 
     Column(modifier.fillMaxSize().background(Chotki.ground)) {
+        MonthGrid(state)
         DayHeader(state.selectedDate)
 
         if (entries.isEmpty()) {
