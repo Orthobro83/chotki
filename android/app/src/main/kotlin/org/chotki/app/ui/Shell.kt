@@ -29,6 +29,9 @@ import org.chotki.app.AppState
  * rule on is something you do while looking at what you already keep — which is
  * the judgement the whole screen exists to support.
  */
+/** A rule being written or changed. Null `rule` means a new one. */
+data class Editing(val rule: org.chotki.core.Rule?)
+
 enum class Place(val title: String) {
     RULE("Rule"),
     PRAYERS("Prayers"),
@@ -42,6 +45,10 @@ enum class Place(val title: String) {
 fun Shell(state: AppState) {
     var place by remember { mutableStateOf(Place.RULE) }
     var showingLibrary by remember { mutableStateOf(false) }
+    /// Set when a rule is being written or changed; null when nothing is.
+    var editing by remember { mutableStateOf<Editing?>(null) }
+    /// The rule whose prayers are open, if any.
+    var readingPrayersFor by remember { mutableStateOf<java.util.UUID?>(null) }
     val context = LocalContext.current
     val readiness = remember(place, showingLibrary) { ReminderReadiness.of(context) }
 
@@ -51,7 +58,22 @@ fun Shell(state: AppState) {
         ReadinessBanner(readiness)
 
         Column(Modifier.weight(1f)) {
+            val open = editing
+            val readingFor = readingPrayersFor?.let { state.rule(it) }
             when {
+                open != null -> RuleEditor(
+                    state = state,
+                    existing = open.rule,
+                    onDone = { editing = null },
+                    modifier = Modifier.weight(1f),
+                )
+
+                readingFor != null -> RulePrayers(
+                    rule = readingFor,
+                    onBack = { readingPrayersFor = null },
+                    modifier = Modifier.weight(1f),
+                )
+
                 showingLibrary -> {
                     Text(
                         "‹ The day",
@@ -62,11 +84,20 @@ fun Shell(state: AppState) {
                             .padding(16.dp)
                             .semantics { contentDescription = "Back to the day" },
                     )
-                    LibrarySheet(state, Modifier.weight(1f))
+                    LibrarySheet(
+                        state = state,
+                        modifier = Modifier.weight(1f),
+                        onWriteYourOwn = { editing = Editing(null) },
+                    )
                 }
 
                 place == Place.RULE -> {
-                    RuleScreen(state, Modifier.weight(1f))
+                    RuleScreen(
+                        state = state,
+                        modifier = Modifier.weight(1f),
+                        onReadPrayers = { readingPrayersFor = it.rule.id },
+                        onEdit = { editing = Editing(it.rule) },
+                    )
                     Text(
                         "Library",
                         color = Chotki.gold,

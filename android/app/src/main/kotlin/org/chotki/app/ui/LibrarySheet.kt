@@ -30,8 +30,13 @@ import org.chotki.core.content.RuleTemplateJson
  * starting point, not a set of obligations.
  */
 @Composable
-fun LibrarySheet(state: AppState, modifier: Modifier = Modifier) {
+fun LibrarySheet(
+    state: AppState,
+    modifier: Modifier = Modifier,
+    onWriteYourOwn: () -> Unit = {},
+) {
     val grouped = Content.ruleLibrary.groupBy { it.category }
+    val custom = state.customEntries
 
     LazyColumn(modifier.fillMaxWidth().background(Chotki.ground)) {
         item {
@@ -55,6 +60,94 @@ fun LibrarySheet(state: AppState, modifier: Modifier = Modifier) {
                 TemplateRow(templates[index], state)
             }
         }
+
+        // Rules of his own, kept so setting one down for a season does not mean
+        // writing it out again.
+        if (custom.isNotEmpty()) {
+            item {
+                Text(
+                    "Custom",
+                    color = Chotki.gold,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 2.dp),
+                )
+                Text(
+                    "Custom routines are usually taken on the advice of your priest or " +
+                        "spiritual father.",
+                    color = Chotki.faint,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                )
+            }
+            items(custom.size, key = { custom[it].id }) { index ->
+                CustomRow(custom[index], state)
+            }
+        }
+
+        item {
+            Text(
+                "＋ Write your own rule",
+                color = Chotki.gold,
+                fontSize = 15.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onWriteYourOwn)
+                    .padding(16.dp)
+                    .semantics { contentDescription = "Write your own rule" },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomRow(rule: org.chotki.core.Rule, state: AppState) {
+    val onTheRule = state.isOnTheRule(rule)
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                rule.title,
+                color = if (onTheRule) Chotki.muted else Chotki.parchment,
+                fontSize = 15.sp,
+            )
+            Text(
+                rule.timeOfDay?.let {
+                    org.chotki.core.Format.time(it, state.settings.clockStyle)
+                } ?: "All day",
+                color = Chotki.faint,
+                fontSize = 13.sp,
+            )
+            val note = rule.note
+            if (note != null) Text(note, color = Chotki.faint, fontSize = 12.sp)
+        }
+        if (onTheRule) {
+            Text("On your rule", color = Chotki.goldDim, fontSize = 12.sp)
+        } else {
+            Text(
+                "Take on",
+                color = Chotki.gold,
+                fontSize = 13.sp,
+                modifier = Modifier
+                    .border(1.dp, Chotki.goldDim, RoundedCornerShape(4.dp))
+                    .clickable { state.takeUp(rule) }
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .semantics { contentDescription = "Take up ${rule.title}" },
+            )
+        }
+        // Out of this list only. The rule and everything it has kept stay as
+        // they are.
+        Text(
+            "✕",
+            color = Chotki.faint,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .clickable { state.setAside(rule) }
+                .padding(start = 10.dp, top = 2.dp)
+                .semantics { contentDescription = "Set aside ${rule.title}" },
+        )
     }
 }
 

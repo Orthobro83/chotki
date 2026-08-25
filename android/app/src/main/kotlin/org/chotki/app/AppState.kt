@@ -9,7 +9,10 @@ import org.chotki.app.platform.Reminders
 import org.chotki.core.Activation
 import org.chotki.core.AppSettings
 import org.chotki.core.CalendarDate
+import org.chotki.core.CustomLibrary
 import org.chotki.core.DayEntry
+import org.chotki.core.EditPlanner
+import org.chotki.core.EditScope
 import org.chotki.core.Occurrence
 import org.chotki.core.OccurrenceStatus
 import org.chotki.core.Practice
@@ -140,6 +143,55 @@ class AppState(private val store: Store, private val zone: ZoneId = ZoneId.syste
     fun isTaken(templateID: String): Boolean {
         val title = Content.ruleLibrary.firstOrNull { it.id == templateID }?.title ?: return false
         return rules.any { it.title == title }
+    }
+
+    // MARK: rules of one's own
+
+    /** The Custom section: rules he wrote, whether or not they are in force. */
+    val customEntries: List<Rule>
+        get() = CustomLibrary.entries(store.rules(includeArchived = true))
+
+    /** Not archived, and with an open stretch. */
+    fun isOnTheRule(rule: Rule): Boolean = !rule.isArchived && !practice.isPaused(rule)
+
+    fun save(rule: Rule, from: CalendarDate = today) {
+        val existing = store.rule(rule.id)
+        store.save(rule)
+        if (existing == null) store.save(Activation(ruleID = rule.id, from = from))
+        load()
+    }
+
+    /**
+     * Puts a rule of his own back on the rule, from today.
+     *
+     * The same rule, not a copy: its history follows it, and the gap shows as a
+     * gap rather than as two unrelated rules with the record split between them.
+     */
+    fun takeUp(rule: Rule) {
+        store.save(CustomLibrary.takingUp(rule))
+        if (practice.isPaused(rule)) {
+            store.save(Activation(ruleID = rule.id, from = today))
+        }
+        load()
+    }
+
+    /** Out of the Custom list. The rule and its history are untouched. */
+    fun setAside(rule: Rule) {
+        store.save(CustomLibrary.settingAside(rule))
+        load()
+    }
+
+    /** Stops a rule from today onwards, keeping everything it has kept. */
+    fun remove(rule: Rule) {
+        store.apply(
+            EditPlanner().delete(
+                rule = rule,
+                activations = activations,
+                date = today,
+                scope = EditScope.WHOLE_SERIES,
+            ),
+        )
+        load()
     }
 
     fun rearmReminders(context: Context) = Reminders.rearm(context, zone = zone)

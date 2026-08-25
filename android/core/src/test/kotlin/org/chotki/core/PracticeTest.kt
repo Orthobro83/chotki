@@ -242,3 +242,71 @@ class PracticeTest {
         assertEquals(day(2026, 8, 18), Practice.progressThrough(today))
     }
 }
+
+/** Rules of one's own, kept so they can be taken up again. */
+class CustomLibraryTest {
+
+    private fun own(title: String, days: Long = 0, hidden: Boolean? = null) = Rule(
+        title = title,
+        recurrence = Recurrence.Daily,
+        createdAt = java.time.Instant.now().plusSeconds(days * 86_400),
+        hiddenFromLibrary = hidden,
+    )
+
+    @Test
+    fun `a rule of one's own is one the bundled library does not have`() {
+        assertTrue(CustomLibrary.isOwn(own("Cold plunge")))
+        assertTrue(CustomLibrary.isOwn(own("Workout")))
+        assertTrue(!CustomLibrary.isOwn(own("Evening prayers")), "that one is the library's")
+        assertTrue(!CustomLibrary.isOwn(own("evening PRAYERS")), "and case does not change it")
+    }
+
+    // source looks like provenance and is not: it is a free-text note the person
+    // edits, so it cannot be trusted to say where a rule came from.
+    @Test
+    fun `the free-text source is not what decides it`() {
+        val rule = own("Cold plunge").copy(source = "the library")
+        assertTrue(CustomLibrary.isOwn(rule), "still his own, whatever the note says")
+    }
+
+    @Test
+    fun `entries are newest first, and set-aside rules are not offered`() {
+        val entries = CustomLibrary.entries(
+            listOf(
+                own("Older", days = -3),
+                own("Newest", days = -1),
+                own("Evening prayers"),
+                own("Set aside", days = -2, hidden = true),
+            ),
+        )
+        assertEquals(listOf("Newest", "Older"), entries.map { it.title })
+    }
+
+    @Test
+    fun `setting aside touches nothing else`() {
+        val rule = own("Cold plunge")
+        val aside = CustomLibrary.settingAside(rule)
+        assertEquals(true, aside.hiddenFromLibrary)
+        assertEquals(rule.id, aside.id)
+        assertEquals(rule.recurrence, aside.recurrence)
+        assertEquals(null, aside.archivedAt, "still on the rule; only the listing changed")
+    }
+
+    // The reason the whole feature exists: the same rule, with its history,
+    // rather than a fresh one that splits the record in two.
+    @Test
+    fun `taking one up again keeps its identity`() {
+        val rule = own("Cold plunge")
+            .copy(archivedAt = java.time.Instant.now(), hiddenFromLibrary = true)
+        val restored = CustomLibrary.takingUp(rule)
+        assertEquals(rule.id, restored.id, "the same rule, so its history follows it")
+        assertEquals(null, restored.archivedAt)
+        assertEquals(null, restored.hiddenFromLibrary, "back in the library too")
+    }
+
+    @Test
+    fun `an archived rule of one's own is still offered`() {
+        val rule = own("Cold plunge").copy(archivedAt = java.time.Instant.now())
+        assertEquals(1, CustomLibrary.entries(listOf(rule)).size, "that is the point")
+    }
+}

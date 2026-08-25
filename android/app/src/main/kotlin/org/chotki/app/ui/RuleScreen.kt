@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,7 +43,12 @@ import org.chotki.core.Format
  * target is padding around it.
  */
 @Composable
-fun RuleScreen(state: AppState, modifier: Modifier = Modifier) {
+fun RuleScreen(
+    state: AppState,
+    modifier: Modifier = Modifier,
+    onReadPrayers: (DayEntry) -> Unit = {},
+    onEdit: (DayEntry) -> Unit = {},
+) {
     val entries = state.entries(state.selectedDate)
 
     Column(modifier.fillMaxSize().background(Chotki.ground)) {
@@ -54,7 +60,13 @@ fun RuleScreen(state: AppState, modifier: Modifier = Modifier) {
         } else {
             LazyColumn(Modifier.fillMaxWidth()) {
                 items(entries, key = { it.id }) { entry ->
-                    EntryRow(entry, state.settings.clockStyle) { state.toggleKept(entry) }
+                    EntryRow(
+                        entry = entry,
+                        clock = state.settings.clockStyle,
+                        onToggle = { state.toggleKept(entry) },
+                        onReadPrayers = { onReadPrayers(entry) },
+                        onEdit = { onEdit(entry) },
+                    )
                 }
             }
         }
@@ -90,7 +102,13 @@ private fun EmptyDay() {
 }
 
 @Composable
-private fun EntryRow(entry: DayEntry, clock: ClockStyle, onToggle: () -> Unit) {
+private fun EntryRow(
+    entry: DayEntry,
+    clock: ClockStyle,
+    onToggle: () -> Unit,
+    onReadPrayers: () -> Unit,
+    onEdit: () -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -141,7 +159,32 @@ private fun EntryRow(entry: DayEntry, clock: ClockStyle, onToggle: () -> Unit) {
             text = entry.rule.timeOfDay?.let { Format.time(it, clock) } ?: "All day",
             color = if (entry.isKept) Chotki.faint else Chotki.muted,
             fontSize = 13.sp,
-            modifier = Modifier.padding(end = 8.dp),
+        )
+
+        // The way to the words, which is the point of a prayer rule. Shown only
+        // when the rule actually carries prayers, and always when it does.
+        if (entry.rule.hasPrayers) {
+            Text(
+                "☰",
+                color = Chotki.goldDim,
+                fontSize = 16.sp,
+                modifier = Modifier
+                    .size(44.dp)
+                    .wrapContentSize()
+                    .clickable(onClick = onReadPrayers)
+                    .semantics { contentDescription = "Read the prayers for ${entry.rule.title}" },
+            )
+        }
+
+        Text(
+            "✎",
+            color = Chotki.faint,
+            fontSize = 16.sp,
+            modifier = Modifier
+                .size(44.dp)
+                .wrapContentSize()
+                .clickable(onClick = onEdit)
+                .semantics { contentDescription = "Edit ${entry.rule.title}" },
         )
     }
 }
