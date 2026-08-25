@@ -60,43 +60,29 @@ struct CrossWatermark: View {
 /// made. Small and quiet — a signature in the corner, not a badge.
 struct RopeMark: View {
     var size: CGFloat = 26
-    var knots: Int = 12
+
+    /// The mark as SwiftUI paths. The icon exporter draws the same numbers
+    /// through AppKit; the proportions they share live in core.
+    static func draw(in size: CGFloat, fill: (Path) -> Void) {
+        let knot = RopeMarkGeometry.knotRadius * size
+        for centre in RopeMarkGeometry.knotCentres {
+            fill(Path(ellipseIn: CGRect(
+                x: centre.x * size - knot, y: centre.y * size - knot,
+                width: knot * 2, height: knot * 2
+            )))
+        }
+        let box = RopeMarkGeometry.crossBox
+        fill(OrthodoxCross().path(in: CGRect(
+            x: box.x * size, y: box.y * size,
+            width: box.width * size, height: box.height * size
+        )))
+    }
 
     var body: some View {
-        Canvas { context, canvasSize in
-            let radius = size * 0.30
-            let centre = CGPoint(x: canvasSize.width / 2, y: radius + size * 0.06)
-            let knotRadius = size * 0.042
-
-            for index in 0..<knots {
-                // Start at the bottom and go round, so the gap for the cross
-                // sits where the cross actually hangs.
-                let fraction = Double(index) / Double(knots)
-                let angle = .pi / 2 + fraction * 2 * .pi
-                let point = CGPoint(
-                    x: centre.x + radius * cos(angle),
-                    y: centre.y + radius * sin(angle)
-                )
-                // Leave the lowest knot out; the cross takes its place.
-                guard index != 0 else { continue }
-                context.fill(
-                    Path(ellipseIn: CGRect(
-                        x: point.x - knotRadius, y: point.y - knotRadius,
-                        width: knotRadius * 2, height: knotRadius * 2
-                    )),
-                    with: .color(Theme.gold)
-                )
+        Canvas { context, _ in
+            RopeMark.draw(in: size) { path in
+                context.fill(path, with: .color(Theme.gold))
             }
-
-            // The cross, hanging below the loop.
-            let crossHeight = size * 0.34
-            let crossRect = CGRect(
-                x: centre.x - crossHeight * CrossGeometry.aspect / 2,
-                y: centre.y + radius - knotRadius,
-                width: crossHeight * CrossGeometry.aspect,
-                height: crossHeight
-            )
-            context.fill(OrthodoxCross().path(in: crossRect), with: .color(Theme.gold))
         }
         .frame(width: size, height: size)
         .opacity(0.5)

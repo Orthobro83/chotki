@@ -63,11 +63,32 @@ enum CrossIcon {
             ground.setFill()
             NSRect(origin: .zero, size: NSSize(width: size, height: size)).fill()
 
-            // Generous margin, so the cross does not crowd the rounded corners.
-            let margin = size * 0.20
+            // The mark is a chotki — a loop of knots with the cross hanging
+            // from it — which is what the app is named after. The menu bar
+            // glyph stays a bare cross: at 18 points a rope of knots is mud.
+            //
+            // Drawn from the same numbers in core as the SwiftUI mark, in
+            // AppKit rather than through a SwiftUI Path, because NSBezierPath
+            // only learned to take a CGPath in macOS 14 and this app runs on 13.
+            let margin = size * 0.14
+            let mark = size - margin * 2
+            func markX(_ u: CGFloat) -> CGFloat { margin + u * mark }
+            func markY(_ v: CGFloat) -> CGFloat { margin + v * mark }
+
+            gold.setFill()
+            let knot = RopeMarkGeometry.knotRadius * mark
+            for centre in RopeMarkGeometry.knotCentres {
+                NSBezierPath(ovalIn: NSRect(
+                    x: markX(centre.x) - knot, y: markY(centre.y) - knot,
+                    width: knot * 2, height: knot * 2
+                )).fill()
+            }
+
+            let box = RopeMarkGeometry.crossBox
             fill(
                 in: CGRect(
-                    x: margin, y: margin, width: size - margin * 2, height: size - margin * 2
+                    x: markX(box.x), y: markY(box.y),
+                    width: box.width * mark, height: box.height * mark
                 ),
                 colour: gold
             )
