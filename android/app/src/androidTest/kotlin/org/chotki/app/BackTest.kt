@@ -34,12 +34,20 @@ class BackTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     private fun show() {
-        val state = AppState(SqliteStore(AndroidDb.inMemory())).also { it.load() }
+        val state = AppState(SqliteStore(AndroidDb.inMemory())).also {
+            it.load()
+            // Past the welcome; back-navigation is what these are about.
+            it.updateSettings { settings -> settings.copy(hasCompletedFirstRun = true) }
+        }
         compose.setContent { ChotkiTheme { Shell(state) } }
     }
 
     private fun withState(configure: (AppState) -> Unit) {
-        val state = AppState(SqliteStore(AndroidDb.inMemory())).also { it.load() }
+        val state = AppState(SqliteStore(AndroidDb.inMemory())).also {
+            it.load()
+            // Past the welcome; back-navigation is what these are about.
+            it.updateSettings { settings -> settings.copy(hasCompletedFirstRun = true) }
+        }
         configure(state)
         compose.setContent { ChotkiTheme { Shell(state) } }
     }

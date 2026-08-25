@@ -50,6 +50,9 @@ object Content {
      * ships. 150 psalms and the supernumerary 151st.
      */
     val psalter: PsalterJson by lazy { json.decodeFromString(load("psalter")) }
+
+    /** What someone reads the first time they open Chotki, and once only. */
+    val welcome: WelcomeJson by lazy { json.decodeFromString(load("welcome")) }
     val prayerSequences: List<PrayerSequenceJson> by lazy {
         json.decodeFromString(load("prayer-sequences"))
     }

@@ -1,101 +1,91 @@
 import SwiftUI
 import ChotkiCore
 
-/// First run. Offers a few rules and nothing more.
+/// First run, once and never again.
 ///
-/// The whole point is restraint: taking on twelve things in week one and
-/// abandoning ten of them is the standard way this goes wrong, so this suggests
-/// three, lets you take none of them, and never presents the full library here.
+/// This replaced a screen that suggested three rules and let you tick them
+/// there and then. That screen and this one both said "start small" in
+/// different words, and two screens saying the same thing in different words is
+/// worse than one — so the suggestions went and the Library does that job,
+/// which is where someone ends up anyway.
+///
+/// The words are in `Welcome`, in core, so this and the Android screen cannot
+/// drift apart.
 struct OnboardingView: View {
     @ObservedObject var model: AppModel
-    @State private var chosen: Set<String> = []
-
-    /// A small, ordinary beginning. Not a minimum, and not a standard.
-    private var suggested: [RuleTemplate] {
-        let library = RuleLibrary.shared.scoped(to: model.settings.jurisdiction.tradition)
-        return ["morning-prayers", "evening-prayers", "daily-gospel"]
-            .compactMap { library.template(id: $0) }
-    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("A place to keep your rule")
-                    .font(.custom("Cardo", size: 20))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                RopeMark(size: 64)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 6)
+
+                Text(Welcome.title)
+                    .font(.custom("Cardo", size: 21))
                     .foregroundStyle(Theme.gold)
-                Text("Start with one or two things you can actually keep. You can add more whenever you are ready, and pause anything without it counting against you.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.parchmentDim)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 18).padding(.top, 20).padding(.bottom, 14)
+                    .frame(maxWidth: .infinity, alignment: .center)
 
-            Rectangle().fill(Theme.line).frame(height: 1)
-
-            ForEach(suggested) { template in
-                Button {
-                    if chosen.contains(template.id) { chosen.remove(template.id) }
-                    else { chosen.insert(template.id) }
-                } label: {
-                    HStack(alignment: .top, spacing: 10) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(chosen.contains(template.id) ? Theme.gold : Color.clear)
-                            RoundedRectangle(cornerRadius: 3)
-                                .stroke(chosen.contains(template.id) ? Theme.gold : Theme.faint, lineWidth: 1)
-                            if chosen.contains(template.id) {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundStyle(Theme.ground)
-                            }
-                        }
-                        .frame(width: 14, height: 14)
-                        .padding(.top, 1)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(template.title)
-                                .font(.system(size: 13))
-                                .foregroundStyle(Theme.parchment)
-                            Text(template.summary)
-                                .font(.system(size: 11))
-                                .foregroundStyle(Theme.faint)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .contentShape(Rectangle())
-                    .padding(.horizontal, 18).padding(.vertical, 9)
+                ForEach(Array(Welcome.paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Paragraph(paragraph)
                 }
-                .buttonStyle(.plain)
-            }
 
-            Rectangle().fill(Theme.line).frame(height: 1)
-
-            HStack(spacing: 14) {
                 Button {
-                    for id in chosen {
-                        if let template = RuleLibrary.shared.template(id: id) {
-                            model.take(on: template)
-                        }
-                    }
                     model.update { $0.hasCompletedFirstRun = true }
                     model.notice = nil
                 } label: {
-                    Text(chosen.isEmpty ? "Start with nothing for now" : "Begin")
-                        .font(.system(size: 12))
+                    Text(Welcome.beginLabel)
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.gold)
-                        .padding(.horizontal, 12).padding(.vertical, 5)
+                        .padding(.horizontal, 22).padding(.vertical, 6)
                         .overlay(RoundedRectangle(cornerRadius: 5).stroke(Theme.goldDim))
                 }
                 .buttonStyle(.plain)
-
-                Text("Nothing here is required. The library has more when you want it.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Theme.faint)
-                    .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 4)
             }
-            .padding(.horizontal, 18).padding(.vertical, 14)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 20)
         }
+    }
+}
+
+/// One paragraph, with its links live.
+///
+/// Built as an `AttributedString` from the spans rather than parsed out of
+/// marked-up text: core hands over where the links are, so nothing here has to
+/// work it out.
+private struct Paragraph: View {
+    let paragraph: WelcomeParagraph
+
+    init(_ paragraph: WelcomeParagraph) { self.paragraph = paragraph }
+
+    private var text: AttributedString {
+        var whole = AttributedString()
+        for span in paragraph.spans {
+            var piece = AttributedString(span.text)
+            if let url = span.url, let link = URL(string: url) {
+                piece.link = link
+                piece.foregroundColor = Theme.gold
+                piece.underlineStyle = .single
+            }
+            whole.append(piece)
+        }
+        return whole
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 11) {
+            if paragraph.isAside {
+                Rectangle().fill(Theme.line).frame(width: 2)
+            }
+            Text(text)
+                .font(.system(size: paragraph.isAside ? 11.5 : 12.5))
+                .foregroundStyle(paragraph.isAside ? Theme.faint : Theme.parchmentDim)
+                .lineSpacing(2.5)
+                .fixedSize(horizontal: false, vertical: true)
+                .tint(Theme.gold)
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 }

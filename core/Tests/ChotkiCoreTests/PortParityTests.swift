@@ -108,4 +108,31 @@ struct PortParityTests {
             )
         }
     }
+
+    /// The first thing anyone sees, on both platforms.
+    ///
+    /// Android had no first-run screen at all — the flag was in the shared
+    /// settings and nothing on that side read it — so every install opened onto
+    /// an empty day with no word about what the app was for.
+    @Test("both platforms show the welcome, and both read it from core")
+    func welcomeIsOnBothPlatforms() throws {
+        let mac = try source("macos/Sources/Chotki/OnboardingView.swift")
+        let android = try source("android/app/src/main/kotlin/org/chotki/app/ui/WelcomeScreen.kt")
+
+        for (platform, file) in [("macOS", mac), ("Android", android)] {
+            #expect(file.contains("Welcome.title"), "\(platform) does not show the welcome title")
+            #expect(file.contains("Welcome.paragraphs"), "\(platform) does not show the welcome text")
+            #expect(file.contains("Welcome.beginLabel"), "\(platform) writes its own button label")
+            #expect(
+                !file.contains("Welcome to Chotki"),
+                "\(platform) has the welcome text typed into it rather than read from core"
+            )
+        }
+
+        // Both have to honour the flag, or the screen shows every launch.
+        let macGate = try source("macos/Sources/Chotki/RootView.swift")
+        let androidGate = try source("android/app/src/main/kotlin/org/chotki/app/ui/Shell.kt")
+        #expect(macGate.contains("hasCompletedFirstRun"))
+        #expect(androidGate.contains("hasCompletedFirstRun"))
+    }
 }

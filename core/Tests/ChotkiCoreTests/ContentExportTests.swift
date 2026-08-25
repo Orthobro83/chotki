@@ -170,7 +170,27 @@ struct ContentExportTests {
             ("glossary", glossary()), ("prayers", prayers()),
             ("prayer-sequences", sequences()), ("rule-library", library()),
             ("patristic-readings", readings()), ("prayer-sources", sources()),
-            ("jurisdictions", jurisdictions()), ("practice-profiles", practiceProfiles())
+            ("jurisdictions", jurisdictions()), ("practice-profiles", practiceProfiles()),
+            ("welcome", welcome())
+        ]
+    }
+
+    /// Ryan's words, moved rather than retyped — the whole reason this lives in
+    /// core is that the two platforms must say exactly the same thing.
+    private func welcome() -> [String: Any] {
+        [
+            "title": Welcome.title,
+            "beginLabel": Welcome.beginLabel,
+            "paragraphs": Welcome.paragraphs.map { paragraph in
+                [
+                    "isAside": paragraph.isAside,
+                    "spans": paragraph.spans.map { span -> [String: Any] in
+                        var out: [String: Any] = ["text": span.text]
+                        if let url = span.url { out["url"] = url }
+                        return out
+                    }
+                ] as [String: Any]
+            }
         ]
     }
 
@@ -202,8 +222,14 @@ struct ContentExportTests {
     @Test("nothing is exported empty")
     func nothingIsEmpty() throws {
         for (name, value) in files {
-            let array = try #require(value as? [[String: Any]])
-            #expect(!array.isEmpty, "\(name) exported nothing")
+            if let array = value as? [[String: Any]] {
+                #expect(!array.isEmpty, "\(name) exported nothing")
+            } else if let object = value as? [String: Any] {
+                // The welcome is one object rather than a list of them.
+                #expect(!object.isEmpty, "\(name) exported nothing")
+            } else {
+                Issue.record("\(name) is neither a list nor an object")
+            }
         }
     }
 

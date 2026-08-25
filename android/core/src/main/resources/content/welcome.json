@@ -1,0 +1,52 @@
+{
+  "beginLabel" : "Begin",
+  "paragraphs" : [
+    {
+      "isAside" : false,
+      "spans" : [
+        {
+          "text" : "This app was created for inquiring Orthodox Christians, catechumens, and anyone looking for a tool to help them keep their spiritual commitments."
+        }
+      ]
+    },
+    {
+      "isAside" : false,
+      "spans" : [
+        {
+          "text" : "This app was inspired by, but is not officially affiliated with, "
+        },
+        {
+          "text" : "The Brotherhood of the Narrow Path",
+          "url" : "https://www.skool.com/fathermoses/"
+        },
+        {
+          "text" : ", an online Orthodox community by "
+        },
+        {
+          "text" : "Father Moses McPherson",
+          "url" : "https://orthodoxaustin.org/our-clergy/"
+        },
+        {
+          "text" : "."
+        }
+      ]
+    },
+    {
+      "isAside" : false,
+      "spans" : [
+        {
+          "text" : "To begin, select a rule from the Library. Start small, only what you can keep, and build up from there. At the bottom of the Library is the option to write your own rule."
+        }
+      ]
+    },
+    {
+      "isAside" : true,
+      "spans" : [
+        {
+          "text" : "A note on writing your own rules: in Orthodoxy, it is generally understood that everybody needs a spiritual father who helps them build their own discipline. We all need somebody guiding and directing us, so that we are going toward God's will and not our own. Chotki's author recommends writing your own rules in consultation with your Orthodox community and its leadership."
+        }
+      ]
+    }
+  ],
+  "title" : "Welcome to Chotki"
+}

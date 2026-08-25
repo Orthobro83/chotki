@@ -103,8 +103,18 @@ enum RenderMode {
             var clean = AppSettings.default
             clean.jurisdiction = settings.jurisdiction
             clean.observances = ObservanceSettings(fasting: .observed, feasts: .shown)
-            clean.hasCompletedFirstRun = true
+            // The welcome is a real screen and needs rendering like any other,
+            // so it can be asked for. Every other render wants it out of the way.
+            clean.hasCompletedFirstRun =
+                ProcessInfo.processInfo.environment["CHOTKI_RENDER_FIRSTRUN"] != "1"
             try store.saveSettings(clean)
+        }
+
+        // Someone who already keeps rules is not on their first run, and the
+        // app marks it complete for them — so the welcome can only be drawn
+        // against an empty record, which is the only state it ever appears in.
+        if ProcessInfo.processInfo.environment["CHOTKI_RENDER_FIRSTRUN"] == "1" {
+            return store
         }
 
         // A believable rule, kept mostly but not perfectly.

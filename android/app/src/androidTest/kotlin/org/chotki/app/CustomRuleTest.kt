@@ -36,7 +36,15 @@ class CustomRuleTest {
 
     @get:Rule val compose = createComposeRule()
 
-    private fun state(): AppState = AppState(SqliteStore(AndroidDb.inMemory())).also { it.load() }
+    /**
+     * Past the welcome. These tests are about what the shell does afterwards,
+     * and a fresh store now opens on the first-run screen — which is
+     * [WelcomeTest]'s business, not theirs.
+     */
+    private fun state(): AppState = AppState(SqliteStore(AndroidDb.inMemory())).also {
+        it.load()
+        it.updateSettings { settings -> settings.copy(hasCompletedFirstRun = true) }
+    }
 
     private fun openLibrary(state: AppState) {
         compose.setContent { ChotkiTheme { Shell(state) } }

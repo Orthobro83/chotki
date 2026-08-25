@@ -70,6 +70,13 @@ fun Shell(state: AppState) {
     // fields into the editor, back closed Chotki.
     BackHandler(enabled = journey.canGoBack) { journey = journey.back() }
 
+    // First run, before anything else. Nothing on it can be reached until it is
+    // read, which is the point of it.
+    if (!state.settings.hasCompletedFirstRun) {
+        WelcomeScreen(state, Modifier.fillMaxSize())
+        return
+    }
+
     Column(Modifier.fillMaxSize().background(Chotki.ground)) {
         if (!dismissed) {
             ReadinessBanner(readiness) {
