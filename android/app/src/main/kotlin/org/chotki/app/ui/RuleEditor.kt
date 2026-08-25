@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.ClockStyle
 import org.chotki.core.Format
+import org.chotki.core.scheduling.ReminderLead
+import org.chotki.core.scheduling.RuleReminders
 import org.chotki.core.Recurrence
 import org.chotki.core.RecurrenceForm
 import org.chotki.core.Rule
@@ -73,6 +75,9 @@ fun RuleEditor(
     var form by remember {
         mutableStateOf(filling?.let { RecurrenceForm.of(it.recurrence) } ?: RecurrenceForm())
     }
+    val startingReminders = filling?.effectiveReminders ?: RuleReminders.DEFAULT
+    var remind by remember { mutableStateOf(startingReminders.enabled) }
+    var leads by remember { mutableStateOf(startingReminders.leads.toSet()) }
     var hasTime by remember { mutableStateOf(filling?.timeOfDay != null) }
     var hour by remember { mutableStateOf(filling?.timeOfDay?.hour ?: 6) }
     var minute by remember { mutableStateOf(filling?.timeOfDay?.minute ?: 30) }
@@ -170,6 +175,35 @@ fun RuleEditor(
             )
         }
 
+        Spacer(Modifier.size(10.dp))
+        // Never offered here at all until now, so a rule arrived with whatever
+        // the library had decided and there was no way to change it — nor to
+        // put reminders on a rule of one's own. Which meant reminders could not
+        // be tested, let alone kept.
+        Choice("Remind me", remind) { remind = !remind }
+        if (remind) {
+            Text("When", color = Chotki.faint, fontSize = 12.sp)
+            // Several at once is the point: an hour before to get ready, ten
+            // minutes before to actually begin.
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                for (lead in ReminderLead.CHOICES) {
+                    val chosen = lead in leads
+                    Choice(lead.label, chosen, compact = true) {
+                        leads = if (chosen) leads - lead else leads + lead
+                    }
+                }
+            }
+            if (leads.isEmpty()) {
+                Text(
+                    "Pick at least one, or Chotki will fall back to ten minutes before.",
+                    color = Chotki.faint,
+                    fontSize = 12.sp,
+                )
+            }
+        } else {
+            Text("This rule will not buzz. It is still due, and still counted.", color = Chotki.faint, fontSize = 12.sp)
+        }
+
         Spacer(Modifier.size(20.dp))
         Row {
             Text(
@@ -186,6 +220,11 @@ fun RuleEditor(
                                 source = source.ifBlank { null },
                                 recurrence = form.recurrence(fallback = state.today),
                                 timeOfDay = if (hasTime) TimeOfDay.of(hour, minute) else null,
+                                reminders = RuleReminders(
+                                    enabled = remind,
+                                    leads = leads.sortedWith(ReminderLead.BY_LEAD)
+                                        .ifEmpty { RuleReminders.DEFAULT.leads },
+                                ),
                             ),
                         )
                         onDone()

@@ -245,4 +245,39 @@ class RuleScreenTest {
 
         assertEquals(21, state.rules.single().timeOfDay?.hour)
     }
+
+    /**
+     * Reminders have to be settable, or there is nothing to test on a phone.
+     *
+     * The editor never offered them: a rule arrived with whatever the library
+     * had decided, and a rule of one's own could not have them at all.
+     */
+    @Test fun remindersCanBeTurnedOffWhileTakingARuleOn() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
+
+        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Choose Remind me").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        assertEquals(false, state.rules.single().effectiveReminders.enabled)
+    }
+
+    @Test fun aLeadCanBeChosen() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
+
+        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Choose 1 hour before").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        val leads = state.rules.single().effectiveReminders.leads
+        assertTrue("leads were $leads", org.chotki.core.scheduling.ReminderLead.ONE_HOUR in leads)
+    }
 }

@@ -61,8 +61,28 @@ class AppState(
             return AppState(
                 store = store,
                 liturgical = LiturgicalService(store, OrthocalClient(AndroidHttp())),
-            )
+            ).also { it.appContext = context.applicationContext }
         }
+    }
+
+    /**
+     * Set only when the real app opens the state, so a change to a rule can
+     * reschedule its alarms there and then.
+     *
+     * Null under test, which is deliberate: no test may reach the device's
+     * alarm manager. It also means a test that wanted to check rescheduling
+     * would have to say so, rather than doing it by accident.
+     */
+    private var appContext: Context? = null
+
+    /**
+     * Alarms follow the rules. Called after anything that changes when a rule
+     * is due — until now this happened only in `onResume`, so a reminder set in
+     * the editor did not schedule until the app had been backgrounded and
+     * reopened, which looks exactly like reminders not working.
+     */
+    private fun rescheduleReminders() {
+        appContext?.let { Reminders.rearm(it, zone = zone) }
     }
 
     var settings by mutableStateOf(AppSettings.DEFAULT)
@@ -248,6 +268,7 @@ class AppState(
         store.save(Activation(ruleID = rule.id, from = today))
         turnOnNeededObservances()
         load()
+        rescheduleReminders()
     }
 
     /**
@@ -290,6 +311,7 @@ class AppState(
         if (existing == null) store.save(Activation(ruleID = rule.id, from = from))
         turnOnNeededObservances()
         load()
+        rescheduleReminders()
     }
 
     /**
@@ -304,12 +326,14 @@ class AppState(
             store.save(Activation(ruleID = rule.id, from = today))
         }
         load()
+        rescheduleReminders()
     }
 
     /** Out of the Custom list. The rule and its history are untouched. */
     fun setAside(rule: Rule) {
         store.save(CustomLibrary.settingAside(rule))
         load()
+        rescheduleReminders()
     }
 
     /** Stops a rule from today onwards, keeping everything it has kept. */
@@ -323,6 +347,7 @@ class AppState(
             ),
         )
         load()
+        rescheduleReminders()
     }
 
     fun rearmReminders(context: Context) = Reminders.rearm(context, zone = zone)
