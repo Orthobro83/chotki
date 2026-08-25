@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -210,5 +211,38 @@ class RuleScreenTest {
                 onDone = { pending = null },
             )
         }
+    }
+
+    /**
+     * Every hour of the day has to be reachable.
+     *
+     * The picker was twenty-four chips in a horizontal scroll inside the page's
+     * vertical scroll. On a real phone the page won the gesture and the row
+     * would not move past the ninth, so an evening rule could not be set at
+     * all — reported as "the maximum time is 08:45".
+     */
+    @Test fun anEveningHourCanBeChosen() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
+
+        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+
+        compose.onNode(hasContentDescription("Hour", substring = true))
+            .performScrollTo().performClick()
+        compose.waitForIdle()
+        // Twenty-four entries do not fit a menu, so the later hours are below
+        // the fold — which is why the first version of this test clicked
+        // nothing and saved the default.
+        // Two things scroll once the menu is open — the page under it and the
+        // menu itself. The menu is the later one.
+        compose.onAllNodes(hasScrollAction()).onLast()
+            .performScrollToNode(hasContentDescription("Choose 21"))
+        compose.onNodeWithContentDescription("Choose 21").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        assertEquals(21, state.rules.single().timeOfDay?.hour)
     }
 }

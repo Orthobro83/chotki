@@ -138,16 +138,16 @@ fun RuleEditor(
             // set to the morning by picking the number that looks right — which
             // is how Evening prayers came to sit at half past ten in the morning
             // on the macOS side for several days.
-            Text("Hour", color = Chotki.faint, fontSize = 12.sp)
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                for (candidate in 0..23) {
-                    Choice(
-                        Format.hourLabel(candidate, state.settings.clockStyle),
-                        candidate == hour,
-                        compact = true,
-                    ) { hour = candidate }
-                }
-            }
+            // A menu, not a scrolling row. Twenty-four chips in a horizontal
+            // scroll sitting inside the page's vertical scroll lost the gesture
+            // on a real phone: the row would not move past the ninth, so an
+            // evening rule simply could not be set. It read as a formatting
+            // problem and was a gesture one.
+            Dropdown(
+                label = "Hour",
+                chosen = Format.hourLabel(hour, state.settings.clockStyle),
+                options = (0..23).map { Format.hourLabel(it, state.settings.clockStyle) },
+            ) { hour = it }
             Text("Minute", color = Chotki.faint, fontSize = 12.sp)
             Row {
                 for (candidate in listOf(0, 15, 30, 45)) {
@@ -269,56 +269,4 @@ private fun Choice(label: String, chosen: Boolean, compact: Boolean = false, onP
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .semantics { contentDescription = "Choose $label" },
     )
-}
-
-/**
- * A labelled line that opens its choices, rather than showing all of them.
- *
- * The chips are still right for a handful of side-by-side options; this is for
- * the lists long enough to push everything below them off a phone.
- */
-@Composable
-private fun Dropdown(
-    label: String,
-    chosen: String,
-    options: List<String>,
-    onChoose: (Int) -> Unit,
-) {
-    var open by remember { mutableStateOf(false) }
-
-    Text(label, color = Chotki.gold, fontSize = 13.sp)
-    Box {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .border(1.dp, Chotki.goldDim, RoundedCornerShape(4.dp))
-                .clickable { open = true }
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-                .semantics { contentDescription = "$label — $chosen" },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(chosen, color = Chotki.parchment, fontSize = 15.sp, modifier = Modifier.weight(1f))
-            Text(if (open) "⌃" else "⌄", color = Chotki.goldDim, fontSize = 14.sp)
-        }
-
-        DropdownMenu(
-            expanded = open,
-            onDismissRequest = { open = false },
-            modifier = Modifier.background(Chotki.panel),
-        ) {
-            options.forEachIndexed { index, option ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            option,
-                            color = if (option == chosen) Chotki.gold else Chotki.parchment,
-                            fontSize = 15.sp,
-                        )
-                    },
-                    onClick = { onChoose(index); open = false },
-                    modifier = Modifier.semantics { contentDescription = "Choose $option" },
-                )
-            }
-        }
-    }
 }

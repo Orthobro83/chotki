@@ -10,6 +10,7 @@ import org.chotki.app.platform.Reminders
 import org.chotki.core.Activation
 import org.chotki.core.AppSettings
 import org.chotki.core.CalendarDate
+import org.chotki.core.ClockStyle
 import org.chotki.core.CustomLibrary
 import org.chotki.core.DayEntry
 import org.chotki.core.EditPlanner
@@ -168,6 +169,13 @@ class AppState(
     fun restoreFrom(text: String) {
         store.importJson(text)
         load()
+    }
+
+    /** How times are written, everywhere at once. */
+    fun setClockStyle(style: ClockStyle) {
+        val updated = settings.copy(clockStyle = style)
+        store.saveSettings(updated)
+        settings = updated
     }
 
     fun entries(on: CalendarDate): List<DayEntry> = practice.entries(on)

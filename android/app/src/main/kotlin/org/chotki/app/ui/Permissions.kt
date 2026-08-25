@@ -84,15 +84,26 @@ class BannerDismissals(context: Context) {
 
     private val store = context.getSharedPreferences("readiness", Context.MODE_PRIVATE)
 
-    fun isDismissed(readiness: ReminderReadiness): Boolean =
-        store.getString(KEY, null) == readiness.signature
+    /**
+     * Once, and it stays put away.
+     *
+     * This used to remember the exact readiness it was dismissed at, so that a
+     * new problem could raise it again. In practice every change raised it
+     * again — granting one permission changes the signature, so putting the
+     * notice away and then acting on it brought it straight back, which is the
+     * one moment a person has clearly understood it.
+     *
+     * Everything it says is in Settings, permanently, so nothing is lost by
+     * believing them the first time.
+     */
+    fun isDismissed(readiness: ReminderReadiness): Boolean = store.getBoolean(KEY, false)
 
     fun dismiss(readiness: ReminderReadiness) {
-        store.edit().putString(KEY, readiness.signature).apply()
+        store.edit().putBoolean(KEY, true).apply()
     }
 
     private companion object {
-        const val KEY = "dismissed"
+        const val KEY = "dismissed-for-good"
     }
 }
 

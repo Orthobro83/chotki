@@ -35,8 +35,15 @@ object Sounds {
     private fun play(samples: ShortArray) {
         val track = AudioTrack.Builder()
             .setAudioAttributes(
+                // USAGE_MEDIA, not USAGE_ASSISTANCE_SONIFICATION. Sonification
+                // follows the ringer, so on a phone with the switch on vibrate
+                // the tick and the bell are silent — which is most phones, most
+                // of the time, and it is why this worked on an emulator and not
+                // on a real device. The rope is something a person has chosen
+                // to listen to, so it belongs on the media volume they can
+                // actually reach.
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build(),
             )

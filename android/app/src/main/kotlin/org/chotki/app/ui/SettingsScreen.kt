@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
+import org.chotki.core.ClockStyle
 import org.chotki.app.BuildConfig
 
 /**
@@ -82,6 +83,16 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
         Line("Fasting — ${state.settings.observances.fasting.name.lowercase()}", Chotki.parchment)
         Line("Feasts — ${state.settings.observances.feasts.name.lowercase()}", Chotki.parchment)
 
+        Heading("The clock")
+        // Missing entirely until now, which left the hour picker labelling
+        // itself 00 to 23 with no way to change it — and made "08:45" read as
+        // a quarter to nine in the evening to anyone thinking in twelve hours.
+        Dropdown(
+            label = "How times are written",
+            chosen = state.settings.clockStyle.displayName,
+            options = ClockStyle.entries.map { it.displayName },
+        ) { index -> state.setClockStyle(ClockStyle.entries[index]) }
+
         Heading("Reminders")
         // Always here, whether or not the banner has been put away — and each
         // one opens the screen where it is actually changed, rather than naming
@@ -100,8 +111,18 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
         }
         if (readiness.hasVendorSleepList) {
             Line(
-                "This phone also keeps its own list. Add Chotki to " +
-                    "${ReminderReadiness.VENDOR_ROUTE}, or reminders stop after a day or two.",
+                "This phone also keeps its own list, on top of Android's. Add " +
+                    "Chotki to ${ReminderReadiness.VENDOR_ROUTE}, or reminders stop " +
+                    "after a day or two.",
+                Chotki.faint,
+            )
+            // No app can read or set that list, so the app cannot tell you
+            // whether it worked — and saying so is better than implying it can.
+            Line(
+                "Chotki cannot see that list or change it, so it cannot tell you " +
+                    "whether it took. If Chotki is not offered there, open it and " +
+                    "leave it a moment first — some phones only list apps they have " +
+                    "seen running. The setting above is Android's own and matters most.",
                 Chotki.faint,
             )
         }
