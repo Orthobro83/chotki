@@ -141,10 +141,18 @@ const val TAG = "the calendar"
 private val CHROME = 64.dp
 
 /**
- * Below this a day cell cannot hold a two-digit number at the app's text size,
- * and the grid draws as empty boxes. Better to show one legible week.
+ * The smallest cell that can still hold the date in it.
+ *
+ * Derived rather than picked: the number is 14sp, which is about 19dp of line,
+ * and the cell carries 2dp of padding each side. Below 24dp the digits start
+ * being clipped and the grid draws as empty boxes, so a legible week is better
+ * than an illegible month.
+ *
+ * The first value here was 30dp, which sat close enough to a six-row month on
+ * an ordinary phone that a full readiness banner tipped it over — folding on
+ * first run, when nothing had been scrolled and the month was what was wanted.
  */
-private val LEGIBLE = 30.dp
+private val LEGIBLE = 24.dp
 
 /**
  * Folded, the arrows move the selected day by a week rather than moving a

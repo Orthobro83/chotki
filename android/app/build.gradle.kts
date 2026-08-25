@@ -57,6 +57,13 @@ android {
                 storePassword = keystore.getProperty("storePassword")
                 keyAlias = keystore.getProperty("keyAlias")
                 keyPassword = keystore.getProperty("keyPassword")
+                // v2 is what installs on everything from Android 7 and is on
+                // by default. v3 is the one that permits key rotation later —
+                // the only escape hatch there is if this key is ever
+                // compromised, since Android otherwise ties the app to it
+                // permanently. It costs nothing to carry.
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }

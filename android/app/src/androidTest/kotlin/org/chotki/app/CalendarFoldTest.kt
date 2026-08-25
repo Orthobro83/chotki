@@ -1,6 +1,9 @@
 package org.chotki.app
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -121,5 +124,39 @@ class CalendarFoldTest {
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Rule number 0"))
         compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
+    }
+
+    /**
+     * A six-row month on an ordinary phone, with the readiness banner taking
+     * its share, still shows as a month.
+     *
+     * The calendar folds by itself when a month will not fit legibly, and that
+     * guard was first set tight enough that a full banner tipped it over — so a
+     * fresh install opened folded, with nothing scrolled and no reason for it.
+     * 470dp is what a 851dp phone leaves this screen once the title, a
+     * two-line banner, the library link and the bottom bar have taken theirs.
+     */
+    @Test fun aMonthStillFitsOnAPhoneWithTheBannerShowing() {
+        val state = stateWithRules(2)
+        compose.setContent {
+            ChotkiTheme {
+                Box(Modifier.height(470.dp)) { RuleScreen(state, Modifier.fillMaxSize()) }
+            }
+        }
+
+        // Folded, the arrows say "week"; unfolded they say "month".
+        compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
+    }
+
+    /** And it does still fold when the space is genuinely too small. */
+    @Test fun aMonthFoldsWhenThereIsTrulyNoRoom() {
+        val state = stateWithRules(2)
+        compose.setContent {
+            ChotkiTheme {
+                Box(Modifier.height(260.dp)) { RuleScreen(state, Modifier.fillMaxSize()) }
+            }
+        }
+
+        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
     }
 }
