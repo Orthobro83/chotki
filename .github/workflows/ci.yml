@@ -65,7 +65,12 @@ jobs:
         run: |
           set -e
           apk=app/build/outputs/apk/release/app-release.apk
-          badging=$("$ANDROID_HOME"/build-tools/*/aapt2 dump badging "$apk")
+          # Pick one deliberately. The runner carries several build-tools
+          # versions, so a bare glob expands to a list and everything after the
+          # first becomes an aapt2 subcommand. A machine with one version
+          # installed hides that completely.
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          badging=$("$aapt2" dump badging "$apk")
           if grep -q "application-debuggable" <<<"$badging"; then
             echo "the release apk is debuggable"; exit 1
           fi
