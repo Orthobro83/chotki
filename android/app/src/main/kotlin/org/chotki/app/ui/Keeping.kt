@@ -2,6 +2,7 @@ package org.chotki.app.ui
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import org.chotki.app.AppState
 import org.chotki.core.store.BackupException
 import java.time.LocalDate
@@ -35,10 +36,29 @@ object Keeping {
             val stream = context.contentResolver.openOutputStream(to, "wt")
                 ?: return Outcome.Failed("Could not write to that place.")
             stream.use { it.write(text.toByteArray()) }
-            Outcome.Saved(to.lastPathSegment?.substringAfterLast('/') ?: "the file")
+            Outcome.Saved(displayName(context, to))
         } catch (e: Exception) {
             Outcome.Failed("Could not save your record there.")
         }
+    }
+
+    /**
+     * What to call the file when telling someone where their record went.
+     *
+     * A document URI's last path segment is the provider's own id — `8`, on the
+     * emulator — so the obvious thing produces "Saved to 8." The display name
+     * has to be asked for.
+     */
+    private fun displayName(context: Context, uri: Uri): String {
+        val name = runCatching {
+            context.contentResolver.query(
+                uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null,
+            )?.use { cursor ->
+                val column = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (column >= 0 && cursor.moveToFirst()) cursor.getString(column) else null
+            }
+        }.getOrNull()
+        return name ?: "your chosen file"
     }
 
     fun restore(context: Context, state: AppState, from: Uri): Outcome {
