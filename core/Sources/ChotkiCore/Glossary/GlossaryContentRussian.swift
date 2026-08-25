@@ -156,8 +156,8 @@ extension Glossary {
 
             Preparation is taken seriously and the expectations differ between jurisdictions. In \
             Russian practice they are relatively demanding — see the entry on preparing for \
-            communion — and they are always something to settle with a priest rather than to work \
-            out alone.
+            communion — and they are always something to settle with your priest or spiritual \
+            father rather than to work out alone.
             """,
             category: .services, related: ["preparation-for-communion", "confession", "divine-liturgy", "eucharistic-fast", "zapivka"]
         ),
@@ -191,7 +191,8 @@ extension Glossary {
             book; and commonly three canons and an akathist read the evening before.
 
             That is the full traditional shape. What any individual actually keeps is settled with \
-            a priest, who will take health, work, family and how new you are into account — and \
+            your priest or spiritual father, who will take health, work, family and how new \
+            you are into account — and \
             who will very often ask for less at the start. Asking is the normal thing to do, not a \
             sign of not managing.
             """,

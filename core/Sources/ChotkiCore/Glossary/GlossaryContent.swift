@@ -336,8 +336,8 @@ extension Glossary {
             Literally "dry eating". Appointed on the strictest days of Great Lent. It is the far end \
             of the fasting scale and is not what most people keep.
 
-            How much of the traditional discipline any individual keeps is settled with a priest, \
-            taking health, work and circumstances into account. It is not a competition, and it is \
+            How much of the traditional discipline any individual keeps is settled with your priest or \
+            spiritual father, taking health, work and circumstances into account. It is not a competition, and it is \
             not the point.
             """,
             category: .fasting, related: ["great-lent", "wine-and-oil"]
@@ -353,7 +353,8 @@ extension Glossary {
             celebrated and the faithful receive communion.
 
             Preparation for receiving — fasting beforehand, confession, prayers — varies between \
-            parishes and is something to settle with a priest rather than to work out alone.
+            parishes and is something to settle with your priest or spiritual father rather than to
+            work out alone.
             """,
             category: .services, related: ["vespers", "matins", "presanctified-liturgy", "antidoron"]
         ),
@@ -429,8 +430,8 @@ extension Glossary {
             short: "The set of prayers a person keeps daily, agreed with their priest or spiritual father.",
             full: """
             A rule is personal. It usually includes morning and evening prayers and grows over \
-            time — and it is meant to be settled with a priest, who will normally suggest starting \
-            with far less than a newcomer expects.
+            time — and it is meant to be settled with your priest or spiritual father, who will \
+            normally suggest starting with far less than a newcomer expects.
 
             A small rule kept faithfully is worth more than a large one abandoned. Reducing a rule \
             is a normal and sometimes necessary act, not a failure.
@@ -658,8 +659,8 @@ extension Glossary {
             than those two items alone.
 
             This is what the calendar marks, not an instruction. What any individual keeps is \
-            settled with a priest, and health, work and circumstance are ordinary reasons for it to \
-            look different.
+            settled with your priest or spiritual father, and health, work and circumstance \
+            are ordinary reasons for it to look different.
             """,
             category: .fasting, related: ["wednesday-friday-fast", "fast-free", "great-lent"]
         ),
