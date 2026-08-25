@@ -1,6 +1,8 @@
 package org.chotki.core.store
 
 import org.chotki.core.CalendarDate
+import org.chotki.core.FastingSeason
+import org.chotki.core.LiturgicalTrigger
 import org.chotki.core.Recurrence
 import org.chotki.core.Rule
 import org.chotki.core.TimeOfDay
@@ -34,6 +36,13 @@ class SchemaMigrationTest {
             "DROP TABLE IF EXISTS app_settings;",             // v4
             "ALTER TABLE rule DROP COLUMN prayer_ids;",       // v5
             "ALTER TABLE rule DROP COLUMN hidden_from_library;", // v6
+            // v7 changed stored data rather than shape: put Kotlin's class
+            // names back into the column, which is what every database written
+            // before the names were frozen actually holds.
+            """UPDATE rule SET recurrence = REPLACE(recurrence, '"daily"', '"org.chotki.core.Recurrence.Daily"');""",
+            """UPDATE rule SET recurrence = REPLACE(recurrence, '"weekly"', '"org.chotki.core.Recurrence.Weekly"');""",
+            """UPDATE rule SET recurrence = REPLACE(recurrence, '"liturgical"', '"org.chotki.core.Recurrence.Liturgical"');""",
+            """UPDATE rule SET recurrence = REPLACE(recurrence, '"season"', '"org.chotki.core.LiturgicalTrigger.Season"');""",
             "DELETE FROM schema_version WHERE version > 1;",
         )
     }
@@ -111,7 +120,7 @@ class SchemaMigrationTest {
         assertEquals(before, version())
         assertEquals(
             1,
-            db.query("SELECT COUNT(*) FROM schema_version WHERE version = 6;") { it.int(0) }.single(),
+            db.query("SELECT COUNT(*) FROM schema_version WHERE version = ${Schema.CURRENT_VERSION};") { it.int(0) }.single(),
             "a step ran twice",
         )
     }
@@ -152,4 +161,58 @@ class SchemaMigrationTest {
 
     private fun tables(): List<String> =
         db.query("SELECT name FROM sqlite_master WHERE type = 'table';") { it.string(0)!! }
+
+    /**
+     * The one that matters: a rule written before the names were frozen.
+     *
+     * Until v7 the recurrence column held `org.chotki.core.Recurrence.Daily`,
+     * so the class could not be renamed or moved without breaking every
+     * database. This asserts the rewrite happened and the rule still decodes —
+     * and it fails loudly if V7 is ever dropped from the ladder.
+     */
+    @Test
+    fun `a rule stored under Kotlin's class names still decodes`() {
+        legacyDatabase()
+        assertTrue(
+            db.query("SELECT recurrence FROM rule;") { it.string(0) }.single()!!
+                .contains("org.chotki.core.Recurrence.Daily"),
+            "the fixture does not hold the old form, so this proves nothing",
+        )
+
+        val store = SqliteStore(db)
+
+        assertEquals(Recurrence.Daily, store.rules().single().recurrence)
+        assertTrue(
+            "org.chotki.core" !in db.query("SELECT recurrence FROM rule;") { it.string(0) }.single()!!,
+            "a Kotlin class name is still in the stored data",
+        )
+    }
+
+    /**
+     * Every stored name, not only the one the fixture happens to use.
+     *
+     * A nested trigger is the case a text substitution can get wrong, because
+     * two discriminators sit in the same string.
+     */
+    @Test
+    fun `every recurrence shape survives being stored and read back`() {
+        val store = SqliteStore(db)
+        val shapes = listOf(
+            Recurrence.Daily,
+            Recurrence.WEDNESDAY_AND_FRIDAY,
+            Recurrence.Once(CalendarDate.of(2026, 8, 24)!!),
+            Recurrence.Monthly(31),
+            Recurrence.Liturgical(LiturgicalTrigger.FastDay),
+            Recurrence.Liturgical(LiturgicalTrigger.GreatFeast),
+            Recurrence.Liturgical(LiturgicalTrigger.Season(FastingSeason.GREAT_LENT)),
+        )
+        for (shape in shapes) store.save(Rule(title = shape.toString(), recurrence = shape))
+
+        assertEquals(shapes.toSet(), store.rules().map { it.recurrence }.toSet())
+        assertTrue(
+            db.query("SELECT recurrence FROM rule;") { it.string(0) }
+                .none { "org.chotki" in (it ?: "") },
+            "a Kotlin class name reached the database",
+        )
+    }
 }

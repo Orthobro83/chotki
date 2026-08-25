@@ -6,7 +6,7 @@ import org.chotki.core.store.Db
  * The schema, and the ladder that brings any older database up to it.
  *
  * Deliberately the same shape as the Swift store's: the same tables, the same
- * columns, the same six steps in the same order. The *contents* of the JSON
+ * columns, the same steps in the same order. The *contents* of the JSON
  * columns differ — Kotlin writes its own encoding — so a database does not move
  * between the two platforms. That was settled when sync was ruled out; it is
  * recorded here because the schema looking identical invites the assumption.
@@ -16,7 +16,7 @@ import org.chotki.core.store.Db
  */
 object Schema {
 
-    const val CURRENT_VERSION = 6
+    const val CURRENT_VERSION = 7
 
     fun migrate(db: Db) {
         db.execute("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);")
@@ -29,6 +29,7 @@ object Schema {
         if (current < 4) db.execute(V4)
         if (current < 5) db.execute(V5)
         if (current < 6) db.execute(V6)
+        if (current < 7) db.execute(V7)
     }
 
     private val V1 = """
@@ -111,4 +112,29 @@ object Schema {
     const val RULE_COLUMNS =
         "id, title, note, source, recurrence, time_of_day, category, created_at, " +
             "archived_at, reminders, prayer_ids, hidden_from_library"
+
+    /**
+     * Frees the stored recurrence from Kotlin's class names.
+     *
+     * Until now kotlinx wrote the fully-qualified class name as the type
+     * discriminator, so every rule in the column named `org.chotki.core.
+     * Recurrence.Daily` and friends. Moving or renaming the class would have
+     * broken every database in the wild. The names are now explicit and frozen;
+     * this rewrites what is already stored to match.
+     *
+     * Written as REPLACE over the text because that is exactly what it is —
+     * eight literal substitutions, no parsing, no round trip through a decoder
+     * that would refuse the old form anyway.
+     */
+    private val V7 = """
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.Recurrence.Once"', '"once"');
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.Recurrence.Daily"', '"daily"');
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.Recurrence.Weekly"', '"weekly"');
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.Recurrence.Monthly"', '"monthly"');
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.Recurrence.Liturgical"', '"liturgical"');
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.LiturgicalTrigger.FastDay"', '"fastDay"');
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.LiturgicalTrigger.GreatFeast"', '"greatFeast"');
+        UPDATE rule SET recurrence = REPLACE(recurrence, '"org.chotki.core.LiturgicalTrigger.Season"', '"season"');
+        INSERT INTO schema_version (version) VALUES (7);
+    """.trimIndent()
 }
