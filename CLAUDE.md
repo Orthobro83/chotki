@@ -168,3 +168,15 @@ Outstanding, in rough priority:
 
 Every bug found so far came from him using the app, never from the tests, and
 every one was in the interface layer rather than core. Expect that to continue.
+
+## Adding a prayer, a reading or any other text
+
+New text brings its glossary with it. A word a newcomer would stop at needs an
+entry; "so" does not, "Theotokos" does. `GlossaryCoverageTests` enforces it
+mechanically — it scans everything bundled and fails on a term of art the
+glossary cannot explain.
+
+Spotting the gap is mechanical. **Writing the definition is not mine to do**:
+what an entry should say about a religious term goes to Ryan or a priest. Put
+the term in `awaitingAnEntry` and in `checklist.md`, which the same suite keeps
+in step, so the debt is visible rather than buried in a test file.

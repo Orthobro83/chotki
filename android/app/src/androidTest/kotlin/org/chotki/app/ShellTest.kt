@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.chotki.app.platform.AndroidDb
@@ -134,11 +135,17 @@ class ShellTest {
     fun settingsSaysWhetherRemindersWillArrive() {
         show()
         compose.onNodeWithContentDescription("Go to Settings").performClick()
-        compose.onNodeWithContentDescription("Notifications readiness").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Exact alarms readiness").assertIsDisplayed()
-        compose.onNodeWithContentDescription(
+        // Scrolled to, not merely present. The three diagnostics moved below
+        // the fold when the church and calendar pickers were added above them,
+        // and asserting "displayed" without scrolling made that read as the
+        // diagnostics disappearing.
+        for (diagnostic in listOf(
+            "Notifications readiness",
+            "Exact alarms readiness",
             "Allowed to run in the background readiness",
-        ).assertIsDisplayed()
+        )) {
+            compose.onNodeWithContentDescription(diagnostic).performScrollTo().assertIsDisplayed()
+        }
     }
 
     @Test

@@ -161,3 +161,17 @@ Not scheduled. Listed so the shape is known while macOS is being built.
 - Windows: WinUI or Win32 tray, ICO icon, toast notifications with actions, `LaunchAtLogin` via registry Run key.
 - Linux: GTK tray via StatusNotifierItem, libnotify, `.desktop` autostart entry. GNOME needs a shell extension for any tray app — a platform limitation, not something the stack choice can fix.
 - Everything in `core/` is expected to be reused unchanged. Anything that is not, is a bug in the core/UI boundary.
+
+## Glossary entries still to write `[manual]`
+
+Terms the app uses in prayers or patristic passages that a newcomer will not
+know, where the definition is a matter for Ryan and a priest rather than for me.
+`GlossaryCoverageTests` keeps this list and this file in step — a term cannot be
+dropped from the test without also being dropped from here.
+
+- **Catholic** — the sharp one. In the Creed it means universal, and a newcomer
+  reads it as Roman Catholic every time. Currently unexplained in "one holy
+  catholic and apostolic Church".
+- **Apostolic** — the other half of that phrase.
+- **Church** — capital-C, as distinct from a building.
+- **Abba** — the monastic title, in the passages from the desert fathers.

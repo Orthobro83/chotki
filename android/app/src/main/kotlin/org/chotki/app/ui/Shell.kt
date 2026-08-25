@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
+import org.chotki.core.content.Glossary
 
 /**
  * Where the app can be: the same seven places the macOS sidebar offers.
@@ -53,6 +54,12 @@ enum class Place(val title: String) {
 @Composable
 fun Shell(state: AppState) {
     var journey by remember { mutableStateOf(Journey()) }
+    // Scoped once, here. Building it inside a screen would redo the filtering
+    // and index rebuilding on every recomposition, and the linked text needs it
+    // for every term on screen.
+    val glossary = remember(state.settings.jurisdiction.tradition) {
+        Glossary.shared(state.settings.jurisdiction.tradition)
+    }
     val context = LocalContext.current
     val readiness = remember(journey) { ReminderReadiness.of(context) }
     val dismissals = remember { BannerDismissals(context) }
@@ -90,6 +97,8 @@ fun Shell(state: AppState) {
                             rule = rule,
                             onBack = { journey = journey.back() },
                             modifier = Modifier.weight(1f),
+                            glossary = glossary,
+                            onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
                         )
                     }
                 }
@@ -152,6 +161,7 @@ fun Shell(state: AppState) {
                 Screen.Settings -> SettingsScreen(state, Modifier.weight(1f))
 
                 is Screen.Terms -> GlossaryScreen(
+                    glossary = glossary,
                     modifier = Modifier.weight(1f),
                     openSlug = screen.slug,
                     onOpen = { journey = journey.push(Screen.Terms(it)) },

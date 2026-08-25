@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.core.content.Content
+import org.chotki.core.content.Glossary
 import org.chotki.core.content.GlossaryEntryJson
 
 /**
@@ -36,11 +37,13 @@ import org.chotki.core.content.GlossaryEntryJson
 fun GlossaryScreen(
     modifier: Modifier = Modifier,
     openSlug: String? = null,
+    /** Scoped to the reader's tradition, as macOS has always done. */
+    glossary: Glossary = Glossary.SHARED,
     onOpen: (String) -> Unit = {},
     onBack: () -> Unit = {},
 ) {
     var query by remember { mutableStateOf("") }
-    val open = openSlug?.let { slug -> Content.glossary.firstOrNull { it.slug == slug } }
+    val open = openSlug?.let(glossary::entry)
 
     if (open != null) {
         TermDetail(open, onBack)
@@ -65,19 +68,28 @@ fun GlossaryScreen(
                 .semantics { contentDescription = "Search terms" },
         )
 
-        val matching = matches(query)
+        // Grouped when browsing, ranked when searching. A flat list of a
+        // hundred and eleven terms in the order they sit in the file is how a
+        // term that is present reads as missing.
         LazyColumn(Modifier.fillMaxSize()) {
-            items(matching.size, key = { matching[it].slug }) { index ->
-                val entry = matching[index]
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpen(entry.slug) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .semantics { contentDescription = "Open ${entry.term}" },
-                ) {
-                    Text(entry.term, color = Chotki.parchment, fontSize = 15.sp)
-                    Text(entry.short, color = Chotki.faint, fontSize = 13.sp)
+            if (query.isBlank()) {
+                for ((category, entries) in glossary.byCategory) {
+                    item(key = "category-$category") {
+                        Text(
+                            category.replaceFirstChar { it.uppercase() },
+                            color = Chotki.gold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 2.dp),
+                        )
+                    }
+                    items(entries.size, key = { entries[it].slug }) { index ->
+                        TermRow(entries[index], onOpen)
+                    }
+                }
+            } else {
+                val matching = matches(query, glossary)
+                items(matching.size, key = { matching[it].slug }) { index ->
+                    TermRow(matching[index], onOpen)
                 }
             }
         }
@@ -88,9 +100,12 @@ fun GlossaryScreen(
  * Ranked the way someone actually searches: the exact word first, then what
  * begins with it, then an alias, then anything that merely mentions it.
  */
-internal fun matches(query: String): List<GlossaryEntryJson> {
+internal fun matches(
+    query: String,
+    glossary: Glossary = Glossary.SHARED,
+): List<GlossaryEntryJson> {
     val needle = query.trim().lowercase()
-    if (needle.isEmpty()) return Content.glossary
+    if (needle.isEmpty()) return glossary.entries
 
     fun rank(entry: GlossaryEntryJson): Int? {
         val term = entry.term.lowercase()
@@ -106,7 +121,7 @@ internal fun matches(query: String): List<GlossaryEntryJson> {
         }
     }
 
-    return Content.glossary.mapNotNull { entry -> rank(entry)?.let { entry to it } }
+    return glossary.entries.mapNotNull { entry -> rank(entry)?.let { entry to it } }
         .sortedWith(compareBy({ it.second }, { it.first.term }))
         .map { it.first }
 }
@@ -135,5 +150,19 @@ private fun TermDetail(entry: GlossaryEntryJson, onBack: () -> Unit) {
                 Spacer(Modifier.size(24.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun TermRow(entry: GlossaryEntryJson, onOpen: (String) -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onOpen(entry.slug) }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .semantics { contentDescription = "Open ${entry.term}" },
+    ) {
+        Text(entry.term, color = Chotki.parchment, fontSize = 15.sp)
+        Text(entry.short, color = Chotki.faint, fontSize = 13.sp)
     }
 }

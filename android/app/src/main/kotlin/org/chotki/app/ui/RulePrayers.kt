@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
+import org.chotki.core.content.Glossary
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -26,9 +28,22 @@ import org.chotki.core.content.Content
  * would I like to look at".
  */
 @Composable
-fun RulePrayers(rule: Rule, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun RulePrayers(
+    rule: Rule,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    glossary: Glossary = Glossary.SHARED,
+    onOpenTerm: (String) -> Unit = {},
+) {
+    // Scanned across the whole run, not prayer by prayer. A rule is read
+    // straight through, so linking "Amen" at the end of all six is noise —
+    // the run is the unit the reader lives, not the prayer.
     val prayers = (rule.prayerIDs ?: emptyList())
         .mapNotNull { id -> Content.prayers.firstOrNull { it.id == id } }
+    val linked = remember(rule.id, glossary) {
+        glossary.scanOnce(prayers.flatMap { it.paragraphs })
+    }
+    var paragraphIndex = 0
 
     LazyColumn(modifier.fillMaxSize().background(Chotki.ground)) {
         item {
@@ -58,7 +73,15 @@ fun RulePrayers(rule: Rule, onBack: () -> Unit, modifier: Modifier = Modifier) {
                 if (rubric != null) Text(rubric, color = Chotki.faint, fontSize = 12.sp)
                 Spacer(Modifier.size(6.dp))
                 for (paragraph in prayer.paragraphs) {
-                    Text(paragraph, color = Chotki.parchment, fontSize = 17.sp, lineHeight = 26.sp)
+                    TermText(
+                        text = paragraph,
+                        glossary = glossary,
+                        matches = linked.getOrNull(paragraphIndex),
+                        colour = Chotki.parchment,
+                        size = 17.sp,
+                        onOpenTerm = onOpenTerm,
+                    )
+                    paragraphIndex += 1
                     Spacer(Modifier.size(8.dp))
                 }
                 Text("Source · ${prayer.source}", color = Chotki.faint, fontSize = 11.sp)
