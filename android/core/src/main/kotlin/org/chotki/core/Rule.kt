@@ -1,9 +1,12 @@
 package org.chotki.core
 
+import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.util.UUID
 
+@Serializable
 data class Rule(
+    @Serializable(with = UuidSerializer::class)
     val id: UUID = UUID.randomUUID(),
     val title: String,
     val note: String? = null,
@@ -23,8 +26,10 @@ data class Rule(
     val reminders: org.chotki.core.scheduling.RuleReminders? = null,
     /** The prayers this rule carries, in the order they are said. */
     val prayerIDs: List<String>? = null,
+    @Serializable(with = InstantSerializer::class)
     val createdAt: Instant = Instant.now(),
     /** Set when the rule is removed. Never deleted, so history survives. */
+    @Serializable(with = InstantSerializer::class)
     val archivedAt: Instant? = null,
     /**
      * Set when a rule of one's own is taken out of the library's Custom list.
@@ -54,8 +59,11 @@ data class Rule(
  * without penalty", "resume", and seasonal rules all fall out of one structure.
  * Scoring only ever looks at days covered by an activation.
  */
+@Serializable
 data class Activation(
+    @Serializable(with = UuidSerializer::class)
     val id: UUID = UUID.randomUUID(),
+    @Serializable(with = UuidSerializer::class)
     val ruleID: UUID,
     val from: CalendarDate,
     /** Null means still in force. */
@@ -75,6 +83,7 @@ data class Activation(
     }
 }
 
+@Serializable
 enum class OccurrenceStatus {
     COMPLETED,
 
@@ -98,11 +107,15 @@ enum class OccurrenceStatus {
  * has passed, missed. Absence is the default state, not a record — which keeps
  * the table small and means "missed" needs no bookkeeping to come true.
  */
+@Serializable
 data class Occurrence(
+    @Serializable(with = UuidSerializer::class)
     val id: UUID = UUID.randomUUID(),
+    @Serializable(with = UuidSerializer::class)
     val ruleID: UUID,
     val date: CalendarDate,
     val status: OccurrenceStatus,
+    @Serializable(with = InstantSerializer::class)
     val completedAt: Instant? = null,
     /** Set when status is [OccurrenceStatus.MOVED]. */
     val movedTo: CalendarDate? = null,

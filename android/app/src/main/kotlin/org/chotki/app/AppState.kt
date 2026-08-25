@@ -29,6 +29,8 @@ import org.chotki.core.liturgical.LiturgicalService
 import org.chotki.core.liturgical.OrthocalClient
 import org.chotki.core.store.SqliteStore
 import org.chotki.core.store.Store
+import org.chotki.core.store.exportJson
+import org.chotki.core.store.importJson
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
@@ -152,6 +154,21 @@ class AppState(
             calendarVersion
             (0..3).none { service.cachedDay(today.plusDays(it)) != null }
         } ?: true
+
+    /**
+     * The record, as a file that outlives the app.
+     *
+     * Android is given no permission to back this app up — a record of
+     * someone's prayer life is not something to hand to Google — so this is the
+     * only way it reaches a new phone. See [org.chotki.app.ui.Keeping].
+     */
+    fun exportJson(): String = store.exportJson()
+
+    /** Merges a backup in and reloads. Nothing already here is removed. */
+    fun restoreFrom(text: String) {
+        store.importJson(text)
+        load()
+    }
 
     fun entries(on: CalendarDate): List<DayEntry> = practice.entries(on)
 
