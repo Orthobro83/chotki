@@ -213,9 +213,16 @@ class AppState(
     }
 
     /** Takes a rule on from the library, from today. */
-    fun take(templateID: String) {
-        val template = Content.ruleLibrary.firstOrNull { it.id == templateID } ?: return
-        val rule = Rule(
+    /**
+     * The rule a library template would make, without saving it.
+     *
+     * So the editor can be shown first, filled in — taking something on is a
+     * decision about how often, and asking afterwards meant finding the rule on
+     * the day and opening the pencil.
+     */
+    fun ruleFrom(templateID: String): Rule? {
+        val template = Content.ruleLibrary.firstOrNull { it.id == templateID } ?: return null
+        return Rule(
             title = template.title,
             note = template.note,
             source = "the library",
@@ -225,23 +232,34 @@ class AppState(
             reminders = template.modelReminders,
             prayerIDs = template.prayerIDs.ifEmpty { null },
         )
+    }
+
+    fun take(templateID: String) {
+        val rule = ruleFrom(templateID) ?: return
         store.save(rule)
         store.save(Activation(ruleID = rule.id, from = today))
+        turnOnNeededObservances()
+        load()
+    }
 
-        // Taking on a rule tied to the church calendar is a clear statement of
-        // intent, so the observance it depends on is turned on rather than the
-        // rule silently never coming due.
+    /**
+     * A rule tied to the church calendar is a clear statement of intent, so the
+     * observance it depends on is turned on rather than the rule silently never
+     * coming due.
+     *
+     * Called from [save] as well as [take]: a rule written by hand on fast days
+     * has exactly the same problem, and only the library path was covered.
+     */
+    private fun turnOnNeededObservances() {
         val needed = Practice(
             store.rules(), store.activations(), store.occurrences(), settings,
         ).observancesNeeded()
-        if (needed.isNotEmpty()) {
-            var updated = settings
-            for (trigger in needed) updated = updated.copy(
-                observances = updated.observances.observing(trigger),
-            )
-            store.saveSettings(updated)
-        }
-        load()
+        if (needed.isEmpty()) return
+        var updated = settings
+        for (trigger in needed) updated = updated.copy(
+            observances = updated.observances.observing(trigger),
+        )
+        store.saveSettings(updated)
     }
 
     fun isTaken(templateID: String): Boolean {
@@ -262,6 +280,7 @@ class AppState(
         val existing = store.rule(rule.id)
         store.save(rule)
         if (existing == null) store.save(Activation(ruleID = rule.id, from = from))
+        turnOnNeededObservances()
         load()
     }
 

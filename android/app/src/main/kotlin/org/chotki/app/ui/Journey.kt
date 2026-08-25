@@ -18,7 +18,13 @@ sealed interface Screen {
     data object Psalter : Screen
 
     data object Library : Screen
-    data class Editor(val rule: Rule?) : Screen
+    /**
+     * [rule] is an existing rule being changed. [startingFrom] is a new one
+     * filled in from a library template and not yet saved — taking something on
+     * is a decision about how often, so it is asked before the rule lands on
+     * the day rather than after.
+     */
+    data class Editor(val rule: Rule?, val startingFrom: Rule? = null) : Screen
     data class RulePrayers(val ruleID: UUID) : Screen
     data object Rope : Screen
     data object Reading : Screen

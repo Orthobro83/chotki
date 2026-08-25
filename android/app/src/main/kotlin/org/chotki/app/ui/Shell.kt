@@ -76,6 +76,7 @@ fun Shell(state: AppState) {
                 is Screen.Editor -> RuleEditor(
                     state = state,
                     existing = screen.rule,
+                    startingFrom = screen.startingFrom,
                     onDone = { journey = journey.back() },
                     modifier = Modifier.weight(1f),
                 )
@@ -120,6 +121,7 @@ fun Shell(state: AppState) {
                         state = state,
                         modifier = Modifier.weight(1f),
                         onWriteYourOwn = { journey = journey.push(Screen.Editor(null)) },
+                        onTakeOn = { journey = journey.push(Screen.Editor(null, startingFrom = it)) },
                     )
                 }
 

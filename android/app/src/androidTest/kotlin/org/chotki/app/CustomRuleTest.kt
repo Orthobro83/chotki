@@ -118,7 +118,14 @@ class CustomRuleTest {
         compose.waitForIdle()
         compose.onNodeWithContentDescription("Rule editor").assertIsDisplayed()
 
+        // How often is a menu now, so it is opened before it is chosen from.
+        // Matched on the field rather than its current value, which depends on
+        // whatever the rule already says.
+        compose.onNode(hasContentDescription("How often", substring = true))
+            .performScrollTo().performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("Choose Every day").performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 

@@ -34,6 +34,12 @@ fun LibrarySheet(
     state: AppState,
     modifier: Modifier = Modifier,
     onWriteYourOwn: () -> Unit = {},
+    /**
+     * Taking a template on opens it filled in, so how often can be settled
+     * there. Rules of one's own are put back with [AppState.takeUp] instead:
+     * that is the same rule returning, and its history follows it.
+     */
+    onTakeOn: (org.chotki.core.Rule) -> Unit = {},
 ) {
     val grouped = Content.ruleLibrary.groupBy { it.category }
     val custom = state.customEntries
@@ -57,7 +63,7 @@ fun LibrarySheet(
                 )
             }
             items(templates.size, key = { templates[it].id }) { index ->
-                TemplateRow(templates[index], state)
+                TemplateRow(templates[index], state, onTakeOn)
             }
         }
 
@@ -152,7 +158,11 @@ private fun CustomRow(rule: org.chotki.core.Rule, state: AppState) {
 }
 
 @Composable
-private fun TemplateRow(template: RuleTemplateJson, state: AppState) {
+private fun TemplateRow(
+    template: RuleTemplateJson,
+    state: AppState,
+    onTakeOn: (org.chotki.core.Rule) -> Unit,
+) {
     val taken = state.isTaken(template.id)
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -180,7 +190,7 @@ private fun TemplateRow(template: RuleTemplateJson, state: AppState) {
                 fontSize = 13.sp,
                 modifier = Modifier
                     .border(1.dp, Chotki.goldDim, RoundedCornerShape(4.dp))
-                    .clickable { state.take(template.id) }
+                    .clickable { state.ruleFrom(template.id)?.let(onTakeOn) }
                     .padding(horizontal = 10.dp, vertical = 4.dp)
                     .semantics { contentDescription = "Take on ${template.title}" },
             )

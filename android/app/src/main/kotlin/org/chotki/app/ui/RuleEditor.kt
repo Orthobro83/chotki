@@ -17,6 +17,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,18 +54,28 @@ import org.chotki.core.Weekday
 fun RuleEditor(
     state: AppState,
     existing: Rule?,
+    /**
+     * A new rule, filled in from a library template but not yet saved. The
+     * fields start here and the button still says "Take it on", because that is
+     * what saving it does.
+     */
+    startingFrom: Rule? = null,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var title by remember { mutableStateOf(existing?.title ?: "") }
-    var note by remember { mutableStateOf(existing?.note ?: "") }
-    var source by remember { mutableStateOf(existing?.source ?: "") }
+    // From whichever rule is being filled in. Reading only `existing` dropped
+    // the template's own time: Morning prayers arrived at 06:30 and the editor
+    // opened saying it ran all day, which is not what was taken on.
+    val filling = existing ?: startingFrom
+    var title by remember { mutableStateOf(filling?.title ?: "") }
+    var note by remember { mutableStateOf(filling?.note ?: "") }
+    var source by remember { mutableStateOf(filling?.source ?: "") }
     var form by remember {
-        mutableStateOf(existing?.let { RecurrenceForm.of(it.recurrence) } ?: RecurrenceForm())
+        mutableStateOf(filling?.let { RecurrenceForm.of(it.recurrence) } ?: RecurrenceForm())
     }
-    var hasTime by remember { mutableStateOf(existing?.timeOfDay != null) }
-    var hour by remember { mutableStateOf(existing?.timeOfDay?.hour ?: 6) }
-    var minute by remember { mutableStateOf(existing?.timeOfDay?.minute ?: 30) }
+    var hasTime by remember { mutableStateOf(filling?.timeOfDay != null) }
+    var hour by remember { mutableStateOf(filling?.timeOfDay?.hour ?: 6) }
+    var minute by remember { mutableStateOf(filling?.timeOfDay?.minute ?: 30) }
 
     Column(
         modifier
@@ -71,34 +85,48 @@ fun RuleEditor(
             .padding(16.dp),
     ) {
         Text(
-            if (existing == null) "Write your own rule" else "Edit this rule",
+            when {
+                existing != null -> "Edit this rule"
+                startingFrom != null -> "Take this on"
+                else -> "Write your own rule"
+            },
             color = Chotki.parchment,
             fontSize = 18.sp,
             modifier = Modifier.semantics { contentDescription = "Rule editor" },
         )
         Spacer(Modifier.size(14.dp))
 
-        Field("What is it?", title, "Evening prayers", "Rule title") { title = it }
-        Field("A note, if you want one", note, "before sleep", "Rule note") { note = it }
+        Field("What is it?", title, "Write something…", "Rule title") { title = it }
+        Field("A note, if you want one", note, "Write something…", "Rule note") { note = it }
         // Rules arrive from other people over months and their origin matters
-        // later: "Fr. Peter", "my godfather", "the parish bulletin".
-        Field("Where it came from", source, "my godfather", "Rule source") { source = it }
+        // later: "Fr. Peter", "my godfather", "the parish bulletin". The hint is
+        // neutral rather than an example, because an example that contradicts
+        // the rule being taken on — "before sleep" under Morning prayers —
+        // reads as the app not paying attention.
+        Field("Where it came from", source, "Write something…", "Rule source") { source = it }
 
         Spacer(Modifier.size(10.dp))
-        Text("How often", color = Chotki.gold, fontSize = 13.sp)
-        for (kind in RecurrenceForm.Kind.entries) {
-            Choice(kind.label, form.kind == kind) { form = form.copy(kind = kind) }
-        }
+        // Seven full-width choices stacked took most of a phone screen before
+        // the time picker had even appeared. One line, opened when wanted.
+        Dropdown(
+            label = "How often",
+            chosen = form.kind.label,
+            options = RecurrenceForm.Kind.entries.map { it.label },
+        ) { index -> form = form.copy(kind = RecurrenceForm.Kind.entries[index]) }
 
         if (form.kind == RecurrenceForm.Kind.WEEKLY) {
             Spacer(Modifier.size(8.dp))
             Text("Which days", color = Chotki.gold, fontSize = 13.sp)
-            for (day in Weekday.entries) {
-                val chosen = day in form.weekdays
-                Choice(day.name.lowercase().replaceFirstChar { it.uppercase() }, chosen) {
-                    form = form.copy(
-                        weekdays = if (chosen) form.weekdays - day else form.weekdays + day,
-                    )
+            // Several at once, so these stay chips rather than becoming a menu —
+            // but in a row that scrolls, for the same reason as above.
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                for (day in Weekday.entries) {
+                    val chosen = day in form.weekdays
+                    Choice(day.name.take(3).lowercase().replaceFirstChar { it.uppercase() }, chosen, compact = true) {
+                        form = form.copy(
+                            weekdays = if (chosen) form.weekdays - day else form.weekdays + day,
+                        )
+                    }
                 }
             }
         }
@@ -152,7 +180,7 @@ fun RuleEditor(
                     .border(1.dp, Chotki.goldDim, RoundedCornerShape(4.dp))
                     .clickable(enabled = title.isNotBlank()) {
                         state.save(
-                            (existing ?: Rule(title = title, recurrence = Recurrence.Daily)).copy(
+                            (existing ?: startingFrom ?: Rule(title = title, recurrence = Recurrence.Daily)).copy(
                                 title = title.trim(),
                                 note = note.ifBlank { null },
                                 source = source.ifBlank { null },
@@ -241,4 +269,56 @@ private fun Choice(label: String, chosen: Boolean, compact: Boolean = false, onP
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .semantics { contentDescription = "Choose $label" },
     )
+}
+
+/**
+ * A labelled line that opens its choices, rather than showing all of them.
+ *
+ * The chips are still right for a handful of side-by-side options; this is for
+ * the lists long enough to push everything below them off a phone.
+ */
+@Composable
+private fun Dropdown(
+    label: String,
+    chosen: String,
+    options: List<String>,
+    onChoose: (Int) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+
+    Text(label, color = Chotki.gold, fontSize = 13.sp)
+    Box {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .border(1.dp, Chotki.goldDim, RoundedCornerShape(4.dp))
+                .clickable { open = true }
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .semantics { contentDescription = "$label — $chosen" },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(chosen, color = Chotki.parchment, fontSize = 15.sp, modifier = Modifier.weight(1f))
+            Text(if (open) "⌃" else "⌄", color = Chotki.goldDim, fontSize = 14.sp)
+        }
+
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            modifier = Modifier.background(Chotki.panel),
+        ) {
+            options.forEachIndexed { index, option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            option,
+                            color = if (option == chosen) Chotki.gold else Chotki.parchment,
+                            fontSize = 15.sp,
+                        )
+                    },
+                    onClick = { onChoose(index); open = false },
+                    modifier = Modifier.semantics { contentDescription = "Choose $option" },
+                )
+            }
+        }
+    }
 }

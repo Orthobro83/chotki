@@ -5,9 +5,16 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import org.chotki.app.ui.RuleEditor
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.chotki.app.platform.AndroidDb
 import org.chotki.app.ui.ChotkiTheme
@@ -44,12 +51,21 @@ class RuleScreenTest {
         compose.onNodeWithText("Nothing on the rule for this day.").assertIsDisplayed()
     }
 
+    /**
+     * Taking something on now opens it filled in, so how often can be settled
+     * before it lands rather than by hunting down the pencil afterwards.
+     * Nothing is saved until the button is pressed.
+     */
     @Test
     fun takingARuleOnFromTheLibraryPutsItOnTheDay() {
         val state = freshState().also { it.load() }
-        compose.setContent { ChotkiTheme { LibrarySheet(state) } }
+        compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
         compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+        assertEquals("it was saved before the editor was even answered", 0, state.rules.size)
+
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 
         assertTrue("the library did not take the rule on", state.isTaken("morning-prayers"))
@@ -63,14 +79,40 @@ class RuleScreenTest {
     @Test
     fun aRuleTakenOnCarriesItsPrayersAndItsTime() {
         val state = freshState().also { it.load() }
-        compose.setContent { ChotkiTheme { LibrarySheet(state) } }
+        compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
         compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 
         val rule = state.rules.single()
         assertTrue("the prayers did not come with it", rule.hasPrayers)
+        // The template's own time has to survive the trip through the editor.
+        // Reading only `existing` dropped it, and the rule arrived running all
+        // day when what was taken on said half past six.
         assertEquals(6, rule.timeOfDay?.hour)
+        assertEquals(30, rule.timeOfDay?.minute)
+    }
+
+    /** How often can be changed before the rule ever reaches the day. */
+    @Test
+    fun theRecurrenceCanBeSettledWhileTakingItOn() {
+        val state = freshState().also { it.load() }
+        compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
+
+        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithContentDescription("How often — Every day").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Choose Certain weekdays").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        val recurrence = state.rules.single().recurrence
+        assertTrue("it was saved as $recurrence", recurrence is org.chotki.core.Recurrence.Weekly)
     }
 
     // The bug this exists to prevent, carried from macOS: the box is the only
@@ -131,7 +173,7 @@ class RuleScreenTest {
     @Test
     fun takingOnAFastingRuleStartsObservingFasting() {
         val state = freshState().also { it.load() }
-        compose.setContent { ChotkiTheme { LibrarySheet(state) } }
+        compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
         // A LazyColumn composes only what is on screen, so the fasting section
         // has to be scrolled to — which is what a person does too.
@@ -139,11 +181,34 @@ class RuleScreenTest {
             .performScrollToNode(hasContentDescription("Take on Great Lent"))
         compose.onNodeWithContentDescription("Take on Great Lent").performClick()
         compose.waitForIdle()
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
+        compose.waitForIdle()
 
         assertEquals(
             "the rule was added but could never come due",
             org.chotki.core.Observance.OBSERVED,
             state.settings.observances.fasting,
         )
+    }
+
+    /**
+     * The library and the editor wired together as the Shell wires them, so
+     * these tests drive the path a person actually takes without composing the
+     * whole app around it.
+     */
+    @Composable
+    private fun LibraryThenEditor(state: AppState) {
+        var pending by remember { mutableStateOf<org.chotki.core.Rule?>(null) }
+        val starting = pending
+        if (starting == null) {
+            LibrarySheet(state, onTakeOn = { pending = it })
+        } else {
+            RuleEditor(
+                state = state,
+                existing = null,
+                startingFrom = starting,
+                onDone = { pending = null },
+            )
+        }
     }
 }
