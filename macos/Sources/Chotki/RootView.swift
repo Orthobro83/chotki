@@ -9,7 +9,6 @@ enum Tab: String, CaseIterable {
 
 struct RootView: View {
     @ObservedObject var model: AppModel
-    @State private var tab: Tab = .rule
 
     var body: some View {
         VStack(spacing: 0) {
@@ -84,16 +83,16 @@ struct RootView: View {
         HStack(spacing: 0) {
             ForEach(Tab.allCases, id: \.self) { candidate in
                 Button {
-                    tab = candidate
+                    model.tab = candidate
                 } label: {
                     Text(candidate.rawValue)
                         .font(.system(size: 12))
-                        .foregroundStyle(tab == candidate ? Theme.parchment : Theme.muted)
+                        .foregroundStyle(model.tab == candidate ? Theme.parchment : Theme.muted)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
                         .overlay(alignment: .bottom) {
                             Rectangle()
-                                .fill(tab == candidate ? Theme.gold : .clear)
+                                .fill(model.tab == candidate ? Theme.gold : .clear)
                                 .frame(height: 2)
                         }
                 }
@@ -103,7 +102,7 @@ struct RootView: View {
     }
 
     @ViewBuilder private var content: some View {
-        switch tab {
+        switch model.tab {
         case .rule: RuleTabView(model: model)
         case .reading: ReadingView(model: model)
         case .progress: ProgressTabView(model: model)

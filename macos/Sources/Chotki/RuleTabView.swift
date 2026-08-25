@@ -283,13 +283,27 @@ struct EntryRow: View {
 
             // Always shown when a rule carries prayers, not only on hover: it
             // is the way to the words, which is the point of the rule.
-            if entry.rule.hasPrayers {
+            // Whenever the app holds the text the rule names. Asking only
+            // about prayers left the reading rules — the day's Gospel, Epistle
+            // and the saint's life — with no way through at all, on both
+            // platforms, for the same reason.
+            switch entry.rule.reference {
+            case .prayers:
                 Button { model.screen = .prayers(entry.rule.id) } label: {
                     Image(systemName: "text.alignleft").font(.system(size: 10))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
                 .help("Read the prayers")
+            case .reading:
+                Button { model.tab = .reading } label: {
+                    Image(systemName: "text.alignleft").font(.system(size: 10))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
+                .help("Read the day's readings")
+            case .none:
+                EmptyView()
             }
 
             // Always drawn, never only on hover. Appearing on hover made the
@@ -311,9 +325,15 @@ struct EntryRow: View {
             if entry.isDispensed {
                 Text("Lifted by the Church today")
             } else {
-                if entry.rule.hasPrayers {
+                switch entry.rule.reference {
+                case .prayers:
                     Button("Read the prayers") { model.screen = .prayers(entry.rule.id) }
                     Divider()
+                case .reading:
+                    Button("Read the day's readings") { model.tab = .reading }
+                    Divider()
+                case .none:
+                    EmptyView()
                 }
                 Button(entry.isKept ? "Clear this day" : "Mark as kept") { model.toggleKept(entry) }
                 if !entry.isKept {

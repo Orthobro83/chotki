@@ -15,10 +15,16 @@ import Foundation
 struct IconExportTests {
 
     /// Android's adaptive icon is a 108×108 canvas whose outer ring is masked
-    /// away by whichever shape the launcher prefers. Content belongs in the
-    /// middle 72; 68 leaves the mark a little air inside that.
+    /// away by whichever shape the launcher prefers, leaving about the middle
+    /// 72 showing.
+    ///
+    /// The mark is sized so it fills the same share of what you actually see as
+    /// it does on the Mac: there the mark is 0.72 of the icon inside a rounded
+    /// square covering 0.906 of it, which is 79%. 0.79 × 72 ≈ 57. Filling the
+    /// safe zone instead made the same rope read as noticeably tighter than the
+    /// Mac's, which is not what "the same icon" means.
     private static let canvas = 108.0
-    private static let mark = 68.0
+    private static let mark = 57.0
     private static let origin = (canvas - mark) / 2
 
     private static let path: String = {

@@ -4,6 +4,11 @@ import ChotkiCore
 
 /// Where the popover currently is. A menu bar window handles sheets badly, so
 /// navigation is an explicit stack of screens inside the popover instead.
+/// Which tab is showing.
+///
+/// On the model rather than in `RootView`, because a rule row has to be able to
+/// send someone to the readings — the day's Gospel is a text the app holds, and
+/// the way to it should be the same three lines that lead to a prayer.
 enum Screen: Hashable {
     case main
     case library
@@ -29,6 +34,7 @@ final class AppModel: ObservableObject {
     @Published var selectedDate: CalendarDate
     @Published var visibleMonth: CalendarDate
     @Published var screen: Screen = .main
+    @Published var tab: Tab = .rule
     /// Where the Terms screen goes back to.
     ///
     /// Every route into the glossary is a detour from something else — the day's
