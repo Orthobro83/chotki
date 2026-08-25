@@ -30,17 +30,42 @@ object Reminders {
                 zone = zone,
             )
 
-            // Only what is still ahead. Arming an alarm for a moment that has
+            val tomorrow = today.plusDays(1)
+            val rules = store.rules()
+            val activations = store.activations()
+            val occurrences = store.occurrences(from = today, through = tomorrow)
+
+            // Today and tomorrow, not today alone.
+            //
+            // Two things were wrong with one day. Nothing re-arms unless the app
+            // is opened, so a day it was not opened had no reminders at all. And
+            // "the evening before" fires at 20:00 the day *before* the rule is
+            // due, so planning only today could never arm it — that lead has
+            // never once worked on this platform.
+            //
+            // Only what is still ahead: arming an alarm for a moment that has
             // passed fires it immediately, which is how a reboot at lunchtime
             // would deliver the whole morning at once.
-            val pending = scheduler.pending(
-                rules = store.rules(),
-                activations = store.activations(),
-                occurrences = store.occurrences(from = today, through = today),
-                on = today,
-                after = now,
-            )
+            val pending = listOf(today, tomorrow).flatMap { day ->
+                scheduler.pending(
+                    rules = rules,
+                    activations = activations,
+                    occurrences = occurrences,
+                    on = day,
+                    after = now,
+                )
+            }
             ReminderAlarms(context).arm(pending)
+
+            // What is already on screen has to come down too. A notification
+            // shown at 06:20 for a rule kept at 06:25 sat there until it was
+            // swiped away; core has always had `cancellationIDs` for this and
+            // nothing on Android called it.
+            val wanted = pending.map { it.request.id }.toSet()
+            val stale = scheduler.plan(rules, activations, emptyList(), today)
+                .map { it.request.id }
+                .filterNot { it in wanted }
+            if (stale.isNotEmpty()) AndroidNotifier(context).cancel(stale)
         } finally {
             db.close()
         }

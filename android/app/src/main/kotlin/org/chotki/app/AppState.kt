@@ -235,6 +235,12 @@ class AppState(
      * the default state, and skipped means something else entirely — a day
      * deliberately stood down, which leaves both sides of the score.
      */
+    /**
+     * Marking a day settled changes what should be armed, so it reschedules.
+     *
+     * It did not, and that is half of why a rule went on buzzing after it had
+     * been kept — the plan stopped including it and nothing acted on that.
+     */
     fun toggleKept(entry: DayEntry) {
         if (entry.isDispensed) return
         if (entry.isKept) {
@@ -251,6 +257,7 @@ class AppState(
             )
         }
         load()
+        rescheduleReminders()
     }
 
     fun standDown(entry: DayEntry) {
@@ -262,6 +269,7 @@ class AppState(
             ),
         )
         load()
+        rescheduleReminders()
     }
 
     /** Takes a rule on from the library, from today. */

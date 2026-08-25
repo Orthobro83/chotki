@@ -19,6 +19,8 @@ class ReminderReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_FIRE = "org.chotki.FIRE"
+        const val EXTRA_RULE_ID = "rule"
+        const val EXTRA_DATE = "date"
         const val ACTION_BUTTON = "org.chotki.BUTTON"
         const val EXTRA_REQUEST = "org.chotki.request_json"
 
@@ -35,7 +37,28 @@ class ReminderReceiver : BroadcastReceiver() {
         when (intent.action) {
             ACTION_FIRE -> {
                 val payload = intent.getStringExtra(EXTRA_REQUEST) ?: return
-                AndroidNotifier(context).show(decode(payload))
+                val ruleID = intent.getStringExtra(EXTRA_RULE_ID)
+                val date = intent.getStringExtra(EXTRA_DATE)
+
+                // Asked again at the moment of firing, not only when armed.
+                // Cancelling covers the ordinary case, but an alarm held back by
+                // Doze can arrive hours late — after the rule was kept, stood
+                // down, or removed — and showing it then is the complaint that
+                // started this.
+                if (ruleID != null && date != null) {
+                    val result = goAsync()
+                    Thread {
+                        try {
+                            if (stillWanted(context, ruleID, date)) {
+                                AndroidNotifier(context).show(decode(payload))
+                            }
+                        } finally {
+                            result.finish()
+                        }
+                    }.start()
+                } else {
+                    AndroidNotifier(context).show(decode(payload))
+                }
             }
 
             ACTION_BUTTON -> {
@@ -69,5 +92,39 @@ object PendingActions {
         val out = recorded.toList()
         recorded.clear()
         out
+    }
+}
+
+/**
+ * Whether a reminder should still be shown, asked of the record itself.
+ *
+ * A receiver has a few milliseconds on the main thread, so this runs on
+ * `goAsync` — it opens the database, which is exactly what a receiver must not
+ * do inline.
+ */
+private fun stillWanted(context: android.content.Context, ruleID: String, date: String): Boolean {
+    val db = AndroidDb.open(context)
+    return try {
+        val store = org.chotki.core.store.SqliteStore(db)
+        val settings = store.loadSettings() ?: org.chotki.core.AppSettings.DEFAULT
+        val on = org.chotki.core.CalendarDate.parse(date) ?: return false
+        val id = runCatching { java.util.UUID.fromString(ruleID) }.getOrNull() ?: return false
+
+        val scheduler = org.chotki.core.scheduling.Scheduler(
+            engine = org.chotki.core.RecurrenceEngine(observances = settings.observances),
+            policy = settings.reminders,
+        )
+        scheduler.plan(
+            rules = store.rules(),
+            activations = store.activations(),
+            occurrences = store.occurrences(from = on, through = on),
+            on = on,
+        ).any { it.ruleID == id }
+    } catch (e: Exception) {
+        // If the record cannot be read, show it. A reminder that arrives when
+        // it need not is a smaller failure than one that never arrives.
+        true
+    } finally {
+        db.close()
     }
 }
