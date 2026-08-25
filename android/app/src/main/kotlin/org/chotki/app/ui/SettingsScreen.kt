@@ -11,6 +11,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
+import org.chotki.app.BuildConfig
 
 /**
  * What can be changed, and a plain account of whether reminders will arrive.
@@ -31,6 +38,34 @@ import org.chotki.app.AppState
 fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val readiness = ReminderReadiness.of(context)
+
+    // The two pickers are Android's own, so no storage permission is involved
+    // and the person chooses where their record goes.
+    var keepingNotice by remember { mutableStateOf<String?>(null) }
+    val save = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        keepingNotice = uri?.let {
+            when (val outcome = Keeping.save(context, state, it)) {
+                is Keeping.Outcome.Saved -> "Saved to ${outcome.name}."
+                is Keeping.Outcome.Failed -> outcome.reason
+                else -> null
+            }
+        }
+    }
+    val restore = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        keepingNotice = uri?.let {
+            when (val outcome = Keeping.restore(context, state, it)) {
+                is Keeping.Outcome.Restored ->
+                    "Restored. You are keeping ${outcome.rules} " +
+                        if (outcome.rules == 1) "rule." else "rules."
+                is Keeping.Outcome.Failed -> outcome.reason
+                else -> null
+            }
+        }
+    }
 
     Column(
         modifier
@@ -71,10 +106,42 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
             )
         }
 
+        Heading("Your record")
+        // Android gives an app no place to leave anything behind and Chotki
+        // turns Android's own backup off, so this is the only way a record
+        // reaches a new phone. Said plainly, because someone who does not know
+        // it will find out the hard way.
+        Line(
+            "Your record is kept on this phone only. It is not sent anywhere, and " +
+                "uninstalling Chotki takes it with it. Save a copy before you change phones.",
+            Chotki.faint,
+        )
+        Action("Save a copy of your record") { save.launch(Keeping.suggestedName()) }
+        Action("Restore from a copy") { restore.launch(arrayOf("application/json", "*/*")) }
+        keepingNotice?.let { Line(it, Chotki.gold) }
+
         Heading("This is an alpha")
+        Line(
+            "Chotki ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})",
+            Chotki.parchment,
+        )
         Line(
             "The glossary, the prayers and the readings are awaiting a priest's review. " +
                 "Nothing here tells you what you must do; what you keep is settled with your priest or spiritual father.",
+            Chotki.faint,
+        )
+        // On macOS this framing reaches you through the releases page. An apk is
+        // passed from hand to hand with no page attached, so it has to travel
+        // inside the app or it does not travel at all.
+        Line(
+            "Chotki is an independent project. It was inspired by The Brotherhood " +
+                "of the Narrow Path, but it is not sanctioned by, affiliated with, or " +
+                "endorsed by them, and nothing in it speaks for them.",
+            Chotki.faint,
+        )
+        Line(
+            "Not open source. During the alpha you may install and run it for your own " +
+                "use. Please do not sell it or pass it on further.",
             Chotki.faint,
         )
         Spacer(Modifier.size(32.dp))
@@ -122,4 +189,19 @@ private fun Diagnostic(label: String, allowed: Boolean, onOpen: () -> Unit) {
             fontSize = 12.sp,
         )
     }
+}
+
+/** A line that does something, told apart from the rest by being gold. */
+@Composable
+private fun Action(label: String, onTap: () -> Unit) {
+    Text(
+        label,
+        color = Chotki.gold,
+        fontSize = 15.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onTap)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .semantics { contentDescription = label },
+    )
 }

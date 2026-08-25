@@ -29,3 +29,8 @@ android/.kotlin/
 
 # Heap dumps from a Gradle/dex OOM
 *.hprof
+
+# The release signing key and its passwords. Never committed.
+keystore.properties
+*.jks
+*.keystore

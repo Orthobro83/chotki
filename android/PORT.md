@@ -224,6 +224,28 @@ Ryan's own device first, with his real rule, for several days. Then an APK for
 the Brotherhood with the same alpha framing as the macOS release, and the same
 licence terms.
 
+Ready for the device: the release build type signs from a gitignored
+`keystore.properties` and shouts if it falls back to the debug key
+(`RELEASE.md`); Settings carries the version, the alpha notice, the Brotherhood
+disclaimer and the licence, because an apk is passed hand to hand with no
+releases page attached; the README says how to sideload it **without developer
+mode or USB debugging**, which was the thing standing between this app and
+Ryan's daily-driver phone; and `DEVICE-CHECKLIST.md` is the week itself.
+
+Two things surfaced while getting there and were fixed rather than noted:
+
+- **The stored recurrence held Kotlin class names.** kotlinx wrote
+  `org.chotki.core.Recurrence.Daily` into the column, so renaming or moving the
+  class would have silently failed to decode every rule anyone had taken up.
+  The eight names are frozen with `@SerialName` and V7 rewrites what exists.
+  This had to happen before an apk went out, not after.
+- **There was no way to keep a record.** macOS exports and merge-restores JSON;
+  Android had neither, and turns Android's own backup off deliberately. A
+  tester changing phones would have lost everything. Settings now saves and
+  restores through the Storage Access Framework — no storage permission, the
+  person chooses where it goes, and a Mac backup is refused with a reason
+  rather than half-read.
+
 **Done when:** Ryan has kept his rule on Android for a week without opening the
 Mac app to check something.
 

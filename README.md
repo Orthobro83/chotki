@@ -87,6 +87,8 @@ That is a fixed constraint rather than a style choice, and it is enforced by tes
 
 ## Getting it
 
+### macOS
+
 **Apple Silicon Macs only** for now (M1 and later), running macOS 13 or later. An Intel build needs a universal binary, which is coming.
 
 1. Download `Chotki.zip` from the [releases page](../../releases) and unzip it.
@@ -97,13 +99,56 @@ That is a fixed constraint rather than a style choice, and it is enforced by tes
 
 A cross appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
 
-### Why macOS blocks it
+#### Why macOS blocks it
 
 Because this build is signed by its author rather than notarised by Apple, which costs a hundred dollars a year and is not worth it for an alpha. macOS cannot tell an unnotarised app from a harmful one, so it refuses both. The source is here to read if you would rather check it yourself, and the whole app is built by the script in `macos/build-app.sh` if you would rather build it than trust a download.
 
-### Removing it
+#### Removing it
 
 Drag the app to the trash. Your record lives in `~/Library/Application Support/Chotki` — delete that folder too if you want it gone, or keep it and it will be there if you reinstall.
+
+### Android
+
+**Android 8 or later**, which is effectively every phone still in use.
+
+You do **not** need developer mode, USB debugging, or Android Studio. Those are
+for building the app, not for running it, and turning them on is what upsets
+banking apps — installing an apk does not.
+
+1. Download `chotki.apk` onto the phone from the [releases page](../../releases).
+2. Open it — from the notification, or from Files › Downloads.
+3. Android will say it cannot install apps from this source. Tap **Settings**
+   on that prompt, turn on **Allow from this source** for whatever app you
+   opened it with (usually Files or Chrome), and go back.
+4. Tap **Install**. Play Protect may add a second warning about an unrecognised
+   developer — **Install anyway**.
+5. Open it. It asks permission to send notifications; allow it if you want
+   reminders, and the app works either way.
+
+Nothing is switched on until you choose something from the library.
+
+#### If reminders stop arriving after a day or two
+
+Android puts apps it thinks you have stopped using to sleep, and Samsung, Xiaomi
+and OnePlus each keep a second list of their own on top of that. Settings ›
+Reminders inside Chotki names the three switches, says which are set, and each
+one opens the Android screen where it is actually changed. On Samsung the extra
+one is Settings › Battery › Background usage limits › Never sleeping apps, and
+no app can read or set it for you.
+
+#### Why Android warns about it
+
+The same reason macOS does. The apk is signed by its author rather than
+distributed through Google Play, and Android cannot tell an app signed by
+someone it does not know from a harmful one, so it warns about both. The source
+is here to read, and `android/RELEASE.md` builds it if you would rather build it
+than trust a download.
+
+#### Removing it
+
+Press and hold the icon, then Uninstall. Your record goes with it — Android
+gives an app no place to leave anything behind — so if you plan to reinstall,
+it will start empty.
 
 ## Licence
 

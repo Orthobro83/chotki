@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     // Kotlin support is built into the Android plugin from AGP 9; applying
     // org.jetbrains.kotlin.android alongside it is now an error.
@@ -27,11 +29,57 @@ android {
 
     buildFeatures {
         compose = true
+        // So the app can say which build it is. An alpha handed to a dozen
+        // people produces reports like "it did the thing again", and without a
+        // version there is no way to know which build they mean.
+        buildConfig = true
+    }
+
+    /**
+     * The release key is Ryan's, and is not in this repository.
+     *
+     * Android ties an installed app to the key that signed it: an update signed
+     * with a different key will not install over it, and the only remedy is for
+     * every person who has it to uninstall and lose their record. So the key is
+     * made once, kept safe, and never regenerated. `keystore.properties` is
+     * gitignored; `android/RELEASE.md` says how to make it.
+     */
+    val keystore = Properties().apply {
+        val file = rootProject.file("keystore.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
+    val signable = keystore.getProperty("storeFile") != null
+
+    signingConfigs {
+        if (signable) {
+            create("release") {
+                storeFile = rootProject.file(keystore.getProperty("storeFile"))
+                storePassword = keystore.getProperty("storePassword")
+                keyAlias = keystore.getProperty("keyAlias")
+                keyPassword = keystore.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
+            // R8 is off deliberately. This is an alpha given to people who are
+            // doing us a favour by running it, and an obfuscated stack trace
+            // from someone who cannot reproduce the crash is worth nothing.
+            // The apk is ~8MB either way.
             isMinifyEnabled = false
+            isDebuggable = false
+            signingConfig = if (signable) {
+                signingConfigs.getByName("release")
+            } else {
+                // Still builds, so the release path is exercised in CI and on a
+                // machine without the key — but it is not the apk to hand out.
+                logger.warn(
+                    "Chotki: no keystore.properties — signing release with the " +
+                        "debug key. Do not distribute this apk. See android/RELEASE.md.",
+                )
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

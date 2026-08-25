@@ -78,6 +78,8 @@ platform layer, and the only places Android-specific code belongs.
 | `LaunchAtLogin` | `MacLaunchAtLogin` (SMAppService) | No equivalent — Android has no login items |
 | `Clock` | `SystemClock` (in core) | Direct translation |
 | `LiturgicalDayProvider` | `LiturgicalService` (in core) | Direct translation |
+| Backup export/restore | `Store.exportJSON` / `importBackup` (in core) | Same shape, own encoding — **files are not interchangeable**, and each refuses the other's by name rather than half-reading it |
+| App icon | `CrossIcon.appIcon`, AppKit | `ic_launcher_foreground.xml`, generated from `RopeMarkGeometry` by a Swift test so neither is hand-traced |
 
 Plus, with no protocol behind them, the two deliberate platform-glue types:
 `ReminderDriver` (a `Timer` on a run loop → `AlarmManager`) and
