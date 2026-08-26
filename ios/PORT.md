@@ -123,6 +123,32 @@ back-swipe comes with it for nothing.
 floor here is 17, so below that the push is the ordinary one. A transition is
 not worth excluding a device over.
 
+## What phase 6 settled
+
+Reminders on iOS are a different shape, and a simpler one. On Android a reminder
+is an alarm that wakes the app so it can post a notification, and the alarms had
+to be written down because AlarmManager will not say what it is holding — all
+five reminder bugs lived in that gap. Here the notification *is* the schedule:
+handed to the system with an identifier and a time, delivered whatever the app
+is doing, and taken back by the same identifier.
+
+So the problem reduces to keeping one set in step with another, and that
+arithmetic is separated from the system deliberately. A test that drives the
+real notification centre needs authorisation and a dialogue, and the temptation
+is then to test the app's own note of what it did instead — which is what the
+first Android version of this did, and it passed with the fix removed. The
+reconciliation is a pure function, tested directly, and the withdrawal test was
+run against the code with the withdrawal taken out and watched to fail.
+
+**Withdrawal is in from the first commit.** `ReminderTicker` decides what to
+show *and what to take down*; Android has it ported, tested, and used by
+nothing.
+
+Sound uses `.ambient` with `mixWithOthers`, which follows the media volume. The
+Android equivalent used sonification, which follows the ringer — so a phone on
+vibrate played nothing, which is most phones most of the time, and it worked on
+an emulator and not on a real device.
+
 ## Phases
 
 Each ends with something runnable and tested, as the Android phases did.

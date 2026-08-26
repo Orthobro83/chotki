@@ -13,6 +13,10 @@ struct ChotkiApp: App {
                 // own background, so nothing else showed it: on a phone already
                 // set to dark it would have looked correct and been wrong.
                 .preferredColorScheme(.dark)
+                // Asked once, plainly, and not insisted on. Nothing arrives
+                // without it and nothing errors, so the alternative to asking
+                // is reminders that silently never come.
+                .task { _ = await Reminders().requestAuthorization() }
         }
     }
 }
@@ -107,7 +111,10 @@ private struct Destination: View {
             PrayersView(model: model, ruleID: ruleID)
                 .zoomDestination(id: ruleID, in: transition)
         case .editor(let ruleID):
-            NotYet(place: ruleID == nil ? "A rule of your own" : "Editing")
+            RuleEditor(
+                model: model,
+                existing: ruleID.flatMap { id in model.rules.first { $0.id == id } }
+            )
         case .term(let slug):
             GlossaryView_(model: model, slug: slug)
         case .psalter:

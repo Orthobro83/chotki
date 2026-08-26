@@ -211,3 +211,190 @@ struct ScreenTests {
         #expect(Kathisma.divisions.count == 20)
     }
 }
+
+/// Reminders: what is planned, and what stops being planned.
+///
+/// Every one of these stands where an Android reminder bug was. `Scheduler` was
+/// right there throughout — it has always stopped returning a settled rule —
+/// and five separate things around it were not.
+@Suite("Reminders")
+struct ReminderTests {
+
+    private func model() throws -> Model {
+        let path = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotki-test-\(UUID().uuidString).sqlite").path
+        return Model(store: try SQLiteStore(path: path))
+    }
+
+    /// Late enough that its reminder is still ahead of now whenever this runs.
+    private func aRuleDueLateToday(_ model: Model) {
+        let template = RuleLibrary.bundled.first { $0.id == "evening-prayers" }!
+        model.take(template)
+        let rule = model.rules.first { $0.title == template.title }!
+        model.save(
+            rule, title: rule.title, note: nil, source: nil,
+            recurrence: .daily, timeOfDay: TimeOfDay(hour: 23, minute: 55),
+            reminders: RuleReminders(enabled: true, leads: [.atTheTime])
+        )
+    }
+
+    @Test("a rule due later today is planned for")
+    func plannedWhenDue() throws {
+        let model = try model()
+        aRuleDueLateToday(model)
+
+        let planned = model.plannedReminders()
+        #expect(!planned.isEmpty, "nothing was planned for a rule due tonight")
+    }
+
+    /// The reported bug, in its iOS form.
+    @Test("marking it kept stops it being planned for")
+    func keptStopsThePlan() throws {
+        let model = try model()
+        aRuleDueLateToday(model)
+
+        let today = model.today
+        let before = model.plannedReminders().filter { $0.date == today }
+        #expect(!before.isEmpty)
+
+        let entry = try #require(model.entries(on: today).first)
+        model.toggleKept(entry)
+
+        let after = model.plannedReminders().filter { $0.date == today }
+        #expect(after.isEmpty, "still planned after being kept: \(after.map(\.request.id))")
+    }
+
+    /// Keeping today says nothing about tomorrow.
+    @Test("tomorrow is still planned for after today is kept")
+    func tomorrowSurvives() throws {
+        let model = try model()
+        aRuleDueLateToday(model)
+
+        let entry = try #require(model.entries(on: model.today).first)
+        model.toggleKept(entry)
+
+        let tomorrow = model.today.adding(days: 1)
+        #expect(model.plannedReminders().contains { $0.date == tomorrow })
+    }
+
+    /// Planning only today could never arm "the evening before", which fires at
+    /// 20:00 the day *before* the rule is due. On Android that lead had never
+    /// once worked.
+    @Test("tomorrow is planned as well as today")
+    func tomorrowIsPlanned() throws {
+        let model = try model()
+        aRuleDueLateToday(model)
+
+        let tomorrow = model.today.adding(days: 1)
+        #expect(model.plannedReminders().contains { $0.date == tomorrow })
+    }
+
+    @Test("turning reminders off for a rule stops them")
+    func silencedStopsThePlan() throws {
+        let model = try model()
+        aRuleDueLateToday(model)
+        #expect(!model.plannedReminders().isEmpty)
+
+        let rule = try #require(model.rules.first)
+        model.save(
+            rule, title: rule.title, note: nil, source: nil,
+            recurrence: rule.recurrence, timeOfDay: rule.timeOfDay,
+            reminders: .silent
+        )
+
+        #expect(model.plannedReminders().isEmpty)
+    }
+
+    /// Removing a rule archives it, and takes its reminders with it.
+    @Test("removing the rule stops its reminders")
+    func removingStopsThem() throws {
+        let model = try model()
+        aRuleDueLateToday(model)
+
+        model.remove(try #require(model.rules.first))
+
+        #expect(model.plannedReminders().isEmpty)
+    }
+}
+
+/// What syncing the schedule would actually do.
+///
+/// The part with the mistakes in it, tested apart from the system that makes it
+/// awkward to test. On Android the equivalent was asserted against the app's
+/// own note of what it had armed, and passed with the fix taken out.
+@Suite("Reconciling what is scheduled")
+struct ReconcileTests {
+
+    private func planned(_ id: String, at fireAt: Date) -> PlannedNotification {
+        PlannedNotification(
+            id: id,
+            ruleID: UUID(),
+            date: CalendarDate(Date(), in: .current),
+            fireAt: fireAt,
+            request: NotificationRequest(id: id, title: "A rule", body: "At 06:30")
+        )
+    }
+
+    private var now: Date { Date() }
+    private var soon: Date { Date().addingTimeInterval(3600) }
+    private var gone: Date { Date().addingTimeInterval(-3600) }
+
+    @Test("something newly planned is added")
+    func addsWhatIsMissing() {
+        let work = Reminders.reconcile(
+            planned: [planned("a:2026-08-26:lead10", at: soon)],
+            pending: [], delivered: [], now: now
+        )
+        #expect(work.add.map(\.request.id) == ["a:2026-08-26:lead10"])
+        #expect(work.removePending.isEmpty)
+    }
+
+    @Test("something no longer planned is taken back")
+    func removesWhatIsStale() {
+        let work = Reminders.reconcile(
+            planned: [], pending: ["a:2026-08-26:lead10"], delivered: [], now: now
+        )
+        #expect(work.removePending == ["a:2026-08-26:lead10"])
+        #expect(work.add.isEmpty)
+    }
+
+    /// The reported Android bug, as arithmetic: a notification already showing
+    /// for a rule since kept must come down, not merely stop repeating.
+    @Test("a delivered notification for a rule since kept is withdrawn")
+    func withdrawsDelivered() {
+        let id = "\(UUID()):2026-08-26:lead10"
+        let work = Reminders.reconcile(
+            planned: [], pending: [], delivered: [id], now: now
+        )
+        #expect(work.removeDelivered == [id])
+    }
+
+    /// Somebody else's notification is not ours to remove.
+    @Test("notifications from elsewhere are left alone")
+    func leavesOthersAlone() {
+        let work = Reminders.reconcile(
+            planned: [], pending: [], delivered: ["com.example.something"], now: now
+        )
+        #expect(work.removeDelivered.isEmpty)
+    }
+
+    /// Handing the system a moment that has passed delivers it at once, which
+    /// is how a restart at lunchtime would deliver the whole morning.
+    @Test("a moment already past is not scheduled")
+    func doesNotSchedulueThePast() {
+        let work = Reminders.reconcile(
+            planned: [planned("a:2026-08-26:lead10", at: gone)],
+            pending: [], delivered: [], now: now
+        )
+        #expect(work.add.isEmpty)
+    }
+
+    @Test("what is already scheduled is left where it is")
+    func leavesSettledAlone() {
+        let id = "a:2026-08-26:lead10"
+        let work = Reminders.reconcile(
+            planned: [planned(id, at: soon)], pending: [id], delivered: [], now: now
+        )
+        #expect(work == Reminders.Work())
+    }
+}

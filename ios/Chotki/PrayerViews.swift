@@ -92,7 +92,17 @@ struct RopeView: View {
             Text("of \(screen.target)").font(.footnote).foregroundStyle(Chotki.muted)
 
             Button {
+                let wasLast = screen.count == screen.target
                 withAnimation(.snappy(duration: 0.18)) { screen.advance() }
+                // The bell marks the end of a round; the tick marks a knot.
+                // Neither is applause — the app does not congratulate anyone
+                // for praying, and the bell is the sound a rope makes, not a
+                // reward for having used one.
+                if wasLast, model.settings.chimeOnCompletion {
+                    Sound.shared.playBell()
+                } else if model.settings.tickEachKnot {
+                    Sound.shared.playTick()
+                }
             } label: {
                 Text("Count").font(.system(size: 20)).frame(maxWidth: .infinity).padding(.vertical, 14)
             }
