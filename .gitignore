@@ -39,3 +39,6 @@ keystore.properties
 # source. pbxproj is machine-written, diffs badly, and Xcode rewrites it.
 ios/Chotki.xcodeproj/
 ios/build/
+
+# The iOS development team. Personal, and a generated project would lose it.
+ios/team.env

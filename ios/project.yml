@@ -30,6 +30,9 @@ options:
 # that is a file rather than a literal.
 settings:
   base:
+    # Off for the simulator, where nothing is signed and the package's own
+    # resource bundle cannot be. Device builds pass these as YES on the command
+    # line, which reaches every target including that bundle.
     CODE_SIGNING_REQUIRED: NO
     CODE_SIGNING_ALLOWED: NO
 
@@ -67,8 +70,15 @@ targets:
         # nothing at all, and the build fails looking for a plist nobody wrote.
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Chotki
-        # Signing is off project-wide for now; the Simulator needs none, and
-        # the team is Ryan's to choose in Xcode when a device is involved.
+        # A device needs signing; the Simulator needs none.
+        #
+        # The team is read from the environment rather than written here,
+        # because this file is committed and a generated project would wipe
+        # anything set in Xcode's own interface on the next regeneration. The
+        # same arrangement as the Android keystore: a gitignored file holds it,
+        # and build-app.sh puts it in the environment.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ${CHOTKI_TEAM}
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         # Portrait, as on Android and for the same reason: this is read and
