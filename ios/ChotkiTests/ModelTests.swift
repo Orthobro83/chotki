@@ -398,3 +398,79 @@ struct ReconcileTests {
         #expect(work == Reminders.Work())
     }
 }
+
+/// The record leaving and coming back.
+///
+/// The parity test can see that an export exists; it cannot see whether it
+/// works — gutting the function body and leaving its name passes it, and that
+/// was tried. This is where the behaviour is actually checked.
+@Suite("Keeping the record")
+struct BackupTests {
+
+    private func model() throws -> Model {
+        let path = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotki-test-\(UUID().uuidString).sqlite").path
+        return Model(store: try SQLiteStore(path: path))
+    }
+
+    @Test("everything comes back")
+    func roundTrip() throws {
+        let from = try model()
+        from.take(RuleLibrary.bundled.first { $0.id == "morning-prayers" }!)
+        let entry = try #require(from.entries(on: from.today).first)
+        from.toggleKept(entry)
+
+        let data = try #require(from.exportBackup())
+        #expect(!data.isEmpty)
+
+        let to = try model()
+        #expect(to.rules.isEmpty)
+        to.restore(from: data)
+
+        #expect(to.rules.map(\.title) == ["Morning prayers"])
+        #expect(to.entries(on: to.today).first?.isKept == true)
+    }
+
+    /// A restore is a merge. Nothing already here is removed — a restore that
+    /// silently wiped a month would be far worse than a duplicate.
+    @Test("a restore never removes what is already there")
+    func restoreMerges() throws {
+        let mine = try model()
+        mine.take(RuleLibrary.bundled.first { $0.id == "evening-prayers" }!)
+
+        let other = try model()
+        other.take(RuleLibrary.bundled.first { $0.id == "morning-prayers" }!)
+        let data = try #require(other.exportBackup())
+
+        mine.restore(from: data)
+
+        let titles = Set(mine.rules.map(\.title))
+        #expect(titles.contains("Evening prayers"))
+        #expect(titles.contains("Morning prayers"))
+    }
+
+    @Test("restoring the same copy twice changes nothing the second time")
+    func restoringTwiceIsSafe() throws {
+        let from = try model()
+        from.take(RuleLibrary.bundled.first { $0.id == "morning-prayers" }!)
+        let data = try #require(from.exportBackup())
+
+        let to = try model()
+        to.restore(from: data)
+        let after = to.rules.count
+        to.restore(from: data)
+
+        #expect(to.rules.count == after)
+    }
+
+    @Test("something that is not a backup does not destroy anything")
+    func rubbishIsRefused() throws {
+        let model = try model()
+        model.take(RuleLibrary.bundled.first { $0.id == "morning-prayers" }!)
+
+        model.restore(from: Data("this is not a backup".utf8))
+
+        #expect(model.rules.count == 1, "a bad file took the record with it")
+        #expect(model.trouble != nil, "it failed silently")
+    }
+}

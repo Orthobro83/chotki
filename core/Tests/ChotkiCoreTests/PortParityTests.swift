@@ -10,9 +10,24 @@ import Foundation
 /// to click and nothing to fail. Only holding it against macOS finds that, and
 /// this is that comparison, made mechanical.
 ///
-/// It reads source text, which is crude. It is also exactly what would have
-/// caught both omissions — `reminders` appeared once in the Android editor and
-/// that one hit was a line of copy describing controls that were not there.
+/// **What this can and cannot do, stated plainly, because it has been patched
+/// four times.** It reads source text. It can tell you a control was never
+/// written — which is the failure that has actually happened, repeatedly, and
+/// which no amount of running the app reveals because there is nothing to tap.
+/// It cannot tell you a control *works*: gutting a function's body while
+/// leaving its name passes this test, and was tried.
+///
+/// So the division is deliberate. This guards the feature *surface* across
+/// three platforms. Whether each one behaves belongs to that platform's own
+/// tests — `ChotkiTests` on iOS, the instrumentation suite on Android, and the
+/// macOS suite — where the record can actually be read back.
+///
+/// Every patch it has needed came from the same mistake in a different coat:
+/// searching for a word rather than for the thing. `reminders` was found in a
+/// line of copy above no controls; `jurisdiction` in a read-only line;
+/// `exportJSON` in the one platform of three that spells it that way. It now
+/// searches whole trees for the core call behind the door, rather than a named
+/// file for a name.
 @Suite("The two interfaces expose the same things")
 struct PortParityTests {
 
@@ -50,8 +65,83 @@ struct PortParityTests {
         (what: "observances", token: "observances"),
     ]
 
-    @Test("a rule can be edited the same way on both platforms")
+    /// Three now, not two. The port that added the third is the one that made
+    /// this test matter: iOS inherits core unchanged, so nothing can be lost in
+    /// translation — but a screen can still simply not be written.
+    private var editors: [(String, String)] {
+        [
+            ("macOS", "macos/Sources/Chotki/RuleEditorView.swift"),
+            ("Android", "android/app/src/main/kotlin/org/chotki/app/ui/RuleEditor.kt"),
+            ("iOS", "ios/Chotki/RuleEditor.swift"),
+        ]
+    }
+
+    private var settingsScreens: [(String, String)] {
+        [
+            ("macOS", "macos/Sources/Chotki/SettingsView.swift"),
+            ("Android", "android/app/src/main/kotlin/org/chotki/app/ui/SettingsScreen.kt"),
+            ("iOS", "ios/Chotki/SettingsView.swift"),
+        ]
+    }
+
+    @Test("a rule can be edited the same way on every platform")
     func ruleEditorsMatch() throws {
+        for (platform, path) in editors {
+            let file = try source(path)
+            for field in editableRuleFields {
+                #expect(
+                    file.contains(field.token),
+                    "\(platform) cannot edit \(field.what) — it is in the model and on the others"
+                )
+            }
+        }
+    }
+
+    /// Whole trees, not named files.
+    ///
+    /// This is the third time a check here has looked in one file and missed
+    /// the thing because the platform had put it in another. Naming files is
+    /// how `reminders` was searched for in the Android editor and found in a
+    /// line of copy; naming a file is also how the export check first reported
+    /// every platform as missing it when two had it elsewhere. Ask the tree.
+    private func tree(_ path: String) throws -> String {
+        let root = Self.root.appendingPathComponent(path)
+        let files = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)?
+            .compactMap { $0 as? URL }
+            .filter { ["swift", "kt"].contains($0.pathExtension) }
+            ?? []
+        return try files.map { try String(contentsOf: $0, encoding: .utf8) }.joined()
+    }
+
+    @Test("the record can be kept on every platform")
+    func recordCanLeaveEveryPlatform() throws {
+        // Nothing is destroyed and nothing is sent anywhere, so a copy someone
+        // makes themselves is the only way a record survives a new phone — and
+        // on Android, the only way it survives an uninstall at all.
+        //
+        // Each platform names its own door differently; what they share is the
+        // core call behind it.
+        for (platform, path) in [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ] {
+            let code = try tree(path)
+            #expect(
+                code.contains("exportBackup") || code.contains("exportJSON")
+                    || code.contains("exportJson"),
+                "\(platform) offers no way to keep a copy of the record"
+            )
+            #expect(
+                code.contains("importBackup") || code.contains("importJSON")
+                    || code.contains("importJson") || code.contains("restoreFrom"),
+                "\(platform) offers no way to put a copy back"
+            )
+        }
+    }
+
+    @Test("the old two-platform editor check", .disabled("folded into ruleEditorsMatch"))
+    func oldEditorCheck() throws {
         let mac = try source("macos/Sources/Chotki/RuleEditorView.swift")
         let android = try source("android/app/src/main/kotlin/org/chotki/app/ui/RuleEditor.kt")
 
@@ -64,18 +154,19 @@ struct PortParityTests {
         }
     }
 
-    @Test("the same settings can be changed on both platforms")
+    @Test("the same settings can be changed on every platform")
     func settingsMatch() throws {
-        let mac = try source("macos/Sources/Chotki/SettingsView.swift")
-        let android = try source("android/app/src/main/kotlin/org/chotki/app/ui/SettingsScreen.kt")
-
-        for setting in editableSettings {
-            #expect(mac.contains(setting.token), "macOS cannot change \(setting.what)")
-            #expect(
-                android.contains(setting.token),
-                "Android cannot change \(setting.what) — it is in the model and on the Mac"
-            )
+        for (platform, path) in settingsScreens {
+            let file = try source(path)
+            for setting in editableSettings {
+                #expect(
+                    file.contains(setting.token),
+                    "\(platform) cannot change \(setting.what) — it is in the model and on the others"
+                )
+            }
         }
+
+        let android = try source("android/app/src/main/kotlin/org/chotki/app/ui/SettingsScreen.kt")
 
         // Mentioning a setting is not offering it. The church and the calendar
         // were both named on this screen and both read-only — printed, not
@@ -118,8 +209,9 @@ struct PortParityTests {
     func welcomeIsOnBothPlatforms() throws {
         let mac = try source("macos/Sources/Chotki/OnboardingView.swift")
         let android = try source("android/app/src/main/kotlin/org/chotki/app/ui/WelcomeScreen.kt")
+        let ios = try source("ios/Chotki/WelcomeView.swift")
 
-        for (platform, file) in [("macOS", mac), ("Android", android)] {
+        for (platform, file) in [("macOS", mac), ("Android", android), ("iOS", ios)] {
             #expect(file.contains("Welcome.title"), "\(platform) does not show the welcome title")
             #expect(file.contains("Welcome.paragraphs"), "\(platform) does not show the welcome text")
             #expect(file.contains("Welcome.beginLabel"), "\(platform) writes its own button label")
@@ -130,9 +222,15 @@ struct PortParityTests {
         }
 
         // Both have to honour the flag, or the screen shows every launch.
-        let macGate = try source("macos/Sources/Chotki/RootView.swift")
-        let androidGate = try source("android/app/src/main/kotlin/org/chotki/app/ui/Shell.kt")
-        #expect(macGate.contains("hasCompletedFirstRun"))
-        #expect(androidGate.contains("hasCompletedFirstRun"))
+        for (platform, path) in [
+            ("macOS", "macos/Sources/Chotki/RootView.swift"),
+            ("Android", "android/app/src/main/kotlin/org/chotki/app/ui/Shell.kt"),
+            ("iOS", "ios/Chotki/ChotkiApp.swift"),
+        ] {
+            #expect(
+                try source(path).contains("hasCompletedFirstRun"),
+                "\(platform) shows the welcome every launch, or never"
+            )
+        }
     }
 }

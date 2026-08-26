@@ -129,6 +129,32 @@ final class Model {
         practice.report(days: days, today: today)
     }
 
+    // MARK: keeping the record
+
+    /// The record, as a file that outlives the app.
+    ///
+    /// iOS backs the sandbox up with the phone, but a record of someone's
+    /// prayer life should not depend on that alone — a new phone, a restore
+    /// that goes wrong, a move to the Mac. macOS and Android both offer this
+    /// and iOS did not, which is what the parity test caught.
+    func exportBackup() -> Data? {
+        do { return try store.exportJSON() } catch {
+            trouble = "Could not make a copy. \(error.localizedDescription)"
+            return nil
+        }
+    }
+
+    /// Merges a copy back in. Nothing already here is removed — a restore that
+    /// silently wiped a month would be far worse than a duplicate.
+    func restore(from data: Data) {
+        do {
+            try store.importJSON(data)
+            reload()
+        } catch {
+            trouble = "That file could not be restored. \(error.localizedDescription)"
+        }
+    }
+
     // MARK: settings
 
     /// Any settings change, with the consequence that follows it.

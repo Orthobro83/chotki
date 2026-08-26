@@ -1,9 +1,12 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import ChotkiCore
 
 /// What someone has chosen, and what the app can honestly report about itself.
 struct SettingsView_: View {
     @Bindable var model: Model
+    @State private var exporting = false
+    @State private var importing = false
 
     var body: some View {
         Form {
@@ -73,6 +76,14 @@ struct SettingsView_: View {
                 ))
             }
 
+            Section("Your record") {
+                Text("Your record is kept on this phone. Save a copy before you change phones, or if you want it somewhere of your own.")
+                    .font(.footnote).foregroundStyle(Chotki.faint)
+
+                Button("Save a copy of your record") { exporting = true }
+                Button("Restore from a copy") { importing = true }
+            }
+
             Section("Elsewhere") {
                 NavigationLink("Glossary", value: Route.term(slug: nil))
                 NavigationLink("The Psalter", value: Route.psalter)
@@ -92,5 +103,37 @@ struct SettingsView_: View {
         .tint(Chotki.gold)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+        // The system's own pickers, so no file permission is involved and the
+        // person chooses where their record goes.
+        .fileExporter(
+            isPresented: $exporting,
+            document: BackupFile(data: model.exportBackup() ?? Data()),
+            contentType: .json,
+            defaultFilename: "chotki-\(model.today.iso)"
+        ) { _ in }
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
+            guard case .success(let url) = result else { return }
+            // A security-scoped URL, which must be opened before it can be read
+            // and closed afterwards, or the read silently returns nothing.
+            guard url.startAccessingSecurityScopedResource() else { return }
+            defer { url.stopAccessingSecurityScopedResource() }
+            if let data = try? Data(contentsOf: url) { model.restore(from: data) }
+        }
+    }
+}
+
+/// A backup on its way out through the system's file picker.
+struct BackupFile: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+
+    var data: Data
+
+    init(data: Data) { self.data = data }
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }
