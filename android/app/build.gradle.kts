@@ -68,6 +68,73 @@ android {
         }
     }
 
+    /**
+     * Emulators the build can create for itself, one per Android behaviour gate.
+     *
+     * Testing the floor and the ceiling does not cover the middle: the bottom
+     * bar drawing under the gesture pill arrived at API 35 and was broken on 35,
+     * 36 and 37, while the API 33 device this was developed against showed
+     * nothing at all. It was found only because a newer emulator happened to be
+     * running.
+     *
+     * So the levels here are not a sample. Each is where Android changed
+     * something this app relies on:
+     *
+     *   31  exact alarms became a permission; PendingIntent mutability required
+     *   33  notifications became a runtime permission
+     *   34  exact alarms tightened further
+     *   35  edge to edge enforced for apps targeting 35+ — this app targets 37
+     *   36  predictive back on by default; orientation lock ignored on large
+     *       screens, which is why one of these is a tablet
+     *
+     * API 37 is absent deliberately: at the time of writing it ships only as
+     * beta 16KB-page images, which these sources cannot name. Run that one
+     * against a local emulator, as it was.
+     *
+     * `aosp-atd` images are the small headless ones meant for exactly this.
+     * They still download several gigabytes the first time, which is why this
+     * is not part of the ordinary build.
+     *
+     *   ./gradlew :app:gatesGroupDebugAndroidTest     — all of them
+     *   ./gradlew :app:api35DebugAndroidTest          — just one
+     */
+    testOptions {
+        managedDevices {
+            allDevices {
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("api31") {
+                    device = "Pixel 6"; apiLevel = 31; systemImageSource = "aosp-atd"
+                }
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("api33") {
+                    device = "Pixel 6"; apiLevel = 33; systemImageSource = "aosp-atd"
+                }
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("api34") {
+                    device = "Pixel 6"; apiLevel = 34; systemImageSource = "aosp-atd"
+                }
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("api35") {
+                    device = "Pixel 6"; apiLevel = 35; systemImageSource = "aosp-atd"
+                }
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("api36") {
+                    device = "Pixel 6"; apiLevel = 36; systemImageSource = "aosp-atd"
+                }
+                // The one large screen. From API 36 an app targeting 36 or later
+                // has its orientation lock ignored here, and this app asks for
+                // portrait — so this is the device that says what that does.
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("tabletApi36") {
+                    device = "Pixel Tablet"; apiLevel = 36; systemImageSource = "aosp-atd"
+                }
+            }
+            groups {
+                create("gates") {
+                    for (name in listOf(
+                        "api31", "api33", "api34", "api35", "api36", "tabletApi36",
+                    )) {
+                        targetDevices.add(allDevices[name])
+                    }
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
             // R8 is off deliberately. This is an alpha given to people who are

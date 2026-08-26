@@ -218,6 +218,42 @@ drew correctly and did nothing, and a screenshot showed none of them.
 there is a test asserting no screen is orphaned — the macOS `WindowRoute` test
 has caught two.
 
+## Testing across Android versions
+
+Two endpoints do not cover the middle. The bottom bar drawing under the gesture
+pill arrived at API 35 and was broken on 35, 36 and 37; the API 33 device this
+was built against showed nothing, and it was found only because a newer
+emulator happened to be running.
+
+So the build now creates its own emulators, one per gate — the levels where
+Android changed something this app relies on, not a sample:
+
+| | |
+|---|---|
+| 31 | exact alarms became a permission; PendingIntent mutability required |
+| 33 | notifications became a runtime permission |
+| 34 | exact alarms tightened further |
+| 35 | edge to edge enforced for apps targeting 35+; this app targets 37 |
+| 36 | predictive back by default; orientation lock ignored on large screens |
+| 36, tablet | the large screen that ignores the portrait lock |
+
+```bash
+cd android && ./gradlew :app:gatesGroupDebugAndroidTest   # all of them
+cd android && ./gradlew :app:api35DebugAndroidTest        # one
+```
+
+Each downloads a system image the first time — gigabytes, and minutes per
+device — so it is not part of the ordinary build. `.github/workflows/gates.yml`
+runs them on a tag or on request, one job per level so a failure at 35 does not
+hide 36.
+
+**API 37 is not in the group.** It ships only as beta 16KB-page images, which
+the managed-device sources cannot name. Run it against a local emulator.
+
+**None of this replaces the phone.** Samsung's sleeping-apps list, OneUI's
+battery handling, real Doze across days — no emulator at any API level has
+them.
+
 ## Phase 11 — On the device, then to the Brotherhood
 
 Ryan's own device first, with his real rule, for several days. Then an APK for
