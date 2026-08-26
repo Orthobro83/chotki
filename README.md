@@ -14,7 +14,8 @@ You can add custom items to your practice which may not be Church canon, but are
 
 What that means in practice:
 
-- Apple Silicon only for now (M1 and later). An Intel build is coming. After beta, releases for Windows, Linux, iOS and Android are planned.
+- Apple Silicon only for now (M1 and later). An Intel build is coming. After beta, releases for Windows, Linux and iOS are planned.
+- **Android is available**, from the same releases page. Android 8 or later; see [Getting it](#android).
 - Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - The glossary and the passages from the Fathers are introductory and await a priest's review. Do not treat them as authoritative.
 - macOS 13 or later.
@@ -115,7 +116,8 @@ You do **not** need developer mode, USB debugging, or Android Studio. Those are
 for building the app, not for running it, and turning them on is what upsets
 banking apps — installing an apk does not.
 
-1. Download `chotki.apk` onto the phone from the [releases page](../../releases).
+1. Download `chotki-<version>.apk` onto the phone from the
+   [releases page](../../releases).
 2. Open it — from the notification, or from Files › Downloads.
 3. Android will say it cannot install apps from this source. Tap **Settings**
    on that prompt, turn on **Allow from this source** for whatever app you
