@@ -46,8 +46,12 @@ if [ "${ACTION:-}" = "device" ]; then
     APP="build/Build/Products/Debug-iphoneos/Chotki.app"
     [ -d "$APP" ] || { echo "no app was built for the device"; exit 1; }
     echo "==> $APP"
+    # By identifier, not by name. Device names contain spaces and curly
+    # apostrophes, and "iPhone 13" parsed by column gives you "13".
     TARGET="${CHOTKI_DEVICE:-$(xcrun devicectl list devices 2>/dev/null \
-        | awk '/connected/ {print $(NF-1); exit}')}"
+        | grep -i connected \
+        | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' \
+        | head -1)}"
     [ -n "$TARGET" ] || { echo "no connected device"; exit 1; }
     xcrun devicectl device install app --device "$TARGET" "$APP"
     exit 0
