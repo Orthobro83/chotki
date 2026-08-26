@@ -4,7 +4,16 @@ import ChotkiCore
 @main
 struct ChotkiApp: App {
     var body: some Scene {
-        WindowGroup { Root() }
+        WindowGroup {
+            Root()
+                // Chotki is dark by design, not by preference — gold on a near
+                // black ground, on every platform. Without this the system's
+                // own chrome follows the phone, and Settings drew its Form as
+                // white cards inside a dark app. Every other screen paints its
+                // own background, so nothing else showed it: on a phone already
+                // set to dark it would have looked correct and been wrong.
+                .preferredColorScheme(.dark)
+        }
     }
 }
 
@@ -42,6 +51,14 @@ struct Shell: View {
     @Namespace private var transition
 
     var body: some View {
+        if !model.settings.hasCompletedFirstRun {
+            WelcomeView(model: model)
+        } else {
+            places
+        }
+    }
+
+    private var places: some View {
         TabView(selection: $place) {
             ForEach(Place.allCases, id: \.self) { candidate in
                 NavigationStack(path: binding(for: candidate)) {
@@ -68,10 +85,10 @@ struct Shell: View {
     private func content(for place: Place) -> some View {
         switch place {
         case .rule: RuleTab(model: model, transition: transition)
-        case .prayers: NotYet(place: "Prayers")
-        case .reading: NotYet(place: "Reading")
-        case .progress: NotYet(place: "Progress")
-        case .settings: NotYet(place: "Settings")
+        case .prayers: RopeView(model: model)
+        case .reading: ReadingView(model: model)
+        case .progress: ProgressView_(model: model)
+        case .settings: SettingsView_(model: model)
         }
     }
 }
@@ -87,18 +104,16 @@ private struct Destination: View {
     var body: some View {
         switch route {
         case .prayers(let ruleID):
-            let title = model.rules.first { $0.id == ruleID }?.title ?? "Prayers"
-            NotYet(place: title)
-                .navigationTitle(title)
+            PrayersView(model: model, ruleID: ruleID)
                 .zoomDestination(id: ruleID, in: transition)
         case .editor(let ruleID):
             NotYet(place: ruleID == nil ? "A rule of your own" : "Editing")
         case .term(let slug):
-            NotYet(place: slug ?? "Glossary")
+            GlossaryView_(model: model, slug: slug)
         case .psalter:
-            NotYet(place: "The Psalter")
+            PsalterView(model: model)
         case .rope:
-            NotYet(place: "The rope")
+            RopeView(model: model)
         }
     }
 }

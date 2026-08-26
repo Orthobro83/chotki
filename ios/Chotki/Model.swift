@@ -87,6 +87,39 @@ final class Model {
         }
     }
 
+    /// The church calendar for a day, if it has been fetched.
+    func liturgicalDay(_ date: CalendarDate) -> LiturgicalDay? {
+        try? store.liturgicalDay(civilDate: date, reckoning: settings.jurisdiction.reckoning)
+    }
+
+    func report(days: Int = 30) -> ProgressReport {
+        practice.report(days: days, today: today)
+    }
+
+    // MARK: settings
+
+    /// Any settings change, with the consequence that follows it.
+    ///
+    /// The reckoning is the one that bites. Moving it shifts every fast and
+    /// feast by thirteen days, and without the stamp the scoring re-derives the
+    /// past from the new calendar — turning a fortnight someone kept into a
+    /// fortnight of misses.
+    func update(_ change: (inout AppSettings) -> Void) {
+        var updated = settings
+        change(&updated)
+        if updated.jurisdiction.reckoning != settings.jurisdiction.reckoning {
+            updated.reckoningChangedOn = today
+        }
+        do {
+            try store.saveSettings(updated)
+            settings = updated
+        } catch {
+            trouble = "That setting did not save. \(error.localizedDescription)"
+        }
+    }
+
+    func beginningIsDone() { update { $0.hasCompletedFirstRun = true } }
+
     // MARK: the library, enough of it for now
 
     /// Takes a template on. The observance a liturgical rule depends on is

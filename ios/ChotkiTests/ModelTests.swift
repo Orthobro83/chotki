@@ -137,3 +137,77 @@ struct NavigationTests {
         #expect(Route.psalter != Route.rope)
     }
 }
+
+/// The screens, and that nothing has quietly gone missing.
+///
+/// Every one of these exists because a screen was lost on another platform, or
+/// nearly was. Android had no first-run screen at all for months; the words
+/// were in core and nothing on that side read them.
+@Suite("The screens")
+struct ScreenTests {
+
+    private func model() throws -> Model {
+        let path = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotki-test-\(UUID().uuidString).sqlite").path
+        return Model(store: try SQLiteStore(path: path))
+    }
+
+    @Test("a fresh record opens on the welcome, and only once")
+    func welcomeIsFirstAndOnce() throws {
+        let model = try model()
+        #expect(!model.settings.hasCompletedFirstRun)
+
+        model.beginningIsDone()
+
+        #expect(model.settings.hasCompletedFirstRun)
+    }
+
+    /// The welcome's words are core's, not typed in here — which is what stops
+    /// the three platforms drifting apart.
+    @Test("the welcome says what core says")
+    func welcomeReadsFromCore() {
+        #expect(Welcome.beginLabel == "Begin")
+        let urls = Welcome.paragraphs.flatMap(\.spans).compactMap(\.url)
+        #expect(urls == [
+            "https://www.skool.com/fathermoses/",
+            "https://orthodoxaustin.org/our-clergy/",
+        ])
+    }
+
+    /// Moving the reckoning shifts every fast and feast by thirteen days.
+    /// Without the stamp, scoring re-derives the past from the new calendar and
+    /// turns a fortnight someone kept into a fortnight of misses.
+    @Test("changing the calendar stamps the day it changed")
+    func reckoningChangeIsStamped() throws {
+        let model = try model()
+        #expect(model.settings.reckoningChangedOn == nil)
+
+        let other: Reckoning = model.settings.jurisdiction.reckoning == .julian
+            ? .revisedJulian : .julian
+        model.update { $0.jurisdiction.reckoning = other }
+
+        #expect(model.settings.reckoningChangedOn == model.today)
+    }
+
+    /// Changing church between two of the same reckoning must stamp nothing.
+    @Test("changing church without changing calendar stamps nothing")
+    func sameReckoningStampsNothing() throws {
+        let model = try model()
+        let same = Jurisdiction.known.first {
+            $0.reckoning == model.settings.jurisdiction.reckoning
+                && $0.name != model.settings.jurisdiction.name
+        }
+        let chosen = try #require(same)
+
+        model.update { $0.jurisdiction = chosen }
+
+        #expect(model.settings.reckoningChangedOn == nil)
+        #expect(model.settings.jurisdiction.name == chosen.name)
+    }
+
+    @Test("the Psalter and its cycle are reachable from here")
+    func psalterIsThere() {
+        #expect(Psalter.all.count == 151)
+        #expect(Kathisma.divisions.count == 20)
+    }
+}
