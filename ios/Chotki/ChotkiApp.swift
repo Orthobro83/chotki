@@ -4,82 +4,124 @@ import ChotkiCore
 @main
 struct ChotkiApp: App {
     var body: some Scene {
-        WindowGroup {
-            FirstLight()
+        WindowGroup { Root() }
+    }
+}
+
+/// Opens the record, or says plainly why it could not.
+///
+/// A store that fails to open is not a condition to recover from — there is no
+/// app without it — but it is one to report rather than crash on, so that a
+/// person sees a sentence instead of an icon that disappears.
+private struct Root: View {
+    @State private var opening = StoreOpening.attempt()
+
+    var body: some View {
+        switch opening {
+        case .opened(let store):
+            Day(model: Model(store: store))
+        case .failed(let why):
+            VStack(spacing: 10) {
+                Text("Chotki could not open its record")
+                    .foregroundStyle(Chotki.parchment)
+                Text(why).font(.footnote).foregroundStyle(Chotki.muted)
+            }
+            .multilineTextAlignment(.center)
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Chotki.ground)
         }
     }
 }
 
-/// Scaffolding for phase 2, and it proves exactly one thing: that the record
-/// survives.
-///
-/// Not a screen anyone will keep. It opens the store where the app will really
-/// keep it, runs the schema ladder on the way in, writes a rule when asked, and
-/// counts what is there — so that quitting and relaunching answers the only
-/// question this phase asks.
-struct FirstLight: View {
-    @State private var opening = StoreOpening.attempt()
-    @State private var rules: [Rule] = []
-    @State private var note = ""
-
-    private let gold = Color(red: 0.788, green: 0.635, blue: 0.153)
-    private let ground = Color(red: 0.082, green: 0.086, blue: 0.110)
-    private let parchment = Color(red: 0.910, green: 0.875, blue: 0.804)
+/// Phase 3 shows the day and a way to put something on it. The library is a
+/// sheet here rather than a screen, which is where phase 4 will take it.
+private struct Day: View {
+    @State var model: Model
+    @State private var libraryShowing = false
 
     var body: some View {
-        VStack(spacing: 14) {
-            Text("Chotki").font(.system(size: 28, weight: .semibold)).foregroundStyle(gold)
+        VStack(spacing: 0) {
+            DayView(model: model)
 
-            switch opening {
-            case .failed(let why):
-                Text(why).foregroundStyle(.red).multilineTextAlignment(.center)
-
-            case .opened(let store):
-                Text(Format.longDate(CalendarDate(Date(), in: .current)))
-                    .foregroundStyle(parchment)
-
-                Text("\(rules.count) rule\(rules.count == 1 ? "" : "s") on the record")
-                    .font(.footnote).foregroundStyle(.secondary)
-
-                ForEach(rules, id: \.id) { rule in
-                    Text("· \(rule.title)").font(.footnote).foregroundStyle(parchment)
-                }
-
-                Button("Take on a rule") { take(into: store) }
-                    .buttonStyle(.bordered).tint(gold).padding(.top, 6)
-
-                if !note.isEmpty {
-                    Text(note).font(.caption).foregroundStyle(.secondary)
-                }
-
-                Text("Quit and reopen — the count should hold.")
-                    .font(.caption2).foregroundStyle(.tertiary).padding(.top, 10)
+            Button {
+                libraryShowing = true
+            } label: {
+                Label("Library", systemImage: "books.vertical")
+                    .font(.system(size: 15))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+            }
+            .tint(Chotki.gold)
+        }
+        .background(Chotki.ground)
+        .sheet(isPresented: $libraryShowing) {
+            Library(model: model)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .overlay(alignment: .bottom) {
+            if let trouble = model.trouble {
+                Text(trouble)
+                    .font(.footnote)
+                    .foregroundStyle(Chotki.parchment)
+                    .padding()
+                    .background(Chotki.panel, in: RoundedRectangle(cornerRadius: 8))
+                    .padding()
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(ground)
-        .task { reload() }
     }
+}
 
-    private func reload() {
-        guard case .opened(let store) = opening else { return }
-        rules = (try? store.rules(includeArchived: false)) ?? []
-    }
+/// Enough of the library to put a rule on the day. The whole of it is phase 5.
+private struct Library: View {
+    @State var model: Model
+    @Environment(\.dismiss) private var dismiss
 
-    private func take(into store: SQLiteStore) {
-        // Straight from the library, the way the app really does it, so this
-        // exercises the recurrence and reminder types rather than a bare row.
-        guard let template = RuleLibrary.bundled.first(where: { $0.id == "morning-prayers" })
-        else { note = "the library has no morning prayers"; return }
-
-        do {
-            let rule = template.makeRule(source: "the library")
-            try store.save(rule)
-            try store.save(Activation(ruleID: rule.id, from: CalendarDate(Date(), in: .current)))
-            note = "saved"
-            reload()
-        } catch {
-            note = "could not save: \(error)"
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Take on what you are ready for. Two or three is a good beginning.")
+                        .font(.footnote)
+                        .foregroundStyle(Chotki.faint)
+                        .listRowBackground(Chotki.ground)
+                }
+                ForEach(RuleLibrary.bundled, id: \.id) { template in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(template.title).foregroundStyle(Chotki.parchment)
+                            Text(template.summary)
+                                .font(.caption).foregroundStyle(Chotki.faint)
+                        }
+                        Spacer(minLength: 8)
+                        if model.isTaken(template) {
+                            Text("On your rule")
+                                .font(.caption).foregroundStyle(Chotki.goldDim)
+                        } else {
+                            Button("Take on") {
+                                withAnimation(.snappy) { model.take(template) }
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(Chotki.gold)
+                            .accessibilityLabel("Take on \(template.title)")
+                        }
+                    }
+                    .listRowBackground(Chotki.ground)
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Chotki.ground)
+            .navigationTitle("Library")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }.tint(Chotki.gold)
+                }
+            }
         }
     }
 }

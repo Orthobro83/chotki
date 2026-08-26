@@ -9,6 +9,9 @@ cd "$(dirname "$0")"
 
 DEVICE="${CHOTKI_SIM_DEVICE:-iPhone 17 Pro}"
 
+#   ./ios/build-app.sh test   runs the suite instead of just building
+if [ "${1:-}" = "test" ]; then ACTION=test; shift; fi
+
 # The project is generated, never edited. project.yml is the source.
 command -v xcodegen >/dev/null || { echo "xcodegen missing: brew install xcodegen"; exit 1; }
 xcodegen generate >/dev/null
@@ -25,7 +28,9 @@ xcodebuild -project Chotki.xcodeproj -scheme Chotki \
     -destination "platform=iOS Simulator,name=$DEVICE" \
     -derivedDataPath build \
     CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-    build "$@" | grep -E "error:|warning:|BUILD" || true
+    "${ACTION:-build}" | grep -E "error:|✘|BUILD|TEST" || true
+
+[ "${ACTION:-build}" = "test" ] && exit 0
 
 APP="build/Build/Products/Debug-iphonesimulator/Chotki.app"
 [ -d "$APP" ] || { echo "no app was built"; exit 1; }

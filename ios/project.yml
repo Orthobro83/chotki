@@ -38,6 +38,16 @@ packages:
     path: ../core
 
 targets:
+  ChotkiTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ChotkiTests
+    dependencies:
+      - target: Chotki
+      - package: ChotkiCore
+        product: ChotkiCore
+
   Chotki:
     type: application
     platform: iOS
