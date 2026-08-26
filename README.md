@@ -14,10 +14,10 @@ You can add custom items to your practice which may not be Church canon, but are
 
 What that means in practice:
 
-- Apple Silicon only for now (M1 and later). An Intel build is coming. After beta, releases for Windows, Linux and iOS are planned.
 - **Android is available**, from the same releases page. Android 8 or later; see [Getting it](#android).
-- Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
-- The glossary and the passages from the Fathers are introductory and await a priest's review. Do not treat them as authoritative.
+- **Apple Silicon is available** Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
+- iOS & Linux versions are planned in the beta state
+- The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 - macOS 13 or later.
 
 - [design.md](design.md) — data model, liturgical handling, scoring
