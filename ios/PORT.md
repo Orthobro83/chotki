@@ -84,6 +84,23 @@ a reward. Motion here is for continuity — showing that a thing came from
 somewhere — not for reinforcement. If an animation would feel at home in a
 habit-streak app, it is wrong however well it moves.
 
+## What phase 2 settled
+
+The store opens in the iOS sandbox, the ladder runs, and the record survives a
+relaunch. Three things worth having in writing:
+
+- **WAL works.** Swift's `PRAGMA journal_mode=WAL` is accepted on iOS, where on
+  Android the equivalent threw and took every store operation with it. After one
+  rule the main file was 4KB and the write-ahead log 144KB, so anything copying
+  the database must take `-wal` and `-shm` with it — the same warning as macOS,
+  and it bites harder here because iOS backup is file-level.
+- **iOS and macOS share a database format.** Both are Swift, both write the same
+  encoding, so a record could in principle move between them. Android's cannot,
+  and that asymmetry is worth remembering before anyone promises a backup is
+  portable.
+- **Schema versions are per-platform from 7 onward.** Swift stops at 6; Kotlin's
+  7th step is its own. Only the table shape is shared.
+
 ## Phases
 
 Each ends with something runnable and tested, as the Android phases did.

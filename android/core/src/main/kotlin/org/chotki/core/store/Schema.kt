@@ -5,11 +5,17 @@ import org.chotki.core.store.Db
 /**
  * The schema, and the ladder that brings any older database up to it.
  *
- * Deliberately the same shape as the Swift store's: the same tables, the same
- * columns, the same steps in the same order. The *contents* of the JSON
- * columns differ — Kotlin writes its own encoding — so a database does not move
- * between the two platforms. That was settled when sync was ruled out; it is
- * recorded here because the schema looking identical invites the assumption.
+ * Deliberately the same shape as the Swift store's: the same tables and the
+ * same columns. The *contents* of the JSON columns differ — Kotlin writes its
+ * own encoding — so a database does not move between the two platforms. That
+ * was settled when sync was ruled out; it is recorded here because the schema
+ * looking identical invites the assumption.
+ *
+ * **The version numbers have diverged, and that is correct.** Swift stops at 6.
+ * Step 7 here is Kotlin's alone: it frees the stored recurrence from Kotlin
+ * class names, a problem Swift never had because Swift never wrote them. Do not
+ * "fix" the mismatch by adding a step to Swift — the ladders are per-platform
+ * from 7 onward, and only the table shape is shared.
  *
  * Forward-only, and each step stamps `schema_version`. A step is never edited
  * once shipped: someone's database has already run it.
