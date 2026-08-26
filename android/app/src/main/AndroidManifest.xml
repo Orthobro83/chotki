@@ -13,9 +13,19 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- A rule kept at 06:30 reminded "sometime this morning" is not a
-         reminder. Requested from Android 12; without it the system quietly
-         downgrades to an inexact alarm rather than refusing. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+         reminder. Without an exact alarm the system quietly downgrades rather
+         than refusing, so the failure is a reminder that drifts.
+
+         Two permissions for one thing, because Android changed how it is asked
+         for. USE_EXACT_ALARM arrived in Android 13 and is granted on install,
+         for apps whose core function is alarms and reminders — which this app's
+         is; it exists to say a thing at the hour it is due. Below 13 that
+         permission does not exist, so SCHEDULE_EXACT_ALARM covers 12 and 12L,
+         where it is asked of the person instead. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
 
     <!-- Alarms do not survive a restart. Without this a phone rebooted
          overnight comes back with nothing scheduled. -->
