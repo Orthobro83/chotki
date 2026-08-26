@@ -17,8 +17,8 @@ android {
         // essentially every device in use. The test device runs 13.
         minSdk = 26
         targetSdk = 37
-        versionCode = 6
-        versionName = "0.1.5-alpha"
+        versionCode = 7
+        versionName = "0.1.6-alpha"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -120,6 +120,14 @@ dependencies {
     // crashes the instrumentation runner for everything after it.
     testImplementation("junit:junit:4.13.2")
 
+    // Espresso, explicitly and current.
+    //
+    // Compose's ui-test drags in 3.5.0, from 2022, and nothing upgrades it
+    // while runner, monitor and core all move — so the suite ran on Android 13
+    // and every single test errored on Android 17 with a NoSuchMethodException
+    // for android.hardware.input.InputManager.getInstance, a method that
+    // version no longer has. The app was fine; the harness was four years old.
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
 }

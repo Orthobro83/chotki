@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.res.painterResource
 import org.chotki.app.R
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +61,8 @@ fun WelcomeScreen(state: AppState, modifier: Modifier = Modifier) {
         modifier
             .fillMaxSize()
             .background(Chotki.ground)
+            // It has the whole screen to itself, so it clears both bars.
+            .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 22.dp, vertical = 24.dp),
     ) {

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,7 +79,10 @@ fun Shell(state: AppState) {
         return
     }
 
-    Column(Modifier.fillMaxSize().background(Chotki.ground)) {
+    // The status bar is the app's to clear now. The bottom bar clears the
+    // navigation bar itself, further down, so its background still runs to the
+    // bottom of the screen while its labels sit above the gesture pill.
+    Column(Modifier.fillMaxSize().background(Chotki.ground).statusBarsPadding()) {
         if (!dismissed) {
             ReadinessBanner(readiness) {
                 dismissals.dismiss(readiness)
@@ -177,7 +182,12 @@ fun Shell(state: AppState) {
             }
         }
 
-        Row(Modifier.fillMaxWidth().background(Chotki.panel)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(Chotki.panel)
+                .navigationBarsPadding(),
+        ) {
             val lit = journey.current.place
             for (candidate in Place.entries) {
                 val colour = if (candidate == lit) Chotki.gold else Chotki.muted

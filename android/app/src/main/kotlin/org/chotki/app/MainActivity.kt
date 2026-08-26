@@ -3,6 +3,7 @@ package org.chotki.app
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +19,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Edge to edge on every version, not only where it is forced.
+        //
+        // From Android 15 an app targeting SDK 35 or later gets this whether it
+        // asks or not, and this one targets 37 — so on a new phone the bottom
+        // bar was drawing underneath the gesture pill, with the pill sitting
+        // across Reading and Progress. Opting in everywhere means one behaviour
+        // to handle rather than two, and the insets below are applied by the app
+        // on old versions as well as new.
+        enableEdgeToEdge()
         state = AppState.open(this)
         state.load()
 
