@@ -10,7 +10,10 @@ import PackageDescription
 // dependency whose own portability is weaker than ours would undermine the point.
 let package = Package(
     name: "ChotkiCore",
-    platforms: [.macOS(.v13)],
+    // iOS is named here or it is assumed to be the oldest one there ever was,
+    // and anything from the last decade — AsyncStream among them — reports as
+    // unavailable. The package itself needed no change beyond saying so.
+    platforms: [.macOS(.v13), .iOS(.v17)],
     products: [
         .library(name: "ChotkiCore", targets: ["ChotkiCore"])
     ],

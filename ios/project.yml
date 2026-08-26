@@ -1,0 +1,66 @@
+# The iOS project, described rather than drawn.
+#
+# `Chotki.xcodeproj` is generated from this and is not committed: pbxproj is a
+# large machine-written format that diffs badly and that Xcode rewrites the
+# moment it is opened. This file is the reviewable source, the same arrangement
+# the Psalter and the shared content already use — a committed generator and a
+# generated artefact.
+#
+#   cd ios && xcodegen generate
+#
+name: Chotki
+options:
+  bundleIdPrefix: info.chotki
+  deploymentTarget:
+    # Comfortably below anything in use, and below what NavigationStack and
+    # sheet detents need — both arrived in 16.
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+# core is a plain SwiftPM package that imports Foundation and SQLite and
+# nothing else, so iOS takes it exactly as macOS does. There is no
+# reimplementation here and no second copy to drift.
+# Project-wide, so the package's own targets inherit them.
+#
+# `core` ships the Psalter as a SwiftPM resource, which becomes a generated
+# bundle target — and that bundle has no Info.plist, so codesign refuses it
+# with "bundle format unrecognized". Setting this only on the app target left
+# the bundle out, and the build failed on the one piece of the shared content
+# that is a file rather than a literal.
+settings:
+  base:
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGNING_ALLOWED: NO
+
+packages:
+  ChotkiCore:
+    path: ../core
+
+targets:
+  Chotki:
+    type: application
+    platform: iOS
+    sources:
+      - path: Chotki
+    dependencies:
+      - package: ChotkiCore
+        product: ChotkiCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: info.chotki.app
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        # Xcode writes the Info.plist from the keys below rather than the
+        # project carrying one as a file. Setting the keys without this says
+        # nothing at all, and the build fails looking for a plist nobody wrote.
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Chotki
+        # Signing is off project-wide for now; the Simulator needs none, and
+        # the team is Ryan's to choose in Xcode when a device is involved.
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        # Portrait, as on Android and for the same reason: this is read and
+        # tapped one-handed, and nothing here wants the width.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait

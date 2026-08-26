@@ -34,3 +34,8 @@ android/.kotlin/
 keystore.properties
 *.jks
 *.keystore
+
+# The iOS project is generated from ios/project.yml, which is the reviewable
+# source. pbxproj is machine-written, diffs badly, and Xcode rewrites it.
+ios/Chotki.xcodeproj/
+ios/build/
