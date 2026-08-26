@@ -10,6 +10,8 @@ import ChotkiCore
 /// padding around it, not a bigger target.
 struct DayView: View {
     @Bindable var model: Model
+    /// Shared with the row so a tapped rule can become the screen it opens.
+    var transition: Namespace.ID
 
     private var entries: [DayEntry] { model.entries(on: model.selectedDate) }
 
@@ -36,7 +38,7 @@ struct DayView: View {
                 } else {
                     List {
                         ForEach(entries, id: \.id) { entry in
-                            EntryRow(model: model, entry: entry)
+                            EntryRow(model: model, entry: entry, transition: transition)
                                 .listRowBackground(Chotki.ground)
                                 .listRowSeparatorTint(Chotki.line)
                         }
@@ -68,6 +70,7 @@ private struct EmptyDay: View {
 private struct EntryRow: View {
     @Bindable var model: Model
     let entry: DayEntry
+    var transition: Namespace.ID
 
     var body: some View {
         HStack(spacing: 10) {
@@ -111,7 +114,47 @@ private struct EntryRow: View {
             Text(entry.rule.timeOfDay.map { Format.time($0, model.settings.clockStyle) } ?? "All day")
                 .font(.system(size: 13))
                 .foregroundStyle(entry.isKept ? Chotki.faint : Chotki.muted)
+
+            // The way to the words, which is the point of the rule. Its own
+            // control, never the whole row.
+            if entry.rule.hasPrayers {
+                NavigationLink(value: Route.prayers(ruleID: entry.rule.id)) {
+                    Image(systemName: "text.alignleft")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Chotki.goldDim)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Read the prayers for \(entry.rule.title)")
+                .zoomSource(id: entry.rule.id, in: transition)
+            }
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// The zoom that carries a tapped thing into the screen it opens.
+///
+/// Guarded rather than assumed: it arrived in iOS 18 and the floor here is 17,
+/// so on 17 the push is the ordinary one. A transition is not worth excluding a
+/// device over.
+extension View {
+    @ViewBuilder
+    func zoomSource(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18.0, *) {
+            self.matchedTransitionSource(id: id, in: namespace)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func zoomDestination(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18.0, *) {
+            self.navigationTransition(.zoom(sourceID: id, in: namespace))
+        } else {
+            self
+        }
     }
 }

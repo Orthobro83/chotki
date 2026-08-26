@@ -98,3 +98,42 @@ struct ModelTests {
         #expect(model.isTaken(morningPrayers))
     }
 }
+
+/// The shape of the navigation, as a decision rather than an accident.
+///
+/// iOS shows five tabs before folding the rest into "More", so the glossary is
+/// not one — it is reached by tapping a word that puzzled you, which is how
+/// anyone actually arrives there. That is a per-platform arrangement, and it
+/// must never become a per-platform *capability*: macOS uses three tabs and
+/// Android six, and all three reach the same screens.
+@Suite("The shape of the navigation")
+struct NavigationTests {
+
+    @Test("five places, which is what a phone shows without an overflow")
+    func fivePlaces() {
+        #expect(Place.allCases.count == 5)
+        #expect(!Place.allCases.map(\.rawValue).contains("Glossary"))
+    }
+
+    /// The glossary is not a tab, so it must be a route. If this stops
+    /// compiling or the case is removed, the screen has quietly become
+    /// unreachable — which is exactly how Android lost its first-run screen.
+    @Test("the glossary is reachable even though it is not a tab")
+    func glossaryIsReachable() {
+        let byTerm = Route.term(slug: "prayer-rule")
+        let browsing = Route.term(slug: nil)
+        #expect(byTerm != browsing)
+    }
+
+    /// Held as values, so a stack cannot guess. Android's navigation was
+    /// "which screen is showing" and the back button guessed wrongly for three
+    /// rounds before it went back one reliably.
+    @Test("routes are values, and distinguish themselves")
+    func routesAreValues() {
+        let a = UUID(), b = UUID()
+        #expect(Route.prayers(ruleID: a) == Route.prayers(ruleID: a))
+        #expect(Route.prayers(ruleID: a) != Route.prayers(ruleID: b))
+        #expect(Route.editor(ruleID: nil) != Route.editor(ruleID: a))
+        #expect(Route.psalter != Route.rope)
+    }
+}

@@ -9,21 +9,16 @@ struct ChotkiApp: App {
 }
 
 /// Opens the record, or says plainly why it could not.
-///
-/// A store that fails to open is not a condition to recover from — there is no
-/// app without it — but it is one to report rather than crash on, so that a
-/// person sees a sentence instead of an icon that disappears.
 private struct Root: View {
     @State private var opening = StoreOpening.attempt()
 
     var body: some View {
         switch opening {
         case .opened(let store):
-            Day(model: Model(store: store))
+            Shell(model: Model(store: store))
         case .failed(let why):
             VStack(spacing: 10) {
-                Text("Chotki could not open its record")
-                    .foregroundStyle(Chotki.parchment)
+                Text("Chotki could not open its record").foregroundStyle(Chotki.parchment)
                 Text(why).font(.footnote).foregroundStyle(Chotki.muted)
             }
             .multilineTextAlignment(.center)
@@ -34,94 +29,90 @@ private struct Root: View {
     }
 }
 
-/// Phase 3 shows the day and a way to put something on it. The library is a
-/// sheet here rather than a screen, which is where phase 4 will take it.
-private struct Day: View {
+/// The places, each with its own stack.
+///
+/// A stack per tab rather than one shared: going three deep into a rule's
+/// prayers and then to the readings should not lose where you were, and coming
+/// back should find it. That is the platform's own behaviour and worth having
+/// rather than flattening.
+struct Shell: View {
     @State var model: Model
-    @State private var libraryShowing = false
+    @State private var place: Place = .rule
+    @State private var paths: [Place: NavigationPath] = [:]
+    @Namespace private var transition
 
     var body: some View {
-        VStack(spacing: 0) {
-            DayView(model: model)
+        TabView(selection: $place) {
+            ForEach(Place.allCases, id: \.self) { candidate in
+                NavigationStack(path: binding(for: candidate)) {
+                    content(for: candidate)
+                        .navigationDestination(for: Route.self) { route in
+                            Destination(model: model, route: route, transition: transition)
+                        }
+                }
+                .tabItem { Label(candidate.rawValue, systemImage: candidate.symbol) }
+                .tag(candidate)
+            }
+        }
+        .tint(Chotki.gold)
+    }
 
-            Button {
-                libraryShowing = true
-            } label: {
-                Label("Library", systemImage: "books.vertical")
-                    .font(.system(size: 15))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-            }
-            .tint(Chotki.gold)
-        }
-        .background(Chotki.ground)
-        .sheet(isPresented: $libraryShowing) {
-            Library(model: model)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-        .overlay(alignment: .bottom) {
-            if let trouble = model.trouble {
-                Text(trouble)
-                    .font(.footnote)
-                    .foregroundStyle(Chotki.parchment)
-                    .padding()
-                    .background(Chotki.panel, in: RoundedRectangle(cornerRadius: 8))
-                    .padding()
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+    private func binding(for place: Place) -> Binding<NavigationPath> {
+        Binding(
+            get: { paths[place] ?? NavigationPath() },
+            set: { paths[place] = $0 }
+        )
+    }
+
+    @ViewBuilder
+    private func content(for place: Place) -> some View {
+        switch place {
+        case .rule: RuleTab(model: model, transition: transition)
+        case .prayers: NotYet(place: "Prayers")
+        case .reading: NotYet(place: "Reading")
+        case .progress: NotYet(place: "Progress")
+        case .settings: NotYet(place: "Settings")
         }
     }
 }
 
-/// Enough of the library to put a rule on the day. The whole of it is phase 5.
-private struct Library: View {
+/// Where a route lands. Phase 5 fills these in; the point of building them now
+/// is that the push, the back-swipe and the transition are settled before the
+/// screens arrive rather than retro-fitted around them.
+private struct Destination: View {
     @State var model: Model
-    @Environment(\.dismiss) private var dismiss
+    let route: Route
+    var transition: Namespace.ID
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text("Take on what you are ready for. Two or three is a good beginning.")
-                        .font(.footnote)
-                        .foregroundStyle(Chotki.faint)
-                        .listRowBackground(Chotki.ground)
-                }
-                ForEach(RuleLibrary.bundled, id: \.id) { template in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(template.title).foregroundStyle(Chotki.parchment)
-                            Text(template.summary)
-                                .font(.caption).foregroundStyle(Chotki.faint)
-                        }
-                        Spacer(minLength: 8)
-                        if model.isTaken(template) {
-                            Text("On your rule")
-                                .font(.caption).foregroundStyle(Chotki.goldDim)
-                        } else {
-                            Button("Take on") {
-                                withAnimation(.snappy) { model.take(template) }
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(Chotki.gold)
-                            .accessibilityLabel("Take on \(template.title)")
-                        }
-                    }
-                    .listRowBackground(Chotki.ground)
-                }
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Chotki.ground)
-            .navigationTitle("Library")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }.tint(Chotki.gold)
-                }
-            }
+        switch route {
+        case .prayers(let ruleID):
+            let title = model.rules.first { $0.id == ruleID }?.title ?? "Prayers"
+            NotYet(place: title)
+                .navigationTitle(title)
+                .zoomDestination(id: ruleID, in: transition)
+        case .editor(let ruleID):
+            NotYet(place: ruleID == nil ? "A rule of your own" : "Editing")
+        case .term(let slug):
+            NotYet(place: slug ?? "Glossary")
+        case .psalter:
+            NotYet(place: "The Psalter")
+        case .rope:
+            NotYet(place: "The rope")
         }
+    }
+}
+
+/// Scaffolding that says so. Better than a blank screen, which reads as a bug.
+struct NotYet: View {
+    let place: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(place).foregroundStyle(Chotki.parchment)
+            Text("Not built yet.").font(.footnote).foregroundStyle(Chotki.faint)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Chotki.ground)
     }
 }

@@ -101,6 +101,28 @@ relaunch. Three things worth having in writing:
 - **Schema versions are per-platform from 7 onward.** Swift stops at 6; Kotlin's
   7th step is its own. Only the table shape is shared.
 
+## What phase 4 settled
+
+**Five tabs, not Android's six.** iPhone folds a sixth into a "More" list,
+which is a worse home for anything than a considered omission. The glossary is
+the one left out: it is reached by tapping a word that puzzled you, which is how
+anyone actually arrives there, and from Settings for browsing. macOS makes a
+third choice — three tabs. So the arrangement is per-platform; **the capability
+is not**, and `PortParityTests` is what keeps that true.
+
+**A stack per tab.** Going three deep into a rule's prayers and then to the
+readings does not lose where you were, and coming back finds it. Verified by
+doing it rather than by reading the documentation.
+
+**Routes are values.** Android held navigation as "which screen is showing" and
+the back button guessed; it took three rounds before back went back one
+reliably. A `NavigationPath` of enum cases cannot guess, and the interactive
+back-swipe comes with it for nothing.
+
+**The zoom is guarded.** `navigationTransition(.zoom)` arrived in iOS 18 and the
+floor here is 17, so below that the push is the ordinary one. A transition is
+not worth excluding a device over.
+
 ## Phases
 
 Each ends with something runnable and tested, as the Android phases did.
