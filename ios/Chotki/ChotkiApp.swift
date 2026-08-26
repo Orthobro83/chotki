@@ -71,6 +71,12 @@ struct Shell: View {
                             Destination(model: model, route: route, transition: transition)
                         }
                 }
+                // A word tapped anywhere in this tab opens the glossary on
+                // *this* tab's stack, so the back-swipe returns to the passage
+                // it was read in rather than to some other tab's history.
+                .environment(\.openTerm, OpenTerm { slug in
+                    paths[candidate, default: NavigationPath()].append(Route.term(slug: slug))
+                })
                 .tabItem { Label(candidate.rawValue, systemImage: candidate.symbol) }
                 .tag(candidate)
             }

@@ -14,7 +14,7 @@ struct RuleTab: View {
     @State private var libraryShowing = false
 
     var body: some View {
-        DayView(model: model, transition: transition)
+        DayView(model: model, transition: transition) { libraryShowing = true }
             .navigationTitle("Chotki")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -48,6 +48,46 @@ enum CrossIcon {
     }
 
     /// The Dock icon: gold on a dark rounded square.
+    /// The same mark, square and full-bleed, for iOS.
+    ///
+    /// iOS applies its own mask, so an icon must not round its own corners or
+    /// inset itself — doing both leaves a small mark floating in a large
+    /// rounded square inside another rounded square. The proportions are
+    /// otherwise identical, because it is one rope at three sizes rather than
+    /// three drawings of a rope.
+    static func phoneIcon(size: CGFloat = 1024) -> NSImage {
+        NSImage(size: NSSize(width: size, height: size), flipped: true) { _ in
+            let ground = NSColor(red: 0.082, green: 0.086, blue: 0.110, alpha: 1)
+            let gold = NSColor(red: 0.788, green: 0.635, blue: 0.153, alpha: 1)
+
+            ground.setFill()
+            NSRect(origin: .zero, size: NSSize(width: size, height: size)).fill()
+
+            let margin = size * 0.16
+            let mark = size - margin * 2
+            func markX(_ u: CGFloat) -> CGFloat { margin + u * mark }
+            func markY(_ v: CGFloat) -> CGFloat { margin + v * mark }
+
+            gold.setFill()
+            let knot = RopeMarkGeometry.knotRadius * mark
+            for centre in RopeMarkGeometry.knotCentres {
+                NSBezierPath(ovalIn: NSRect(
+                    x: markX(centre.x) - knot, y: markY(centre.y) - knot,
+                    width: knot * 2, height: knot * 2
+                )).fill()
+            }
+            let box = RopeMarkGeometry.crossBox
+            fill(
+                in: CGRect(
+                    x: markX(box.x), y: markY(box.y),
+                    width: box.width * mark, height: box.height * mark
+                ),
+                colour: gold
+            )
+            return true
+        }
+    }
+
     static func appIcon(size: CGFloat = 512) -> NSImage {
         NSImage(size: NSSize(width: size, height: size), flipped: true) { _ in
             let ground = NSColor(red: 0.082, green: 0.086, blue: 0.110, alpha: 1)

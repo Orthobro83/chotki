@@ -248,3 +248,55 @@ testing, the other for less trust in testing.
 that every user-editable part of the shared model is reachable in both
 interfaces. It is a source-level check and a crude one, and it fails on exactly
 this class of omission, which is the class that has actually happened.
+
+## The iOS port shipped a screen that asked for nothing
+
+Seven faults came back from the first hour on the iPhone 13. Six were ordinary
+port gaps of the kind this document already covers. One was a shape I had not
+met before, and it is the one worth writing down.
+
+**The reading screen read a cache that nothing filled.** `ReadingView` called
+`liturgicalDay(_:)` on the store, found nothing, and displayed the sentence
+"The church calendar is the only thing Chotki asks the network for, and it will
+fill in when it can reach it." Every word of that was false on iOS. There was
+no `LiturgicalService` on the platform, no `OrthocalClient`, no network call of
+any kind — `grep -rn "Orthocal\|LiturgicalService" ios/Chotki/` returned
+nothing at all. The screen was not slow. It was never going to fill in.
+
+This is not "a control that was never written", which is the failure the
+previous entry is about and which `PortParityTests` was built to catch. A
+missing control is *absent*: there is nothing to tap, and the gap is visible to
+anyone comparing the screens. A reader with no writer is *present and
+convincing*. It renders, it explains itself, it tells you it is waiting — and
+the explanation it gives is the same one a genuinely slow network would give.
+Ryan's report said "It should not take this long for readings to load", which
+is exactly the wrong diagnosis and exactly the diagnosis the screen invited.
+
+Android arrived at the same place along a different road: the fetch was written
+and the INTERNET permission was not, so every call threw into a `runCatching`
+and vanished. Two platforms, two unrelated causes, one symptom — which is a
+strong hint the symptom deserves its own guard rather than each cause getting
+one.
+
+The second fault worth recording: **iOS had reimplemented `PrayerScreen`.** Core
+has that type. It holds the rope rule (a hundred Jesus Prayers are counted, the
+Creed is not), the reader's override of that rule, and the count. iOS had a
+local three-field struct of the same name in `@State`, so the rope never
+followed the prayer, "Show rope" did not exist, and the count was destroyed by
+any navigation. Nothing failed, because there was nothing to fail — the local
+version was internally consistent. It was just a fork nobody had declared.
+
+Both are now in `PortParityTests`, and both negative controls were run: the
+calendar check fails when `LiturgicalService` is removed from the iOS tree, and
+the prayer check fails when the "Read" group is taken out of the chooser.
+
+**And a note on the negative controls themselves.** My first attempt at
+sabotaging the prayer check replaced `notForRope` with `SABOTAGE_notForRope` —
+which still contains `notForRope`, so the test passed and I nearly recorded that
+as a verified guard. A negative control that does not actually remove the thing
+is worth less than no negative control, because it produces false confidence
+rather than none. Then, restoring afterwards, `git checkout --` silently did
+nothing for `TermText.swift`, because a new untracked file is not in the index
+to restore from; the sabotage sat in the working tree until I grepped for it.
+Check the restore, every time, by looking for the sabotage string rather than by
+trusting the restore command.

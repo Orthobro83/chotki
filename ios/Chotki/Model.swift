@@ -14,10 +14,39 @@ import ChotkiCore
 /// here; copying it would have brought five hundred lines of wiring for the
 /// sake of a dozen. Where the two platforms must *decide* the same thing, the
 /// deciding belongs in core rather than in either of them.
+/// Main-actor by declaration rather than by convention. It was already only
+/// ever touched from a view body; saying so is what lets the calendar fetch be
+/// an ordinary `Task` instead of a hand-audited hop.
+@MainActor
 @Observable
 final class Model {
 
     private let store: SQLiteStore
+
+    /// The church calendar. The only thing Chotki asks the network for.
+    ///
+    /// iOS shipped without this: `ReadingView` read `liturgicalDay(_:)` from
+    /// the store and nothing ever wrote to it, so the reading screen was
+    /// permanently empty and looked like a slow network rather than a missing
+    /// half. The reader was built and the writer was not — the same shape as
+    /// Android's missing INTERNET permission, arrived at independently.
+    let liturgical: LiturgicalService
+
+    /// What the prayers screen is showing. Core's, not a local copy.
+    ///
+    /// It lives on the model rather than in the view because following a word
+    /// into the glossary destroys and rebuilds the view, and losing your place
+    /// in a hundred-knot count because you looked up "Publican" is a poor
+    /// trade. The iOS build had its own three-field struct in `@State`, which
+    /// lost the count on every push and had none of the rope rule.
+    var prayers = PrayerScreen()
+
+    /// Bumped when the calendar changes under us, so anything showing a day
+    /// re-reads it. `liturgicalDay(_:)` reads the store directly, and an
+    /// `@Observable` model cannot see that a table it does not hold has
+    /// changed.
+    private(set) var calendarVersion = 0
+    private(set) var isFetchingCalendar = false
 
     private(set) var rules: [Rule] = []
     private(set) var activations: [Activation] = []
@@ -39,7 +68,26 @@ final class Model {
         let now = CalendarDate(Date(), in: .current)
         self.selectedDate = now
         self.visibleMonth = now
+        let loaded = (try? store.loadSettings()) ?? .default
+        self.liturgical = LiturgicalService(store: store, jurisdiction: loaded.jurisdiction)
         reload()
+        Task { await refreshCalendar() }
+    }
+
+    /// Fetches the calendar around today and tells the screens to look again.
+    ///
+    /// Deliberately not silent about failing: `isFetchingCalendar` is what lets
+    /// the reading screen say it is trying rather than say nothing, and offer
+    /// the fetch again when it did not work.
+    func refreshCalendar(around date: CalendarDate? = nil) async {
+        guard !isFetchingCalendar else { return }
+        isFetchingCalendar = true
+        defer { isFetchingCalendar = false }
+
+        let centre = date ?? today
+        try? liturgical.loadSnapshot(around: centre)
+        _ = await liturgical.refresh(from: centre.adding(days: -1), days: 16)
+        calendarVersion += 1
     }
 
     /// Rescheduled after anything that changes when a rule is due.
@@ -121,8 +169,13 @@ final class Model {
     }
 
     /// The church calendar for a day, if it has been fetched.
+    ///
+    /// Reads `calendarVersion` so that a fetch redraws whatever is showing.
+    /// Without that touch the value is invisible to observation and the screen
+    /// stays empty until something else happens to change.
     func liturgicalDay(_ date: CalendarDate) -> LiturgicalDay? {
-        try? store.liturgicalDay(civilDate: date, reckoning: settings.jurisdiction.reckoning)
+        _ = calendarVersion
+        return try? store.liturgicalDay(civilDate: date, reckoning: settings.jurisdiction.reckoning)
     }
 
     func report(days: Int = 30) -> ProgressReport {
@@ -169,11 +222,20 @@ final class Model {
         if updated.jurisdiction.reckoning != settings.jurisdiction.reckoning {
             updated.reckoningChangedOn = today
         }
+        let jurisdictionChanged = updated.jurisdiction != settings.jurisdiction
         do {
             try store.saveSettings(updated)
             settings = updated
         } catch {
             trouble = "That setting did not save. \(error.localizedDescription)"
+        }
+        // A new church or a new reckoning means a different calendar, and the
+        // one already cached answers for the old one. macOS re-fetches here;
+        // iOS would have kept showing the previous jurisdiction's days.
+        if jurisdictionChanged {
+            try? liturgical.setJurisdiction(updated.jurisdiction, around: today)
+            calendarVersion += 1
+            Task { await refreshCalendar() }
         }
     }
 

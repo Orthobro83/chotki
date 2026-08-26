@@ -37,6 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         trace("launched, activationPolicy=\(NSApp.activationPolicy().rawValue)")
+        if let path = ProcessInfo.processInfo.environment["CHOTKI_EXPORT_PHONE_ICON"] {
+            IconExport.runPhone(to: path)
+            return
+        }
+
         if let directory = ProcessInfo.processInfo.environment["CHOTKI_EXPORT_ICON"] {
             IconExport.run(to: directory)
             return

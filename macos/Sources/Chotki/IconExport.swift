@@ -21,6 +21,26 @@ enum IconExport {
         ("icon_512x512", 512), ("icon_512x512@2x", 1024)
     ]
 
+    /// The single 1024 square iOS wants; the system makes every other size.
+    static func runPhone(to path: String) {
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024,
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) else { NSApp.terminate(nil); return }
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        CrossIcon.phoneIcon(size: 1024).draw(in: NSRect(x: 0, y: 0, width: 1024, height: 1024))
+        NSGraphicsContext.restoreGraphicsState()
+
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+            FileHandle.standardOutput.write(Data("wrote \(path)\n".utf8))
+        }
+        NSApp.terminate(nil)
+    }
+
     static func run(to directory: String) {
         let url = URL(fileURLWithPath: directory)
         do {

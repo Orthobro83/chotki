@@ -12,6 +12,8 @@ struct DayView: View {
     @Bindable var model: Model
     /// Shared with the row so a tapped rule can become the screen it opens.
     var transition: Namespace.ID
+    /// Raised by the tab, which owns the sheet.
+    var openLibrary: () -> Void
 
     private var entries: [DayEntry] { model.entries(on: model.selectedDate) }
 
@@ -34,7 +36,7 @@ struct DayView: View {
                     .animation(.snappy(duration: 0.22), value: model.selectedDate)
 
                 if entries.isEmpty {
-                    EmptyDay()
+                    EmptyDay(open: openLibrary)
                 } else {
                     List {
                         ForEach(entries, id: \.id) { entry in
@@ -52,7 +54,18 @@ struct DayView: View {
     }
 }
 
+/// Nothing due, and the way to change that.
+///
+/// The words alone sent someone to a small icon in a corner they had not
+/// noticed. The library is named in the sentence, so the library is drawn under
+/// it, at a size that reads as the thing to press. The corner button stays
+/// where it is: it is how the library is reached on every other day, and a
+/// control that moves depending on whether the day is empty is worse than one
+/// that does not.
 private struct EmptyDay: View {
+    /// Opens the same sheet the toolbar does.
+    var open: () -> Void
+
     var body: some View {
         VStack(spacing: 6) {
             Text("Nothing on the rule for this day.")
@@ -60,6 +73,17 @@ private struct EmptyDay: View {
             Text("Take something on from the library when you are ready.")
                 .font(.footnote)
                 .foregroundStyle(Chotki.faint)
+
+            Button(action: open) {
+                Image(systemName: "books.vertical")
+                    .font(.system(size: 46, weight: .light))
+                    .foregroundStyle(Chotki.gold)
+                    .frame(width: 88, height: 88)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 18)
+            .accessibilityLabel("Library")
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

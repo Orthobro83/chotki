@@ -149,6 +149,39 @@ Android equivalent used sonification, which follows the ringer — so a phone on
 vibrate played nothing, which is most phones most of the time, and it worked on
 an emulator and not on a real device.
 
+## What the first hour on the phone settled
+
+Seven faults, and the useful split is which kind each was.
+
+**Three were the port gap this project already knows about**, and all three
+were greppable with no phone in the room: the prayers screen offered the rope
+prayers and neither the rules nor the read-only prayers, showed no prayer text
+at all, and had its own copy of core's `PrayerScreen` — so the rope never
+followed the prayer and the count died on every navigation.
+
+**One was new: a reader with no writer.** The reading screen read the calendar
+cache and nothing on the platform ever wrote to it. That does not look like a
+missing feature; it looks like a slow network, and it says so in its own words.
+`PortParityTests` now asks that any tree containing `liturgicalDay` also
+contains `LiturgicalService` and a refresh.
+
+**Three were ordinary interface bugs**: no app icon (the asset catalog had no
+`AppIcon`), the reading column sized to its content instead of the width, and
+the library was named in the empty-day text while only being reachable from a
+small corner button.
+
+Two things followed that are worth keeping:
+
+- **The rope toggle went to the toolbar, not the footer.** macOS keeps it at the
+  foot of a fixed-height popover. Here the morning prayers are eleven prayers
+  long, and a control you have to read a whole rule to reach is one nobody
+  finds. Same capability, different placement — which is the same call the tab
+  count already makes.
+- **Glossary links are per-tab.** macOS calls a method on one model because it
+  has one window. Each tab here owns its `NavigationPath`, so `OpenTerm` goes
+  through the environment and a word tapped in the Reading pushes onto the
+  Reading's stack. The back-swipe returns to the passage it was read in.
+
 ## Phases
 
 Each ends with something runnable and tested, as the Android phases did.

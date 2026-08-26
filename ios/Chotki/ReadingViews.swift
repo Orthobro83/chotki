@@ -13,69 +13,138 @@ struct ReadingView: View {
 
     var body: some View {
         ScrollView {
-            if let day {
-                VStack(alignment: .leading, spacing: 14) {
-                    if !day.summaryTitle.isEmpty {
-                        Text(day.summaryTitle).font(.footnote).foregroundStyle(Chotki.muted)
-                    }
-                    // Never re-cased: orthocal's words are shown as it writes them.
-                    if let title = day.title {
-                        Text(title).font(.system(size: 20)).foregroundStyle(Chotki.gold)
-                    }
-                    if day.isFast {
-                        Text("The calendar marks this as \(day.fastLevelDescription).")
-                            .font(.footnote).foregroundStyle(Chotki.goldDim)
-                        if !day.abstentions.isEmpty {
-                            Text("Customarily set aside: \(day.abstentions.joined(separator: ", ")).")
-                                .font(.footnote).foregroundStyle(Chotki.faint)
-                        }
-                    }
-
-                    ForEach(Array(day.readings.enumerated()), id: \.offset) { _, reading in
-                        Divider().overlay(Chotki.line)
-                        Text(reading.display)
-                            .font(.footnote).foregroundStyle(Chotki.gold)
-                        Text(reading.text)
-                            .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
-                            .lineSpacing(4)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
-                        Divider().overlay(Chotki.line)
-                        Text("From the fathers").font(.footnote).foregroundStyle(Chotki.gold)
-                        Text(patristic.text)
-                            .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
-                            .lineSpacing(4)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("\(patristic.author) · \(patristic.source)")
-                            .font(.system(size: 11)).foregroundStyle(Chotki.faint)
-                    }
-
-                    Divider().overlay(Chotki.line)
-                    HStack(spacing: 6) {
-                        Text("\(day.paschaDistance) days since Pascha")
-                        if let tone = day.tone { Text("· tone \(tone)") }
-                        Spacer()
-                        Text(model.settings.jurisdiction.reckoning.displayName)
-                    }
-                    .font(.system(size: 11)).foregroundStyle(Chotki.faint)
+            VStack(alignment: .leading, spacing: 14) {
+                if let day {
+                    stored(day)
+                } else {
+                    missing
                 }
-                .padding(18)
-            } else {
-                VStack(spacing: 6) {
-                    Text("No reading stored for this day yet.")
-                        .foregroundStyle(Chotki.muted)
-                    Text("The church calendar is the only thing Chotki asks the network for, and it will fill in when it can reach it.")
-                        .font(.footnote).foregroundStyle(Chotki.faint)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(24).padding(.top, 40)
             }
+            // Without an explicit full width the column takes the width of its
+            // widest line, which on a day whose commemoration is short left the
+            // text in a narrow band with the ground either side of it.
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Chotki.ground)
         .navigationTitle("Reading")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                // The reading is where unfamiliar words are thickest, so the
+                // glossary is one tap away from it rather than only from a
+                // word that happens to be linked.
+                NavigationLink(value: Route.term(slug: nil)) {
+                    Label("Glossary", systemImage: "character.book.closed")
+                }
+                .accessibilityLabel("Glossary")
+            }
+        }
+        // Asks again when the day being looked at moves outside what was
+        // fetched, and on first appearance. Cheap: the service only writes days
+        // it did not already hold.
+        .task(id: model.selectedDate) {
+            if model.liturgicalDay(model.selectedDate) == nil {
+                await model.refreshCalendar(around: model.selectedDate)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func stored(_ day: LiturgicalDay) -> some View {
+        if !day.summaryTitle.isEmpty {
+            TermText(model: model, text: day.summaryTitle, size: 13, colour: Chotki.muted)
+        }
+        // Never re-cased: orthocal's words are shown as it writes them.
+        if let title = day.title {
+            TermText(model: model, text: title, size: 20, colour: Chotki.gold)
+        }
+        if day.isFast {
+            TermText(
+                model: model,
+                text: "The calendar marks this as \(day.fastLevelDescription).",
+                size: 13, colour: Chotki.goldDim
+            )
+            if !day.abstentions.isEmpty {
+                TermText(
+                    model: model,
+                    text: "Customarily set aside: \(day.abstentions.joined(separator: ", ")).",
+                    size: 13, colour: Chotki.faint
+                )
+            }
+        }
+
+        ForEach(Array(day.readings.enumerated()), id: \.offset) { _, reading in
+            Divider().overlay(Chotki.line)
+            Text(reading.display)
+                .font(.footnote).foregroundStyle(Chotki.gold)
+            // Scripture is left unlinked on purpose: linking every term inside
+            // a whole chapter turns a passage into a field of references.
+            Text(reading.text)
+                .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+
+        if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
+            Divider().overlay(Chotki.line)
+            Text("From the fathers").font(.footnote).foregroundStyle(Chotki.gold)
+            Text(patristic.text)
+                .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("\(patristic.author) · \(patristic.source)")
+                .font(.system(size: 11)).foregroundStyle(Chotki.faint)
+        }
+
+        Divider().overlay(Chotki.line)
+        HStack(spacing: 6) {
+            Text("\(day.paschaDistance) days since Pascha")
+            if let tone = day.tone { Text("· tone \(tone)") }
+            Spacer()
+            Text(model.settings.jurisdiction.reckoning.displayName)
+        }
+        .font(.system(size: 11)).foregroundStyle(Chotki.faint)
+    }
+
+    /// Nothing stored for the day, and a way to ask again.
+    ///
+    /// The screen used to say only that it would fill in when it could, which
+    /// is indistinguishable from a slow network — and here it was neither: iOS
+    /// never asked at all. Saying what is happening, and offering the fetch, is
+    /// what makes the difference visible.
+    private var missing: some View {
+        VStack(spacing: 10) {
+            if model.isFetchingCalendar {
+                ProgressView().tint(Chotki.gold)
+                Text("Asking the church calendar…")
+                    .font(.footnote).foregroundStyle(Chotki.muted)
+            } else {
+                Text("No reading stored for this day yet.")
+                    .foregroundStyle(Chotki.muted)
+                Button {
+                    Task { await model.refreshCalendar(around: model.selectedDate) }
+                } label: {
+                    Text(model.selectedDate == model.today
+                         ? "Load today\u{2019}s readings"
+                         : "Load this day\u{2019}s readings")
+                }
+                .buttonStyle(.bordered).tint(Chotki.gold)
+
+                Text("The church calendar is the only thing Chotki asks the network for.")
+                    .font(.footnote).foregroundStyle(Chotki.faint)
+                    .multilineTextAlignment(.center)
+                if model.liturgical.isOffline {
+                    Text("It could not be reached just now.")
+                        .font(.footnote).foregroundStyle(Chotki.faint)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 50)
     }
 }
 

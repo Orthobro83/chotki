@@ -200,6 +200,111 @@ struct PortParityTests {
         }
     }
 
+    /// Every platform that *shows* the church calendar must also *fetch* it.
+    ///
+    /// iOS shipped reading `liturgicalDay` from the store with nothing on the
+    /// whole platform ever writing to it: no `LiturgicalService`, no fetch, no
+    /// network call at all. The reading screen was permanently empty and said
+    /// it would fill in when it could, which reads as a slow network rather
+    /// than as a half that was never built.
+    ///
+    /// That is a new shape of omission for this project and worth its own
+    /// check: not a missing control, but a reader with no writer. Android
+    /// reached the same place by a different road — the screen was written and
+    /// the INTERNET permission was not.
+    @Test("every platform fetches the calendar it displays")
+    func everyPlatformFetchesWhatItShows() throws {
+        for (platform, path) in [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ] {
+            let code = try tree(path)
+            guard code.contains("liturgicalDay") else { continue }
+
+            #expect(
+                code.contains("LiturgicalService"),
+                "\(platform) shows the church calendar but never opens the service that fills it"
+            )
+            #expect(
+                code.contains(".refresh(") || code.contains("refreshCalendar")
+                    || code.contains("refreshLiturgical"),
+                "\(platform) reads the calendar from the store and never asks the network for it"
+            )
+        }
+    }
+
+    /// The prayers screen offers everything in the book, not a slice of it.
+    ///
+    /// iOS offered the rope prayers and nothing else: no rules to say through,
+    /// none of the prayers that are read rather than counted, and no text of
+    /// any prayer anywhere on the screen. Six of the bundled prayers and all
+    /// three rules were unreachable on the platform.
+    ///
+    /// So this asks for the groups by the call that builds each one. A screen
+    /// that offers the rules has to reach for the sequences; one that separates
+    /// what is counted from what is read has to filter on `isForRope` in both
+    /// directions. Prose cannot do either.
+    @Test("every platform offers every prayer, in every group")
+    func everyPlatformOffersEveryPrayer() throws {
+        for (platform, path) in [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ] {
+            let code = try tree(path)
+
+            #expect(
+                code.contains("The rope alone"),
+                "\(platform) does not offer the rope on its own"
+            )
+            #expect(
+                code.contains("sequences") || code.contains("prayerSequences"),
+                "\(platform) offers no rule to say through — only single prayers"
+            )
+            #expect(
+                code.contains("forRope") || code.contains("ForRope"),
+                "\(platform) does not know which prayers are said on the rope"
+            )
+            #expect(
+                code.contains("notForRope") || code.contains("filterNot"),
+                "\(platform) offers only the rope prayers — the ones that are read are unreachable"
+            )
+            // Choosing a prayer and never showing it is the state iOS shipped
+            // in. The words come from `paragraphs`; a title alone is a menu.
+            #expect(
+                code.contains("paragraphs"),
+                "\(platform) lets you choose a prayer and never shows its words"
+            )
+            // The rope rule, and the override, belong to core on every
+            // platform. iOS had its own three-field struct in view state: no
+            // override, no rope rule, and the count lost on every navigation.
+            #expect(
+                code.contains("PrayerScreen"),
+                "\(platform) decides about the rope for itself instead of asking core"
+            )
+        }
+    }
+
+    /// An unfamiliar word leads somewhere, wherever it is read.
+    ///
+    /// The glossary is only reachable by tapping a word for most people, so a
+    /// platform that never scans its text has a glossary nobody arrives at.
+    @Test("every platform links the words a newcomer would stop at")
+    func everyPlatformLinksItsTerms() throws {
+        for (platform, path) in [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ] {
+            let code = try tree(path)
+            #expect(
+                code.contains("scanOnce") || code.contains(".scan("),
+                "\(platform) shows the prayers and the readings with nothing linked"
+            )
+        }
+    }
+
     /// The first thing anyone sees, on both platforms.
     ///
     /// Android had no first-run screen at all — the flag was in the shared

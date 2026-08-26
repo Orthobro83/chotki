@@ -10,6 +10,7 @@ import ChotkiCore
 /// that the screen is reading back what was written. That is the seam where
 /// every interface bug in this project has lived.
 @Suite("The iOS model")
+@MainActor
 struct ModelTests {
 
     private func model() throws -> Model {
@@ -144,6 +145,7 @@ struct NavigationTests {
 /// nearly was. Android had no first-run screen at all for months; the words
 /// were in core and nothing on that side read them.
 @Suite("The screens")
+@MainActor
 struct ScreenTests {
 
     private func model() throws -> Model {
@@ -218,6 +220,7 @@ struct ScreenTests {
 /// right there throughout — it has always stopped returning a settled rule —
 /// and five separate things around it were not.
 @Suite("Reminders")
+@MainActor
 struct ReminderTests {
 
     private func model() throws -> Model {
@@ -405,6 +408,7 @@ struct ReconcileTests {
 /// works — gutting the function body and leaving its name passes it, and that
 /// was tried. This is where the behaviour is actually checked.
 @Suite("Keeping the record")
+@MainActor
 struct BackupTests {
 
     private func model() throws -> Model {
