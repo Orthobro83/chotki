@@ -266,6 +266,67 @@ final class Model {
         }
     }
 
+    // MARK: what the day's menu can do
+    //
+    // Every one of these existed on the Mac and reached iOS as nothing at all.
+    // The row had a checkbox and a way to the prayers; the Mac's right-click
+    // menu — stand down, mark kept late, pause, resume, edit — had no
+    // equivalent here, so a rule once taken on could not be changed or stopped
+    // from the day at all.
+
+    /// Writes a status for one day of one rule.
+    ///
+    /// Settling a day silences the rest of it: `reload` reschedules, and
+    /// `ReminderTicker` withdraws what the day no longer needs.
+    func setStatus(_ status: OccurrenceStatus, for rule: Rule, on date: CalendarDate) {
+        let kept = status == .completed || status == .completedLate
+        do {
+            try store.save(Occurrence(
+                ruleID: rule.id, date: date, status: status,
+                completedAt: kept ? Date() : nil
+            ))
+            reload()
+        } catch {
+            trouble = "That did not save. \(error.localizedDescription)"
+        }
+    }
+
+    /// Kept, but after its moment had passed.
+    ///
+    /// Deliberately a thing you say rather than a thing the app infers.
+    /// Someone who kept a rule and only remembered to tick it afterwards has
+    /// not done anything late, and the app cannot tell the difference — so
+    /// ticking the box never means this. Only choosing it does.
+    func markKeptLate(_ entry: DayEntry) {
+        setStatus(.completedLate, for: entry.rule, on: entry.date)
+    }
+
+    /// This one day excused. The rule itself is untouched.
+    func standDownForTheDay(_ entry: DayEntry) {
+        setStatus(.skipped, for: entry.rule, on: entry.date)
+    }
+
+    func isPaused(_ rule: Rule) -> Bool { practice.isPaused(rule) }
+
+    /// Stops a rule from today, keeping everything it has kept. Pausing
+    /// removes days from the record rather than counting them against anyone.
+    func pause(_ rule: Rule) {
+        apply(EditPlanner().pause(rule: rule, activations: activations, on: today))
+    }
+
+    func resume(_ rule: Rule) {
+        apply(EditPlanner().resume(rule: rule, on: today))
+    }
+
+    private func apply(_ plan: EditPlan) {
+        do {
+            try store.apply(plan)
+            reload()
+        } catch {
+            trouble = "That change did not apply. \(error.localizedDescription)"
+        }
+    }
+
     /// Removing a rule archives it. Nothing is destroyed — its history stays in
     /// the record and it can be taken up again.
     func remove(_ rule: Rule) {
@@ -293,15 +354,33 @@ final class Model {
 
     // MARK: the library, enough of it for now
 
-    /// Takes a template on. The observance a liturgical rule depends on is
-    /// turned on with it, or the rule would never come due.
-    func take(_ template: RuleTemplate) {
-        do {
-            let rule = template.makeRule(source: "the library")
-            try store.save(rule)
-            try store.save(Activation(ruleID: rule.id, from: today))
-            reload()
+    /// The rule a template would make, without saving it.
+    ///
+    /// So the editor can be shown first, filled in. Taking something on is a
+    /// decision about how often and at what time — iOS saved the template's
+    /// defaults straight to the day and never asked, which left no way to say
+    /// when, on which days, or whether to be reminded. Android already does
+    /// this; the words here are its comment, because it is the same decision.
+    func ruleFrom(_ template: RuleTemplate) -> Rule {
+        template.makeRule(source: "the library")
+    }
 
+    /// Takes a template on as it stands, without asking. Kept for the tests
+    /// that predate the editor-first flow.
+    func take(_ template: RuleTemplate) {
+        save(ruleFrom(template))
+    }
+
+    /// Saves a rule the editor has filled in, new or changed.
+    ///
+    /// The observance a liturgical rule depends on is turned on with it, or the
+    /// rule would sit there never coming due.
+    func save(_ rule: Rule) {
+        do {
+            let isNew = (try store.rule(id: rule.id)) == nil
+            try store.save(rule)
+            if isNew { try store.save(Activation(ruleID: rule.id, from: today)) }
+            reload()
             turnOnNeededObservances()
         } catch {
             trouble = "That did not save. \(error.localizedDescription)"
@@ -311,4 +390,44 @@ final class Model {
     var isTaken: (RuleTemplate) -> Bool {
         { [rules] template in rules.contains { $0.title == template.title } }
     }
+
+    // MARK: rules of his own
+
+    /// The Custom section: rules he wrote, whether or not they are in force.
+    ///
+    /// Missing from iOS entirely, along with the whole lower half of the
+    /// library — so a rule written by hand and later set aside could not be
+    /// found again on this platform.
+    var customEntries: [Rule] {
+        CustomLibrary.entries(from: (try? store.rules(includeArchived: true)) ?? [])
+    }
+
+    /// Puts a rule of his own back on the rule, from today.
+    ///
+    /// The same rule, not a copy: its history follows it, and the gap shows as
+    /// a gap rather than as two unrelated rules with the record split between
+    /// them.
+    func takeUp(_ rule: Rule) {
+        do {
+            try store.save(CustomLibrary.takingUp(rule))
+            if practice.isPaused(rule) {
+                try store.save(Activation(ruleID: rule.id, from: today))
+            }
+            reload()
+        } catch {
+            trouble = "That did not save. \(error.localizedDescription)"
+        }
+    }
+
+    /// Out of the Custom list. The rule and its history are untouched.
+    func setAside(_ rule: Rule) {
+        do {
+            try store.save(CustomLibrary.settingAside(rule))
+            reload()
+        } catch {
+            trouble = "That did not save. \(error.localizedDescription)"
+        }
+    }
+
+    func isOnTheRule(_ rule: Rule) -> Bool { !rule.isArchived && !isPaused(rule) }
 }

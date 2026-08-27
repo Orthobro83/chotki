@@ -1,6 +1,8 @@
 package org.chotki.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,12 +18,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,11 +101,16 @@ fun RuleScreen(
                         EntryRow(
                             entry = entry,
                             clock = state.settings.clockStyle,
+                            isPaused = state.isPaused(entry.rule),
                             onToggle = { state.toggleKept(entry) },
                             onReadPrayers = { onReadPrayers(entry) },
                             onReadReading = onReadReading,
                             onReadPsalter = onReadPsalter,
                             onEdit = { onEdit(entry) },
+                            onMarkKeptLate = { state.markKeptLate(entry) },
+                            onStandDown = { state.standDown(entry) },
+                            onPause = { state.pause(entry.rule) },
+                            onResume = { state.resume(entry.rule) },
                         )
                     }
                 }
@@ -162,16 +174,52 @@ private fun EmptyDay(onOpenLibrary: () -> Unit, modifier: Modifier = Modifier) {
 private fun EntryRow(
     entry: DayEntry,
     clock: ClockStyle,
+    isPaused: Boolean,
     onToggle: () -> Unit,
     onReadPrayers: () -> Unit,
     onReadReading: () -> Unit,
     onReadPsalter: () -> Unit,
     onEdit: () -> Unit,
+    onMarkKeptLate: () -> Unit,
+    onStandDown: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
+
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 2.dp),
+        Modifier
+            .fillMaxWidth()
+            // Long press is the Mac's right click. On the row itself, so the
+            // checkbox and the two icons keep their own gestures — the whole
+            // row was a tap target once and it ticked rules off by accident.
+            .combinedClickable(
+                onClick = {},
+                onLongClick = { menuOpen = true },
+                // No ripple on the plain tap: nothing happens on a plain tap,
+                // and a flash that says otherwise is a lie about the control.
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            )
+            .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        RuleMenu(
+            open = menuOpen,
+            entry = entry,
+            isPaused = isPaused,
+            onDismiss = { menuOpen = false },
+            onReadPrayers = onReadPrayers,
+            onReadReading = onReadReading,
+            onReadPsalter = onReadPsalter,
+            onToggle = onToggle,
+            onMarkKeptLate = onMarkKeptLate,
+            onStandDown = onStandDown,
+            onEdit = onEdit,
+            onPause = onPause,
+            onResume = onResume,
+        )
+
         // The box, and only the box. It draws at 20dp and responds across 44,
         // which is the platform's minimum target and the right answer to a small
         // control — rather than a tap gesture over the whole row.
@@ -248,6 +296,86 @@ private fun EntryRow(
                 .semantics { contentDescription = "Edit ${entry.rule.title}" },
         )
     }
+}
+
+/**
+ * What the Mac's right-click menu offers, in the same order and the same words.
+ *
+ * Neither mobile platform had any of this. Android could edit a rule through
+ * the pencil and nothing else: `standDown` and `remove` existed on `AppState`
+ * and were called from nowhere, so a rule once taken on could not be stood down
+ * for a day or paused at all.
+ */
+@Composable
+private fun RuleMenu(
+    open: Boolean,
+    entry: DayEntry,
+    isPaused: Boolean,
+    onDismiss: () -> Unit,
+    onReadPrayers: () -> Unit,
+    onReadReading: () -> Unit,
+    onReadPsalter: () -> Unit,
+    onToggle: () -> Unit,
+    onMarkKeptLate: () -> Unit,
+    onStandDown: () -> Unit,
+    onEdit: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+) {
+    DropdownMenu(
+        expanded = open,
+        onDismissRequest = onDismiss,
+        modifier = Modifier.background(Chotki.panel),
+    ) {
+        fun choosing(action: () -> Unit): () -> Unit = { onDismiss(); action() }
+
+        if (entry.isDispensed) {
+            // The Church lifted it. Nothing to mark, nothing to stand down.
+            DropdownMenuItem(
+                text = { Text("Lifted by the Church today", color = Chotki.muted) },
+                onClick = onDismiss,
+            )
+        } else {
+            when (entry.rule.reference) {
+                RuleReference.PRAYERS -> {
+                    Item("Read the prayers", choosing(onReadPrayers))
+                    HorizontalDivider(color = Chotki.lineSoft)
+                }
+                RuleReference.READING -> {
+                    Item("Read the day\u2019s readings", choosing(onReadReading))
+                    HorizontalDivider(color = Chotki.lineSoft)
+                }
+                RuleReference.PSALTER -> {
+                    Item("Read today\u2019s kathisma", choosing(onReadPsalter))
+                    HorizontalDivider(color = Chotki.lineSoft)
+                }
+                RuleReference.NONE -> Unit
+            }
+
+            Item(
+                if (entry.isKept) "Clear this day" else "Mark as kept",
+                choosing(onToggle),
+            )
+            if (!entry.isKept) Item("Mark as kept, late", choosing(onMarkKeptLate))
+            Item("Stand down for this day", choosing(onStandDown))
+        }
+
+        HorizontalDivider(color = Chotki.lineSoft)
+        Item("Edit rule\u2026", choosing(onEdit))
+        if (isPaused) {
+            Item("Resume this rule", choosing(onResume))
+        } else {
+            Item("Pause this rule", choosing(onPause))
+        }
+    }
+}
+
+@Composable
+private fun Item(label: String, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(label, color = Chotki.parchment, fontSize = 15.sp) },
+        onClick = onClick,
+    )
 }
 
 private val months = listOf(

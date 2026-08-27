@@ -339,6 +339,82 @@ struct PortParityTests {
         }
     }
 
+    /// Everything the Mac's right-click menu offers, offered everywhere.
+    ///
+    /// This is the largest gap the project has had. macOS has carried a context
+    /// menu on every rule since the first version — mark kept, mark kept late,
+    /// stand down for the day, edit, pause, resume — and **neither mobile
+    /// platform had any of it**. iOS could not reach the editor at all: the
+    /// route existed and nothing navigated to it. Android had a pencil, and
+    /// `standDown` and `remove` sat on `AppState` called from nowhere.
+    ///
+    /// Both are now long-press, which is the gesture that means right-click on
+    /// a phone. The *gesture* is per-platform; the operations are not.
+    ///
+    /// Checked as user-visible words rather than as method names, because the
+    /// method names differ by platform and the words are the promise. A menu
+    /// that says "Pause this rule" is a menu with a pause in it.
+    @Test("every platform offers every action the Mac offers on a rule")
+    func everyPlatformOffersTheSameActions() throws {
+        let actions = [
+            "Mark as kept, late",
+            "Stand down for this day",
+            "Pause this rule",
+            "Resume this rule",
+            "Edit rule",
+        ]
+
+        for (platform, path) in [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ] {
+            let code = try tree(path)
+            for action in actions {
+                #expect(
+                    code.contains(action),
+                    "\(platform) does not offer \"\(action)\" anywhere — the Mac has it on every rule"
+                )
+            }
+            // Saying the words is not doing the thing. Pausing and resuming are
+            // activation surgery, and only `EditPlanner` does it correctly —
+            // writing an archive flag instead would read the same and score
+            // the paused days as missed.
+            #expect(
+                code.contains("EditPlanner"),
+                "\(platform) names pause and resume but never asks EditPlanner to do them"
+            )
+        }
+    }
+
+    /// The whole library, not the top third of it.
+    ///
+    /// iOS shipped with the bundled templates and nothing else: no Custom
+    /// section, so a rule he had written and later set aside could not be found
+    /// again on that platform, and no way to write one in the first place.
+    @Test("every platform offers the whole library")
+    func everyPlatformOffersTheWholeLibrary() throws {
+        for (platform, path) in [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ] {
+            let code = try tree(path)
+            #expect(
+                code.contains("Write your own rule"),
+                "\(platform) offers no way to write a rule of your own"
+            )
+            #expect(
+                code.contains("customEntries"),
+                "\(platform) has no Custom section — a rule set aside cannot be found again"
+            )
+            #expect(
+                code.contains("takeUp") && code.contains("setAside"),
+                "\(platform) cannot put a rule of your own back, or take it out of the library"
+            )
+        }
+    }
+
     /// The first thing anyone sees, on both platforms.
     ///
     /// Android had no first-run screen at all — the flag was in the shared

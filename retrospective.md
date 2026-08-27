@@ -348,3 +348,47 @@ Two smaller things from the same session:
   a state-lifetime bug, not a feature gap, and source-grep parity cannot see it.
   Switching to the Reading and back reset a hundred-knot count to nought. Both
   platforms now hold it beside the screen rather than in it.
+
+## The largest gap yet, and it was in both ports at once
+
+Ryan opened iOS to take a rule on and found there was no way to say when, how
+often, or whether to be reminded — the tap saved the template's defaults
+straight onto the day. From there it unravelled: no pencil on a rule, no way to
+remove one, no way to stand it down for a day, no way to pause it. Then: no
+Custom section in the library, and no "Write your own rule" at all.
+
+macOS has carried all of this since its first version, on a right-click menu:
+mark as kept, mark as kept late, stand down for this day, edit rule, pause,
+resume. **Neither mobile platform had any of it.** Android had a pencil and
+nothing else — `standDown` and `remove` sat on `AppState` called from nowhere,
+which is a shape this file already describes and I had not thought to check for
+again. iOS could not reach its own rule editor at all: `Route.editor` existed,
+`RuleEditor.swift` existed and was complete, and no view anywhere navigated to
+it. A whole screen, written and unreachable.
+
+`PortParityTests` did not catch a line of it, and the reason is worth stating.
+Every check in it was written after a specific bug, and each one asks about the
+thing that bug was about — reminders in the editor, the clock in settings, the
+calendar fetch, the glossary scan. None asked "does the row offer what the row
+offers on the Mac", because nobody had reported that yet. **A test suite grown
+entirely from past bugs only ever covers past bugs.** The parity checks now
+include the menu's actions and the library's sections, but the general lesson is
+that the inventory has to be taken deliberately against the reference
+implementation rather than accumulated one incident at a time.
+
+Ryan's instruction is now the rule, in `house-rules.md`: the first platform
+built is the specification, later platforms carry all of it, and only the *way
+in* may differ. Right-click became long-press. The Mac's fixed footer for the
+rope became a toolbar button, because eleven prayers of scroll is not a footer.
+Six tabs became five with the glossary reached contextually. Every one of those
+is a change of gesture, not of capability — and the moment a difference is a
+difference in capability, it is a bug.
+
+**One thing I got right by accident and should do on purpose.** Converting the
+row's controls from `NavigationLink` to buttons that push through an
+environment action fixed two problems I had not connected: `List` was drawing a
+disclosure chevron for every link, and a `NavigationLink` inside a
+`.contextMenu` is presented outside the navigation stack, where it does not
+reliably work at all. The second would have shipped as "the menu items do
+nothing sometimes" — a control that draws correctly and does nothing, which is
+the failure this project meets more than any other.

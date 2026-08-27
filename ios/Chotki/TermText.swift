@@ -31,6 +31,59 @@ extension EnvironmentValues {
     }
 }
 
+/// Going to one of the tabs from inside a screen.
+///
+/// The day's readings already have a place of their own, so a reading rule
+/// sends you there rather than pushing a second copy onto the day's stack —
+/// which is the call macOS makes (`model.tab = .reading`) and Android makes
+/// (`journey.go(Place.READING)`). Only the shell knows which tab is showing, so
+/// it puts the way to change that here.
+struct GoToPlace: Sendable {
+    private let action: @MainActor @Sendable (Place) -> Void
+
+    init(_ action: @escaping @MainActor @Sendable (Place) -> Void) { self.action = action }
+
+    @MainActor func callAsFunction(_ place: Place) { action(place) }
+}
+
+struct GoToPlaceKey: EnvironmentKey {
+    static let defaultValue = GoToPlace { _ in }
+}
+
+extension EnvironmentValues {
+    var goToPlace: GoToPlace {
+        get { self[GoToPlaceKey.self] }
+        set { self[GoToPlaceKey.self] = newValue }
+    }
+}
+
+/// Pushing a route onto whichever tab's stack is showing.
+///
+/// A `NavigationLink` inside a `List` row makes the row draw a disclosure
+/// chevron, so a row with a prayers link and a pencil grew two of them pointing
+/// at nothing in particular. And a `NavigationLink` inside a `.contextMenu` is
+/// presented outside the navigation stack, where it does not reliably do
+/// anything at all. Both become ordinary buttons if there is a way to push by
+/// hand, so here is one.
+struct PushRoute: Sendable {
+    private let action: @MainActor @Sendable (Route) -> Void
+
+    init(_ action: @escaping @MainActor @Sendable (Route) -> Void) { self.action = action }
+
+    @MainActor func callAsFunction(_ route: Route) { action(route) }
+}
+
+struct PushRouteKey: EnvironmentKey {
+    static let defaultValue = PushRoute { _ in }
+}
+
+extension EnvironmentValues {
+    var pushRoute: PushRoute {
+        get { self[PushRouteKey.self] }
+        set { self[PushRouteKey.self] = newValue }
+    }
+}
+
 /// Running text with glossary terms made tappable.
 ///
 /// A newcomer meets a dozen unfamiliar words in the first sentence of a

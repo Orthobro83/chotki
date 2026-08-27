@@ -95,6 +95,8 @@ private struct EntryRow: View {
     @Bindable var model: Model
     let entry: DayEntry
     var transition: Namespace.ID
+    @Environment(\.goToPlace) private var goToPlace
+    @Environment(\.pushRoute) private var pushRoute
 
     var body: some View {
         HStack(spacing: 10) {
@@ -141,20 +143,107 @@ private struct EntryRow: View {
 
             // The way to the words, which is the point of the rule. Its own
             // control, never the whole row.
-            if entry.rule.hasPrayers {
-                NavigationLink(value: Route.prayers(ruleID: entry.rule.id)) {
-                    Image(systemName: "text.alignleft")
-                        .font(.system(size: 15))
-                        .foregroundStyle(Chotki.goldDim)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Read the prayers for \(entry.rule.title)")
-                .zoomSource(id: entry.rule.id, in: transition)
+            //
+            // Asked `hasPrayers` before, so a reading rule and the Psalter rule
+            // had no way through on iOS — the same fault Android had for
+            // months, and the day's Gospel is no less a text for not being a
+            // prayer. Ask what the rule refers to.
+            reference
+
+            // Always drawn, never on a gesture alone. The Mac has had this
+            // pencil since the first version; iOS had no way to reach the
+            // editor at all — the route existed and nothing navigated to it.
+            Button { pushRoute(.editor(ruleID: entry.rule.id, startingFrom: nil)) } label: {
+                Image(systemName: "pencil")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Chotki.faint)
+                    .frame(width: 40, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Edit \(entry.rule.title)")
         }
         .padding(.vertical, 2)
+        // Long press is the Mac's right-click. Everything its context menu
+        // offers is here, in the same order, with the same words.
+        .contextMenu { menu }
+    }
+
+    @ViewBuilder
+    private var reference: some View {
+        switch entry.rule.reference {
+        case .prayers:
+            link(to: .prayers(ruleID: entry.rule.id),
+                 label: "Read the prayers for \(entry.rule.title)")
+                .zoomSource(id: entry.rule.id, in: transition)
+        case .reading:
+            Button { goToPlace(.reading) } label: {
+                Image(systemName: "text.alignleft")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Chotki.goldDim)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Read the day\u{2019}s readings")
+        case .psalter:
+            link(to: .psalter, label: "Read today\u{2019}s kathisma")
+        case .none:
+            EmptyView()
+        }
+    }
+
+    private func link(to route: Route, label: String) -> some View {
+        Button { pushRoute(route) } label: {
+            Image(systemName: "text.alignleft")
+                .font(.system(size: 15))
+                .foregroundStyle(Chotki.goldDim)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    /// The Mac's right-click menu, option for option.
+    @ViewBuilder
+    private var menu: some View {
+        if entry.isDispensed {
+            // The Church lifted it. Nothing to mark, nothing to stand down.
+            Text("Lifted by the Church today")
+        } else {
+            switch entry.rule.reference {
+            case .prayers:
+                Button("Read the prayers") { pushRoute(.prayers(ruleID: entry.rule.id)) }
+                Divider()
+            case .reading:
+                Button("Read the day\u{2019}s readings") { goToPlace(.reading) }
+                Divider()
+            case .psalter:
+                Button("Read today\u{2019}s kathisma") { pushRoute(.psalter) }
+                Divider()
+            case .none:
+                EmptyView()
+            }
+
+            Button(entry.isKept ? "Clear this day" : "Mark as kept") {
+                model.toggleKept(entry)
+            }
+            if !entry.isKept {
+                Button("Mark as kept, late") { model.markKeptLate(entry) }
+            }
+            Button("Stand down for this day") { model.standDownForTheDay(entry) }
+        }
+
+        Divider()
+        Button("Edit rule\u{2026}") {
+            pushRoute(.editor(ruleID: entry.rule.id, startingFrom: nil))
+        }
+        if model.isPaused(entry.rule) {
+            Button("Resume this rule") { model.resume(entry.rule) }
+        } else {
+            Button("Pause this rule") { model.pause(entry.rule) }
+        }
     }
 }
 

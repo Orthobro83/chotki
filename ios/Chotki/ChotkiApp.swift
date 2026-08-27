@@ -74,6 +74,12 @@ struct Shell: View {
                 // A word tapped anywhere in this tab opens the glossary on
                 // *this* tab's stack, so the back-swipe returns to the passage
                 // it was read in rather than to some other tab's history.
+                .environment(\.goToPlace, GoToPlace { destination in
+                    place = destination
+                })
+                .environment(\.pushRoute, PushRoute { route in
+                    paths[candidate, default: NavigationPath()].append(route)
+                })
                 .environment(\.openTerm, OpenTerm { slug in
                     paths[candidate, default: NavigationPath()].append(Route.term(slug: slug))
                 })
@@ -116,10 +122,11 @@ private struct Destination: View {
         case .prayers(let ruleID):
             PrayersView(model: model, ruleID: ruleID)
                 .zoomDestination(id: ruleID, in: transition)
-        case .editor(let ruleID):
+        case .editor(let ruleID, let startingFrom):
             RuleEditor(
                 model: model,
-                existing: ruleID.flatMap { id in model.rules.first { $0.id == id } }
+                existing: ruleID.flatMap { id in model.rules.first { $0.id == id } },
+                startingFrom: startingFrom
             )
         case .term(let slug):
             GlossaryView_(model: model, slug: slug)

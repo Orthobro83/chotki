@@ -38,7 +38,11 @@ enum Place: String, CaseIterable, Hashable {
 /// attempts before back reliably went back one. A stack of these cannot guess.
 enum Route: Hashable {
     case prayers(ruleID: UUID)
-    case editor(ruleID: UUID?)
+    /// `ruleID` is an existing rule being changed. `startingFrom` is a new one
+    /// filled in from a library template and not yet saved — taking something
+    /// on is a decision about how often, so it is asked before the rule lands
+    /// on the day rather than after.
+    case editor(ruleID: UUID?, startingFrom: Rule? = nil)
     case term(slug: String?)
     case psalter
     case rope

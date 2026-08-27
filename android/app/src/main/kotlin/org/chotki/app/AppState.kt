@@ -272,6 +272,46 @@ class AppState(
         rescheduleReminders()
     }
 
+    /**
+     * Kept, but after its moment had passed.
+     *
+     * Deliberately a thing you say rather than a thing the app works out.
+     * Someone who kept a rule and only remembered to tick it afterwards has not
+     * done anything late; only choosing this means it.
+     */
+    fun markKeptLate(entry: DayEntry) {
+        store.save(
+            Occurrence(
+                ruleID = entry.rule.id,
+                date = entry.date,
+                status = OccurrenceStatus.COMPLETED_LATE,
+                completedAt = Instant.now(),
+            ),
+        )
+        load()
+        rescheduleReminders()
+    }
+
+    fun isPaused(rule: Rule): Boolean = practice.isPaused(rule)
+
+    /**
+     * Stops a rule from today, keeping everything it has kept.
+     *
+     * Pausing removes days from the record rather than counting them against
+     * anyone — the whole point of it, and the reason it is not "give up".
+     */
+    fun pause(rule: Rule) {
+        store.apply(EditPlanner().pause(rule, activations, today))
+        load()
+        rescheduleReminders()
+    }
+
+    fun resume(rule: Rule) {
+        store.apply(EditPlanner().resume(rule, today))
+        load()
+        rescheduleReminders()
+    }
+
     fun standDown(entry: DayEntry) {
         store.save(
             Occurrence(
