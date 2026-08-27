@@ -14,7 +14,7 @@ You can add custom items to your practice which may not be Church canon, but are
 
 What that means in practice:
 
-- **Android is available**, OS version Android 8/API 33 or later. Strictly sideload for now, see [Getting it](#android).
+- **Android is available**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android).
 - **Apple Silicon is available** Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - iOS & Linux versions are planned in the beta state
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
