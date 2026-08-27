@@ -134,6 +134,15 @@ signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
   Anything a test constructs must be told not to touch the world.
 - **A screenshot nearly carried his private data** into a public README. The
   render harness now copies only the liturgical cache.
+- **Never run the Intel slice on his Mac.** The release is universal; the
+  x86_64 half must never be launched here — no `arch -x86_64`, no Rosetta, not
+  once to see whether it starts. Forcing it raises a Rosetta install prompt on
+  his machine, and a second Chotki opens his live record alongside the copy he
+  is already using: one SQLite database, two writers. Verify that half
+  statically — `lipo -archs`, and the CI job that fails a release bundle missing
+  a slice. That it has never been executed anywhere is said plainly in the
+  README and the release notes; that is the honest position, not a gap to close
+  quietly. He may ask for an emulator run later.
 - **Never screen-capture his display.** It caught a private messaging window
   once. Use the render harness.
 - **Python edits that do not assert fail silently.** Several patches quietly
