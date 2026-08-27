@@ -18,7 +18,11 @@ echo "==> stopping any running copy"
 pkill -f "Chotki.app/Contents/MacOS/Chotki" 2>/dev/null || true
 
 echo "==> building release"
-./build-app.sh release >/dev/null
+# Not masked. `>/dev/null` here once hid a failing build and installed a stale
+# bundle, which is in CLAUDE.md as a rule; it also hides the architecture line,
+# and a quietly single-arch install is the exact thing that check exists for.
+# Trimmed to the lines worth reading rather than silenced.
+./build-app.sh release | grep -E "^==>|Architectures|error|warning: " || true
 
 echo "==> installing to $DEST"
 rm -rf "$DEST"

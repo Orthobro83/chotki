@@ -57,8 +57,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleDisplayName</key><string>$APP_NAME</string>
     <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
     <key>CFBundleExecutable</key><string>$APP_NAME</string>
+    <!-- CFBundleIconFile names the .icns in Resources. There is deliberately
+         no CFBundleIconName beside it: that key is for an icon inside a
+         compiled asset catalog, it takes precedence over CFBundleIconFile, and
+         this bundle has no Assets.car for it to resolve against. macOS
+         followed it, found nothing, and drew a blank white tile in Stage
+         Manager — while the Dock looked right, because the app also sets
+         NSApp.applicationIconImage at runtime and that only reaches the Dock. -->
     <key>CFBundleIconFile</key><string>$APP_NAME</string>
-    <key>CFBundleIconName</key><string>$APP_NAME</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleVersion</key><string>$VERSION</string>
