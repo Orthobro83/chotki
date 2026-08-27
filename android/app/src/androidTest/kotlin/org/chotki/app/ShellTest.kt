@@ -156,6 +156,31 @@ class ShellTest {
         }
     }
 
+    /**
+     * Both ways in, and they are different controls.
+     *
+     * The empty day draws the library in the middle as well as in the bar, and
+     * the two must not announce themselves the same way — the first version did,
+     * which made every existing library test ambiguous rather than failing
+     * honestly.
+     */
+    @Test
+    fun anEmptyDayOffersTheLibraryInTheMiddleAsWellAsTheBar() {
+        show()
+        compose.onNodeWithContentDescription("Go to Rule").performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithContentDescription("Open the library").assertIsDisplayed()
+        // No performScrollTo: the empty day is a plain Column, not a scroller,
+        // and asking to scroll to a node with no scrollable parent throws.
+        compose.onNodeWithContentDescription("Take something on from the library")
+            .performClick()
+        compose.waitForIdle()
+
+        // It opens the same place the bar's icon does.
+        compose.onNodeWithContentDescription("Back to the day").assertIsDisplayed()
+    }
+
     @Test
     fun theLibraryIsReachedFromTheDayAndComesBack() {
         show()

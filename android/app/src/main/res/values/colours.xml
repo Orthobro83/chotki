@@ -2,4 +2,6 @@
 <resources>
     <!-- The app's ground, the same value as Chotki.ground in Theme.kt. -->
     <color name="ic_launcher_background">#15161C</color>
+    <!-- The same value again, for the window behind the first frame. -->
+    <color name="ground">#15161C</color>
 </resources>

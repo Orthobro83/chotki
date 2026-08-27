@@ -286,22 +286,56 @@ struct PortParityTests {
         }
     }
 
-    /// An unfamiliar word leads somewhere, wherever it is read.
+    /// An unfamiliar word leads somewhere, **wherever** it is read.
     ///
-    /// The glossary is only reachable by tapping a word for most people, so a
-    /// platform that never scans its text has a glossary nobody arrives at.
-    @Test("every platform links the words a newcomer would stop at")
-    func everyPlatformLinksItsTerms() throws {
+    /// This check began by asking whether a platform scanned its text anywhere
+    /// at all, and Android passed it while two of its three reading surfaces
+    /// were plain `Text`. One linked screen is enough to satisfy "does this
+    /// platform have a glossary"; it is not remotely enough to satisfy "does
+    /// the word I am looking at lead anywhere", which is the thing anyone
+    /// actually wants. So it asks per surface now.
+    ///
+    /// A surface is any file that renders prayer paragraphs or a liturgical
+    /// day's commemoration — found by what it draws rather than by its name,
+    /// because naming files is how three earlier checks here missed the thing
+    /// by looking in the wrong one. Move the code and the check follows it.
+    ///
+    /// The welcome screens are excluded deliberately: `Welcome.paragraphs` is
+    /// Ryan's own prose about what the app is for, not liturgical text, and
+    /// underlining half of it would be noise.
+    @Test("every surface that shows the text links its terms")
+    func everySurfaceLinksItsTerms() throws {
+        let linking = ["TermText", "PrayerProse", "scanOnce", ".scan(", "linked("]
+
         for (platform, path) in [
             ("macOS", "macos/Sources"),
             ("Android", "android/app/src/main"),
             ("iOS", "ios/Chotki"),
         ] {
-            let code = try tree(path)
-            #expect(
-                code.contains("scanOnce") || code.contains(".scan("),
-                "\(platform) shows the prayers and the readings with nothing linked"
-            )
+            let root = Self.root.appendingPathComponent(path)
+            let files = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)?
+                .compactMap { $0 as? URL }
+                .filter { ["swift", "kt"].contains($0.pathExtension) }
+                ?? []
+
+            for file in files {
+                let code = try String(contentsOf: file, encoding: .utf8)
+
+                // The welcome is prose, not liturgical text.
+                let prayerText = code.replacingOccurrences(of: "Welcome.paragraphs", with: "")
+                    .contains("paragraphs")
+                let commemoration = code.contains("summaryTitle")
+                guard prayerText || commemoration else { continue }
+
+                #expect(
+                    linking.contains(where: code.contains),
+                    """
+                    \(platform)'s \(file.lastPathComponent) shows \
+                    \(prayerText ? "prayer text" : "the commemoration") with nothing linked — \
+                    a word a newcomer stops at leads nowhere on that screen
+                    """
+                )
+            }
         }
     }
 

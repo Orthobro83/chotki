@@ -1,8 +1,19 @@
 package org.chotki.app.ui
 
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,6 +64,58 @@ enum class Place(val title: String) {
     SETTINGS("Settings"),
 }
 
+/**
+ * The bar across the top: where you are, and the one thing you can do from here.
+ *
+ * Slim on purpose. A phone has little enough height, and this exists to carry a
+ * single control — the library, or on the Reading the glossary — not to be a
+ * header.
+ */
+@Composable
+private fun TopBar(screen: Screen, onLibrary: () -> Unit, onGlossary: () -> Unit) {
+    val readingHere = screen.place == Place.READING
+    Row(
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            if (screen == Screen.Day) "Chotki" else screen.place.title,
+            color = Chotki.parchment,
+            fontSize = 17.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Column(
+            Modifier
+                .clickable(onClick = if (readingHere) onGlossary else onLibrary)
+                .padding(10.dp)
+                .semantics {
+                    contentDescription =
+                        if (readingHere) "Open the glossary" else "Open the library"
+                },
+        ) {
+            if (readingHere) {
+                GlossaryIcon(Chotki.gold, 24.dp)
+            } else {
+                LibraryIcon(Chotki.gold, 24.dp)
+            }
+        }
+    }
+}
+
+/** The way back out of a screen that was pushed rather than chosen. */
+@Composable
+private fun BackLink(onBack: () -> Unit) {
+    Text(
+        "‹ The day",
+        color = Chotki.gold,
+        fontSize = 15.sp,
+        modifier = Modifier
+            .clickable(onClick = onBack)
+            .padding(16.dp)
+            .semantics { contentDescription = "Back to the day" },
+    )
+}
+
 @Composable
 fun Shell(state: AppState) {
     var journey by remember { mutableStateOf(Journey()) }
@@ -63,6 +126,21 @@ fun Shell(state: AppState) {
         Glossary.shared(state.settings.jurisdiction.tradition)
     }
     val context = LocalContext.current
+
+    // Honoured, not assumed.
+    //
+    // "Remove animations" in accessibility, and the developer animation scale,
+    // both land here as a scale of zero — and people turn it off precisely on
+    // the older, slower phones this has to keep working on. Compose does not
+    // consult it for `AnimatedContent`, so the app has to.
+    val animates = remember {
+        Settings.Global.getFloat(
+            context.contentResolver,
+            Settings.Global.ANIMATOR_DURATION_SCALE,
+            1f,
+        ) > 0f
+    }
+
     val readiness = remember(journey) { ReminderReadiness.of(context) }
     val dismissals = remember { BannerDismissals(context) }
     var dismissed by remember(readiness) { mutableStateOf(dismissals.isDismissed(readiness)) }
@@ -90,95 +168,120 @@ fun Shell(state: AppState) {
             }
         }
 
-        Column(Modifier.weight(1f)) {
-            when (val screen = journey.current) {
-                is Screen.Editor -> RuleEditor(
-                    state = state,
-                    existing = screen.rule,
-                    startingFrom = screen.startingFrom,
-                    onDone = { journey = journey.back() },
-                    modifier = Modifier.weight(1f),
-                )
+        // Always in the corner, wherever you are — except on the Reading,
+        // where the glossary takes its place. The library used to be a word at
+        // the foot of the day and nowhere else, so it was invisible from every
+        // other screen and easy to miss on the one that had it.
+        TopBar(
+            screen = journey.current,
+            onLibrary = { journey = journey.push(Screen.Library) },
+            onGlossary = { journey = journey.push(Screen.Terms()) },
+        )
 
-                is Screen.RulePrayers -> {
-                    val rule = state.rule(screen.ruleID)
-                    if (rule == null) {
-                        journey = journey.back()
+        Box(Modifier.weight(1f)) {
+            AnimatedContent(
+                targetState = journey,
+                transitionSpec = {
+                    // Going deeper slides in from the right; coming back slides
+                    // in from the left. The stack depth says which, so nothing
+                    // has to be remembered about how we got here.
+                    val deeper = targetState.stack.size >= initialState.stack.size
+                    val from = if (deeper) 1 else -1
+
+                    if (!animates) {
+                        EnterTransition.None togetherWith ExitTransition.None
                     } else {
-                        RulePrayers(
-                            rule = rule,
-                            onBack = { journey = journey.back() },
+                        // A sixth of the width, not the whole width. A full
+                        // slide reads as a page turn and is slow on a cheap
+                        // phone; a short one reads as continuity and costs
+                        // almost nothing to draw.
+                        (
+                            slideInHorizontally(tween(220)) { it / 6 * from } +
+                                fadeIn(tween(180))
+                            ) togetherWith fadeOut(tween(120))
+                    }.using(SizeTransform(clip = false))
+                },
+                label = "screen",
+            ) { destination ->
+                Column(Modifier.fillMaxSize()) {
+                    when (val screen = destination.current) {
+                        is Screen.Editor -> RuleEditor(
+                            state = state,
+                            existing = screen.rule,
+                            startingFrom = screen.startingFrom,
+                            onDone = { journey = journey.back() },
+                            modifier = Modifier.weight(1f),
+                        )
+
+                        is Screen.RulePrayers -> {
+                            val rule = state.rule(screen.ruleID)
+                            if (rule == null) {
+                                journey = journey.back()
+                            } else {
+                                RulePrayers(
+                                    rule = rule,
+                                    onBack = { journey = journey.back() },
+                                    modifier = Modifier.weight(1f),
+                                    glossary = glossary,
+                                    onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
+                                )
+                            }
+                        }
+
+                        Screen.Psalter -> {
+                            BackLink { journey = journey.back() }
+                            PsalterScreen(state, Modifier.weight(1f))
+                        }
+
+                        Screen.Library -> {
+                            BackLink { journey = journey.back() }
+                            LibrarySheet(
+                                state = state,
+                                modifier = Modifier.weight(1f),
+                                onWriteYourOwn = { journey = journey.push(Screen.Editor(null)) },
+                                onTakeOn = {
+                                    journey = journey.push(Screen.Editor(null, startingFrom = it))
+                                },
+                            )
+                        }
+
+                        Screen.Day -> RuleScreen(
+                            state = state,
+                            modifier = Modifier.weight(1f),
+                            onReadPrayers = { journey = journey.push(Screen.RulePrayers(it.rule.id)) },
+                            // The day's readings already have a place of their own.
+                            onReadReading = { journey = journey.go(Place.READING) },
+                            onReadPsalter = { journey = journey.push(Screen.Psalter) },
+                            onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
+                            onOpenLibrary = { journey = journey.push(Screen.Library) },
+                        )
+
+                        Screen.Rope -> RopeScreen(
+                            state = state,
                             modifier = Modifier.weight(1f),
                             glossary = glossary,
                             onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
                         )
+
+                        Screen.Reading -> ReadingScreen(
+                            state = state,
+                            modifier = Modifier.weight(1f),
+                            glossary = glossary,
+                            onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
+                        )
+
+                        Screen.Progress -> ProgressScreen(state, Modifier.weight(1f))
+                        Screen.Settings -> SettingsScreen(state, Modifier.weight(1f))
+
+                        is Screen.Terms -> GlossaryScreen(
+                            glossary = glossary,
+                            modifier = Modifier.weight(1f),
+                            openSlug = screen.slug,
+                            onOpen = { journey = journey.push(Screen.Terms(it)) },
+                            onBack = { journey = journey.back() },
+                        )
                     }
                 }
-
-                Screen.Psalter -> {
-                    Text(
-                        "‹ The day",
-                        color = Chotki.gold,
-                        fontSize = 15.sp,
-                        modifier = Modifier
-                            .clickable { journey = journey.back() }
-                            .padding(16.dp)
-                            .semantics { contentDescription = "Back to the day" },
-                    )
-                    PsalterScreen(state, Modifier.weight(1f))
-                }
-
-                Screen.Library -> {
-                    Text(
-                        "‹ The day",
-                        color = Chotki.gold,
-                        fontSize = 15.sp,
-                        modifier = Modifier
-                            .clickable { journey = journey.back() }
-                            .padding(16.dp)
-                            .semantics { contentDescription = "Back to the day" },
-                    )
-                    LibrarySheet(
-                        state = state,
-                        modifier = Modifier.weight(1f),
-                        onWriteYourOwn = { journey = journey.push(Screen.Editor(null)) },
-                        onTakeOn = { journey = journey.push(Screen.Editor(null, startingFrom = it)) },
-                    )
-                }
-
-                Screen.Day -> {
-                    RuleScreen(
-                        state = state,
-                        modifier = Modifier.weight(1f),
-                        onReadPrayers = { journey = journey.push(Screen.RulePrayers(it.rule.id)) },
-                        // The day's readings already have a place of their own.
-                        onReadReading = { journey = journey.go(Place.READING) },
-                        onReadPsalter = { journey = journey.push(Screen.Psalter) },
-                        onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
-                    )
-                    Text(
-                        "Library",
-                        color = Chotki.gold,
-                        fontSize = 15.sp,
-                        modifier = Modifier
-                            .clickable { journey = journey.push(Screen.Library) }
-                            .padding(16.dp)
-                            .semantics { contentDescription = "Open the library" },
-                    )
-                }
-
-                Screen.Rope -> RopeScreen(state, Modifier.weight(1f))
-                Screen.Reading -> ReadingScreen(state, Modifier.weight(1f))
-                Screen.Progress -> ProgressScreen(state, Modifier.weight(1f))
-                Screen.Settings -> SettingsScreen(state, Modifier.weight(1f))
-
-                is Screen.Terms -> GlossaryScreen(
-                    glossary = glossary,
-                    modifier = Modifier.weight(1f),
-                    openSlug = screen.slug,
-                    onOpen = { journey = journey.push(Screen.Terms(it)) },
-                    onBack = { journey = journey.back() },
-                )
             }
         }
 

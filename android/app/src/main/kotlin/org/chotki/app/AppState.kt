@@ -20,6 +20,7 @@ import org.chotki.core.OccurrenceStatus
 import org.chotki.core.LiturgicalDay
 import org.chotki.core.NoLiturgicalData
 import org.chotki.core.Practice
+import org.chotki.core.PrayerScreen
 import org.chotki.core.Rule
 import org.chotki.core.content.Content
 import org.chotki.core.content.model
@@ -93,6 +94,17 @@ class AppState(
         private set
     var occurrences by mutableStateOf<List<Occurrence>>(emptyList())
         private set
+    /**
+     * What the prayers screen is showing, and where the count has got to.
+     *
+     * Here rather than remembered inside `RopeScreen`, because a composition
+     * dies when you leave it: switching to the Reading and coming back lost a
+     * hundred-knot count, and so did following a word into the glossary. Held
+     * as the `MutableState` itself so the screen can keep writing through
+     * `by`, which is how core's `PrayerScreen` wants to be used.
+     */
+    val prayers = mutableStateOf(PrayerScreen())
+
     var selectedDate by mutableStateOf(CalendarDate.from(Instant.now(), zone))
     var visibleMonth by mutableStateOf(CalendarDate.from(Instant.now(), zone))
 

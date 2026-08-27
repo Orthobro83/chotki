@@ -300,3 +300,51 @@ nothing for `TermText.swift`, because a new untracked file is not in the index
 to restore from; the sabotage sat in the working tree until I grepped for it.
 Check the restore, every time, by looking for the sabotage string rather than by
 trusting the restore command.
+
+## The guard I wrote one day earlier passed while the bug was live
+
+The iOS fixes shipped with a new `PortParityTests` check: every platform links
+the words a newcomer would stop at. It asked whether each platform's source
+tree contained `scanOnce` or `.scan(` anywhere in it.
+
+Android contained both — in `RulePrayers.kt`, one screen of three. The Reading
+and the Rope drew every word as plain `Text`, so on the two screens where a
+newcomer spends most of their time, nothing led anywhere. Ryan found it by
+using the app, the day after I wrote the test that was supposed to make that
+unnecessary.
+
+This is the same mistake this file already records four times — searching for a
+word rather than for the thing — but at a granularity I had not thought about.
+The word was not the problem: `scanOnce` is a real call and finding it means
+real linking is really happening. The *scope* was the problem. I asked a
+question about the platform when the invariant is about the surface. "Does this
+app have a glossary" is satisfied by one linked screen. "Does the word I am
+looking at lead anywhere" is not satisfied by anything less than all of them.
+
+The rewritten check enumerates files, finds the ones that render prayer
+paragraphs or a liturgical commemoration, and requires each of those to link.
+It finds its surfaces by what they draw rather than by their names, so moving
+the code moves the check with it — the fix for the three earlier times a check
+here looked in the wrong file. Run against the unfixed tree it named both
+screens, by filename, unprompted.
+
+**The general form, which is worth more than the specific fix:** when writing a
+guard, state the invariant as a sentence first and check the quantifier. Mine
+should have read "every surface that shows the text links its terms" and I
+implemented "some surface does". A test whose quantifier is weaker than the
+invariant is not a weak test — it is a test that reports success on a broken
+app, which is worse than no test, because it stops anyone looking.
+
+Two smaller things from the same session:
+
+- **Android had no theme.** With no `android:theme` declared the app inherited
+  the platform default, which draws an ActionBar carrying `android:label`. So
+  there was a system title bar above every screen, doing nothing, that nobody
+  had noticed until a second header appeared beneath it. Part of what Ryan
+  described as the app feeling "flat and clunky" was a dead bar taking the top
+  of every screen.
+- **`RopeScreen` kept the count in `remember`.** Identical to the iOS fault
+  fixed the day before, found by looking rather than by the parity test — it is
+  a state-lifetime bug, not a feature gap, and source-grep parity cannot see it.
+  Switching to the Reading and back reset a hundred-knot count to nought. Both
+  platforms now hold it beside the screen rather than in it.

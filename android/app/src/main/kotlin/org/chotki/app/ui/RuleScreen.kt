@@ -57,6 +57,7 @@ fun RuleScreen(
     onReadReading: () -> Unit = {},
     onReadPsalter: () -> Unit = {},
     onEdit: (DayEntry) -> Unit = {},
+    onOpenLibrary: () -> Unit = {},
 ) {
     val entries = state.entries(state.selectedDate)
     val list = rememberLazyListState()
@@ -81,7 +82,9 @@ fun RuleScreen(
             DayHeader(state.selectedDate)
 
             if (entries.isEmpty()) {
-                EmptyDay()
+                // Takes the room the rules would have had, so the mark sits in
+                // the space that is actually free rather than under the bar.
+                EmptyDay(onOpenLibrary, Modifier.weight(1f))
             } else {
                 // The weight is the fix. Without it this takes whatever height
                 // is left over, which can be none, and a list of zero height
@@ -116,10 +119,19 @@ private fun DayHeader(date: CalendarDate) {
     )
 }
 
+/**
+ * Nothing due, and the way to change that.
+ *
+ * The words alone sent someone hunting for a control they had not noticed. The
+ * library is named in the sentence, so the library is drawn under it, at a size
+ * that reads as the thing to press. The corner icon stays where it is — it is
+ * how the library is reached on every other day, and a control that moves
+ * depending on whether the day is empty is worse than one that does not.
+ */
 @Composable
-private fun EmptyDay() {
+private fun EmptyDay(onOpenLibrary: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        Modifier.fillMaxWidth().padding(24.dp),
+        modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text("Nothing on the rule for this day.", color = Chotki.muted, fontSize = 14.sp)
@@ -129,6 +141,20 @@ private fun EmptyDay() {
             color = Chotki.faint,
             fontSize = 13.sp,
         )
+        Spacer(Modifier.weight(1f))
+        Column(
+            Modifier
+                .clickable(onClick = onOpenLibrary)
+                .padding(14.dp)
+                // Not the same label as the icon in the bar. Two controls
+                // announcing themselves identically on one screen is a maze
+                // for anyone using a screen reader, and it made the test that
+                // clicks the bar's icon ambiguous — which is how it was found.
+                .semantics { contentDescription = "Take something on from the library" },
+        ) {
+            LibraryIcon(Chotki.gold, 56.dp)
+        }
+        Spacer(Modifier.weight(1.4f))
     }
 }
 

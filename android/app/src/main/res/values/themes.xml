@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      No action bar.
+
+      With no theme declared at all the app inherited the platform default,
+      which draws an ActionBar carrying android:label. So Chotki had a system
+      title bar it never asked for, doing nothing, above every screen — and
+      once the app grew a top bar of its own there were two headings both
+      reading "Chotki".
+
+      The window background is the app's ground rather than the platform's, so
+      the moment between the splash and the first frame is not a white flash on
+      a dark app.
+    -->
+    <style name="Theme.Chotki" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ground</item>
+    </style>
+</resources>

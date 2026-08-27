@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.LiturgicalDay
 import org.chotki.core.Reckoning
+import org.chotki.core.content.Glossary
 import org.chotki.core.content.PatristicReadings
 
 /**
@@ -36,7 +37,12 @@ import org.chotki.core.content.PatristicReadings
  * distinction is the whole reason the wording is careful here.
  */
 @Composable
-fun ReadingScreen(state: AppState, modifier: Modifier = Modifier) {
+fun ReadingScreen(
+    state: AppState,
+    modifier: Modifier = Modifier,
+    glossary: Glossary = Glossary.SHARED,
+    onOpenTerm: (String) -> Unit = {},
+) {
     // liturgicalDay reads the calendar counter itself, so this redraws when
     // the fortnight ahead arrives.
     val day = state.liturgicalDay(state.selectedDate)
@@ -48,23 +54,38 @@ fun ReadingScreen(state: AppState, modifier: Modifier = Modifier) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        if (day == null) Waiting(state) else Content(state, day)
+        if (day == null) Waiting(state) else Content(state, day, glossary, onOpenTerm)
     }
 }
 
 @Composable
-private fun Content(state: AppState, day: LiturgicalDay) {
+private fun Content(
+    state: AppState,
+    day: LiturgicalDay,
+    glossary: Glossary,
+    onOpenTerm: (String) -> Unit,
+) {
     val title = day.title
     if (title != null) {
         // Never re-cased. "Wednesday of the 12th week after Pentecost" is how the
         // Church writes it, and lowercasing it made the app look careless.
-        Text(title, color = Chotki.muted, fontSize = 13.sp)
+        TermText(
+            text = title,
+            glossary = glossary,
+            colour = Chotki.muted,
+            size = 13.sp,
+            onOpenTerm = onOpenTerm,
+        )
     }
-    Text(
-        day.summaryTitle,
-        color = Chotki.gold,
-        fontSize = 19.sp,
-        lineHeight = 26.sp,
+    // The commemoration is where the unfamiliar words are thickest — a
+    // newcomer can meet four in one line of it — so this is the single most
+    // valuable place in the app for a word to lead somewhere.
+    TermText(
+        text = day.summaryTitle,
+        glossary = glossary,
+        colour = Chotki.gold,
+        size = 19.sp,
+        onOpenTerm = onOpenTerm,
         modifier = Modifier
             .padding(top = 6.dp, bottom = 10.dp)
             .semantics { contentDescription = "The day in the church calendar" },
@@ -73,16 +94,20 @@ private fun Content(state: AppState, day: LiturgicalDay) {
     if (state.settings.observances.fasting.isVisible && day.isFast) {
         // What the calendar marks, and what is customarily set aside — not an
         // instruction to the reader.
-        Text(
-            "The calendar marks this as ${day.fastDescription}.",
-            color = Chotki.violet,
-            fontSize = 13.sp,
+        TermText(
+            text = "The calendar marks this as ${day.fastDescription}.",
+            glossary = glossary,
+            colour = Chotki.violet,
+            size = 13.sp,
+            onOpenTerm = onOpenTerm,
         )
         if (day.abstentions.isNotEmpty()) {
-            Text(
-                "Customarily set aside: ${day.abstentions.joinToString(", ")}.",
-                color = Chotki.faint,
-                fontSize = 13.sp,
+            TermText(
+                text = "Customarily set aside: ${day.abstentions.joinToString(", ")}.",
+                glossary = glossary,
+                colour = Chotki.faint,
+                size = 13.sp,
+                onOpenTerm = onOpenTerm,
             )
         }
         Spacer(Modifier.size(10.dp))

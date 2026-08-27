@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.app.platform.Sounds
 import org.chotki.core.PrayerScreen
+import org.chotki.core.content.Glossary
 import org.chotki.core.content.Content
 
 /**
@@ -48,8 +49,20 @@ import org.chotki.core.content.Content
  * both at once: with your eyes closed they would run together.
  */
 @Composable
-fun RopeScreen(state: AppState, modifier: Modifier = Modifier) {
-    var screen by remember { mutableStateOf(PrayerScreen()) }
+fun RopeScreen(
+    state: AppState,
+    modifier: Modifier = Modifier,
+    glossary: Glossary = Glossary.SHARED,
+    onOpenTerm: (String) -> Unit = {},
+) {
+    // Held on the state, not remembered here.
+    //
+    // `remember` dies with the composition, so switching to the Reading and
+    // back lost the count — a hundred-knot rule restarted at nought because
+    // you looked something up. iOS had the identical fault and for the
+    // identical reason: the screen's state was kept in the view rather than
+    // beside it.
+    var screen by state.prayers
     val showsRope = screen.showsRope()
 
     val prayer = screen.selection?.let { id -> Content.prayers.firstOrNull { it.id == id } }
@@ -164,15 +177,38 @@ fun RopeScreen(state: AppState, modifier: Modifier = Modifier) {
         }
 
         if (paragraphs.isNotEmpty()) {
+            // Scanned across the whole run, not prayer by prayer. A rule is
+            // read straight through, so linking "Amen" at the end of every
+            // prayer in it turns a text meant to be prayed into a page of
+            // references.
+            val linked = remember(screen.selection, glossary) {
+                glossary.scanOnce(paragraphs.flatMap { it.paragraphs })
+            }
+            // Where each prayer's paragraphs begin in that flattened run.
+            val firstOf = remember(screen.selection, glossary) {
+                paragraphs.runningFold(0) { at, each -> at + each.paragraphs.size }
+            }
+
             Box(Modifier.fillMaxWidth().padding(top = 8.dp).size(1.dp).background(Chotki.lineSoft))
             LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
                 items(paragraphs.size, key = { paragraphs[it].id }) { index ->
                     val each = paragraphs[index]
                     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text(each.title, color = Chotki.gold, fontSize = 13.sp)
+                        val rubric = each.rubric
+                        if (rubric != null) {
+                            Text(rubric, color = Chotki.faint, fontSize = 12.sp)
+                        }
                         Spacer(Modifier.size(4.dp))
-                        for (line in each.paragraphs) {
-                            Text(line, color = Chotki.parchment, fontSize = 17.sp, lineHeight = 26.sp)
+                        for ((line, paragraph) in each.paragraphs.withIndex()) {
+                            TermText(
+                                text = paragraph,
+                                glossary = glossary,
+                                matches = linked.getOrNull(firstOf[index] + line),
+                                colour = Chotki.parchment,
+                                size = 17.sp,
+                                onOpenTerm = onOpenTerm,
+                            )
                             Spacer(Modifier.size(8.dp))
                         }
                         Text("Source · ${each.source}", color = Chotki.faint, fontSize = 11.sp)

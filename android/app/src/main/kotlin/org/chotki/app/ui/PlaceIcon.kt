@@ -41,6 +41,74 @@ fun PlaceIcon(place: Place, tint: Color, size: androidx.compose.ui.unit.Dp = 22.
     }
 }
 
+/**
+ * The library, wherever it is offered — the bar does not carry it, so it is
+ * drawn on its own rather than through [PlaceIcon].
+ *
+ * Standing books, matching the `books.vertical` the iOS build uses and the
+ * shelf the Mac shows. The same mark in the corner and in the middle of an
+ * empty day, because they open the same thing.
+ */
+@Composable
+fun LibraryIcon(tint: Color, size: androidx.compose.ui.unit.Dp = 22.dp) {
+    Canvas(Modifier.size(size)) {
+        library(tint, Stroke(width = this.size.minDimension * 0.085f))
+    }
+}
+
+/** A closed book: the glossary, at the top of the Reading. */
+@Composable
+fun GlossaryIcon(tint: Color, size: androidx.compose.ui.unit.Dp = 22.dp) {
+    Canvas(Modifier.size(size)) {
+        closedBook(tint, Stroke(width = this.size.minDimension * 0.085f))
+    }
+}
+
+/**
+ * Three books on a shelf, the last one leaning as they do.
+ *
+ * Spines, with a band across each the way a bound book has one, and clear air
+ * between them. Without the bands and the gaps three outlined rectangles of
+ * different heights read as a bar chart, which is the wrong meaning entirely on
+ * a screen that also has a progress tab.
+ */
+private fun DrawScope.library(tint: Color, stroke: Stroke) {
+    val w = size.width
+    val foot = w * 0.84f
+
+    fun spine(left: Float, top: Float) {
+        val wide = w * 0.15f
+        drawRect(
+            color = tint,
+            topLeft = Offset(left, top),
+            size = Size(wide, foot - top),
+            style = stroke,
+        )
+        // The band, a third of the way down.
+        val band = top + (foot - top) * 0.30f
+        drawLine(tint, Offset(left, band), Offset(left + wide, band), stroke.width)
+    }
+
+    spine(w * 0.14f, w * 0.28f)
+    spine(w * 0.36f, w * 0.18f)
+
+    // One leaning against the others, its band tilted with it.
+    val lean = Path().apply {
+        moveTo(w * 0.60f, foot)
+        lineTo(w * 0.71f, w * 0.24f)
+        lineTo(w * 0.85f, w * 0.29f)
+        lineTo(w * 0.74f, foot)
+        close()
+    }
+    drawPath(lean, tint, style = stroke)
+    drawLine(
+        tint,
+        Offset(w * 0.665f, w * 0.44f),
+        Offset(w * 0.805f, w * 0.49f),
+        stroke.width,
+    )
+}
+
 /** A month, with the two rings a wall calendar hangs from. */
 private fun DrawScope.calendar(tint: Color, stroke: Stroke) {
     val w = size.width
