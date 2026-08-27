@@ -7,15 +7,32 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIG="${1:-debug}"
+# Both slices unless told otherwise. A release anyone downloads has to be
+# universal — "it will not open" reads identically whether the cause is the
+# architecture or Gatekeeper, so an Intel tester cannot tell you which it is.
+# `debug` stays single-arch, because doubling every local build to serve a
+# machine nobody here is developing on is a poor trade.
+ARCHS=()
+LABEL="$CONFIG"
+if [ "$CONFIG" = "release" ] && [ "${CHOTKI_SINGLE_ARCH:-}" != "1" ]; then
+    ARCHS=(--arch arm64 --arch x86_64)
+    LABEL="$CONFIG, universal"
+fi
+# macOS ships bash 3.2, where "${ARCHS[@]}" on an empty array is an unbound
+# variable under `set -u` — so a debug build died on the line meant to leave it
+# alone. This is the 3.2-safe expansion: nothing at all when the array is empty.
 APP_NAME="Chotki"
 BUNDLE_ID="info.chotki.app"
 VERSION="0.1.0"
 DIST="dist"
 APP="$DIST/$APP_NAME.app"
 
-echo "==> building ($CONFIG)"
-swift build -c "$CONFIG"
-BIN="$(swift build -c "$CONFIG" --show-bin-path)/$APP_NAME"
+echo "==> building ($LABEL)"
+swift build -c "$CONFIG" ${ARCHS[@]+"${ARCHS[@]}"}
+# --show-bin-path must be given the same flags: a universal build lands in
+# .build/apple/Products/, not .build/<arch>-apple-macosx/, and reading the
+# wrong path silently bundles yesterday's single-arch binary.
+BIN="$(swift build -c "$CONFIG" ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)/$APP_NAME"
 
 echo "==> assembling bundle"
 rm -rf "$APP"
@@ -63,6 +80,11 @@ xattr -cr "$APP"
 echo "==> signing (ad-hoc)"
 codesign --force --sign - --timestamp=none "$APP"
 codesign --verify --verbose=1 "$APP" 2>&1 | sed 's/^/    /'
+
+# Said out loud, because a bundle that is quietly single-arch is exactly the
+# failure this is here to prevent and it looks identical from the outside.
+echo "==> architectures"
+lipo -info "$APP/Contents/MacOS/$APP_NAME" | sed 's/^/    /'
 
 echo "==> packaging"
 rm -f "$DIST/$APP_NAME.zip"

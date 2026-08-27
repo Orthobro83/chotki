@@ -148,26 +148,63 @@ signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
 - **The database is WAL mode.** A file-level copy must include `-wal` and
   `-shm` or it silently loses recent data.
 
-## State as of 21 August 2026
+## State as of 26 August 2026
 
-Alpha published: `v0.1.0-alpha`, Apple Silicon only, ad-hoc signed, marked
-prerelease. All seven build phases complete.
+Three platforms, all in daily testing by Ryan.
+
+| | |
+|---|---|
+| macOS | universal (arm64 + x86_64), ad-hoc signed, `v0.1.0-alpha` published |
+| Android | `v0.1.8-alpha` published, prerelease, signed with his own key |
+| iOS | on his iPhone 13 by free provisioning, seven days at a time |
+
+**Published is not delivered.** Father Moses and Maximos are the only intended
+eyes on the alpha and Ryan hands it to them himself. As of 26 August neither had
+received any build. Never write that a named person has one.
 
 Outstanding, in rough priority:
 
-1. **A universal binary.** Needs Xcode, which is not installed — Command Line
-   Tools cannot cross-compile. Testers on Intel Macs cannot run it at all, and
-   "it will not open" reads identically whether the cause is the architecture or
-   Gatekeeper.
-2. **Notarisation**, or every tester must go through System Settings › Privacy
-   and Security. Needs the Apple Developer Program at $99/yr — his call.
-3. **A priest's review** of the glossary and the patristic attributions. He has
+1. **Notarisation**, or every macOS tester must go through System Settings ›
+   Privacy and Security, and iOS cannot reach TestFlight at all. Needs the Apple
+   Developer Program at $99/yr — his call, and now the single biggest blocker to
+   anyone else running the iOS build.
+2. **A priest's review** of the glossary and the patristic attributions. He has
    said this will happen before the app goes further.
+3. **Landscape, before any public release.** Asked for on 26 August: the phones
+   are portrait-locked, and the landscape layout for a phone or a tablet should
+   be *the macOS layout* rather than a third design. macOS is already the wide
+   arrangement — sidebar, calendar and the day side by side — so this is
+   choosing between two existing layouts on width, not drawing a new one.
+   Nothing about it is started.
 4. **Confirming the reckoning** with his parish. Julian is the default and ROCOR
    is Julian, so this is confirmation rather than a blocker.
+5. **A Linux port**, if wanted. Core runs there already; see the note below.
 
-Every bug found so far came from him using the app, never from the tests, and
-every one was in the interface layer rather than core. Expect that to continue.
+Done since, and no longer outstanding:
+
+- **The universal binary.** `swift build --arch arm64 --arch x86_64` works with
+  Xcode installed; it took one line in `build-app.sh`. Release builds are
+  universal, debug builds stay single-arch, and CI fails if a release bundle
+  loses a slice.
+
+### What a Linux port would actually cost
+
+`core/` runs on Linux today — CI builds and tests it there every push, and
+`HTTPFetching` already imports `FoundationNetworking` conditionally. Every seam
+a platform has to fill is a named protocol: `Notifier`, `LaunchAtLogin`,
+`Store`, `Clock`, `HTTPFetching`. The bell and the tick are *synthesised* in
+core (`Sound/BellTone.swift`); only playback is platform.
+
+So the port is not the app. **The port is the views, and SwiftUI does not exist
+on Linux** — all ~4,000 lines of it would be rewritten against GTK or similar,
+the way Android's Kotlin reimplementation was. iOS is the better guide to size
+than macOS: the same screens came to 2,800 lines there once the platform
+wiring was excluded.
+
+Skipping the tray is right and removes the worst of it: `checklist.md` already
+records that GNOME needs a shell extension for any tray app at all, which no
+stack choice fixes. A plain windowed app runs the same on GNOME, KDE and XFCE,
+because GTK is a library rather than a desktop dependency.
 
 ## Adding a prayer, a reading or any other text
 

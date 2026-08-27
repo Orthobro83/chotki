@@ -114,3 +114,16 @@ jobs:
         run: ./macos/build-app.sh release
       - name: Verify signature
         run: codesign --verify --verbose=2 macos/dist/Chotki.app
+      # A single-arch bundle looks identical from the outside, and the tester
+      # it fails on cannot tell an architecture problem from Gatekeeper —
+      # "it will not open" is the same sentence either way.
+      - name: The release bundle must run on Intel as well as Apple Silicon
+        run: |
+          slices=$(lipo -archs macos/dist/Chotki.app/Contents/MacOS/Chotki)
+          echo "slices: $slices"
+          for want in arm64 x86_64; do
+            case " $slices " in
+              *" $want "*) ;;
+              *) echo "::error::the bundle has no $want slice — Intel Macs cannot run it"; exit 1 ;;
+            esac
+          done
