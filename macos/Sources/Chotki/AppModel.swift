@@ -52,7 +52,12 @@ final class AppModel: ObservableObject {
     /// The prayers screen. Kept here rather than in the view because following a
     /// word into the glossary rebuilds the view, and a rope count is not
     /// something to lose to a lookup.
-    @Published var prayers = PrayerScreen()
+    /// A second between knots, because this platform's Count button answers
+    /// the space bar. Holding the bar down makes the system repeat the key at
+    /// whatever rate the reader has set, and a short delay with a fast repeat
+    /// writes a whole knot from one lean. The phones pass nothing here: a tap
+    /// has no repeat, so every tap counts.
+    @Published var prayers = PrayerScreen(minimumInterval: 1)
     @Published private(set) var loadError: String?
     /// A neutral note, not an error. Cleared when the popover reopens.
     @Published var notice: String?

@@ -388,4 +388,64 @@ struct PrayerScreenTests {
     func targets() {
         #expect(PrayerScreen.targets == [33, 50, 100])
     }
+
+    // MARK: leaning on the space bar
+
+    /// The Mac's Count button answers the space bar, and holding a key down
+    /// makes the system repeat it — fast, if that is how the reader has set
+    /// their keyboard. Without a floor, one lean on the bar writes a whole
+    /// knot nobody prayed.
+    @Test("a second knot inside the interval does not count")
+    func repeatsInsideTheIntervalAreRefused() {
+        var screen = PrayerScreen(count: 0, target: 33, minimumInterval: 1)
+        let start = Date(timeIntervalSince1970: 1_000)
+
+        screen.advance(at: start)
+        #expect(screen.count == 1)
+
+        // Key repeat: twenty presses, all well inside a second.
+        for tick in 1...20 {
+            screen.advance(at: start.addingTimeInterval(Double(tick) * 0.03))
+        }
+        #expect(screen.count == 1, "twenty repeats inside a second counted more than one knot")
+    }
+
+    @Test("a knot counts again once the interval has passed")
+    func advancingAfterTheIntervalCounts() {
+        var screen = PrayerScreen(count: 0, target: 33, minimumInterval: 1)
+        let start = Date(timeIntervalSince1970: 1_000)
+
+        screen.advance(at: start)
+        screen.advance(at: start.addingTimeInterval(1.0))
+        screen.advance(at: start.addingTimeInterval(2.5))
+        #expect(screen.count == 3)
+    }
+
+    /// A phone has no space bar and no key repeat, so a tap must always count.
+    /// The floor is opt-in for exactly that reason.
+    @Test("without an interval every press counts, which is what a tap does")
+    func withoutAnIntervalEveryPressCounts() {
+        var screen = PrayerScreen(count: 0, target: 33)
+        let start = Date(timeIntervalSince1970: 1_000)
+        for tick in 0..<10 {
+            screen.advance(at: start.addingTimeInterval(Double(tick) * 0.01))
+        }
+        #expect(screen.count == 10)
+    }
+
+    /// Starting over is a deliberate act, not a stray repeat.
+    @Test("starting again lets the next knot count at once")
+    func startingAgainClearsTheInterval() {
+        var screen = PrayerScreen(count: 0, target: 33, minimumInterval: 1)
+        let start = Date(timeIntervalSince1970: 1_000)
+
+        screen.advance(at: start)
+        screen.startAgain()
+        screen.advance(at: start.addingTimeInterval(0.01))
+        #expect(screen.count == 1, "the first knot after starting again was refused")
+
+        screen.aim(at: 50)
+        screen.advance(at: start.addingTimeInterval(0.02))
+        #expect(screen.count == 1, "the first knot after changing the target was refused")
+    }
 }
