@@ -187,7 +187,10 @@ Outstanding, in rough priority:
    Nothing about it is started.
 4. **Confirming the reckoning** with his parish. Julian is the default and ROCOR
    is Julian, so this is confirmation rather than a blocker.
-5. **A Linux port**, if wanted. Core runs there already; see the note below.
+5. **A Linux port** — **deferred by Ryan on 26 August 2026**, deliberately. Not
+   until beta builds are with a wider set of users and their feedback is coming
+   in; it is an afterthought and a light-week job, not a next step. Do not
+   propose starting it. See the note below for what it would cost when he does.
 
 Done since, and no longer outstanding:
 
@@ -214,6 +217,33 @@ Skipping the tray is right and removes the worst of it: `checklist.md` already
 records that GNOME needs a shell extension for any tray app at all, which no
 stack choice fixes. A plain windowed app runs the same on GNOME, KDE and XFCE,
 because GTK is a library rather than a desktop dependency.
+
+**Do not repeat the "you would be building blind" objection.** It was mine, and
+it was wrong once the tooling was checked. There is no Docker, Podman, Colima or
+Lima on this machine, so CI is the only Linux available *by default* — and CI
+proves a thing compiles, never that it works, which is the wrong half for a
+port whose every bug has been an interface bug. But **UTM is installed**, and
+`/Applications/UTM.app/Contents/MacOS/utmctl` carries `exec` (run a command in
+the guest, exit code returned), `file push` / `file pull`, and `ip-address`.
+With an Ubuntu guest that is a working loop, and SSH on top of it is more
+ergonomic than `exec` for real work.
+
+The point of the VM is not the shell. It is that a screenshot tool inside the
+guest, copied back out, restores the look-at-it loop that every other platform
+had — the loop that found the empty prayers screen on iOS and the clipped icon
+on Android. Without it Ryan becomes the test harness at VM-boot latency; with
+it, Linux is an ordinary port.
+
+If it starts: ARM64 Ubuntu, not x86_64 (UTM runs ARM64 natively on Apple Silicon
+and emulates x86_64 at a fraction of the speed; Swift ships official aarch64
+Linux builds). Desktop, not server — a server image has no display server, and
+no display server means no screenshots. Install `qemu-guest-agent` or `utmctl
+exec` and `ip-address` do nothing. Key auth only: never handle his password,
+and hand him anything needing `sudo` to run himself.
+
+And the first move is still a spike, not a phase: prove a maintained Swift GUI
+toolkit for Linux exists at all and can draw one real screen. Nothing else is
+worth writing until that is answered, and it is the part most likely to sink it.
 
 ## Adding a prayer, a reading or any other text
 
