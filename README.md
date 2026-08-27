@@ -15,7 +15,7 @@ You can add custom items to your practice which may not be Church canon, but are
 What that means in practice:
 
 - **Android is available**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android).
-- **Apple Silicon is available**, - macOS 13 or later. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
+- **macOS is available** — macOS 13 or later, Apple Silicon and Intel. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - iOS is in development and a Linux version is planned.
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 
@@ -90,7 +90,9 @@ That is a fixed constraint rather than a style choice, and it is enforced by tes
 
 ### macOS
 
-**Apple Silicon Macs only** for now (M1 and later), running macOS 13 or later. An Intel build needs a universal binary, which is coming.
+**macOS 13 or later.** The download is a universal binary, so it carries code for both Apple Silicon and Intel.
+
+> **The Intel half has never been run.** It is built and signed alongside the Apple Silicon one and nobody here owns an Intel Mac to open it on. If you are on Intel and it does not start, that is worth telling us about — and please check step 4 below first, because a Mac refusing an unnotarised app and a Mac unable to run a binary look exactly the same from the outside.
 
 1. Download `Chotki.zip` from the [releases page](../../releases) and unzip it.
 2. Drag **Chotki.app** into your Applications folder.
@@ -99,6 +101,8 @@ That is a fixed constraint rather than a style choice, and it is enforced by tes
 5. It will ask permission to send notifications. Allow it if you want reminders; the app works either way.
 
 A cross appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
+
+To check which half you are running: `lipo -archs /Applications/Chotki.app/Contents/MacOS/Chotki` lists both, and `uname -m` says which one your Mac will use — `arm64` for Apple Silicon, `x86_64` for Intel.
 
 #### Why macOS blocks it
 

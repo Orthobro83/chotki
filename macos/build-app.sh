@@ -23,7 +23,7 @@ fi
 # alone. This is the 3.2-safe expansion: nothing at all when the array is empty.
 APP_NAME="Chotki"
 BUNDLE_ID="info.chotki.app"
-VERSION="0.1.0"
+VERSION="0.1.9"
 DIST="dist"
 APP="$DIST/$APP_NAME.app"
 
