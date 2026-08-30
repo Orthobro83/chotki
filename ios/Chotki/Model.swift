@@ -61,6 +61,13 @@ final class Model {
     var selectedDate: CalendarDate
     var visibleMonth: CalendarDate
 
+    /// The day this model last believed was today.
+    ///
+    /// Not a "follow today" flag: comparing the selection against this is what
+    /// tells `DayRollover` whether the view was on today, and it means tapping
+    /// back onto today resumes following with nothing to keep in step.
+    private var lastKnownToday: CalendarDate
+
     var today: CalendarDate { CalendarDate(Date(), in: .current) }
 
     init(store: SQLiteStore) {
@@ -68,6 +75,7 @@ final class Model {
         let now = CalendarDate(Date(), in: .current)
         self.selectedDate = now
         self.visibleMonth = now
+        self.lastKnownToday = now
         let loaded = (try? store.loadSettings()) ?? .default
         self.liturgical = LiturgicalService(store: store, jurisdiction: loaded.jurisdiction)
         reload()
@@ -166,6 +174,33 @@ final class Model {
         } catch {
             trouble = "That did not save. \(error.localizedDescription)"
         }
+    }
+
+    /// Moves the view on when the day has changed under it.
+    ///
+    /// Chotki was opened on the 28th, closed, and opened again on the 29th
+    /// still showing the 28th — so the rules on screen were yesterday's, and
+    /// ticking one wrote to the wrong day. A phone is the worst case for this:
+    /// the app is rarely quit, so without a check on coming back to the
+    /// foreground the view can sit on a stale day for a week.
+    ///
+    /// Whether to move is `DayRollover`'s decision, not this one. `now` is
+    /// injectable so the move can be tested without waiting for midnight.
+    func advanceDayIfNeeded(now: CalendarDate? = nil) {
+        let now = now ?? today
+        guard now != lastKnownToday else { return }
+
+        let next = DayRollover.selection(
+            showing: selectedDate, wasToday: lastKnownToday, isToday: now
+        )
+        lastKnownToday = now
+
+        guard next != selectedDate else { return }
+        selectedDate = next
+        // Show the month the day is actually in, or the selection lands
+        // off-screen in a grid still displaying somewhere else.
+        visibleMonth = next
+        reload()
     }
 
     /// The church calendar for a day, if it has been fetched.

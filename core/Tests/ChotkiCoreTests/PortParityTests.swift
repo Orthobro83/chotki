@@ -415,6 +415,37 @@ struct PortParityTests {
         }
     }
 
+    /// The day under the view moves on, everywhere.
+    ///
+    /// Chotki was opened on the 28th, closed, and opened again on the 29th
+    /// still showing the 28th — on all three platforms at once, because all
+    /// three set the selected day in their initialiser and never looked again.
+    /// A rule ticked on that screen went onto the wrong day.
+    ///
+    /// The decision is `DayRollover`'s. What differs per platform is only when
+    /// it is asked: a resident Mac has a tick and a wake notification, a phone
+    /// has coming back to the foreground and a midnight broadcast. So this
+    /// checks that each platform reaches for the rule and has somewhere to
+    /// call it from — not the mechanism, which is properly different.
+    @Test("every platform moves the day on under the view")
+    func everyPlatformAdvancesTheDay() throws {
+        for (platform, path) in [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ] {
+            let code = try tree(path)
+            #expect(
+                code.contains("DayRollover"),
+                "\(platform) decides for itself whether the day has moved, or does not notice"
+            )
+            #expect(
+                code.contains("advanceDayIfNeeded"),
+                "\(platform) has the rule but nothing that applies it"
+            )
+        }
+    }
+
     /// The first thing anyone sees, on both platforms.
     ///
     /// Android had no first-run screen at all — the flag was in the shared

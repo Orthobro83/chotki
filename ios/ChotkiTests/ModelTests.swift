@@ -478,3 +478,59 @@ struct BackupTests {
         #expect(model.trouble != nil, "it failed silently")
     }
 }
+
+/// The day the view is showing, once the clock has moved on.
+///
+/// `DayRolloverTests` in core proves the rule. This proves the model obeys it.
+/// A phone is the worst case: the app is rarely quit, so a stale selection can
+/// sit there for a week and every rule ticked goes onto the wrong day.
+@MainActor
+@Suite("The day advances under the view")
+struct DayAdvanceTests {
+
+    /// On disk, in a temporary place — a test must never touch the real store.
+    private func makeModel() throws -> Model {
+        let path = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotki-test-\(UUID().uuidString).sqlite").path
+        return Model(store: try SQLiteStore(path: path))
+    }
+
+    @Test("coming back on a later day moves the view to it")
+    func movesToTheNewToday() throws {
+        let model = try makeModel()
+        let opened = model.selectedDate
+
+        model.advanceDayIfNeeded(now: opened.adding(days: 1))
+        #expect(model.selectedDate == opened.adding(days: 1))
+    }
+
+    @Test("the grid follows the selection into the new month")
+    func gridFollowsIntoTheNewMonth() throws {
+        let model = try makeModel()
+        let later = model.selectedDate.adding(days: 40)
+
+        model.advanceDayIfNeeded(now: later)
+        #expect(model.selectedDate == later)
+        #expect(model.visibleMonth.month == later.month)
+    }
+
+    @Test("a day chosen on purpose is left where it is")
+    func leavesADeliberateChoiceAlone() throws {
+        let model = try makeModel()
+        let lastWeek = model.selectedDate.adding(days: -7)
+        model.selectedDate = lastWeek
+
+        model.advanceDayIfNeeded(now: model.today.adding(days: 1))
+        #expect(model.selectedDate == lastWeek, "looking back at last week was interrupted")
+    }
+
+    @Test("nothing moves when the day has not changed")
+    func stillWithinTheSameDay() throws {
+        let model = try makeModel()
+        let opened = model.selectedDate
+
+        model.advanceDayIfNeeded(now: opened)
+        #expect(model.selectedDate == opened)
+    }
+}
+

@@ -13,6 +13,7 @@ import org.chotki.core.CalendarDate
 import org.chotki.core.ClockStyle
 import org.chotki.core.CustomLibrary
 import org.chotki.core.DayEntry
+import org.chotki.core.DayRollover
 import org.chotki.core.EditPlanner
 import org.chotki.core.EditScope
 import org.chotki.core.Occurrence
@@ -107,6 +108,15 @@ class AppState(
 
     var selectedDate by mutableStateOf(CalendarDate.from(Instant.now(), zone))
     var visibleMonth by mutableStateOf(CalendarDate.from(Instant.now(), zone))
+
+    /**
+     * The day this state last believed was today.
+     *
+     * Not a "follow today" flag: comparing the selection against this is what
+     * tells [DayRollover] whether the view was on today, and it means tapping
+     * back onto today resumes following with nothing to keep in step.
+     */
+    private var lastKnownToday: CalendarDate = CalendarDate.from(Instant.now(), zone)
 
     val today: CalendarDate get() = CalendarDate.from(Instant.now(), zone)
 
@@ -432,6 +442,36 @@ class AppState(
         )
         load()
         rescheduleReminders()
+    }
+
+    /**
+     * Moves the view on when the day has changed under it.
+     *
+     * Chotki was opened on the 28th, closed, and opened again on the 29th
+     * still showing the 28th — so the rules on screen were yesterday's, and
+     * ticking one wrote to the wrong day. A phone is the worst case: the app
+     * is rarely quit, so without a check on coming back to the foreground the
+     * view can sit on a stale day for a week.
+     *
+     * Whether to move is [DayRollover]'s decision, not this one. [now] is
+     * injectable so the move can be tested without waiting for midnight.
+     */
+    fun advanceDayIfNeeded(now: CalendarDate = CalendarDate.from(Instant.now(), zone)) {
+        if (now == lastKnownToday) return
+
+        val next = DayRollover.selection(
+            showing = selectedDate,
+            wasToday = lastKnownToday,
+            isToday = now,
+        )
+        lastKnownToday = now
+
+        if (next == selectedDate) return
+        selectedDate = next
+        // Show the month the day is actually in, or the selection lands
+        // off-screen in a grid still displaying somewhere else.
+        visibleMonth = next
+        load()
     }
 
     fun rearmReminders(context: Context) = Reminders.rearm(context, zone = zone)

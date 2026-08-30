@@ -1,6 +1,11 @@
 package org.chotki.app
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -52,9 +57,36 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (::state.isInitialized) {
+            // Before load(), so what is loaded is the right day's.
+            state.advanceDayIfNeeded()
             state.load()
             state.rearmReminders(this)
             state.refreshCalendar()
+        }
+        // Midnight, and any clock or timezone change, for the case where the
+        // app is left open in the foreground and nobody backgrounds it.
+        // Registered only while resumed: a receiver alive behind a screen
+        // nobody is looking at would be waking the phone for nothing.
+        ContextCompat.registerReceiver(
+            this,
+            dayChanged,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_DATE_CHANGED)
+                addAction(Intent.ACTION_TIME_CHANGED)
+                addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+    }
+
+    override fun onPause() {
+        super.onPause()
+        runCatching { unregisterReceiver(dayChanged) }
+    }
+
+    private val dayChanged = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (::state.isInitialized) state.advanceDayIfNeeded()
         }
     }
 }

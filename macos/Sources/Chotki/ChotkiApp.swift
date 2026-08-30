@@ -112,6 +112,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Development affordance: open the popover at launch so the interface
         // can be inspected without a click. Never set in normal use.
+        // A lid closed on the 28th and opened on the 29th. The reminder
+        // timer does resume after sleep, but not necessarily at once, and
+        // this is the case the whole fix is about — so ask on wake too.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [model] _ in
+            MainActor.assumeIsolated { model.advanceDayIfNeeded() }
+        }
+
         if ProcessInfo.processInfo.environment["CHOTKI_OPEN_AT_LAUNCH"] == "1" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
                 self?.togglePopover()

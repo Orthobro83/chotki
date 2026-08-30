@@ -20,6 +20,15 @@ final class ReminderDriver {
     private var ticker = ReminderTicker()
     private var timer: Timer?
 
+    /// Raised on every tick, before the reminders are dealt with.
+    ///
+    /// The app is resident and this is the only thing already waking the
+    /// processor on a schedule, so anything else that has to notice the passing
+    /// of time rides along with it rather than starting a second timer. The
+    /// driver still knows nothing about what that is — it raises the tick and
+    /// the model decides what a tick means.
+    var onTick: (() -> Void)?
+
     init(
         notifier: any Notifier,
         clock: any Clock = SystemClock(),
@@ -57,6 +66,10 @@ final class ReminderDriver {
     }
 
     func tick() {
+        // Before the reminders: whatever else the passing of time means is the
+        // model's business, and it may change what `plan()` is about to return.
+        onTick?()
+
         let decision = ticker.tick(planned: plan(), now: clock.now)
         guard !decision.isEmpty else { return }
 

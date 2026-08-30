@@ -898,3 +898,57 @@ struct LibraryDrawerTests {
         #expect(model.screen == .main, "the day and its calendar are still on screen")
     }
 }
+
+/// The day the view is showing, once the clock has moved on.
+///
+/// `DayRolloverTests` in core proves the rule. This proves the model obeys it —
+/// that the selection actually moves, that the grid follows it to the right
+/// month, and that a day chosen on purpose is not taken away. A rule nothing
+/// calls is the failure this project keeps meeting.
+@MainActor
+@Suite("The day advances under the view")
+struct DayAdvanceTests {
+
+    @Test("opening on a later day moves the view to it")
+    func movesToTheNewToday() throws {
+        let model = try makeModel()
+        let opened = model.selectedDate
+
+        model.advanceDayIfNeeded(now: opened.adding(days: 1))
+        #expect(model.selectedDate == opened.adding(days: 1))
+    }
+
+    @Test("the grid follows the selection into the new month")
+    func gridFollowsIntoTheNewMonth() throws {
+        let model = try makeModel()
+        let opened = model.selectedDate
+
+        // Far enough to land in a different month whatever today happens to be.
+        let later = opened.adding(days: 40)
+        model.advanceDayIfNeeded(now: later)
+        #expect(model.selectedDate == later)
+        #expect(model.visibleMonth.month == later.month)
+        #expect(model.visibleMonth.year == later.year)
+    }
+
+    @Test("a day chosen on purpose is left where it is")
+    func leavesADeliberateChoiceAlone() throws {
+        let model = try makeModel()
+        let lastWeek = model.selectedDate.adding(days: -7)
+        model.selectedDate = lastWeek
+
+        model.advanceDayIfNeeded(now: model.selectedDate.adding(days: 8))
+        #expect(model.selectedDate == lastWeek, "looking back at last week was interrupted")
+    }
+
+    @Test("nothing moves when the day has not changed")
+    func stillWithinTheSameDay() throws {
+        let model = try makeModel()
+        let opened = model.selectedDate
+
+        model.advanceDayIfNeeded(now: opened)
+        model.advanceDayIfNeeded(now: opened)
+        #expect(model.selectedDate == opened)
+    }
+}
+

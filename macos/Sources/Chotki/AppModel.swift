@@ -34,6 +34,13 @@ final class AppModel: ObservableObject {
     @Published private(set) var customEntries: [Rule] = []
     @Published var selectedDate: CalendarDate
     @Published var visibleMonth: CalendarDate
+
+    /// The day this model last believed was today.
+    ///
+    /// Not a "follow today" flag: comparing the selection against this is what
+    /// tells `DayRollover` whether the view was on today, and it means tapping
+    /// back onto today resumes following with nothing to keep in step.
+    private var lastKnownToday: CalendarDate
     @Published var screen: Screen = .main
     @Published var tab: Tab = .rule
     /// Where the Terms screen goes back to.
@@ -117,6 +124,7 @@ final class AppModel: ObservableObject {
         let now = CalendarDate(Date(), in: .current)
         self.selectedDate = now
         self.visibleMonth = now
+        self.lastKnownToday = now
 
         // Registering is per-bundle-path. Moving the app — from the external
         // drive to /Applications, say — leaves the setting on while the actual
@@ -213,6 +221,34 @@ final class AppModel: ObservableObject {
         } catch {
             loadError = "Could not save that setting, so it may not survive a restart. \(error)"
         }
+    }
+
+    /// Moves the view on when the day has changed under it.
+    ///
+    /// Chotki was opened on the 28th, closed, and opened again on the 29th
+    /// still showing the 28th — so the rules on screen were yesterday's, and
+    /// ticking one wrote to the wrong day. The same happens to a Mac left
+    /// running over midnight, which is why this is checked on the tick as well
+    /// as at launch.
+    ///
+    /// Whether to move is `DayRollover`'s decision, not this one.
+    /// `now` is injectable so the move can be tested without waiting for
+    /// midnight; nothing in the app passes it.
+    func advanceDayIfNeeded(now: CalendarDate? = nil) {
+        let now = now ?? today
+        guard now != lastKnownToday else { return }
+
+        let next = DayRollover.selection(
+            showing: selectedDate, wasToday: lastKnownToday, isToday: now
+        )
+        lastKnownToday = now
+
+        guard next != selectedDate else { return }
+        selectedDate = next
+        // Show the month the day is actually in, or the selection lands
+        // off-screen in a grid still displaying somewhere else.
+        visibleMonth = next
+        reload()
     }
 
     func refreshLiturgical() async {
@@ -513,6 +549,9 @@ final class AppModel: ObservableObject {
                 occurrences: self.occurrences, on: self.today
             )
         }
+        // The day is checked on the same tick that drives the reminders, so a
+        // Mac left running over midnight moves on without a second timer.
+        driver.onTick = { [weak self] in self?.advanceDayIfNeeded() }
         self.driver = driver
         driver.start()
     }

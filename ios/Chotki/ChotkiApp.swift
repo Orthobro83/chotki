@@ -53,12 +53,30 @@ struct Shell: View {
     @State private var place: Place = .rule
     @State private var paths: [Place: NavigationPath] = [:]
     @Namespace private var transition
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        if !model.settings.hasCompletedFirstRun {
-            WelcomeView(model: model)
-        } else {
-            places
+        Group {
+            if !model.settings.hasCompletedFirstRun {
+                WelcomeView(model: model)
+            } else {
+                places
+            }
+        }
+        // Coming back to the foreground is the moment a phone finds out what
+        // day it is. The app is rarely quit, so without this the view can sit
+        // on a stale day for as long as the process happens to live.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { model.advanceDayIfNeeded() }
+        }
+        // Fires at midnight, and on a timezone or clock change — the case
+        // where the app is left open and nobody backgrounds it.
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: UIApplication.significantTimeChangeNotification
+            )
+        ) { _ in
+            model.advanceDayIfNeeded()
         }
     }
 
