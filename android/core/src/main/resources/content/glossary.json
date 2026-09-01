@@ -605,6 +605,25 @@
   },
   {
     "aliases" : [
+      "spiritual fathers",
+      "spiritual guide"
+    ],
+    "category" : "prayer",
+    "full" : "In Orthodox Christianity, a spiritual father is a guide in the life in Christ — someone who helps form, heal, and accompany a person toward repentance and communion with God.",
+    "related" : [
+      "confession",
+      "confessor",
+      "prayer-rule"
+    ],
+    "short" : "A guide in the life in Christ, who accompanies a person toward repentance and communion with God.",
+    "slug" : "spiritual-father",
+    "term" : "Spiritual father",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
 
     ],
     "category" : "prayer",

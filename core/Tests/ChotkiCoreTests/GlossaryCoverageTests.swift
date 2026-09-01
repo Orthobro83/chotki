@@ -58,6 +58,10 @@ struct GlossaryCoverageTests {
     /// Listed here so the coverage test can pass while the debt stays visible,
     /// and pinned to checklist.md by the test below so it cannot be forgotten
     /// by being quietly deleted from this file.
+    ///
+    /// "Spiritual father" was here and has been written — Ryan supplied the
+    /// definition. It is worth remembering how it was found: not by this scan,
+    /// which looks for capitals, but by reading the Brotherhood's plain prose.
     static let awaitingAnEntry = ["Abba", "Apostolic", "Catholic", "Church"]
 
     private var glossary: Glossary { Glossary.shared }
@@ -99,6 +103,32 @@ struct GlossaryCoverageTests {
     @Test("every passage from the fathers is covered too")
     func patristicIsCovered() {
         let unexplained = candidates(in: PatristicReadings.shared.readings.map(\.text))
+        let complaint: Comment = """
+            no glossary entry for: \(unexplained.sorted().joined(separator: ", ")). \
+            Add entries, or add the word to `known` if a reader needs no help with it.
+            """
+        #expect(unexplained.isEmpty, complaint)
+    }
+
+    /// The seven reflections are bundled text like any other, so they are held
+    /// to the same rule.
+    ///
+    /// **What this catches and what it does not.** The scan looks for
+    /// capitalised words mid-sentence, which in liturgical English is very
+    /// nearly the definition of a term of art. The Brotherhood's prose is plain
+    /// modern English and capitalises nothing, so this test guards future edits
+    /// to the seven rather than finding much today. Terms of art that appear in
+    /// lowercase — "liturgy", "confession", "communion", "spiritual father" —
+    /// have to be found by reading. Three of those four the glossary already
+    /// explains; the fourth is in `awaitingAnEntry` above.
+    @Test("the reflections' terms of art are in the glossary")
+    func reflectionsAreCovered() {
+        // Titles are excluded: they are headings in title case — "Notice the
+        // Resistance" — and the scan reads every capital after the first word
+        // as a term. A heading is a label rather than something a reader
+        // stumbles through, and the rule is about the prose.
+        let text = Reflection.bundled.flatMap { [$0.notice, $0.task] }
+        let unexplained = candidates(in: text)
         let complaint: Comment = """
             no glossary entry for: \(unexplained.sorted().joined(separator: ", ")). \
             Add entries, or add the word to `known` if a reader needs no help with it.

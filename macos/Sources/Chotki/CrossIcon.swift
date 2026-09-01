@@ -34,17 +34,78 @@ enum CrossIcon {
         footrest.fill()
     }
 
-    /// The menu bar item. A template image, so macOS inverts it correctly in
-    /// both light and dark menu bars.
+    /// The menu bar item: the rope mark, which is the app's own logo — the same
+    /// mark as the Dock icon and the one drawn beside the day.
+    ///
+    /// It was the bare cross before. A three-bar cross in a menu bar is any
+    /// Orthodox app; the rope is this one, and it is what the app is named
+    /// after. A template image, so macOS inverts it for light and dark menu
+    /// bars without a second drawing.
+    ///
+    /// The knots are drawn at a floor of half a point. At 18 points tall the
+    /// geometric radius is about three quarters of a point, which on a
+    /// non-Retina display rounds away to nothing and leaves a cross hanging
+    /// from an empty circle.
     static func menuBarImage(height: CGFloat = 18) -> NSImage {
-        let size = NSSize(width: (height * CrossGeometry.aspect).rounded(), height: height)
-        // Flipped, so the shared top-down geometry can be used directly.
+        let size = NSSize(width: (height * ropeAspect).rounded(), height: height)
         let image = NSImage(size: size, flipped: true) { rect in
-            fill(in: rect, colour: .black)
+            fillRope(in: rect, colour: .black)
             return true
         }
         image.isTemplate = true
         return image
+    }
+
+    /// The proportions of the rope mark: the loop, plus the cross hanging below
+    /// it. Taken from the geometry rather than measured by eye, so it follows if
+    /// the mark is ever redrawn.
+    static var ropeAspect: CGFloat {
+        let box = RopeMarkGeometry.crossBox
+        let top = RopeMarkGeometry.centreY - RopeMarkGeometry.loopRadius
+            - RopeMarkGeometry.knotRadius
+        let bottom = box.y + box.height
+        let left = RopeMarkGeometry.centreX - RopeMarkGeometry.loopRadius
+            - RopeMarkGeometry.knotRadius
+        let right = RopeMarkGeometry.centreX + RopeMarkGeometry.loopRadius
+            + RopeMarkGeometry.knotRadius
+        return CGFloat((right - left) / (bottom - top))
+    }
+
+    /// Fills the rope mark into `rect` of an already-flipped (top-down) context,
+    /// scaled to fit and centred.
+    private static func fillRope(in rect: CGRect, colour: NSColor) {
+        let box = RopeMarkGeometry.crossBox
+        let top = RopeMarkGeometry.centreY - RopeMarkGeometry.loopRadius
+            - RopeMarkGeometry.knotRadius
+        let left = RopeMarkGeometry.centreX - RopeMarkGeometry.loopRadius
+            - RopeMarkGeometry.knotRadius
+        let usedWidth = CGFloat(
+            (RopeMarkGeometry.loopRadius + RopeMarkGeometry.knotRadius) * 2)
+        let usedHeight = CGFloat(box.y + box.height - top)
+
+        // Fit the used part of the mark, not the notional unit box, or the
+        // drawing sits small in the middle of its own padding.
+        let scale = min(rect.width / usedWidth, rect.height / usedHeight)
+        let drawn = CGSize(width: usedWidth * scale, height: usedHeight * scale)
+        let originX = rect.minX + (rect.width - drawn.width) / 2
+        let originY = rect.minY + (rect.height - drawn.height) / 2
+
+        func x(_ u: Double) -> CGFloat { originX + (CGFloat(u) - CGFloat(left)) * scale }
+        func y(_ v: Double) -> CGFloat { originY + (CGFloat(v) - CGFloat(top)) * scale }
+
+        colour.setFill()
+        let knot = max(CGFloat(RopeMarkGeometry.knotRadius) * scale, 0.5)
+        for centre in RopeMarkGeometry.knotCentres {
+            NSBezierPath(ovalIn: NSRect(
+                x: x(centre.x) - knot, y: y(centre.y) - knot,
+                width: knot * 2, height: knot * 2
+            )).fill()
+        }
+
+        fill(in: CGRect(
+            x: x(box.x), y: y(box.y),
+            width: CGFloat(box.width) * scale, height: CGFloat(box.height) * scale
+        ), colour: colour)
     }
 
     /// The Dock icon: gold on a dark rounded square.

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chotki — Reflections (mockup)</title>
+<style>
+  :root{
+    --ground:#15161C; --panel:#1C1E26; --sidebar:#1B1C22; --sel:#2C2E37;
+    --line:#2E2A20; --lineSoft:#23252C;
+    --gold:#C9A227; --goldDim:#8A7220;
+    --parchment:#E8DFCD; --parchmentDim:#D8CFBD;
+    --muted:#8A8578; --faint:#5A564C;
+    --serif:"Iowan Old Style","Hoefler Text",Palatino,"Palatino Linotype",Georgia,serif;
+    --sans:-apple-system,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#0d0e11;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .window{width:min(1080px,calc(100vw - 32px));height:min(740px,calc(100vh - 32px));
+    margin:16px auto;display:flex;border-radius:10px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.55);border:1px solid #000;position:relative}
+
+  /* sidebar — chrome, stays sans */
+  .sidebar{width:182px;flex:0 0 182px;background:var(--sidebar);padding:0 8px}
+  .chrome{height:44px;display:flex;align-items:center;gap:8px;padding:0 6px}
+  .dot{width:12px;height:12px;border-radius:50%;background:#3a3b41}
+  .toggle{margin-left:12px;color:#5f6068}
+  .nav{display:flex;align-items:center;gap:8px;height:25px;padding:0 8px;border-radius:5px;
+       color:var(--parchmentDim);font-size:13px;cursor:default}
+  .nav svg{width:14px;height:14px;flex:0 0 14px;stroke:currentColor;fill:none;stroke-width:1.4;opacity:.85}
+  .nav.on{background:var(--sel);color:#fff}
+
+  .detail{flex:1;background:var(--ground);display:flex;flex-direction:column;min-width:0}
+  .titlebar{height:44px;display:flex;align-items:center;padding:0 24px}
+  .titlebar h1{margin:0;font-size:15px;font-weight:600;color:var(--parchment)}
+  .scroll{flex:1;overflow-y:auto;padding:6px 24px 32px}
+  .scroll::-webkit-scrollbar{width:9px}
+  .scroll::-webkit-scrollbar-thumb{background:#2f3139;border-radius:5px}
+
+  /* a weekday */
+  .day{margin-bottom:26px}
+  .dayhead{display:flex;align-items:baseline;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .dayname{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--gold);letter-spacing:.04em;text-transform:uppercase}
+  .today{font-family:var(--sans);font-size:10px;color:#12131a;background:var(--gold);border-radius:3px;padding:1px 5px;font-weight:600}
+  .spacer{flex:1}
+  .hist{font-family:var(--sans);font-size:11.5px;color:var(--muted);background:none;
+        border:1px solid #34363f;border-radius:5px;padding:3px 9px;cursor:pointer}
+  .hist:hover{color:var(--gold);border-color:var(--goldDim)}
+  .hist[disabled]{opacity:.4;cursor:default}
+
+  /* the reflection — reading text, serif */
+  .card{padding:11px 0 2px}
+  .cardhead{display:flex;align-items:baseline;gap:8px}
+  .qtitle{font-family:var(--serif);font-size:16px;color:var(--parchment)}
+  .act{font-family:var(--sans);font-size:11.5px;color:var(--muted);background:none;border:none;
+       padding:0;cursor:pointer;opacity:.6}
+  .card:hover .act{opacity:1}
+  .act:hover{color:var(--gold)}
+  .prompt{margin:8px 0 11px;max-width:56em}
+  .prow{display:flex;gap:10px;margin-bottom:5px}
+  .ptask{color:var(--parchment)!important}
+  .plabel{flex:0 0 92px;text-align:right;font-family:var(--sans);font-size:11px;color:var(--faint);
+          padding-top:3px;letter-spacing:.03em}
+  .ptext{font-family:var(--serif);font-size:14.5px;line-height:1.55;color:var(--parchmentDim);flex:1}
+  textarea{width:100%;max-width:56em;min-height:66px;resize:vertical;font-family:var(--serif);
+    font-size:14.5px;line-height:1.6;color:var(--parchment);background:#191B22;
+    border:1px solid #2b2d36;border-radius:6px;padding:9px 11px;outline:none}
+  textarea:focus{border-color:var(--goldDim)}
+  textarea::placeholder{color:#4a4c54;font-style:italic}
+  .under{display:flex;align-items:center;gap:12px;margin-top:7px}
+  .save{font-family:var(--sans);font-size:11.5px;color:var(--gold);background:none;
+        border:1px solid var(--goldDim);border-radius:5px;padding:3px 13px;cursor:pointer}
+  .save:hover{background:#2a2415}
+  .stamp{font-family:var(--sans);font-size:11px;color:var(--faint)}
+  .locked{font-family:var(--sans);font-size:11px;color:var(--faint);font-style:italic}
+
+  /* edit state */
+  .edit .frow{display:flex;gap:10px;align-items:flex-start;margin-bottom:7px;max-width:56em}
+  .edit .flabel{flex:0 0 92px;text-align:right;font-family:var(--sans);font-size:11px;color:var(--faint);padding-top:7px}
+  .edit input,.edit textarea{flex:1;font-family:var(--serif);background:#191B22;border:1px solid #2b2d36;
+    border-radius:6px;color:var(--parchment);padding:6px 10px;outline:none;font-size:14.5px;line-height:1.5}
+  .edit textarea{min-height:52px}
+  .edit input:focus,.edit textarea:focus{border-color:var(--goldDim)}
+  .warn{font-family:var(--sans);font-size:11px;color:var(--muted);max-width:52em;margin:2px 0 8px 102px;line-height:1.5}
+
+  /* colophon */
+  .colophon{margin:8px 0 6px;padding:18px 0 0;border-top:1px solid var(--line);max-width:56em}
+  .colophon p{font-family:var(--serif);font-size:13.5px;line-height:1.65;color:var(--muted);margin:0 0 10px}
+
+  /* file bar */
+  .filebar{display:flex;align-items:center;gap:10px;padding:14px 0 0;border-top:1px solid var(--lineSoft);max-width:56em}
+  .filebar .note{font-family:var(--sans);font-size:11px;color:var(--faint);flex:1;line-height:1.5}
+  .btn{font-family:var(--sans);font-size:11.5px;color:var(--parchmentDim);background:none;
+       border:1px solid #34363f;border-radius:5px;padding:4px 12px;cursor:pointer}
+  .btn:hover{color:var(--gold);border-color:var(--goldDim)}
+
+  /* overlay */
+  .veil{position:absolute;inset:0;background:rgba(8,9,12,.72);display:none;align-items:center;justify-content:center;z-index:9}
+  .veil.on{display:flex}
+  .ov{width:100%;max-height:78%;background:#191B21;border:1px solid var(--line);
+      border-radius:9px;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+  .ovhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--lineSoft)}
+  .ovday{font-family:var(--sans);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold)}
+  .ovdate{font-family:var(--sans);font-size:12px;color:var(--parchmentDim)}
+  .close{font-family:var(--sans);font-size:16px;color:var(--muted);background:none;border:none;cursor:pointer;line-height:1}
+  .close:hover{color:var(--gold)}
+  .ovbody{padding:16px 20px;overflow-y:auto}
+  .ovbody::-webkit-scrollbar{width:8px}.ovbody::-webkit-scrollbar-thumb{background:#2f3139;border-radius:4px}
+  .ovq{font-family:var(--serif);font-size:16px;color:var(--parchment);margin-bottom:9px}
+  .ovprompt{margin-bottom:15px;padding-bottom:14px;border-bottom:1px solid var(--lineSoft)}
+  .ovans{font-family:var(--serif);font-size:14.5px;line-height:1.68;color:var(--parchment);white-space:pre-wrap}
+  .ovfoot{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--lineSoft)}
+  .ovpos{font-family:var(--sans);font-size:11px;color:var(--faint)}
+  .chev{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:64px;border:none;
+        background:none;color:var(--muted);font-size:22px;cursor:pointer}
+  .chev:hover{color:var(--gold)}
+  .chev[disabled]{opacity:.22;cursor:default}
+  .ovwrap{position:relative;display:flex;align-items:center;justify-content:center;width:min(640px,calc(100% - 170px))}
+  .chev.l{left:-42px}.chev.r{right:-42px}
+  select{font-family:var(--sans);font-size:11.5px;color:var(--parchmentDim);background:#1F212A;
+    border:1px solid #34363f;border-radius:5px;padding:3px 20px 3px 8px;outline:none;appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M0 0h8L4 6z' fill='%238A8578'/></svg>");
+    background-repeat:no-repeat;background-position:right 6px center}
+  select:focus{border-color:var(--goldDim)}
+  .footnote{font-family:var(--sans);font-size:10.5px;color:#3f4148;padding:14px 24px 0;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="window">
+  <aside class="sidebar">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="toggle"><svg width="15" height="12" fill="none" stroke="currentColor" stroke-width="1.2"><rect x=".6" y=".6" width="13.8" height="10.8" rx="2"/><path d="M5.4.6v10.8"/></svg></span>
+    </div>
+    <nav id="nav"></nav>
+  </aside>
+  <main class="detail">
+    <div class="titlebar"><h1>Reflections</h1></div>
+    <div class="scroll" id="scroll"></div>
+  </main>
+
+  <div class="veil" id="veil" onclick="if(event.target===this)closeOv()">
+    <div class="ovwrap">
+      <button class="chev l" id="prev" onclick="stepOv(1)">&#8249;</button>
+      <div class="ov" id="ov"></div>
+      <button class="chev r" id="next" onclick="stepOv(-1)">&#8250;</button>
+    </div>
+  </div>
+</div>
+<script>
+const DAYS = [
+  { n: 1, title: "Notice the Resistance",
+    notice: "Pay attention today to the moments where you feel resistance, irritation, or quiet refusal. Not the big things. The small ones. The conversation you avoided. The prayer you skipped. The moment you reached for your phone instead of sitting with a thought.",
+    task: "Write down two or three moments where you felt resistance. Do not analyze them yet. Just notice." },
+  { n: 2, title: "Notice the Quiet",
+    notice: "Pay attention to where your inner life has gone silent. Where have you stopped praying about something you used to pray about? Where have you stopped caring about something you used to care about?",
+    task: "At the end of the day, write down one area of your life that has quietly gone silent." },
+  { n: 3, title: "Notice the Comfort",
+    notice: "Pay attention to the things you reach for to soothe yourself. Phone. Food. Music. Distraction. Not to judge them. Just to see them.",
+    task: "At the end of the day, write down what you reach for when you do not want to feel something." },
+  { n: 4, title: "Notice the Avoidance",
+    notice: "Pay attention to what you are avoiding. The conversation you keep putting off. The confession you have not scheduled. The relationship you are letting drift. The thought you keep pushing away.",
+    task: "At the end of the day, write down one thing you have been avoiding." },
+  { n: 5, title: "Notice the Pattern",
+    notice: "Look back at what you have written so far this week. What is the pattern? What keeps showing up?",
+    task: "At the end of the day, write down what you are starting to see about yourself." },
+  { n: 6, title: "Notice the Cost",
+    notice: "If you keep going the way you have been going, where does it lead? Look at the patterns honestly. What is this costing you spiritually? What is it costing the people around you?",
+    task: "At the end of the day, write down what you are putting at risk by staying where you are." },
+  { n: 7, title: "Bring It Forward",
+    notice: "Look at everything you have written this week. This is the honest picture of where you are. Identify one thing from this week's noticing that you need to bring to confession. Identify one thing you want to talk to your spiritual father about. Go to liturgy. Stand. Pay attention. Receive communion if you are prepared and have your priest's blessing.",
+    task: "At the end of the day, write down what you are taking forward from this week and what changes when you do." },
+];const ICONS = {
+  Rule:'<rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><path d="M1.5 5.5h11M4.5 1v3M9.5 1v3"/>',
+  Reading:'<path d="M7 3.5S5.5 2 2 2v9c3.5 0 5 1.5 5 1.5S8.5 11 12 11V2C8.5 2 7 3.5 7 3.5z"/><path d="M7 3.5v9"/>',
+  Prayers:'<path d="M7 12.5V4M3.5 12.5V6.5M10.5 12.5V6.5M5 4a2 2 0 114 0"/>',
+  Progress:'<path d="M1.5 12h11M2.5 9.5l3-3 2.5 2.5 4-5"/>',
+  Reflections:'<path d="M2.5 2.5h9v9h-9z"/><path d="M4.5 5.5h5M4.5 7.5h5M4.5 9.5h3"/>',
+  Library:'<rect x="1.5" y="1.5" width="4.5" height="4.5"/><rect x="8" y="1.5" width="4.5" height="4.5"/><rect x="1.5" y="8" width="4.5" height="4.5"/><rect x="8" y="8" width="4.5" height="4.5"/>',
+  Glossary:'<path d="M3 1.5h8v11H3z"/><path d="M3 10.5h8"/><path d="M5 4h4"/>',
+  Settings:'<circle cx="7" cy="7" r="2.2"/><path d="M7 1v1.6M7 11.4V13M1 7h1.6M11.4 7H13M2.8 2.8l1.1 1.1M10.1 10.1l1.1 1.1M11.2 2.8l-1.1 1.1M3.9 10.1l-1.1 1.1"/>'
+};
+document.getElementById('nav').innerHTML = Object.keys(ICONS).map(k =>
+  `<div class="nav ${k==='Reflections'?'on':''}"><svg viewBox="0 0 14 14">${ICONS[k]}</svg>${k}</div>`).join('');
+
+const WEEK = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pretty = iso => { const [y,m,d]=iso.split('-').map(Number); return `${d} ${MONTHS[m-1]} ${y}`; };
+
+/* Sunday first, in the order they appear in the source */
+let state = DAYS.map((d,i)=>({
+  weekday:i+1, name:WEEK[i], title:d.title, notice:d.notice, task:d.task,
+  entries:[], editing:false
+}));
+
+/* history, so the overlay has something to page through */
+const seed = [
+  [0,'2026-08-30','It came up first thing, before I had said anything at all. Sat with it rather than moving.'],
+  [0,'2026-08-23','Less this week. Or I noticed it less, which is not the same thing.'],
+  [0,'2026-07-26','Three weeks of writing nothing and then this. The resistance was to the writing itself.'],
+  [1,'2026-08-31','Quieter than it has been. Kept the phone in the other room and the silence was not empty.'],
+  [3,'2026-08-26','Put off the call again. Third day.'],
+  [3,'2026-07-29','The same call. Noted then too, and did nothing about it.'],
+  [5,'2026-08-28','Late, and the cost was the hour I did not give.'],
+  [6,'2026-08-29','Vigil. Confession after.']
+];
+seed.forEach(([i,date,text])=>{
+  const d = state[i];
+  d.entries.push({date, text, q:{title:d.title, notice:d.notice, task:d.task}});
+});
+state.forEach(d=>d.entries.sort((a,b)=>b.date.localeCompare(a.date)));
+
+const TODAY_WEEKDAY = 3;                      /* Tuesday 1 September 2026 */
+const COLOPHON = [
+  "If this week showed you something uncomfortable, that is the point. You cannot fight what you cannot see. Now you can see it.",
+  "Take what you noticed to your priest. Bring it to confession. Pray about it. Do not try to fix everything yourself. The point of this week was not to become a different person in seven days. The point was to stop pretending you do not need to change."
+];
+
+function render(){
+  document.getElementById('scroll').innerHTML = state.map((d,i)=>{
+    const isToday = d.weekday===TODAY_WEEKDAY;
+    const n = d.entries.length;
+    return `<section class="day">
+      <div class="dayhead">
+        <span class="dayname">${d.name}</span>${isToday?'<span class="today">today</span>':''}
+        <span class="spacer"></span>
+        <button class="hist" ${n?'':'disabled'} onclick="openOv(${i},0)">
+          ${n? `${n} past ${n===1?'entry':'entries'}` : 'no past entries'}
+        </button>
+      </div>
+      ${d.editing ? editCard(d,i) : readCard(d,i,isToday)}
+    </section>`;
+  }).join('') + `
+    <div class="colophon">${COLOPHON.map(p=>`<p>${esc(p)}</p>`).join('')}</div>
+    <div class="filebar">
+      <span class="note">Kept in Chotki's own record, in Application Support, and included in the daily backup.</span>
+      <button class="btn">Export journal</button><button class="btn">Import journal</button>
+    </div>`;
+}
+
+function readCard(d,i,isToday){
+  const last = d.entries[0];
+  return `<div class="card">
+    <div class="cardhead"><span class="qtitle">${esc(d.title)}</span><span class="spacer"></span>
+      <button class="act" onclick="startEdit(${i})">Edit this reflection</button></div>
+    <div class="prompt">
+      <div class="prow"><span class="plabel">Notice</span><span class="ptext">${esc(d.notice)}</span></div>
+      <div class="prow"><span class="plabel"></span><span class="ptext ptask">${esc(d.task)}</span></div>
+    </div>
+    <textarea id="a-${i}" placeholder="${isToday?'Write today&#39;s answer…':'Nothing written for this day yet.'}"></textarea>
+    <div class="under"><button class="save" onclick="saveAnswer(${i})">Save</button>
+      <span class="spacer"></span>
+      <span class="stamp">${last?`last written ${pretty(last.date)}`:'no entries yet'}</span></div>
+  </div>`;
+}
+
+function editCard(d,i){
+  return `<div class="card edit">
+    <div class="frow"><span class="flabel">Title</span><input id="e-t-${i}" value="${esc(d.title)}"></div>
+    <div class="frow"><span class="flabel">Notice</span><textarea id="e-n-${i}">${esc(d.notice)}</textarea></div>
+    <div class="frow"><span class="flabel">At day's end</span><textarea id="e-k-${i}">${esc(d.task)}</textarea></div>
+    <p class="warn">This changes the question from today onward. Every answer already written keeps the
+      question it was written against, and stays readable.</p>
+    <div class="under" style="margin-left:102px"><button class="save" onclick="saveEdit(${i})">Save reflection</button>
+      <button class="act" onclick="cancelEdit(${i})">Cancel</button></div>
+  </div>`;
+}
+
+/* ── overlay ─────────────────────────────────────────────────────────────── */
+let ov = {day:0, idx:0, year:'all', month:'all'};
+
+function visible(){
+  return state[ov.day].entries.filter(e=>{
+    const [y,m] = e.date.split('-').map(Number);
+    if(ov.year!=='all' && y!==+ov.year) return false;
+    if(ov.month!=='all' && m!==+ov.month) return false;
+    return true;
+  });
+}
+function openOv(day,idx){ ov={day, idx, year:'all', month:'all'}; drawOv(); document.getElementById('veil').classList.add('on'); }
+function closeOv(){ document.getElementById('veil').classList.remove('on'); }
+function stepOv(delta){ const v=visible(); ov.idx=Math.min(Math.max(ov.idx+delta,0),v.length-1); drawOv(); }
+function setPeriod(which,val){ ov[which]=val; ov.idx=0; drawOv(); }
+function jumpTo(date){ ov.idx = visible().findIndex(e=>e.date===date); drawOv(); }
+
+function drawOv(){
+  const d = state[ov.day], v = visible(), e = v[ov.idx];
+  const years = [...new Set(d.entries.map(x=>x.date.slice(0,4)))].sort().reverse();
+  const head = `<div class="ovhead">
+      <span class="ovday">${d.name}</span>
+      <span class="ovdate">${e?pretty(e.date):'—'}</span>
+      <span class="spacer"></span>
+      <button class="close" onclick="closeOv()">&times;</button></div>`;
+  const body = e
+    ? `<div class="ovbody">
+        <div class="ovprompt">
+          <div class="ovq">${esc(e.q.title)}</div>
+          <div class="prow"><span class="plabel">Notice</span><span class="ptext">${esc(e.q.notice)}</span></div>
+          <div class="prow"><span class="plabel"></span><span class="ptext ptask">${esc(e.q.task)}</span></div>
+        </div>
+        <div class="ovans">${esc(e.text)}</div></div>`
+    : `<div class="ovbody"><div class="ovans" style="color:var(--faint);font-style:italic">Nothing written in this period.</div></div>`;
+  const foot = `<div class="ovfoot">
+      <span class="ovpos">${v.length?`${ov.idx+1} of ${v.length}`:'0'} ${d.name}${v.length===1?'':'s'}</span>
+      <span class="spacer"></span>
+      <select onchange="setPeriod('year',this.value)"><option value="all">All years</option>
+        ${years.map(y=>`<option ${ov.year===y?'selected':''}>${y}</option>`).join('')}</select>
+      <select onchange="setPeriod('month',this.value)"><option value="all">All months</option>
+        ${MONTHS.map((m,i)=>`<option value="${i+1}" ${ov.month==String(i+1)?'selected':''}>${m}</option>`).join('')}</select>
+      <select onchange="jumpTo(this.value)">
+        ${v.map((x,i)=>`<option value="${x.date}" ${i===ov.idx?'selected':''}>${pretty(x.date)}</option>`).join('') || '<option>—</option>'}</select>
+    </div>`;
+  document.getElementById('ov').innerHTML = head + body + foot;
+  document.getElementById('prev').disabled = ov.idx >= v.length-1;
+  document.getElementById('next').disabled = ov.idx <= 0;
+}
+
+/* ── actions ─────────────────────────────────────────────────────────────── */
+function saveAnswer(i){
+  const box=document.getElementById('a-'+i), text=box.value.trim(); if(!text) return;
+  if(!confirm('Save this answer? Once saved it cannot be changed.')) return;
+  const d=state[i], iso='2026-09-0'+(i+1);
+  d.entries = d.entries.filter(e=>e.date!==iso);
+  d.entries.unshift({date:iso, text, q:{title:d.title, notice:d.notice, task:d.task}});
+  d.entries.sort((a,b)=>b.date.localeCompare(a.date)); render();
+}
+function startEdit(i){ state[i].editing=true; render(); }
+function cancelEdit(i){ state[i].editing=false; render(); }
+function saveEdit(i){
+  const d=state[i];
+  d.title=document.getElementById('e-t-'+i).value;
+  d.notice=document.getElementById('e-n-'+i).value;
+  d.task=document.getElementById('e-k-'+i).value;
+  d.editing=false; render();
+}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('veil').classList.contains('on')) return;
+  if(e.key==='Escape') closeOv();
+  if(e.key==='ArrowLeft') stepOv(1);
+  if(e.key==='ArrowRight') stepOv(-1);
+});
+render();
+</script>
+<div class="footnote">
+  Mockup only — not the app. Prompt text is verbatim from <code>nepsis-seven-reflections.html</code>.
+  Reading text is Iowan Old Style; the sidebar, labels, dates and buttons stay SF.
+</div>
+</body>
+</html>

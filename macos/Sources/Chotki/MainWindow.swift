@@ -9,6 +9,7 @@ enum MainSection: String, CaseIterable, Hashable {
     case reading = "Reading"
     case prayers = "Prayers"
     case progress = "Progress"
+    case reflections = "Reflections"
     case library = "Library"
     case glossary = "Glossary"
     case settings = "Settings"
@@ -18,6 +19,7 @@ enum MainSection: String, CaseIterable, Hashable {
         case .rule: return "calendar"
         case .reading: return "book"
         case .progress: return "chart.line.uptrend.xyaxis"
+        case .reflections: return "square.and.pencil"
         case .library: return "square.grid.2x2"
         case .prayers: return "hands.sparkles"
         case .glossary: return "text.book.closed"
@@ -53,6 +55,7 @@ enum WindowRoute: Equatable {
         case .prayers(let ruleID): return .prayers(ruleID)
         // The Psalter lives under Prayers in the window, as the rope does.
         case .psalter: return .section(.prayers)
+        case .reflections: return .section(.reflections)
         }
     }
 }
@@ -65,7 +68,20 @@ private struct EditorTarget: Identifiable {
 
 struct MainWindowView: View {
     @ObservedObject var model: AppModel
-    @State private var section: MainSection = .rule
+    @State private var section: MainSection
+
+    /// `initialSection` exists for the render harness.
+    ///
+    /// The sidebar's selection is `@State`, so nothing outside this view can
+    /// move it — which is why the harness has to build its shots in one
+    /// careful order and can never go back. A section it cannot reach at all
+    /// is a section that gets signed off unseen, which has happened here
+    /// before. This lets it open a window already on the screen it wants.
+    init(model: AppModel, initialSection: MainSection = .rule) {
+        self.model = model
+        _section = State(initialValue: initialSection)
+    }
+
     /// Where the sidebar was before the current section, so Terms can go back to
     /// it. Cleared when it is used, otherwise pressing back on Terms would
     /// return to Terms.
@@ -146,6 +162,9 @@ struct MainWindowView: View {
         case .rule: ruleSection
         case .reading: scrolling { ReadingViewContent(model: model) }
         case .progress: scrolling { ProgressTabViewContent(model: model) }
+        // Its own ScrollView rather than `scrolling`, because the overlay has
+        // to sit over the whole pane instead of inside the scrolled content.
+        case .reflections: ReflectionsView(model: model)
         case .library: scrolling { LibraryViewContent(model: model) }
         case .prayers: PrayerRopeView(model: model)
         case .glossary:
@@ -268,10 +287,29 @@ final class MainWindowController: NSObject, NSWindowDelegate {
         window.minSize = NSSize(width: 620, height: 480)
         window.center()
         window.delegate = self
-        window.contentView = NSHostingView(rootView: MainWindowView(model: model))
+        window.contentView = MainWindowController.hostingView(model: model)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
+    }
+
+    /// The window's content view, with SwiftUI's sizing detached from it.
+    ///
+    /// **The window's size belongs to whoever set it, not to what is inside.**
+    /// `NSHostingView` defaults to `.standardBounds`, which lets AppKit ask
+    /// SwiftUI for an intrinsic size and resize the window to satisfy it. A
+    /// `ScrollView` asked for its intrinsic height answers with the height of
+    /// *all* its content, not the height it is being shown at — so anything
+    /// that invalidates the layout while a tall section is open makes the
+    /// window jump.
+    ///
+    /// That is exactly what opening the Reflections explainer did: one help
+    /// mark, and the window stretched to the full height of the screen. Clearing
+    /// the options fixes it for every section rather than for that one.
+    static func hostingView(model: AppModel) -> NSHostingView<MainWindowView> {
+        let host = NSHostingView(rootView: MainWindowView(model: model))
+        host.sizingOptions = []
+        return host
     }
 
     var isOpen: Bool { window?.isVisible ?? false }

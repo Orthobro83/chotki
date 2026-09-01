@@ -58,7 +58,8 @@ enum RenderMode {
     }
 
     /// A copy of the real database, so the liturgical cache is realistic, plus a
-    /// few rules to show. The original is never opened for writing.
+    /// few rules to show. The original is never opened at all — see
+    /// `readOnlyCopy(of:)`, and why that had to be written.
     /// A throwaway store holding sample rules and nothing personal.
     ///
     /// Only the liturgical cache is taken from the real database — the calendar
@@ -90,8 +91,8 @@ enum RenderMode {
 
         // Carry across the calendar only.
         if let real = try? StoreLocation.databasePath(),
-           FileManager.default.fileExists(atPath: real) {
-            let source = try SQLiteStore(path: real)
+           FileManager.default.fileExists(atPath: real),
+           let source = try? readOnlyCopy(of: real) {
             let settings = (try? source.loadSettings()) ?? .default
             for reckoning in Reckoning.allCases {
                 let days = (try? source.liturgicalDays(
@@ -152,7 +153,63 @@ enum RenderMode {
                 try store.save(Occurrence(ruleID: rule.id, date: date, status: status))
             }
         }
+
+        // Made-up answers, so the journal and its overlay have something to
+        // draw. Invented here like every other sample: a reflection is the most
+        // personal thing this app holds, and a screenshot must never be able to
+        // carry a real one.
+        try store.seedReflections()
+        // On the rule, so the day list shows it with its way through to the
+        // section and its pencil, which is the thing to look at.
+        if let template = RuleLibrary.shared.templates.first(where: { $0.id == "reflection" }) {
+            let rule = template.makeRule(source: "the library")
+            try store.save(rule)
+            try store.save(Activation(ruleID: rule.id, from: today.adding(days: -40)))
+        }
+        let invented: [(Weekday, Int, String)] = [
+            (.sunday, 7, "It came up first thing, before I had said anything at all. Sat with it rather than moving on."),
+            (.sunday, 14, "Less this week. Or I noticed it less, which is not the same thing."),
+            (.sunday, 42, "Three weeks of writing nothing, and then this. The resistance was to the writing itself."),
+            (.monday, 8, "Quieter than it has been. Kept the phone in the other room and the silence was not empty."),
+            (.wednesday, 10, "Put off the call again. Third day."),
+            (.wednesday, 45, "The same call. Noted then too, and did nothing about it."),
+            (.friday, 12, "Late, and the cost was the hour I did not give."),
+            (.saturday, 11, "Vigil. Confession after.")
+        ]
+        for (weekday, back, text) in invented {
+            let date = today.adding(days: -back)
+            // Land it on the weekday it belongs to, whatever today happens to be.
+            let landed = date.adding(days: weekday.rawValue - date.weekday.rawValue)
+            try store.save(ReflectionEntry(
+                answering: Reflection.bundled(for: weekday), on: landed, text: text))
+        }
         return store
+    }
+
+    /// A throwaway copy of the real database, opened instead of the original.
+    ///
+    /// **`SQLiteStore(path:)` migrates on open.** So reading the liturgical
+    /// cache straight out of the live file wrote to it — every render run
+    /// silently applied whatever migrations the working copy had that the
+    /// installed app did not. It was caught when schema 7 turned up in Ryan's
+    /// record before the build carrying it had ever been installed. Nothing was
+    /// lost, because a migration only adds; the next one that rewrites a column
+    /// would not have been so forgiving.
+    ///
+    /// The comment above this function used to say the original is never opened
+    /// for writing. It says it again now, and this time it is true.
+    ///
+    /// `-wal` and `-shm` come too: without them a file-level copy silently
+    /// loses whatever has not been checkpointed, which here is most of it.
+    private static func readOnlyCopy(of path: String) throws -> SQLiteStore {
+        let copy = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotki-cache-\(UUID().uuidString).sqlite")
+        for suffix in ["", "-wal", "-shm"] {
+            try? FileManager.default.copyItem(
+                atPath: path + suffix, toPath: copy.path + suffix
+            )
+        }
+        return try SQLiteStore(path: copy.path)
     }
 
     /// Renders the real window, through AppKit rather than ImageRenderer.
@@ -242,6 +299,51 @@ enum RenderMode {
             }
 
 
+            // Reflections, which the sidebar can reach but `model.screen`
+            // cannot — so it gets a window of its own, opened straight onto it.
+            resize(to: 940)
+            // `.main` routes to `.stay`, so the fresh window keeps the section
+            // it was opened on. Leaving the previous shot's screen in place
+            // makes `onReceive` reroute it the instant it subscribes — which is
+            // how the first attempt at this drew Settings and called it
+            // Reflections.
+            model.screen = .main
+            let journal = NSHostingView(
+                rootView: MainWindowView(model: model, initialSection: .reflections))
+            journal.frame = NSRect(x: 0, y: 0, width: 940, height: 660)
+            window.contentView = journal
+            window.setContentSize(journal.frame.size)
+
+            draw(journal, "window-reflections", prefix: prefix) { }
+            draw(journal, "window-reflections-scrolled", prefix: prefix) {
+                scrollDown(journal, by: 900)
+            }
+            // The foot of the section: what closes the week, and the file bar.
+            draw(journal, "window-reflections-bottom", prefix: prefix) {
+                scrollDown(journal, by: 6000)
+            }
+
+            // Both of these are raised by @State inside the view, so nothing
+            // outside can open them. They get windows of their own rather than
+            // borrowing this one: reusing it left the hosting view unconstrained
+            // and it drew the whole section at its natural height — a strip
+            // 12,810 pixels tall, which is not a screenshot of anything.
+            inOwnWindow(
+                ReflectionsView(model: model, initialReading: .sunday),
+                size: NSSize(width: 780, height: 560),
+                "window-reflections-reading", prefix: prefix)
+
+            // The explainer behind the help mark. It animates down, which a
+            // still cannot show — but whether the text is there, wraps, and
+            // carries its link is exactly what a still is for.
+            inOwnWindow(
+                ReflectionsView(model: model, initialExplaining: true),
+                size: NSSize(width: 780, height: 560),
+                "window-reflections-explainer", prefix: prefix)
+
+            window.contentView = host
+            window.setContentSize(NSSize(width: 940, height: 660))
+
             // The popover is the surface most people use, and until now none of
             // it could be drawn: every screen in it is inside a ScrollView.
             model.screen = .main
@@ -270,6 +372,42 @@ enum RenderMode {
             FileHandle.standardError.write(Data("window render failed: \(error)\n".utf8))
         }
         NSApp.terminate(nil)
+    }
+
+    /// Draws one view in an off-screen window of its own.
+    ///
+    /// Needed for anything a view raises through its own `@State`, which
+    /// nothing outside it can reach. Sharing the main window for this left the
+    /// hosting view unconstrained and it grew to its natural height.
+    private static func inOwnWindow<Root: View>(
+        _ root: Root, size: NSSize, _ name: String, prefix: String
+    ) {
+        // The explicit frame is the point. As the root of a window, a ScrollView
+        // has nothing above it telling it how tall to be, so it reports its
+        // content height and the hosting view grows to match — which drew the
+        // explainer as a strip 12,786 pixels tall. In the app the split view's
+        // detail column does this constraining.
+        // The ground and the dark appearance come from the window in the app —
+        // `MainWindowView` paints the detail column — so a view hosted on its
+        // own has to be given both, or it draws dark text on white.
+        let host = NSHostingView(
+            rootView: root
+                .frame(width: size.width, height: size.height)
+                .background(Theme.ground)
+        )
+        host.frame = NSRect(origin: .zero, size: size)
+        let window = NSWindow(
+            contentRect: host.frame,
+            styleMask: [.titled, .resizable, .fullSizeContentView],
+            backing: .buffered, defer: false
+        )
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.contentView = host
+        window.setContentSize(size)
+        window.setFrameOrigin(NSPoint(x: -30_000, y: -30_000))
+        window.orderFrontRegardless()
+        draw(host, name, prefix: prefix) { }
+        window.orderOut(nil)
     }
 
     /// Arrange, let SwiftUI settle, then ask the view to draw itself.

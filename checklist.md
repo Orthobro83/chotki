@@ -164,8 +164,9 @@ Not scheduled. Listed so the shape is known while macOS is being built.
 
 ## Glossary entries still to write `[manual]`
 
-Terms the app uses in prayers or patristic passages that a newcomer will not
-know, where the definition is a matter for Ryan and a priest rather than for me.
+Terms the app uses in prayers, patristic passages or the reflections that a
+newcomer will not know, where the definition is a matter for Ryan and a priest
+rather than for me.
 `GlossaryCoverageTests` keeps this list and this file in step — a term cannot be
 dropped from the test without also being dropped from here.
 

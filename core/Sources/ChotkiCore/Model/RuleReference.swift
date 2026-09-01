@@ -19,6 +19,8 @@ public enum RuleReference: Sendable, Hashable {
     case reading
     /// The kathismata appointed for the day, and the psalms in them.
     case psalter
+    /// The Reflections section, and today's question in it.
+    case reflections
     case none
 }
 
@@ -29,6 +31,13 @@ public enum RuleReference: Sendable, Hashable {
 /// and stays theirs when the library changes underneath it.
 let psalterRuleTitle = "A kathisma of the Psalter"
 
+/// How a rule of one's own is recognised as the Reflections rule.
+///
+/// Same reasoning as the Psalter's, and the same consequence: rename it and it
+/// becomes an ordinary rule with no way through to the section. That is right.
+/// It is theirs at that point, not ours.
+public let reflectionRuleTitle = "Reflection"
+
 public extension Rule {
     var reference: RuleReference {
         if hasPrayers { return .prayers }
@@ -36,6 +45,7 @@ public extension Rule {
         // all three are what the Reading screen already shows.
         if category == RuleCategory.reading.rawValue { return .reading }
         if title == psalterRuleTitle { return .psalter }
+        if title == reflectionRuleTitle { return .reflections }
         return .none
     }
 }

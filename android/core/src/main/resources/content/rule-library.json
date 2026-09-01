@@ -577,6 +577,32 @@
   {
     "category" : "life",
     "glossarySlugs" : [
+      "confession",
+      "spiritual-father"
+    ],
+    "id" : "reflection",
+    "note" : "Taking it on puts one item on every day. What you write is kept against the date and can be read back over months.\n\nClick on the Reflections tab to learn more.",
+    "prayerIDs" : [
+
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "A question a day, and somewhere to answer it.",
+    "title" : "Reflection",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "life",
+    "glossarySlugs" : [
 
     ],
     "id" : "almsgiving",

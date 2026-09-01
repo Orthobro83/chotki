@@ -208,6 +208,46 @@ public final class SQLiteStore: Store, @unchecked Sendable {
                 INSERT INTO schema_version (version) VALUES (6);
                 """)
         }
+
+        if current < 7 {
+            // Reflections. `weekday` is the primary key of `reflection` because
+            // there is exactly one per day and there always will be — they are
+            // rewritten, never added or removed, so there is no ordering within
+            // a day and no archived state.
+            //
+            // The seven are NOT seeded here. `Store.seedReflections()` does it
+            // from `Reflection.bundled`, so the Brotherhood's text lives in one
+            // place rather than being copied into a migration where it would
+            // drift.
+            try exec("""
+                CREATE TABLE reflection (
+                    weekday INTEGER PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    notice TEXT NOT NULL,
+                    task TEXT NOT NULL,
+                    edited_at TEXT
+                );
+
+                -- q_title, q_notice and q_task are the question as it stood
+                -- when the answer was written. They are copied, not joined:
+                -- the wording is editable, and a join would silently rewrite
+                -- every past answer's question the moment it changed.
+                CREATE TABLE reflection_entry (
+                    id TEXT PRIMARY KEY,
+                    weekday INTEGER NOT NULL,
+                    date TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    q_title TEXT NOT NULL,
+                    q_notice TEXT NOT NULL,
+                    q_task TEXT NOT NULL,
+                    written_at TEXT NOT NULL,
+                    UNIQUE(weekday, date)
+                );
+                CREATE INDEX reflection_entry_by_date ON reflection_entry(date);
+
+                INSERT INTO schema_version (version) VALUES (7);
+                """)
+        }
     }
 
     // MARK: liturgical cache
@@ -465,6 +505,95 @@ public final class SQLiteStore: Store, @unchecked Sendable {
         } catch {
             try? locked { try exec("ROLLBACK;") }
             throw error
+        }
+    }
+
+    // MARK: reflections
+
+    public func reflections() throws -> [Reflection] {
+        try locked {
+            try query(
+                "SELECT weekday, title, notice, task, edited_at FROM reflection ORDER BY weekday;", []
+            ) { statement in
+                guard let weekday = Weekday(rawValue: Int(sqlite3_column_int(statement, 0))) else {
+                    throw StoreError.query("reflection has no weekday")
+                }
+                return Reflection(
+                    weekday: weekday,
+                    question: ReflectionQuestion(
+                        title: text(statement, 1) ?? "",
+                        notice: text(statement, 2) ?? "",
+                        task: text(statement, 3) ?? ""
+                    ),
+                    editedAt: decode(text(statement, 4))
+                )
+            }
+        }
+    }
+
+    public func save(_ reflection: Reflection) throws {
+        try locked {
+            try run("""
+                INSERT INTO reflection (weekday, title, notice, task, edited_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(weekday) DO UPDATE SET
+                    title = excluded.title, notice = excluded.notice,
+                    task = excluded.task, edited_at = excluded.edited_at;
+                """, [
+                    String(reflection.weekday.rawValue), reflection.question.title,
+                    reflection.question.notice, reflection.question.task,
+                    encode(reflection.editedAt)
+                ])
+        }
+    }
+
+    public func save(_ entry: ReflectionEntry) throws {
+        try locked {
+            try run("""
+                INSERT INTO reflection_entry
+                    (id, weekday, date, text, q_title, q_notice, q_task, written_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(weekday, date) DO UPDATE SET
+                    text = excluded.text, q_title = excluded.q_title,
+                    q_notice = excluded.q_notice, q_task = excluded.q_task,
+                    written_at = excluded.written_at;
+                """, [
+                    entry.id.uuidString, String(entry.weekday.rawValue), entry.date.iso, entry.text,
+                    entry.question.title, entry.question.notice, entry.question.task,
+                    encode(entry.writtenAt)
+                ])
+        }
+    }
+
+    public func reflectionEntries(
+        weekday: Weekday?, from: CalendarDate?, through: CalendarDate?
+    ) throws -> [ReflectionEntry] {
+        try locked {
+            var sql = """
+                SELECT id, weekday, date, text, q_title, q_notice, q_task, written_at
+                FROM reflection_entry WHERE 1 = 1
+                """
+            var bindings: [String?] = []
+            if let weekday { sql += " AND weekday = ?"; bindings.append(String(weekday.rawValue)) }
+            if let from { sql += " AND date >= ?"; bindings.append(from.iso) }
+            if let through { sql += " AND date <= ?"; bindings.append(through.iso) }
+            sql += " ORDER BY date DESC;"
+            return try query(sql, bindings) { statement in
+                guard
+                    let id = UUID(uuidString: text(statement, 0) ?? ""),
+                    let weekday = Weekday(rawValue: Int(sqlite3_column_int(statement, 1))),
+                    let date = CalendarDate(iso: text(statement, 2) ?? "")
+                else { throw StoreError.query("reflection entry is not readable") }
+                return ReflectionEntry(
+                    id: id, weekday: weekday, date: date, text: text(statement, 3) ?? "",
+                    question: ReflectionQuestion(
+                        title: text(statement, 4) ?? "",
+                        notice: text(statement, 5) ?? "",
+                        task: text(statement, 6) ?? ""
+                    ),
+                    writtenAt: decode(text(statement, 7)) ?? Date()
+                )
+            }
         }
     }
 }

@@ -18,7 +18,7 @@ struct ReportWindowView: View {
                         .foregroundStyle(Theme.muted)
                     ForEach(report.summary, id: \.self) { line in
                         Text(line)
-                            .font(.custom("Cardo", size: 17))
+                            .font(Theme.reading(17))
                             .foregroundStyle(Theme.parchment)
                             .lineSpacing(3)
                             .fixedSize(horizontal: false, vertical: true)

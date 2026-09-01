@@ -22,7 +22,7 @@ struct OnboardingView: View {
                     .padding(.top, 6)
 
                 Text(Welcome.title)
-                    .font(.custom("Cardo", size: 21))
+                    .font(Theme.reading(21))
                     .foregroundStyle(Theme.gold)
                     .frame(maxWidth: .infinity, alignment: .center)
 
@@ -80,7 +80,7 @@ private struct Paragraph: View {
                 Rectangle().fill(Theme.line).frame(width: 2)
             }
             Text(text)
-                .font(.system(size: paragraph.isAside ? 11.5 : 12.5))
+                .font(Theme.reading(paragraph.isAside ? 11.5 : 12.5))
                 .foregroundStyle(paragraph.isAside ? Theme.faint : Theme.parchmentDim)
                 .lineSpacing(2.5)
                 .fixedSize(horizontal: false, vertical: true)

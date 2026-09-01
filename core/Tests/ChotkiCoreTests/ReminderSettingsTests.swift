@@ -231,20 +231,70 @@ struct ReminderPersistenceTests {
 @Suite("Schema migration")
 struct SchemaMigrationTests {
 
+    /// Every table any migration after version 2 creates. Read by
+    /// `makeLegacyDatabase`, and checked against the source by
+    /// `everyLaterTableIsReversed` below, so forgetting one is a test failure
+    /// rather than a puzzle.
+    static let tablesAfterVersionTwo = ["app_settings", "reflection", "reflection_entry"]
+
     private func makeLegacyDatabase(at path: String) throws {
         let store = try SQLiteStore(path: path)
         // Wind the file back to exactly what version 2 left behind.
         //
         // **Every later migration must be undone here**, not just the most
-        // recent one. This has now broken twice — once when version 4 arrived
-        // and again at version 5 — because a new migration was added without
-        // teaching this fixture to reverse it. If you add a migration, add its
-        // reversal to this list.
+        // recent one. This has now broken three times — at versions 4, 5 and 7
+        // — because a new migration was added without teaching this fixture to
+        // reverse it. `everyLaterTableIsReversed` now fails when that happens,
+        // instead of leaving a "table already exists" for someone to decode.
         for column in ["reminders", "prayer_ids", "hidden_from_library"] {
             try? store.exec("ALTER TABLE rule DROP COLUMN \(column);")
         }
-        try store.exec("DROP TABLE IF EXISTS app_settings;")
+        for table in Self.tablesAfterVersionTwo {
+            try store.exec("DROP TABLE IF EXISTS \(table);")
+        }
         try store.exec("DELETE FROM schema_version WHERE version > 2;")
+    }
+
+    /// Reads `SQLiteStore.swift` and checks that every table created after
+    /// version 2 is one this fixture knows how to remove.
+    ///
+    /// The failure it prevents is not subtle but it is misleading: the
+    /// migration tests fail with "table already exists" in a suite that has
+    /// nothing to do with the feature that was just added, which reads like a
+    /// broken migration rather than a stale fixture.
+    @Test("the fixture reverses every table a later migration creates")
+    func everyLaterTableIsReversed() throws {
+        let source = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Sources/ChotkiCore/Store/SQLiteStore.swift")
+        let text = try String(contentsOf: source, encoding: .utf8)
+
+        // Everything from the version 3 block onward.
+        guard let start = text.range(of: "if current < 3 {") else {
+            Issue.record("the migration ladder no longer looks like `if current < n {`")
+            return
+        }
+        let later = text[start.lowerBound...]
+
+        var created: [String] = []
+        for line in later.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.hasPrefix("CREATE TABLE ") else { continue }
+            let name = trimmed
+                .replacingOccurrences(of: "CREATE TABLE IF NOT EXISTS ", with: "")
+                .replacingOccurrences(of: "CREATE TABLE ", with: "")
+                .components(separatedBy: " ").first ?? ""
+            if !name.isEmpty { created.append(name) }
+        }
+
+        #expect(!created.isEmpty, "no CREATE TABLE found — the scan is looking in the wrong place")
+        for table in created {
+            #expect(
+                Self.tablesAfterVersionTwo.contains(table),
+                "migration creates `\(table)` but makeLegacyDatabase never drops it — add it to tablesAfterVersionTwo"
+            )
+        }
     }
 
     @Test("a version 2 database upgrades in place without losing rules")

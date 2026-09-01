@@ -54,7 +54,7 @@ struct ReadingViewContent: View {
                         .foregroundStyle(Theme.muted)
                     if !reading.text.isEmpty {
                         Text(reading.text)
-                            .font(.custom("Cardo", size: 13))
+                            .font(Theme.reading(13))
                             .foregroundStyle(Theme.parchmentDim)
                             .lineSpacing(3)
                             .fixedSize(horizontal: false, vertical: true)
@@ -73,7 +73,7 @@ struct ReadingViewContent: View {
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.muted)
                     Text(patristic.text)
-                        .font(.custom("Cardo", size: 14))
+                        .font(Theme.reading(14))
                         .foregroundStyle(Theme.parchmentDim)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)

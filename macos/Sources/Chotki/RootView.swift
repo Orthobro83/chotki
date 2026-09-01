@@ -50,6 +50,15 @@ struct RootView: View {
                 Header(title: "Prayers") { model.screen = .main }
                 PrayerRopeView(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
+            case .reflections:
+                // The section is window-only, so the popover offers the way
+                // there rather than a cramped copy of it. Doing nothing here
+                // would leave the row's button dead in the popover while it
+                // worked in the window, which is a mistake this app has already
+                // made twice.
+                Header(title: "Reflections") { model.screen = .main }
+                ReflectionsElsewhere(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
             }
             }
 

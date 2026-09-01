@@ -42,6 +42,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        if let directory = ProcessInfo.processInfo.environment["CHOTKI_EXPORT_MENUBAR"] {
+            IconExport.runMenuBar(to: directory)
+            return
+        }
+
         if let directory = ProcessInfo.processInfo.environment["CHOTKI_EXPORT_ICON"] {
             IconExport.run(to: directory)
             return

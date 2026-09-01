@@ -143,6 +143,16 @@ signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
   a slice. That it has never been executed anywhere is said plainly in the
   README and the release notes; that is the honest position, not a gap to close
   quietly. He may ask for an emulator run later.
+- **The render harness opened his live database — and `SQLiteStore(path:)`
+  migrates on open.** `seededStore()` read the liturgical cache straight out of
+  `~/Library/Application Support/Chotki/chotki.sqlite`, under a comment saying
+  the original is never opened for writing. It was: every render run applied
+  whatever migrations the working copy had and the installed app did not. Caught
+  on 1 September 2026, when schema 7 turned up in his record before the build
+  carrying it had ever been installed. Nothing was lost, because that migration
+  only added — the next one that rewrites or drops a column would not have been
+  so forgiving. It now copies the file (with `-wal` and `-shm`) and opens the
+  copy. **Treat opening a store as a write.**
 - **Never screen-capture his display.** It caught a private messaging window
   once. Use the render harness.
 - **Python edits that do not assert fail silently.** Several patches quietly

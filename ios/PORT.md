@@ -206,3 +206,46 @@ Each ends with something runnable and tested, as the Android phases did.
 
 `sudo xcode-select -s /Applications/Xcode.app`, and an iOS Simulator runtime,
 which downloads separately from the SDK.
+
+## Reflections — a section that does not exist here yet
+
+Added to macOS on 1 September 2026: seven weekday reflections and a journal of
+answers. `reflections-decisions.md` at the repo root is the specification.
+
+It inherits `core` unchanged — `Reflection`, `ReflectionEntry`,
+`ReflectionJournal`, `ReflectionSeries`, `ReflectionPeriod`, `ReflectionArchive`
+and their tests are already here and already pass on this platform. What is left
+is the view.
+
+The overlay is the part that will not translate directly. Arrows either side of
+a modal is a desktop gesture; on a phone it wants to be a swipe. That is an
+interface decision for this port, and interface decisions are where every bug
+found by hand on this project has been.
+
+`PortParityTests` gains a Reflections entry only when both ports have it.
+
+## The typeface
+
+macOS now sets everything meant to be **read** in Iowan Old Style, and keeps the
+system sans for everything meant to be **operated** — the sidebar, the month
+grid's numerals, times, buttons and settings. `Theme.reading(_:relativeTo:)` is
+the one way to ask for the reading face.
+
+**Each platform picks the native face closest to what macOS chose.** The look
+should be recognisably the same app; matching the exact file is neither possible
+nor the point.
+
+iOS has the easy version of this: **Iowan Old Style ships with iOS**, and so
+does Charter, so the chain carries over unchanged —
+`["Iowan Old Style", "Charter"]`, then `.system(design: .serif)`. Port
+`Theme.reading` as it stands.
+
+**It cannot be bundled.** Iowan Old Style is John Downer's, released through
+Bitstream and licensed to Apple; shipping it inside the app would be a licence
+violation. It is relied on where the system already has it, and nowhere else.
+
+One trap worth carrying over with the code: `Font.custom` falls back **silently**
+when a face is missing. The app asked for `Cardo` in six places for months and
+Cardo was never installed or bundled, so all six had quietly been rendering in
+the system sans. `TypefaceTests` and `FontCallSiteTests` in the macOS suite exist
+because of that; translate both.

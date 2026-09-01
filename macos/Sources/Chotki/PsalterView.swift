@@ -91,11 +91,12 @@ private struct KathismaRow: View {
                             .foregroundStyle(Theme.goldDim)
                         if let title = psalm.superscription {
                             Text(title)
-                                .font(.system(size: 12).italic())
+                                .font(Theme.reading(12).italic())
                                 .foregroundStyle(Theme.muted)
                         }
                         ForEach(psalm.verses, id: \.number) { verse in
                             Text("\(verse.number)  \(verse.text)")
+                                .font(Theme.reading(12))
                                 .foregroundStyle(Theme.parchment)
                                 .fixedSize(horizontal: false, vertical: true)
                         }

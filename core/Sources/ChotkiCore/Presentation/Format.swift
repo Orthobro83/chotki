@@ -16,6 +16,26 @@ public enum Format {
         "\(weekdays[date.weekday.rawValue - 1]) \(date.day) \(months[date.month - 1])"
     }
 
+    /// "Sunday"
+    public static func weekdayName(_ weekday: Weekday) -> String {
+        weekdays[weekday.rawValue - 1]
+    }
+
+    /// "September"
+    public static func monthName(_ month: Int) -> String {
+        months[month - 1]
+    }
+
+    /// "30 August 2026"
+    ///
+    /// The year is not optional here. `longDate` names the weekday and omits
+    /// the year, which is right for a day list looking at this week — and wrong
+    /// for a journal, where two entries can share a date across years and the
+    /// whole point is comparing them.
+    public static func dateWithYear(_ date: CalendarDate) -> String {
+        "\(date.day) \(months[date.month - 1]) \(date.year)"
+    }
+
     /// "August 2026"
     public static func monthAndYear(_ date: CalendarDate) -> String {
         "\(months[date.month - 1]) \(date.year)"

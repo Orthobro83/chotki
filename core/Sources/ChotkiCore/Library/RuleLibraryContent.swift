@@ -167,6 +167,23 @@ extension RuleLibrary {
 
         // MARK: life
 
+        // MARK: reflections
+        //
+        // One rule, not seven. It recurs every day and reads simply
+        // "Reflection" on the day, because which question is being asked is the
+        // section's business rather than the rule list's — seven entries in the
+        // library, each repeating the same explanation, was noise.
+        //
+        // Silent: a reflection is noticed through the day, not answered on a
+        // schedule.
+        RuleTemplate(
+            id: "reflection", title: reflectionRuleTitle,
+            summary: "A question a day, and somewhere to answer it.",
+            note: Reflection.libraryNote,
+            recurrence: .daily, category: .life, reminders: .silent,
+            glossarySlugs: ["confession", "spiritual-father"]
+        ),
+
         RuleTemplate(
             id: "almsgiving", title: "Almsgiving",
             summary: "Giving, in whatever form you have settled on.",

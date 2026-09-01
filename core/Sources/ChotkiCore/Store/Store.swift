@@ -43,6 +43,83 @@ public protocol Store: Sendable {
     /// move between machines, and is included in a backup.
     func loadSettings() throws -> AppSettings?
     func saveSettings(_ settings: AppSettings) throws
+
+    /// The seven reflections, in weekday order. Seeded by `seedReflections()`.
+    func reflections() throws -> [Reflection]
+    /// Upserts by weekday. There is one per weekday and there always will be.
+    func save(_ reflection: Reflection) throws
+
+    /// Answers, newest first. Passing nil for a bound leaves it open.
+    func reflectionEntries(
+        weekday: Weekday?, from: CalendarDate?, through: CalendarDate?
+    ) throws -> [ReflectionEntry]
+
+    /// Writes an answer.
+    ///
+    /// This upserts on (weekday, date) because a store must be able to restore
+    /// a backup verbatim. The rule that an answer **locks once saved** is
+    /// enforced above the store, by `ReflectionJournal.hasEntry` and by
+    /// `ReflectionEntry` having no mutable field — not here, where a restore
+    /// would be indistinguishable from an edit.
+    func save(_ entry: ReflectionEntry) throws
+}
+
+public extension Store {
+    /// Puts the bundled wording in place for any weekday that has none.
+    ///
+    /// Idempotent, and safe to call on every launch: it fills gaps and never
+    /// overwrites, so a question the user has edited survives it. Done here
+    /// rather than in a SQL migration so the text lives in exactly one place
+    /// and both store implementations behave identically.
+    @discardableResult
+    func seedReflections() throws -> [Reflection] {
+        let held = Set(try reflections().map(\.weekday))
+        let missing = Reflection.bundled.filter { !held.contains($0.weekday) }
+        for reflection in missing { try save(reflection) }
+        return missing
+    }
+
+    /// The reflection for one weekday, seeding first if the record is empty.
+    func reflection(for weekday: Weekday) throws -> Reflection {
+        if let found = try reflections().first(where: { $0.weekday == weekday }) { return found }
+        try seedReflections()
+        return try reflections().first { $0.weekday == weekday } ?? .bundled(for: weekday)
+    }
+
+    func exportReflections(now: Date = Date()) throws -> ReflectionArchive {
+        ReflectionArchive(
+            exportedAt: now,
+            reflections: try reflections(),
+            entries: try reflectionEntries(weekday: nil, from: nil, through: nil)
+        )
+    }
+
+    func exportReflectionsJSON(now: Date = Date()) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(try exportReflections(now: now))
+    }
+
+    /// Merges a journal file in. Never discards what is already held.
+    @discardableResult
+    func importReflections(_ archive: ReflectionArchive) throws -> ReflectionImportResult {
+        let existing = try reflectionEntries(weekday: nil, from: nil, through: nil)
+        let result = ReflectionImport.plan(archive, into: existing)
+        for entry in result.added { try save(entry) }
+        // Questions are restored only where this record has none, so an import
+        // cannot rewrite wording the user has since edited.
+        let held = Set(try reflections().map(\.weekday))
+        for reflection in archive.reflections where !held.contains(reflection.weekday) {
+            try save(reflection)
+        }
+        return result
+    }
+
+    @discardableResult
+    func importReflectionsJSON(_ data: Data, now: Date = Date()) throws -> ReflectionImportResult {
+        try importReflections(try ReflectionImport.read(data, now: now))
+    }
 }
 
 public extension Store {
@@ -66,16 +143,22 @@ public struct Backup: Sendable, Codable {
     public var occurrences: [Occurrence]
     /// Optional, so a backup written before settings moved here still restores.
     public var settings: AppSettings?
+    /// Optional, so a backup written before Reflections existed still restores.
+    public var reflections: [Reflection]?
+    public var reflectionEntries: [ReflectionEntry]?
 
     public init(
         exportedAt: Date = Date(), rules: [Rule], activations: [Activation],
-        occurrences: [Occurrence], settings: AppSettings? = nil
+        occurrences: [Occurrence], settings: AppSettings? = nil,
+        reflections: [Reflection]? = nil, reflectionEntries: [ReflectionEntry]? = nil
     ) {
         self.exportedAt = exportedAt
         self.rules = rules
         self.activations = activations
         self.occurrences = occurrences
         self.settings = settings
+        self.reflections = reflections
+        self.reflectionEntries = reflectionEntries
     }
 }
 
@@ -86,7 +169,9 @@ public extension Store {
             rules: try rules(includeArchived: true),
             activations: try activations(ruleID: nil),
             occurrences: try occurrences(ruleID: nil, from: nil, through: nil),
-            settings: try loadSettings()
+            settings: try loadSettings(),
+            reflections: try reflections(),
+            reflectionEntries: try reflectionEntries(weekday: nil, from: nil, through: nil)
         )
     }
 
@@ -102,6 +187,8 @@ public extension Store {
         for activation in backup.activations { try save(activation) }
         for occurrence in backup.occurrences { try save(occurrence) }
         if let settings = backup.settings { try saveSettings(settings) }
+        for reflection in backup.reflections ?? [] { try save(reflection) }
+        for entry in backup.reflectionEntries ?? [] { try save(entry) }
     }
 
     func importJSON(_ data: Data) throws {

@@ -41,6 +41,45 @@ enum IconExport {
         NSApp.terminate(nil)
     }
 
+    /// The menu bar image at the sizes it is actually drawn at, on a mid grey so
+    /// a template image can be seen at all.
+    ///
+    /// It is 18 points tall in a 22 point bar and its knots are under a point
+    /// across. That is not something to reason about — it is something to look
+    /// at, at 1x and at 2x, before deciding it works.
+    static func runMenuBar(to directory: String) {
+        let url = URL(fileURLWithPath: directory)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        for height in [16, 18, 20, 22] as [CGFloat] {
+            for scale in [1, 2, 3] as [CGFloat] {
+                let mark = CrossIcon.menuBarImage(height: height)
+                let pixels = NSSize(
+                    width: (mark.size.width * scale).rounded(),
+                    height: (mark.size.height * scale).rounded())
+                guard let rep = NSBitmapImageRep(
+                    bitmapDataPlanes: nil,
+                    pixelsWide: Int(pixels.width), pixelsHigh: Int(pixels.height),
+                    bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                    colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+                ) else { continue }
+                NSGraphicsContext.saveGraphicsState()
+                NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+                NSColor(white: 0.45, alpha: 1).setFill()
+                NSRect(origin: .zero, size: pixels).fill()
+                mark.draw(in: NSRect(origin: .zero, size: pixels))
+                NSGraphicsContext.restoreGraphicsState()
+                if let data = rep.representation(using: .png, properties: [:]) {
+                    try? data.write(to: url.appendingPathComponent(
+                        "menubar-\(Int(height))pt@\(Int(scale))x.png"))
+                }
+            }
+        }
+        FileHandle.standardOutput.write(Data("wrote menu bar images\n".utf8))
+        // Without this the app carries on launching and `swift run` never
+        // returns. The window renderer terminates for the same reason.
+        NSApp.terminate(nil)
+    }
+
     static func run(to directory: String) {
         let url = URL(fileURLWithPath: directory)
         do {

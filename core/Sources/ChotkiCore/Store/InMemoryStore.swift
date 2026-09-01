@@ -12,6 +12,9 @@ public final class InMemoryStore: Store, @unchecked Sendable {
     private var storedSettings: AppSettings?
     /// Keyed by civil date and reckoning — never by the reported date.
     private var liturgicalByKey: [String: LiturgicalDay] = [:]
+    private var reflectionByWeekday: [Weekday: Reflection] = [:]
+    /// Keyed by weekday and day: one answer per weekday per date.
+    private var reflectionEntryByKey: [String: ReflectionEntry] = [:]
 
     public init() {}
 
@@ -91,6 +94,30 @@ public final class InMemoryStore: Store, @unchecked Sendable {
 
     public func saveSettings(_ settings: AppSettings) throws {
         locked { storedSettings = settings }
+    }
+
+    public func reflections() throws -> [Reflection] {
+        locked { reflectionByWeekday.values.sorted { $0.weekday.rawValue < $1.weekday.rawValue } }
+    }
+
+    public func save(_ reflection: Reflection) throws {
+        locked { reflectionByWeekday[reflection.weekday] = reflection }
+    }
+
+    public func save(_ entry: ReflectionEntry) throws {
+        locked { reflectionEntryByKey["\(entry.weekday.rawValue):\(entry.date.iso)"] = entry }
+    }
+
+    public func reflectionEntries(
+        weekday: Weekday?, from: CalendarDate?, through: CalendarDate?
+    ) throws -> [ReflectionEntry] {
+        locked {
+            reflectionEntryByKey.values
+                .filter { weekday == nil || $0.weekday == weekday! }
+                .filter { from == nil || $0.date >= from! }
+                .filter { through == nil || $0.date <= through! }
+                .sorted { $0.date > $1.date }
+        }
     }
 
     public func occurrences(

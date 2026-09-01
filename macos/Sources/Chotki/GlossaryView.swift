@@ -90,7 +90,7 @@ struct GlossaryView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(entry.term)
-                    .font(.custom("Cardo", size: 18))
+                    .font(Theme.reading(18))
                     .foregroundStyle(Theme.gold)
                 if let pronunciation = entry.pronunciation {
                     Text(pronunciation)
@@ -100,7 +100,7 @@ struct GlossaryView: View {
             }
 
             Text(entry.full)
-                .font(.system(size: 12))
+                .font(Theme.reading(12))
                 .foregroundStyle(Theme.parchmentDim)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)

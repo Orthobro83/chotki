@@ -114,7 +114,7 @@ struct DayPanel: View {
         HStack(spacing: 8) {
             Rectangle().fill(Theme.goldDim.opacity(0.4)).frame(width: 14, height: 1)
             Text(text)
-                .font(.custom("Cardo", size: 14))
+                .font(Theme.reading(14))
                 .foregroundStyle(Theme.gold)
             Rectangle().fill(Theme.goldDim.opacity(0.4)).frame(height: 1)
         }
@@ -309,6 +309,13 @@ struct EntryRow: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
                 .help("Read today's kathisma")
+            case .reflections:
+                Button { model.screen = .reflections } label: {
+                    Image(systemName: "text.alignleft").font(.system(size: 10))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
+                .help("Open Reflections")
             case .none:
                 EmptyView()
             }
@@ -341,6 +348,9 @@ struct EntryRow: View {
                     Divider()
                 case .psalter:
                     Button("Read today's kathisma") { model.screen = .psalter }
+                    Divider()
+                case .reflections:
+                    Button("Open Reflections") { model.screen = .reflections }
                     Divider()
                 case .none:
                     EmptyView()

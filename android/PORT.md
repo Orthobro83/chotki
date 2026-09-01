@@ -316,3 +316,60 @@ Mac app to check something.
    Labels and headings in Compose take their capitalisation from the shared
    content, which is already correct — do not lower-case them in the view, which
    is how the macOS app acquired the habit in six separate places.
+
+## Reflections — a section that does not exist here yet
+
+Added to macOS on 1 September 2026: seven weekday reflections and a journal of
+answers. `reflections-decisions.md` at the repo root is the specification.
+
+As with everything else here this is a reimplementation, not a port. The Swift
+`core` types — `Reflection`, `ReflectionEntry`, `ReflectionJournal`,
+`ReflectionSeries`, `ReflectionPeriod`, `ReflectionArchive` — and their tests are
+the specification to translate. Schema version 7 adds `reflection` and
+`reflection_entry`.
+
+Two things specific to this platform:
+
+- **The font.** See the section below.
+- **The snapshot rule.** Every answer stores its own copy of the question it was
+  written against. It is not a join. Translating it as one would silently
+  rewrite every past answer the moment a question was edited, and the bug would
+  not show until someone edited one.
+
+`PARITY.md` is generated from `core/` and says so at the top; it has no
+generator committed, so bringing it up to date is currently a manual pass.
+
+## The typeface
+
+macOS now sets everything meant to be **read** in Iowan Old Style, and keeps the
+system sans for everything meant to be **operated** — the sidebar, the month
+grid's numerals, times, buttons and settings. That division is the thing to
+port, more than any particular file.
+
+**Each platform picks the native face closest to what macOS chose.** The look
+should be recognisably the same app; matching the exact file is neither possible
+nor the point.
+
+Android cannot have Iowan Old Style at all: it is John Downer's, released through
+Bitstream and licensed to Apple, and **redistributing it would be a licence
+violation**. So:
+
+- **Reading face: Charter**, bundled. This is not a consolation prize. Charter is
+  Matthew Carter, 1987, also originally Bitstream, drawn to the same brief as
+  Iowan — large x-height, low stroke contrast, sturdy blunt serifs, engineered to
+  hold up at text sizes. It is already the second face in the macOS chain, so a
+  Mac without Iowan and an Android phone read the same. Bitstream released
+  Charter permissively; **XCharter** is the maintained extension and is the one
+  to ship. If bundling is refused for any reason, `Literata` and `Source Serif 4`
+  are the next nearest, both OFL.
+- **Chrome: Roboto**, the platform sans, untouched. It plays the part SF plays on
+  macOS, and swapping it for anything else would make the app look foreign on the
+  device rather than consistent with itself.
+
+One trap worth knowing when translating: on Apple platforms `Font.custom` falls
+back **silently** when a face is missing. The app asked for `Cardo` in six places
+for months and Cardo was never installed or bundled, so all six had quietly been
+rendering in the system sans, and nothing looked broken. A bundled font on
+Android fails more loudly, but the lesson holds — assert that the face resolves
+rather than trusting the call site. `TypefaceTests` and `FontCallSiteTests` in
+the macOS suite exist because of that.

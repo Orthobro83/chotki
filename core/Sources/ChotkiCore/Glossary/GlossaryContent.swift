@@ -439,6 +439,20 @@ extension Glossary {
             category: .prayer, related: ["jesus-prayer", "chotki", "trisagion"]
         ),
 
+        // Written by Ryan. The reflections send the reader to his spiritual
+        // father, and the glossary explained Confession and Confessor but not
+        // this — which are related and not the same thing.
+        GlossaryEntry(
+            slug: "spiritual-father", term: "Spiritual father",
+            aliases: ["spiritual fathers", "spiritual guide"],
+            short: "A guide in the life in Christ, who accompanies a person toward repentance and communion with God.",
+            full: """
+            In Orthodox Christianity, a spiritual father is a guide in the life in Christ — someone \
+            who helps form, heal, and accompany a person toward repentance and communion with God.
+            """,
+            category: .prayer, related: ["confession", "confessor", "prayer-rule"]
+        ),
+
         GlossaryEntry(
             slug: "jesus-prayer", term: "Jesus Prayer",
             short: "\"Lord Jesus Christ, Son of God, have mercy on me, a sinner.\"",

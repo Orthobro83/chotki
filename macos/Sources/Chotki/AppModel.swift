@@ -18,6 +18,9 @@ enum Screen: Hashable {
     case prayerRope
     case prayers(UUID)
     case psalter
+    /// Window only. The popover sends the reader to the window for it — at 400
+    /// points there is no room for seven questions and a journal.
+    case reflections
 }
 
 @MainActor
@@ -32,6 +35,11 @@ final class AppModel: ObservableObject {
     /// Rules of his own, offered in the library to take up again. Archived ones
     /// included — those are exactly the ones worth offering.
     @Published private(set) var customEntries: [Rule] = []
+    /// The seven questions and every answer to them. Loaded whole: seven rows
+    /// and a journal are small, and the section needs all of it at once to
+    /// count what each weekday holds.
+    @Published private(set) var reflections: [Reflection] = []
+    @Published private(set) var reflectionEntries: [ReflectionEntry] = []
     @Published var selectedDate: CalendarDate
     @Published var visibleMonth: CalendarDate
 
@@ -164,6 +172,11 @@ final class AppModel: ObservableObject {
             activations = try store.activations(ruleID: nil)
             occurrences = try store.occurrences(ruleID: nil, from: nil, through: nil)
             customEntries = CustomLibrary.entries(from: try store.rules(includeArchived: true))
+            // Idempotent, and it fills a gap rather than overwriting, so a
+            // question he has rewritten survives every launch.
+            try store.seedReflections()
+            reflections = try store.reflections()
+            reflectionEntries = try store.reflectionEntries(weekday: nil, from: nil, through: nil)
             loadError = nil
         } catch {
             loadError = "Could not read your rules. \(error)"
@@ -589,5 +602,132 @@ final class AppModel: ObservableObject {
         default:
             break
         }
+    }
+
+    // MARK: reflections
+
+    /// The question for a weekday as it currently stands.
+    func reflection(for weekday: Weekday) -> Reflection {
+        reflections.first { $0.weekday == weekday } ?? .bundled(for: weekday)
+    }
+
+    /// One weekday's answers, newest first, scoped to a period.
+    func reflectionSeries(
+        for weekday: Weekday, in period: ReflectionPeriod = .all
+    ) -> ReflectionSeries {
+        ReflectionJournal.series(reflectionEntries, on: weekday, in: period)
+    }
+
+    /// Whether today already carries an answer. An answer locks once saved, so
+    /// this is what stops a second being offered for the same day.
+    func hasAnsweredToday(_ weekday: Weekday) -> Bool {
+        ReflectionJournal.hasEntry(reflectionEntries, on: dateOfCurrentWeek(weekday))
+    }
+
+    /// The date this weekday fell on in the week containing today.
+    ///
+    /// A reflection is answered on its own weekday, so writing on Sunday's card
+    /// files the answer under this week's Sunday — not under today, which may
+    /// be a Wednesday.
+    func dateOfCurrentWeek(_ weekday: Weekday) -> CalendarDate {
+        let today = CalendarDate(Date(), in: .current)
+        return today.adding(days: weekday.rawValue - today.weekday.rawValue)
+    }
+
+    /// Writes an answer. Locks immediately: there is no path back through here.
+    func saveReflection(_ weekday: Weekday, text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let date = dateOfCurrentWeek(weekday)
+        let entry = ReflectionEntry(
+            answering: reflection(for: weekday), on: date, text: trimmed)
+
+        // Persist and display are separate concerns. The entry is already in
+        // memory and is valid; swallowing the redraw would make a successful
+        // write look like a dead button, which is how this went wrong on the
+        // web. Show it either way and say so if the write failed.
+        reflectionEntries.removeAll { $0.weekday == weekday && $0.date == date }
+        reflectionEntries.append(entry)
+        do {
+            try store.save(entry)
+        } catch {
+            notice = "That was written down here but could not be saved to your record."
+        }
+    }
+
+    /// Rewrites a question from today onward. Answers already written keep the
+    /// question they were written against — see `ReflectionQuestion`.
+    func rewriteReflection(_ weekday: Weekday, to question: ReflectionQuestion) {
+        let updated = reflection(for: weekday).rewritten(question)
+        reflections.removeAll { $0.weekday == weekday }
+        reflections.append(updated)
+        reflections.sort { $0.weekday.rawValue < $1.weekday.rawValue }
+        do {
+            try store.save(updated)
+        } catch {
+            notice = "The question was changed here but could not be saved to your record."
+        }
+    }
+
+    /// Returns a weekday's question to the wording it shipped with.
+    func restoreBundledReflection(_ weekday: Weekday) {
+        rewriteReflection(weekday, to: Reflection.bundled(for: weekday).question)
+    }
+
+    /// The library rule that puts Reflections on the rule.
+    var reflectionTemplate: RuleTemplate? {
+        RuleLibrary.shared.templates.first { $0.id == "reflection" }
+    }
+
+    /// Whether it is already there.
+    ///
+    /// Matched on title, because a template taken from the library **copies**
+    /// itself and keeps no link back — deliberately, so a rule of one's own and
+    /// a rule from the library are the same kind of thing afterwards. A renamed
+    /// copy stops counting, and that is right: it is his rule then, not this
+    /// one. The same rule that decides whether the row offers a way through to
+    /// the section — see `RuleReference`.
+    var hasReflectionsOnRule: Bool {
+        rules.contains { $0.title == reflectionRuleTitle }
+    }
+
+    /// Puts Reflections on the rule: one rule, recurring every day.
+    ///
+    /// Not seven. Which question is being asked is the section's business, and
+    /// seven entries in the day list — each a different title — said more about
+    /// the machinery than about the practice.
+    func addReflectionsToRule() {
+        guard !hasReflectionsOnRule, let template = reflectionTemplate else { return }
+        take(on: template)
+    }
+
+    func exportReflectionsJSON() throws -> Data {
+        try store.exportReflectionsJSON()
+    }
+
+    /// Merges a journal file in. Never discards what is already held.
+    @discardableResult
+    func importReflectionsJSON(_ data: Data) -> ReflectionImportResult? {
+        do {
+            let result = try store.importReflectionsJSON(data)
+            reflectionEntries = try store.reflectionEntries(weekday: nil, from: nil, through: nil)
+            reflections = try store.reflections()
+            notice = summary(of: result)
+            return result
+        } catch is ReflectionImportError {
+            notice = "That file could not be read as a journal. Nothing was changed."
+            return nil
+        } catch {
+            notice = "That journal could not be read in. Nothing was changed."
+            return nil
+        }
+    }
+
+    private func summary(of result: ReflectionImportResult) -> String {
+        var parts: [String] = []
+        parts.append(result.addedCount == 1 ? "1 answer added" : "\(result.addedCount) answers added")
+        if result.alreadyPresent > 0 { parts.append("\(result.alreadyPresent) already here") }
+        if result.collided > 0 { parts.append("\(result.collided) skipped, that day was taken") }
+        return parts.joined(separator: ", ") + "."
     }
 }

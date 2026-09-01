@@ -48,7 +48,7 @@ struct ProgressTabViewContent: View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(report.summary, id: \.self) { line in
                 Text(line)
-                    .font(.system(size: 13))
+                    .font(Theme.reading(13))
                     .foregroundStyle(Theme.parchment)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)

@@ -22,7 +22,7 @@ struct TermText: View {
 
     var body: some View {
         Text(attributed)
-            .font(serif ? .custom("Cardo", size: size) : .system(size: size))
+            .font(serif ? Theme.reading(size) : .system(size: size))
             .foregroundStyle(colour)
             .fixedSize(horizontal: false, vertical: true)
             .environment(\.openURL, TermText.opening(with: model))
@@ -106,7 +106,7 @@ struct PrayerProse: View {
         VStack(alignment: centred ? .center : .leading, spacing: 4) {
             ForEach(Array(linked.enumerated()), id: \.offset) { _, paragraph in
                 Text(paragraph)
-                    .font(.custom("Cardo", size: size))
+                    .font(Theme.reading(size))
                     .foregroundStyle(Theme.parchment)
                     .lineSpacing(spacing)
                     .multilineTextAlignment(centred ? .center : .leading)
