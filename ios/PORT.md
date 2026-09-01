@@ -207,22 +207,38 @@ Each ends with something runnable and tested, as the Android phases did.
 `sudo xcode-select -s /Applications/Xcode.app`, and an iOS Simulator runtime,
 which downloads separately from the SDK.
 
-## Reflections — a section that does not exist here yet
+## Reflections — built, 1 September 2026
 
-Added to macOS on 1 September 2026: seven weekday reflections and a journal of
-answers. `reflections-decisions.md` at the repo root is the specification.
+Seven weekday questions and a journal of answers. `reflections-decisions.md` at
+the repo root is the specification; what follows is what this platform chose
+where it could not simply copy the Mac.
 
-It inherits `core` unchanged — `Reflection`, `ReflectionEntry`,
-`ReflectionJournal`, `ReflectionSeries`, `ReflectionPeriod`, `ReflectionArchive`
-and their tests are already here and already pass on this platform. What is left
-is the view.
+It inherited `core` unchanged — the model, the seven prompts, the journal logic,
+the archive and the store methods were already here and already passing — so
+only the view was written. `ReflectionsViews.swift`.
 
-The overlay is the part that will not translate directly. Arrows either side of
-a modal is a desktop gesture; on a phone it wants to be a swipe. That is an
-interface decision for this port, and interface decisions are where every bug
-found by hand on this project has been.
+- **A route, not a sixth tab.** Five is the cap here, and the sixth folds into a
+  "More" list. Reflections is reached from the rule row that names it and from
+  Settings, the arrangement the glossary and the Psalter already use.
+- **Past entries are a dated list you tap into**, not the Mac's panel with ◀ ▶
+  either side: there is no room for chevrons beside a full-width sheet. Each row
+  is a date and a two-line excerpt; opening one shows the question as it stood
+  when it was written, then the answer.
+- **The way through carries its weekday.** `Route.reflections(weekday:)` — tapped
+  on a Tuesday it scrolls to Tuesday's question rather than the top. The scroll
+  is deferred a turn, because a `LazyVStack` has not built the later days when
+  `onAppear` fires and scrolling to Saturday in the same pass finds nothing.
+- **The keyboard.** SwiftUI lifts the focused field clear on its own, checked on
+  the **last** day of the seven — the worst case, with nothing below to scroll
+  into — in the Simulator with the software keyboard actually up. Also
+  `.scrollDismissesKeyboard(.interactively)`, since seven fields with no way to
+  put the keyboard away but saving is unpleasant.
+- **Import and export** go through `fileImporter` / `fileExporter`. The picker
+  hands back a security-scoped URL, so the read is wrapped in
+  `startAccessingSecurityScopedResource`.
 
-`PortParityTests` gains a Reflections entry only when both ports have it.
+`PortParityTests` still has no Reflections entry: it compares macOS with
+Android, and Android does not have the feature yet.
 
 ## The typeface
 

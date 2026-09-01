@@ -152,6 +152,8 @@ private struct Destination: View {
             PsalterView(model: model)
         case .rope:
             RopeView(model: model)
+        case .reflections(let weekday):
+            ReflectionsView(model: model, openAt: weekday)
         }
     }
 }

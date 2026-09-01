@@ -20,7 +20,11 @@ enum Screen: Hashable {
     case psalter
     /// Window only. The popover sends the reader to the window for it — at 400
     /// points there is no room for seven questions and a journal.
-    case reflections
+    ///
+    /// `weekday` is the day to open on: the way through from Tuesday's rule
+    /// should land on Tuesday's question rather than at the top of a seven-day
+    /// scroll. nil opens at the top, which is what the sidebar wants.
+    case reflections(weekday: Weekday? = nil)
 }
 
 @MainActor
@@ -605,6 +609,20 @@ final class AppModel: ObservableObject {
     }
 
     // MARK: reflections
+
+    /// Which weekday the Reflections section should scroll to when it appears,
+    /// and nil once it has.
+    ///
+    /// A one-shot rather than a persistent selection: the section is scrolled
+    /// once on arrival and then belongs to whoever is reading it. Left set, a
+    /// later redraw would yank the view back to a day nobody asked for.
+    @Published var reflectionsOpenAt: Weekday?
+
+    /// Opens the section on a given weekday.
+    func openReflections(on weekday: Weekday?) {
+        reflectionsOpenAt = weekday
+        screen = .reflections(weekday: weekday)
+    }
 
     /// The question for a weekday as it currently stands.
     func reflection(for weekday: Weekday) -> Reflection {

@@ -62,7 +62,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: info.chotki.app
-        MARKETING_VERSION: "0.1.0"
+        MARKETING_VERSION: "0.1.11"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"
         # Xcode writes the Info.plist from the keys below rather than the

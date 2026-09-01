@@ -53,6 +53,12 @@ final class Model {
     private(set) var occurrences: [Occurrence] = []
     private(set) var settings: AppSettings = .default
 
+    /// The seven questions and every answer to them. Loaded whole: seven rows
+    /// and a journal are small, and the screen needs all of it at once to count
+    /// what each weekday holds.
+    private(set) var reflections: [Reflection] = []
+    private(set) var reflectionEntries: [ReflectionEntry] = []
+
     /// Said out loud when something goes wrong with the record, rather than
     /// swallowed. A setting that fails to save reverts on the next launch with
     /// nobody the wiser, which is exactly how an earlier bug hid.
@@ -143,6 +149,11 @@ final class Model {
             activations = try store.activations(ruleID: nil)
             occurrences = try store.occurrences(ruleID: nil, from: nil, through: nil)
             settings = (try store.loadSettings()) ?? .default
+            // Idempotent, and it fills a gap rather than overwriting, so a
+            // question changed here survives every launch.
+            try store.seedReflections()
+            reflections = try store.reflections()
+            reflectionEntries = try store.reflectionEntries(weekday: nil, from: nil, through: nil)
         } catch {
             trouble = "Chotki could not read the record. \(error.localizedDescription)"
         }
@@ -465,4 +476,117 @@ final class Model {
     }
 
     func isOnTheRule(_ rule: Rule) -> Bool { !rule.isArchived && !isPaused(rule) }
+
+    // MARK: reflections
+
+    /// The question for a weekday as it currently stands.
+    func reflection(for weekday: Weekday) -> Reflection {
+        reflections.first { $0.weekday == weekday } ?? .bundled(for: weekday)
+    }
+
+    /// One weekday's answers, newest first, scoped to a period.
+    func reflectionSeries(
+        for weekday: Weekday, in period: ReflectionPeriod = .all
+    ) -> ReflectionSeries {
+        ReflectionJournal.series(reflectionEntries, on: weekday, in: period)
+    }
+
+    /// The date this weekday fell on in the week containing today.
+    ///
+    /// A reflection is answered on its own weekday, so writing on Sunday's card
+    /// files the answer under this week's Sunday — not under today, which may
+    /// be a Wednesday.
+    func dateOfCurrentWeek(_ weekday: Weekday) -> CalendarDate {
+        today.adding(days: weekday.rawValue - today.weekday.rawValue)
+    }
+
+    /// Whether this week's answer for a weekday is already written. An answer
+    /// locks once saved, so this is what stops a second being offered.
+    func hasAnswered(_ weekday: Weekday) -> Bool {
+        ReflectionJournal.hasEntry(reflectionEntries, on: dateOfCurrentWeek(weekday))
+    }
+
+    func answer(for weekday: Weekday) -> ReflectionEntry? {
+        let date = dateOfCurrentWeek(weekday)
+        return reflectionEntries.first { $0.weekday == weekday && $0.date == date }
+    }
+
+    /// Writes an answer. It locks immediately: there is no path back through here.
+    func saveReflection(_ weekday: Weekday, text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let date = dateOfCurrentWeek(weekday)
+        let entry = ReflectionEntry(
+            answering: reflection(for: weekday), on: date, text: trimmed)
+
+        // Persist and display are separate concerns. The entry is already in
+        // memory and is valid; swallowing the redraw would make a successful
+        // write look like a dead button, which is how this went wrong on the
+        // web. Show it either way and say so if the write failed.
+        reflectionEntries.removeAll { $0.weekday == weekday && $0.date == date }
+        reflectionEntries.append(entry)
+        do {
+            try store.save(entry)
+        } catch {
+            trouble = "That was written down here but could not be saved to your record."
+        }
+    }
+
+    /// Rewrites a question from today onward. Answers already written keep the
+    /// question they were written against — see `ReflectionQuestion` in core.
+    func rewriteReflection(_ weekday: Weekday, to question: ReflectionQuestion) {
+        let updated = reflection(for: weekday).rewritten(question)
+        reflections.removeAll { $0.weekday == weekday }
+        reflections.append(updated)
+        reflections.sort { $0.weekday.rawValue < $1.weekday.rawValue }
+        do {
+            try store.save(updated)
+        } catch {
+            trouble = "The question was changed here but could not be saved to your record."
+        }
+    }
+
+    func restoreBundledReflection(_ weekday: Weekday) {
+        rewriteReflection(weekday, to: Reflection.bundled(for: weekday).question)
+    }
+
+    /// The library rule that puts Reflections on the rule.
+    var reflectionTemplate: RuleTemplate? {
+        RuleLibrary.shared.templates.first { $0.id == "reflection" }
+    }
+
+    /// Whether it is already there. Matched on title, because a template taken
+    /// from the library copies itself and keeps no link back — so a renamed copy
+    /// stops counting, which is right: it is theirs then, not ours. The same
+    /// rule that decides whether the day's row offers a way through.
+    var hasReflectionsOnRule: Bool {
+        rules.contains { $0.title == reflectionRuleTitle }
+    }
+
+    func exportReflectionsJSON() throws -> Data { try store.exportReflectionsJSON() }
+
+    /// Merges a journal file in. Never discards what is already held.
+    @discardableResult
+    func importReflectionsJSON(_ data: Data) -> ReflectionImportResult? {
+        do {
+            let result = try store.importReflectionsJSON(data)
+            reflectionEntries = try store.reflectionEntries(weekday: nil, from: nil, through: nil)
+            reflections = try store.reflections()
+            trouble = summary(of: result)
+            return result
+        } catch is ReflectionImportError {
+            trouble = "That file could not be read as a journal. Nothing was changed."
+            return nil
+        } catch {
+            trouble = "That journal could not be read in. Nothing was changed."
+            return nil
+        }
+    }
+
+    private func summary(of result: ReflectionImportResult) -> String {
+        var parts = [result.addedCount == 1 ? "1 answer added" : "\(result.addedCount) answers added"]
+        if result.alreadyPresent > 0 { parts.append("\(result.alreadyPresent) already here") }
+        if result.collided > 0 { parts.append("\(result.collided) skipped, that day was taken") }
+        return parts.joined(separator: ", ") + "."
+    }
 }

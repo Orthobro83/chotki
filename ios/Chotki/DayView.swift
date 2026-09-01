@@ -188,6 +188,10 @@ private struct EntryRow: View {
             .accessibilityLabel("Read the day\u{2019}s readings")
         case .psalter:
             link(to: .psalter, label: "Read today\u{2019}s kathisma")
+        case .reflections:
+            // The day this row is on, so the way through lands on that
+            // question rather than at the top of a seven-day scroll.
+            link(to: .reflections(weekday: entry.date.weekday), label: "Open Reflections")
         case .none:
             EmptyView()
         }
@@ -221,6 +225,11 @@ private struct EntryRow: View {
                 Divider()
             case .psalter:
                 Button("Read today\u{2019}s kathisma") { pushRoute(.psalter) }
+                Divider()
+            case .reflections:
+                Button("Open Reflections") {
+                    pushRoute(.reflections(weekday: entry.date.weekday))
+                }
                 Divider()
             case .none:
                 EmptyView()

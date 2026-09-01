@@ -85,6 +85,7 @@ struct SettingsView_: View {
             }
 
             Section("Elsewhere") {
+                NavigationLink("Reflections", value: Route.reflections(weekday: nil))
                 NavigationLink("Glossary", value: Route.term(slug: nil))
                 NavigationLink("The Psalter", value: Route.psalter)
                 NavigationLink("The prayer rope", value: Route.rope)

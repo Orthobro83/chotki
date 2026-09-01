@@ -21,13 +21,17 @@ struct ReflectionsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            ReflectionsViewContent(
-                model: model, reading: $reading, explaining: $explaining)
-                .frame(maxWidth: 640, alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        ScrollViewReader { scroller in
+            ScrollView {
+                ReflectionsViewContent(
+                    model: model, reading: $reading, explaining: $explaining)
+                    .frame(maxWidth: 640, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollContentBackgroundHidden()
+            .onAppear { scrollToOpening(scroller) }
+            .onChange(of: model.reflectionsOpenAt) { _ in scrollToOpening(scroller) }
         }
-        .scrollContentBackgroundHidden()
         // `.overlay` rather than a `ZStack`, deliberately. A ZStack takes its
         // size from its children, so a panel appearing beside a ScrollView made
         // the whole thing report the ScrollView's *content* height — which
@@ -63,6 +67,25 @@ struct ReflectionsView: View {
     private func close() {
         withAnimation(.easeInOut(duration: 0.22)) { explaining = false }
     }
+
+    /// Scrolls to the day the section was opened on, once.
+    ///
+    /// Cleared afterwards, so a later redraw does not yank the view back to a
+    /// day nobody asked for. Deferred a turn because the content has not been
+    /// laid out when `onAppear` fires and there is nothing yet to scroll to.
+    ///
+    /// **A `ScrollViewReader` scroll does not show up in the render harness.**
+    /// That is not evidence either way, so this one was checked in the running
+    /// app rather than signed off from a picture.
+    private func scrollToOpening(_ scroller: ScrollViewProxy) {
+        guard let weekday = model.reflectionsOpenAt else { return }
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.35)) {
+                scroller.scrollTo(weekday, anchor: .top)
+            }
+            model.reflectionsOpenAt = nil
+        }
+    }
 }
 
 /// The seven, Sunday through Saturday, and what closes the week.
@@ -76,6 +99,7 @@ struct ReflectionsViewContent: View {
             SectionHeader(model: model, explaining: explaining)
             ForEach(Weekday.allCases, id: \.self) { weekday in
                 DayBlock(model: model, weekday: weekday, reading: reading)
+                    .id(weekday)
             }
             Colophon()
             FileBar(model: model)
@@ -571,7 +595,7 @@ struct ReflectionsElsewhere: View {
 
             Button("Open the window") {
                 model.openMainWindow?()
-                model.screen = .reflections
+                model.openReflections(on: model.today.weekday)
             }
             .buttonStyle(.plain)
             .font(.system(size: 11))

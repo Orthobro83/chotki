@@ -351,7 +351,7 @@ struct ReflectionsReachabilityTests {
     /// and does nothing in the popover.
     @Test("the window routes the request to the section")
     func windowRoutes() {
-        #expect(WindowRoute.route(for: .reflections) == .section(.reflections))
+        #expect(WindowRoute.route(for: .reflections()) == .section(.reflections))
     }
 
     @Test("the sidebar offers it")
@@ -360,13 +360,37 @@ struct ReflectionsReachabilityTests {
         #expect(MainSection.reflections.rawValue == "Reflections")
     }
 
+    /// Tapping the way through from Tuesday's rule should land on Tuesday's
+    /// question, not at the top of a seven-day scroll.
+    @Test("the way through carries the day it was opened from", arguments: Weekday.allCases)
+    func carriesTheWeekday(weekday: Weekday) {
+        let model = makeModel()
+        model.openReflections(on: weekday)
+
+        #expect(model.screen == .reflections(weekday: weekday))
+        #expect(model.reflectionsOpenAt == weekday)
+        #expect(WindowRoute.route(for: model.screen) == .section(.reflections),
+                "however it was opened, it still lands on the section")
+    }
+
+    /// Opened from the sidebar there is no day in mind, and the section should
+    /// start where it starts.
+    @Test("opened with no day in mind, it stays at the top")
+    func noWeekday() {
+        let model = makeModel()
+        model.openReflections(on: nil)
+        #expect(model.reflectionsOpenAt == nil)
+        #expect(model.screen == .reflections(weekday: nil))
+    }
+
     /// The popover cannot hold the section at 400 points, so it offers the way
     /// to the window instead — which is a landing place, not a dead end.
     @Test("the popover has somewhere to put the request")
     func popoverLands() {
         let model = makeModel()
-        model.screen = .reflections
-        #expect(model.screen == .reflections, "the popover keeps the request rather than dropping it")
+        model.openReflections(on: .tuesday)
+        #expect(model.screen == .reflections(weekday: .tuesday),
+                "the popover keeps the request rather than dropping it")
     }
 }
 

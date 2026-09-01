@@ -310,7 +310,9 @@ struct EntryRow: View {
                 .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
                 .help("Read today's kathisma")
             case .reflections:
-                Button { model.screen = .reflections } label: {
+                // The day this row is on, so the way through lands on that
+                // question rather than at the top of a seven-day scroll.
+                Button { model.openReflections(on: entry.date.weekday) } label: {
                     Image(systemName: "text.alignleft").font(.system(size: 10))
                 }
                 .buttonStyle(.plain)
@@ -350,7 +352,7 @@ struct EntryRow: View {
                     Button("Read today's kathisma") { model.screen = .psalter }
                     Divider()
                 case .reflections:
-                    Button("Open Reflections") { model.screen = .reflections }
+                    Button("Open Reflections") { model.openReflections(on: entry.date.weekday) }
                     Divider()
                 case .none:
                     EmptyView()

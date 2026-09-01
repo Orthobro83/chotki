@@ -333,6 +333,17 @@ enum RenderMode {
                 size: NSSize(width: 780, height: 560),
                 "window-reflections-reading", prefix: prefix)
 
+            // Opened from a Friday rule, which should land on Friday rather
+            // than at the top. A ScrollViewReader scroll may simply not appear
+            // in a drawn view — if this shot shows Sunday, that is not evidence
+            // the scroll is broken, only that the harness could not see it.
+            model.reflectionsOpenAt = .friday
+            inOwnWindow(
+                ReflectionsView(model: model),
+                size: NSSize(width: 780, height: 560),
+                "window-reflections-opened-on-friday", prefix: prefix)
+            model.reflectionsOpenAt = nil
+
             // The explainer behind the help mark. It animates down, which a
             // still cannot show — but whether the text is there, wraps, and
             // carries its link is exactly what a still is for.

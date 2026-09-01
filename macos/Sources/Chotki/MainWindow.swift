@@ -55,7 +55,7 @@ enum WindowRoute: Equatable {
         case .prayers(let ruleID): return .prayers(ruleID)
         // The Psalter lives under Prayers in the window, as the rope does.
         case .psalter: return .section(.prayers)
-        case .reflections: return .section(.reflections)
+        case .reflections: return .section(.reflections)  // the weekday is read by the view
         }
     }
 }

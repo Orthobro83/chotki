@@ -534,3 +534,99 @@ struct DayAdvanceTests {
     }
 }
 
+
+/// Reflections on the phone. Core carries every decision and has its own tests;
+/// these check the seam this layer adds — that what is written reaches the
+/// store, and that the way through from a rule lands where it should.
+@Suite("Reflections on iOS")
+@MainActor
+struct ReflectionModelTests {
+
+    private func model() throws -> Model {
+        let path = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotki-reflection-\(UUID().uuidString).sqlite").path
+        return Model(store: try SQLiteStore(path: path))
+    }
+
+    @Test("the seven arrive without anything being enabled")
+    func seeded() throws {
+        let model = try model()
+        #expect(model.reflections.count == 7)
+        #expect(model.reflection(for: .sunday).title == "Notice the Resistance")
+        #expect(model.rules.isEmpty, "the questions are seeded; the rule is not")
+        #expect(model.hasReflectionsOnRule == false)
+    }
+
+    @Test("an answer is filed under its own weekday's date")
+    func filedUnderItsWeekday() throws {
+        let model = try model()
+        for weekday in Weekday.allCases {
+            #expect(model.dateOfCurrentWeek(weekday).weekday == weekday)
+        }
+    }
+
+    @Test("writing an answer keeps it, and it reads back")
+    func writing() throws {
+        let model = try model()
+        #expect(model.hasAnswered(.sunday) == false)
+
+        model.saveReflection(.sunday, text: "  what I noticed  ")
+
+        #expect(model.hasAnswered(.sunday))
+        #expect(model.answer(for: .sunday)?.text == "what I noticed", "trimmed on the way in")
+        #expect(model.answer(for: .sunday)?.question.title == "Notice the Resistance")
+    }
+
+    /// The snapshot rule, at the level someone touches: rewriting a question
+    /// must not reach an answer already written.
+    @Test("rewriting a question leaves answers already written alone")
+    func rewriting() throws {
+        let model = try model()
+        model.saveReflection(.sunday, text: "before")
+        model.rewriteReflection(.sunday, to: ReflectionQuestion(
+            title: "Something else", notice: "n", task: "t"))
+
+        #expect(model.reflection(for: .sunday).title == "Something else")
+        #expect(model.answer(for: .sunday)?.question.title == "Notice the Resistance")
+    }
+
+    @Test("a journal exports and imports whole")
+    func exportImport() throws {
+        let model = try model()
+        model.saveReflection(.sunday, text: "one")
+        let data = try model.exportReflectionsJSON()
+
+        let fresh = try self.model()
+        let result = fresh.importReflectionsJSON(data)
+        #expect(result?.addedCount == 1)
+        #expect(fresh.answer(for: .sunday)?.text == "one")
+    }
+
+    @Test("a file that is not a journal changes nothing")
+    func rubbishImport() throws {
+        let model = try model()
+        model.saveReflection(.sunday, text: "mine")
+        #expect(model.importReflectionsJSON(Data("not json".utf8)) == nil)
+        #expect(model.reflectionEntries.count == 1)
+    }
+
+    /// Tapping the way through from Tuesday's rule should land on Tuesday's
+    /// question, not at the top of a seven-day scroll.
+    @Test("the way through carries the day it was opened from", arguments: Weekday.allCases)
+    func routeCarriesTheWeekday(weekday: Weekday) {
+        #expect(Route.reflections(weekday: weekday) != Route.reflections(weekday: nil))
+        #expect(Route.reflections(weekday: weekday) == Route.reflections(weekday: weekday))
+    }
+
+    /// A rule of this title points at the section — decided in core, so the
+    /// phone and the Mac cannot disagree about it.
+    @Test("the rule on the day points at the section")
+    func rulePointsAtTheSection() throws {
+        let model = try model()
+        let template = try #require(model.reflectionTemplate)
+        let rule = template.makeRule()
+        #expect(rule.reference == .reflections)
+        #expect(rule.recurrence == .daily)
+        #expect(rule.title == "Reflection")
+    }
+}

@@ -46,4 +46,15 @@ enum Route: Hashable {
     case term(slug: String?)
     case psalter
     case rope
+    /// The seven questions and the journal of answers.
+    ///
+    /// A route rather than a sixth tab: iPhone folds the sixth into a "More"
+    /// list, and that list is a worse home for anything than a considered
+    /// arrangement. Reached the way the glossary and the Psalter are — from the
+    /// rule that names it on the day, and from Settings for browsing.
+    ///
+    /// `weekday` is the day to open on: tapping the way through from Tuesday's
+    /// rule should land on Tuesday's question rather than at the top of a
+    /// seven-day scroll. nil opens at the top, which is what Settings wants.
+    case reflections(weekday: Weekday? = nil)
 }

@@ -317,29 +317,110 @@ Mac app to check something.
    content, which is already correct — do not lower-case them in the view, which
    is how the macOS app acquired the habit in six separate places.
 
-## Reflections — a section that does not exist here yet
+## Reflections — what iOS did, and what Android must do differently
 
-Added to macOS on 1 September 2026: seven weekday reflections and a journal of
-answers. `reflections-decisions.md` at the repo root is the specification.
+Added to macOS and iOS on 1 September 2026. `reflections-decisions.md` at the
+repo root is the specification; this section is the delta list, written while
+the iOS version was built so that none of it has to be rediscovered.
 
-As with everything else here this is a reimplementation, not a port. The Swift
-`core` types — `Reflection`, `ReflectionEntry`, `ReflectionJournal`,
-`ReflectionSeries`, `ReflectionPeriod`, `ReflectionArchive` — and their tests are
-the specification to translate. Schema version 7 adds `reflection` and
-`reflection_entry`.
+### What comes free, and what does not
 
-Two things specific to this platform:
+iOS took about two hours because it **shares `core` unchanged** — `Reflection`,
+`ReflectionQuestion`, `ReflectionEntry`, `ReflectionPeriod`, `ReflectionSeries`,
+`ReflectionJournal`, `ReflectionArchive`, `ReflectionImport`, the seven prompts
+and the four `Store` methods were already there and already passing. Only the
+view was written.
 
-- **The font.** See the section below.
-- **The snapshot rule.** Every answer stores its own copy of the question it was
-  written against. It is not a join. Translating it as one would silently
-  rewrite every past answer the moment a question was edited, and the bug would
-  not show until someone edited one.
+**Android gets none of that.** Before a single screen exists:
 
-`PARITY.md` is generated from `core/` and says so at the top; it has no
-generator committed, so bringing it up to date is currently a manual pass.
+| To translate | Where |
+|---|---|
+| `Reflection`, `ReflectionQuestion`, `ReflectionEntry` | `core/.../Reflections/Reflection.swift` |
+| The seven prompts, verbatim | `ReflectionContent.swift` |
+| `ReflectionPeriod`, `ReflectionSeries`, `ReflectionJournal` | `ReflectionJournal.swift` |
+| `ReflectionArchive`, `ReflectionImport` | `ReflectionArchive.swift` |
+| Four `Store` methods + `seedReflections` and the export/import extensions | `Store.swift` |
+| Schema 7 — `reflection`, `reflection_entry` | `SQLiteStore.swift`, and `Schema.kt` here stops at 6 |
+| ~50 tests | `ReflectionTests.swift`, `ReflectionStoreTests.swift` |
 
-## The typeface
+`RuleReference` gains a `.reflections` case and `reflectionRuleTitle`, both in
+`core/.../Model/RuleReference.swift`. The library rule and the glossary entry
+arrive free — both are in the generated JSON under
+`android/core/src/main/resources/content/`, already regenerated.
+
+### The three that will bite
+
+**1. The snapshot rule is not a join.** Every `ReflectionEntry` stores its own
+copy of the question — `q_title`, `q_notice`, `q_task` — rather than a foreign
+key to `reflection`. Translating it as a join looks tidier and is wrong: editing
+a question would silently rewrite what every past answer was answering, and the
+bug would not show until someone edited one. The columns are deliberate.
+
+**2. An answer is immutable.** Every field of `ReflectionEntry` is `let` in
+Swift. Kotlin's `val` in a `data class` gives the same thing — do not reach for
+`var` because a builder is convenient. "Locks on save" is structural, not a
+rule the interface remembers.
+
+**3. `weekday` is the primary key of `reflection`.** There is exactly one per
+day and there always will be. No id column, no ordering, no archived state.
+
+### The interface, and what iOS chose
+
+macOS and iOS disagree in three places, each for a reason that applies to
+Android as well:
+
+- **Reading past entries.** macOS uses a panel with ◀ ▶ either side. There is no
+  room for chevrons beside a full-width sheet on a phone, so **iOS uses a dated
+  list you tap into** — a date with a two-line excerpt, opening on the question
+  as it stood plus the answer. Android should do the same; a phone is a phone.
+- **Where it lives.** macOS has a sidebar entry. iOS caps at five tabs before
+  the system folds the rest into "More", so Reflections is a *route* reached
+  from the rule row that names it and from Settings — the same arrangement the
+  glossary and Psalter already use. **Android has six navigation items**, so it
+  may be able to afford a destination; decide against the existing arrangement
+  rather than copying either.
+- **The explainer.** A panel that animates down over the top on macOS; on iOS a
+  card at the head of the scroll, raised from the toolbar's help mark.
+
+### Behaviour to match exactly
+
+- **Tapping the way through from a rule scrolls to that weekday.** Tapping it on
+  a Tuesday lands on Tuesday's question, not at the top of a seven-day scroll.
+  Both platforms carry the weekday in the navigation value — `Route.reflections(weekday:)`
+  on iOS, `Screen.reflections(weekday:)` on macOS. In Compose this is
+  `LazyColumn` + `scrollToItem`.
+- **The scroll must be deferred one frame.** A lazy list has not built the later
+  days when the screen first appears, so scrolling to Saturday in the same pass
+  finds nothing. iOS wraps it in `DispatchQueue.main.async`; Compose wants a
+  `LaunchedEffect`.
+- **Save asks for confirmation**, because it is irreversible. There is **no
+  standing warning** under the field — a permanent notice beside every empty box
+  is a nag, and the tone rules rule it out.
+- **Neither half of the question is labelled.** The task lines say "At the end of
+  the day…" themselves, and a "Notice" label only named what the section is
+  already called. Told apart by weight.
+- **Import merges and never replaces.** `ReflectionJournal.merge` decides it;
+  the interface only reports the counts.
+- **A failed write still repaints.** The entry is in memory and valid; swallowing
+  the redraw makes a successful save look like a dead button.
+
+### The keyboard
+
+The thing Ryan flagged, and it is handled — but not by hand. SwiftUI lifts a
+focused field clear of the keyboard on its own, and it was **checked on the last
+day of the seven**, which is the worst case: nothing below it to scroll into.
+Verified in the Simulator with the software keyboard actually up, not reasoned
+about.
+
+**Android has to do this deliberately.** `android:windowSoftInputMode="adjustResize"`
+on the activity, and `Modifier.imePadding()` on the scrolling container. Then
+check it on the last day, not the first — the first day always looks fine.
+
+iOS also got `.scrollDismissesKeyboard(.interactively)`, because seven text
+fields with no way to put the keyboard away except by saving is unpleasant.
+Compose's equivalent is a `nestedScroll` connection that clears focus.
+
+### The typeface
 
 macOS now sets everything meant to be **read** in Iowan Old Style, and keeps the
 system sans for everything meant to be **operated** — the sidebar, the month
