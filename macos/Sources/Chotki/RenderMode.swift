@@ -378,6 +378,22 @@ enum RenderMode {
             }
             draw(popover, "popover-terms-back", prefix: prefix) { model.openGlossary("amen") }
 
+            // The welcome exists only on a first run, which is the record
+            // `CHOTKI_RENDER_FIRSTRUN` seeds. Against any other it would be the
+            // rule screen wearing the wrong filename, so it is not drawn at all.
+            //
+            // The notice is cleared because the settings renders above leave one
+            // standing, and it pushed the popover 52pt past its own height. The
+            // welcome is what someone sees before anything has happened to them:
+            // it is the one screen that must carry nothing into it.
+            if ProcessInfo.processInfo.environment["CHOTKI_RENDER_FIRSTRUN"] == "1" {
+                draw(popover, "popover-welcome", prefix: prefix) {
+                    model.screen = .main
+                    model.libraryOnRule = false
+                    model.notice = nil
+                }
+            }
+
             FileHandle.standardOutput.write(Data("rendered\n".utf8))
         } catch {
             FileHandle.standardError.write(Data("window render failed: \(error)\n".utf8))
@@ -428,11 +444,32 @@ enum RenderMode {
         arrange()
         RunLoop.current.run(until: Date().addingTimeInterval(0.8))
         host.layoutSubtreeIfNeeded()
-        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return }
+        guard let rep = retinaRep(for: host) else { return }
         host.cacheDisplay(in: host.bounds, to: rep)
         guard let png = rep.representation(using: .png, properties: [:]) else { return }
         try? png.write(to: URL(fileURLWithPath: "\(prefix)-\(name).png"))
         FileHandle.standardOutput.write(Data("\(name)\n".utf8))
+    }
+
+    /// A bitmap at twice the point size, so this path matches the other one.
+    ///
+    /// `bitmapImageRepForCachingDisplay` hands back the view's backing store,
+    /// and an off-screen window has no screen behind it to make that Retina —
+    /// so every render through AppKit came out at 1x while the `ImageRenderer`
+    /// path beside it was already at 2x, which is what the README's screenshots
+    /// are. Building the rep by hand and then telling it its size in *points*
+    /// is what makes it a 2x representation; `cacheDisplay` draws into it
+    /// scaled to suit.
+    private static func retinaRep(for host: NSView) -> NSBitmapImageRep? {
+        let size = host.bounds.size
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(size.width * 2), pixelsHigh: Int(size.height * 2),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) else { return nil }
+        rep.size = size
+        return rep
     }
 
     /// Scrolls the tallest scroll view in the hierarchy, so that anything which

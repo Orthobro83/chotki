@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chotki — first-run splash (mockup)</title>
+<style>
+  :root{
+    --ground:#15161C; --panel:#1C1E26; --sidebar:#1B1C22;
+    --line:#2E2A20; --lineSoft:#23252C;
+    --gold:#C9A227; --goldDim:#8A7220;
+    --parchment:#E8DFCD; --parchmentDim:#D8CFBD;
+    --muted:#8A8578; --faint:#5A564C;
+    --serif:"Iowan Old Style","Charter","Hoefler Text",Palatino,"Palatino Linotype",Georgia,serif;
+    --sans:-apple-system,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0d0e11;font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;color:var(--parchmentDim)}
+  body{padding:34px 26px 70px;max-width:1180px;margin:0 auto}
+
+  header{margin-bottom:34px;max-width:60em}
+  h1{font-family:var(--serif);font-size:25px;font-weight:400;color:var(--gold);margin:0 0 9px}
+  .lede{font-family:var(--serif);font-size:14.5px;line-height:1.6;color:var(--parchmentDim);margin:0}
+
+  section{margin-bottom:44px}
+  h2{font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.09em;
+     text-transform:uppercase;color:var(--muted);margin:0 0 6px;
+     border-bottom:1px solid var(--lineSoft);padding-bottom:7px}
+  .note{font-family:var(--serif);font-size:13.5px;line-height:1.6;color:var(--muted);
+        margin:11px 0 20px;max-width:58em}
+
+  .row{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start}
+  figure{margin:0}
+  figcaption{font-family:var(--sans);font-size:11.5px;color:var(--muted);
+             margin-top:9px;max-width:250px;line-height:1.5}
+  figcaption b{color:var(--parchmentDim);font-weight:600;display:block;margin-bottom:2px}
+
+  /* a device drawn at true size, then scaled down as a whole so every
+     interior measurement in here is the real one */
+  .scaler{position:relative;overflow:hidden}
+  .scaler > .inner{transform-origin:top left;position:absolute;top:0;left:0}
+
+  .phone{width:390px;height:844px;background:var(--ground);
+         border-radius:44px;border:1px solid #000;overflow:hidden;position:relative}
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);
+         width:118px;height:33px;background:#000;border-radius:19px}
+
+  .pop{width:400px;height:560px;background:var(--ground);border-radius:9px;
+       border:1px solid #000;overflow:hidden;position:relative;
+       box-shadow:0 18px 44px rgba(0,0,0,.55)}
+
+  /* the splash composition itself */
+  .splash{position:absolute;inset:0;display:flex;flex-direction:column;
+          align-items:center;justify-content:center}
+  .mark{color:var(--gold);display:block}
+  .wordmark{font-family:var(--serif);color:var(--gold);letter-spacing:.015em;line-height:1}
+  .watermark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+             color:var(--parchment);opacity:.07;pointer-events:none}
+
+  /* the welcome, as it already exists */
+  .welcome{position:absolute;inset:0;padding:20px 22px;overflow:hidden}
+  .welcome .mark{margin:6px auto 14px;opacity:.5}
+  .wtitle{font-family:var(--serif);font-size:21px;color:var(--gold);
+          text-align:center;margin:0 0 14px}
+  .wp{font-family:var(--serif);font-size:12.5px;line-height:1.62;
+      color:var(--parchmentDim);margin:0 0 14px}
+  .wp a{color:var(--gold);text-decoration:underline}
+  .aside{display:flex;gap:11px;margin-bottom:14px}
+  .aside .bar{width:2px;background:var(--line);flex:0 0 2px}
+  .aside p{font-family:var(--serif);font-size:11.5px;line-height:1.62;
+           color:var(--faint);margin:0}
+  .begin{display:block;margin:4px auto 0;font-family:var(--sans);font-size:13px;
+         color:var(--gold);background:none;border:1px solid var(--goldDim);
+         border-radius:5px;padding:6px 22px}
+
+  .arrow{align-self:center;color:var(--faint);font-size:22px;padding:0 2px}
+
+  .notes{max-width:60em}
+  .notes h2{margin-bottom:16px}
+  .notes dt{font-family:var(--sans);font-size:12px;font-weight:600;
+            color:var(--parchment);margin-top:17px}
+  .notes dd{font-family:var(--serif);font-size:13.5px;line-height:1.62;
+            color:var(--muted);margin:5px 0 0}
+  .notes dd code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                 font-size:12px;color:var(--parchmentDim)}
+</style>
+</head>
+<body>
+
+<!-- the mark, drawn from the fractions in core: RopeMarkGeometry + CrossGeometry -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="rope" viewBox="0 0 100 100">
+    <g fill="currentColor">
+      <circle cx="35.00" cy="61.98" r="4.2"/><circle cx="24.02" cy="51.00" r="4.2"/>
+      <circle cx="20.00" cy="36.00" r="4.2"/><circle cx="24.02" cy="21.00" r="4.2"/>
+      <circle cx="35.00" cy="10.02" r="4.2"/><circle cx="50.00" cy="6.00" r="4.2"/>
+      <circle cx="65.00" cy="10.02" r="4.2"/><circle cx="75.98" cy="21.00" r="4.2"/>
+      <circle cx="80.00" cy="36.00" r="4.2"/><circle cx="75.98" cy="51.00" r="4.2"/>
+      <circle cx="65.00" cy="61.98" r="4.2"/>
+      <rect x="48.269" y="61.800" width="3.550" height="34.000"/>
+      <rect x="44.790" y="65.234" width="10.491" height="3.298"/>
+      <rect x="41.169" y="71.966" width="17.661" height="3.298"/>
+      <polygon points="44.861,83.526 55.051,88.728 55.051,92.026 44.861,86.824"/>
+    </g>
+  </symbol>
+  <symbol id="cross" viewBox="0 0 51.944 100">
+    <g fill="currentColor">
+      <rect x="20.882" y="0" width="10.441" height="100"/>
+      <rect x="10.649" y="10.1" width="30.855" height="9.7"/>
+      <rect x="0" y="29.9" width="51.944" height="9.7"/>
+      <polygon points="10.856,63.9 40.828,79.2 40.828,88.9 10.856,73.6"/>
+    </g>
+  </symbol>
+</svg>
+
+<header>
+  <h1>first-run splash</h1>
+  <p class="lede">The launch screen, at the moment before the Welcome. Drawn from
+  the real palette in <code>Theme</code> and the real mark geometry in
+  <code>RopeMarkGeometry</code> and <code>CrossGeometry</code>, so the
+  proportions here are the ones the app already draws.</p>
+</header>
+
+<section>
+  <h2>the launch screen — iPhone 13, 390 × 844</h2>
+  <p class="note">No copy on any of these. The words that belong to a first run
+  are already written, in <code>Welcome</code>, and a splash that says anything
+  is a second screen saying it in different words — which is the reason the
+  suggestion screen was taken out of <code>OnboardingView</code> in the first
+  place. So the splash carries the mark and the name, and nothing it would have
+  to say twice.</p>
+  <div class="row">
+
+    <figure>
+      <div class="scaler" style="width:245px;height:530px">
+        <div class="inner" style="transform:scale(.6282)">
+          <div class="phone"><div class="notch"></div>
+            <div class="splash">
+              <svg class="mark" width="96" height="96" style="opacity:.5"><use href="#rope"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>A — the mark alone</b>Gold at 50%, the opacity
+      <code>RopeMark</code> already uses. Quietest, and says nothing the app has
+      not earned yet.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="scaler" style="width:245px;height:530px">
+        <div class="inner" style="transform:scale(.6282)">
+          <div class="phone"><div class="notch"></div>
+            <div class="splash">
+              <svg class="mark" width="88" height="88" style="opacity:.62"><use href="#rope"/></svg>
+              <div class="wordmark" style="font-size:31px;margin-top:22px">chotki</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>B — mark and wordmark</b>Lowercase, in the reading serif.
+      The app's own labels are lowercase by design, and this is one of
+      them.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="scaler" style="width:245px;height:530px">
+        <div class="inner" style="transform:scale(.6282)">
+          <div class="phone"><div class="notch"></div>
+            <svg class="watermark" width="145" height="279"><use href="#cross"/></svg>
+            <div class="splash">
+              <svg class="mark" width="88" height="88"><use href="#rope"/></svg>
+              <div class="wordmark" style="font-size:31px;margin-top:22px">chotki</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>C — with the watermark</b>The cross behind, at the 7% the
+      rule screen already uses. Full-strength gold on the mark. Warmest, and the
+      one most at risk of reading as a badge.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section>
+  <h2>what it hands to, on a first run — popover, 400 × 560</h2>
+  <p class="note">Treatment B at the popover's fixed size, and the Welcome as it
+  is written today. Seeing them adjacent is the point: the splash has to be the
+  held breath before this, not a smaller copy of it.</p>
+  <div class="row">
+
+    <figure>
+      <div class="scaler" style="width:320px;height:448px">
+        <div class="inner" style="transform:scale(.8)">
+          <div class="pop">
+            <div class="splash">
+              <svg class="mark" width="76" height="76" style="opacity:.62"><use href="#rope"/></svg>
+              <div class="wordmark" style="font-size:26px;margin-top:18px">chotki</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>the splash</b>Same composition, scaled to the
+      popover.</figcaption>
+    </figure>
+
+    <div class="arrow">&rarr;</div>
+
+    <figure>
+      <div class="scaler" style="width:320px;height:448px">
+        <div class="inner" style="transform:scale(.8)">
+          <div class="pop">
+            <div class="welcome">
+              <svg class="mark" width="64" height="64" style="display:block"><use href="#rope"/></svg>
+              <div class="wtitle">Welcome to Chotki</div>
+              <p class="wp">This app was created for inquiring Orthodox Christians,
+                catechumens, and anyone looking for a tool to help them keep their
+                spiritual commitments.</p>
+              <p class="wp">This app was inspired by, but is not officially
+                affiliated with, <a href="#">The Brotherhood of the Narrow Path</a>,
+                an online Orthodox community by <a href="#">Father Moses
+                McPherson</a>.</p>
+              <p class="wp">To begin, select a rule from the Library. Start small,
+                only what you can keep, and build up from there. At the bottom of
+                the Library is the option to write your own rule.</p>
+              <div class="aside"><div class="bar"></div>
+                <p>A note on writing your own rules: in Orthodoxy, it is generally
+                understood that everybody needs a spiritual father who helps them
+                build their own discipline. We all need somebody guiding and
+                directing us, so that we are going toward God's will and not our
+                own.</p></div>
+              <button class="begin">Begin</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>the Welcome, unchanged</b>Ryan's words, from
+      <code>Welcome</code> in core. Shown here only so the pair can be judged
+      together.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section class="notes">
+  <h2>two things the mockup cannot decide</h2>
+  <dl>
+    <dt>A launch screen cannot know it is a first run.</dt>
+    <dd>On iOS it is a static launch storyboard and on Android a
+    <code>windowBackground</code> — both drawn by the system before any code of
+    ours runs. Neither can read <code>hasCompletedFirstRun</code>. So this is the
+    splash on <em>every</em> launch, and "first run" stays what it already is:
+    the Welcome behind it. If a splash that appears only once is what is wanted,
+    it has to be an in-app screen, and then it is a second welcome.</dd>
+
+    <dt>macOS may not want one at all.</dt>
+    <dd>Chotki opens as a popover from the menu bar; a popover that shows a
+    splash and then swaps to content flickers in a way a full window does not.
+    The popover frame above is drawn to show the composition at that size, not
+    to argue it belongs there. The window with the Dock icon is the surface
+    where a splash would make sense, if either does.</dd>
+  </dl>
+</section>
+
+</body>
+</html>
