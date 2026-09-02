@@ -24,6 +24,7 @@ struct ReflectionsView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     if explaining { ReflectionExplainer { withAnimation { explaining = false } } }
+                    TakeOnRow(model: model)
                     ForEach(Weekday.allCases, id: \.self) { weekday in
                         DayBlock(model: model, weekday: weekday) { reading = weekday }
                             .id(weekday)
@@ -85,6 +86,44 @@ struct ReflectionsView: View {
             }
             model.importReflectionsJSON(data)
         }
+    }
+}
+
+/// The one control that puts Reflections on the rule.
+///
+/// The explainer's last line tells the reader to click a button of this name,
+/// and for a while that button existed only on macOS — so on a phone the text
+/// named something that was not there. Both halves come from
+/// `Reflection.addAsRuleLabel`, so they cannot drift apart again, and
+/// `PortParityTests` now fails if a platform lacks it.
+///
+/// It opens the editor pre-filled rather than adding straight away, because
+/// that is how everything is taken on here: how often is a decision, and asking
+/// afterwards meant finding the rule on the day and opening the pencil.
+private struct TakeOnRow: View {
+    @State var model: Model
+    @Environment(\.pushRoute) private var pushRoute
+
+    var body: some View {
+        HStack {
+            if model.hasReflectionsOnRule {
+                // Stated as a fact, not as praise and not as a prompt to do
+                // more. There is nothing left to press.
+                Text("On your rule")
+                    .font(.caption)
+                    .foregroundStyle(Chotki.faint)
+            } else {
+                Button(Reflection.addAsRuleLabel) {
+                    guard let template = model.reflectionTemplate else { return }
+                    pushRoute(.editor(ruleID: nil, startingFrom: model.ruleFrom(template)))
+                }
+                .font(.callout)
+                .foregroundStyle(Chotki.gold)
+            }
+            Spacer()
+        }
+        .padding(.top, 10)
+        .padding(.bottom, 4)
     }
 }
 

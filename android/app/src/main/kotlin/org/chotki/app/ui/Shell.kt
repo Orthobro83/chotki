@@ -239,6 +239,12 @@ fun Shell(state: AppState) {
                                 state = state,
                                 openAt = screen.weekday,
                                 modifier = Modifier.weight(1f),
+                                onTakeOn = {
+                                    state.ruleFrom("reflection")?.let {
+                                        journey = journey.push(
+                                            Screen.Editor(rule = null, startingFrom = it))
+                                    }
+                                },
                             )
                         }
 

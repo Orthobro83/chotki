@@ -110,7 +110,30 @@ struct PortParityTests {
             .compactMap { $0 as? URL }
             .filter { ["swift", "kt"].contains($0.pathExtension) }
             ?? []
-        return try files.map { try String(contentsOf: $0, encoding: .utf8) }.joined()
+        return try files
+            .map { try String(contentsOf: $0, encoding: .utf8) }
+            .map(Self.withoutComments)
+            .joined()
+    }
+
+    /// Strips comments, so a check cannot be satisfied by prose.
+    ///
+    /// This is the failure this suite has recorded twice and then walked into a
+    /// third time: `reminders` was found in a line of copy above no controls,
+    /// and `addAsRuleLabel` was found in a doc comment explaining why the button
+    /// mattered — while the button itself had been removed. A mention is not an
+    /// implementation, and after this it cannot pass for one.
+    ///
+    /// Line comments only. Block comments are rare here and stripping them
+    /// correctly across two languages is more machinery than the problem needs.
+    static func withoutComments(_ code: String) -> String {
+        code.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line -> Substring in
+                let trimmed = line.drop { $0 == " " || $0 == "\t" }
+                if trimmed.hasPrefix("//") || trimmed.hasPrefix("*") { return "" }
+                return line
+            }
+            .joined(separator: "\n")
     }
 
     @Test("the record can be kept on every platform")
@@ -478,5 +501,147 @@ struct PortParityTests {
                 "\(platform) shows the welcome every launch, or never"
             )
         }
+    }
+
+    /// Reflections, on every platform.
+    ///
+    /// Written after the fact, and it found something immediately: the shared
+    /// explainer ends by telling the reader to click "Add this as a daily rule",
+    /// and that button existed only on macOS. On a phone the text named a
+    /// control that was not there — which is exactly the failure this suite is
+    /// for, and exactly the one no amount of running the app reveals, because
+    /// a control that was never written has nothing to tap.
+    ///
+    /// Trees, not files, and the core call behind the door rather than a word
+    /// that could appear in a comment. Three platforms now, so a check that
+    /// passes on two is not a passing check.
+    @Test("every platform offers the reflections journal")
+    func reflectionsAreOnEveryPlatform() throws {
+        for (platform, path) in Self.appTrees {
+            let code = try tree(path)
+
+            #expect(
+                code.contains("ReflectionJournal"),
+                "\(platform) never asks core what the journal holds"
+            )
+            #expect(
+                code.contains("seedReflections"),
+                "\(platform) never seeds the seven, so the section is empty on a new record"
+            )
+            #expect(
+                code.contains("ReflectionEntry"),
+                "\(platform) offers no way to write an answer"
+            )
+            // Each platform spells the call its own way — JSON on Apple, Json on
+            // Kotlin — which is the mistake `exportJSON` made here once already.
+            // The core call *and* the words on the control. The call alone is
+            // satisfied by a model method nothing reaches — which is how
+            // removing the button from a screen left this check still passing.
+            #expect(
+                code.contains("exportReflectionsJSON") || code.contains("exportReflectionsJson"),
+                "\(platform) cannot write the journal out"
+            )
+            #expect(
+                code.contains("Export journal"),
+                "\(platform) can write the journal out but offers nobody a way to ask"
+            )
+            #expect(
+                code.contains("importReflectionsJSON") || code.contains("importReflectionsJson"),
+                "\(platform) cannot read a journal back in"
+            )
+            #expect(
+                code.contains("Import journal"),
+                "\(platform) can read a journal in but offers nobody a way to ask"
+            )
+        }
+    }
+
+    /// The fixed copy is read from core on every platform, not typed into any.
+    ///
+    /// The seven questions are the Brotherhood's and the closing text is theirs
+    /// too. Typed into three interfaces they are three chances to get someone
+    /// else's words wrong, and no way to notice.
+    @Test("no platform types the reflections text into itself")
+    func reflectionTextComesFromCore() throws {
+        for (platform, path) in Self.appTrees {
+            let code = try tree(path)
+
+            #expect(
+                code.contains("closingText"),
+                "\(platform) does not show what closes the week"
+            )
+            #expect(
+                code.contains("explainer"),
+                "\(platform) does not say what the section is for"
+            )
+            #expect(
+                !code.contains("Notice the Resistance"),
+                "\(platform) has a question typed into it rather than read from core"
+            )
+            #expect(
+                !code.contains("You cannot fight what you cannot see"),
+                "\(platform) has the closing text typed into it rather than read from core"
+            )
+        }
+    }
+
+    /// The one control the explainer names, and the way through from the rule.
+    ///
+    /// `addAsRuleLabel` is the constant behind the button *and* the words in the
+    /// last paragraph, so naming it here is what stops the text from promising a
+    /// control one platform does not draw. That is not hypothetical: it was true
+    /// of both phones until this test was written.
+    @Test("every platform draws the control its own explainer names")
+    func everyPlatformHasTheTakeOnControl() throws {
+        for (platform, path) in Self.appTrees {
+            #expect(
+                try tree(path).contains("addAsRuleLabel"),
+                """
+                \(platform) does not draw "Add this as a daily rule", but shows an \
+                explainer that tells the reader to click it
+                """
+            )
+        }
+    }
+
+    /// A rule of one's own has to lead back to the section on every surface, and
+    /// land on the day it was tapped from rather than at the top of a seven-day
+    /// scroll.
+    @Test("the rule leads to the section, on the day it was tapped from")
+    func theRuleLeadsToTheSection() throws {
+        // Swift spells the case `.reflections`, Kotlin `REFLECTIONS`. Asking for
+        // either is the point: the check is that the platform reaches for the
+        // core case at all, not how its language writes it.
+        for (platform, path) in Self.appTrees {
+            let code = try tree(path)
+            // The case *and* the words on the control. Asking only for the case
+            // is satisfied by a branch that does nothing — which is exactly what
+            // a half-removed link looks like, and it passed this check once.
+            #expect(
+                code.contains("RuleReference.REFLECTIONS") || code.contains("case .reflections"),
+                "\(platform) never asks whether a rule points at the section"
+            )
+            #expect(
+                code.contains("Open Reflections"),
+                "\(platform) shows the rule with no way through to the section"
+            )
+            #expect(
+                code.contains("weekday"),
+                "\(platform) does not carry a weekday through, so the way through cannot land on a day"
+            )
+        }
+    }
+}
+
+private extension PortParityTests {
+    /// Where each platform's interface lives. One list, because a check that
+    /// enumerates two of three platforms passes while the third is missing the
+    /// feature entirely — which is the whole failure this suite exists for.
+    static var appTrees: [(String, String)] {
+        [
+            ("macOS", "macos/Sources"),
+            ("Android", "android/app/src/main"),
+            ("iOS", "ios/Chotki"),
+        ]
     }
 }

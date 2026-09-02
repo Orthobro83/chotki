@@ -69,6 +69,7 @@ fun ReflectionsScreen(
     state: AppState,
     openAt: Weekday? = null,
     modifier: Modifier = Modifier,
+    onTakeOn: () -> Unit = {},
 ) {
     val list = rememberLazyListState()
     var explaining by remember { mutableStateOf(false) }
@@ -120,6 +121,7 @@ fun ReflectionsScreen(
                 state = state,
                 explaining = explaining,
                 onToggleExplainer = { explaining = !explaining },
+                onTakeOn = onTakeOn,
             )
         }
         items(Weekday.entries.toList(), key = { it.number }) { weekday ->
@@ -157,6 +159,7 @@ private fun SectionHead(
     state: AppState,
     explaining: Boolean,
     onToggleExplainer: () -> Unit,
+    onTakeOn: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -176,6 +179,21 @@ private fun SectionHead(
                 // Stated as a fact, not as praise and not as a prompt to do
                 // more. There is nothing left to press.
                 Text("On your rule", color = Chotki.faint, fontSize = 12.sp)
+            } else {
+                // The explainer's last line tells the reader to click a button
+                // of this name. For a while that button existed only on macOS,
+                // so on a phone the text named something that was not there.
+                // Both halves come from `addAsRuleLabel`, and PortParityTests
+                // now fails if a platform lacks it.
+                //
+                // It opens the editor pre-filled rather than adding straight
+                // away, because that is how everything is taken on here.
+                Text(
+                    Reflection.addAsRuleLabel,
+                    color = Chotki.gold,
+                    fontSize = 13.sp,
+                    modifier = Modifier.clickable(onClick = onTakeOn),
+                )
             }
         }
         if (explaining) Explainer()
