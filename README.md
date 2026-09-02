@@ -28,6 +28,12 @@ What that means in practice:
 ## What it looks like
 
 <p align="center">
+  <img src="screenshots/chotki-welcome.png" width="330" alt="The first-run welcome: the prayer rope mark, an introduction, and a note set apart about writing rules with your community.">
+</p>
+
+**The welcome**, shown once and then not again. Who the app is for, what it is not affiliated with, and where to begin — start small, only what you can keep. The note set apart is about spiritual direction: writing your own rule is something to do with your community and its leadership, not alone.
+
+<p align="center">
   <img src="screenshots/chotki-rule.png" width="330" alt="The month, shaded for fasts and feasts, above the day's rules with checkboxes.">
   <img src="screenshots/chotki-progress.png" width="330" alt="A progress report leading with sentences, then a percentage, then a breakdown by rule.">
 </p>
