@@ -17,8 +17,8 @@ android {
         // essentially every device in use. The test device runs 13.
         minSdk = 26
         targetSdk = 37
-        versionCode = 9
-        versionName = "0.1.8-alpha"
+        versionCode = 10
+        versionName = "0.1.12-alpha"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
