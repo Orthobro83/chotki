@@ -53,6 +53,15 @@ object Content {
 
     /** What someone reads the first time they open Chotki, and once only. */
     val welcome: WelcomeJson by lazy { json.decodeFromString(load("welcome")) }
+
+    /**
+     * The seven questions and the fixed copy around them.
+     *
+     * Generated like the rest. The text is the Brotherhood's, transcribed once
+     * into the Swift core; retyping it here would be a second chance to get it
+     * wrong.
+     */
+    val reflections: ReflectionsJson by lazy { json.decodeFromString(load("reflections")) }
     val prayerSequences: List<PrayerSequenceJson> by lazy {
         json.decodeFromString(load("prayer-sequences"))
     }

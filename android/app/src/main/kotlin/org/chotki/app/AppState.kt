@@ -31,6 +31,20 @@ import org.chotki.core.content.modelTimeOfDay
 import org.chotki.core.liturgical.LiturgicalService
 import org.chotki.core.liturgical.OrthocalClient
 import org.chotki.core.store.SqliteStore
+import org.chotki.core.store.exportReflectionsJson
+import org.chotki.core.store.importReflectionsJson
+import org.chotki.core.store.seedReflections
+import org.chotki.core.reflections.Reflection
+import org.chotki.core.reflections.ReflectionEntry
+import org.chotki.core.reflections.ReflectionImportException
+import org.chotki.core.reflections.ReflectionImportResult
+import org.chotki.core.reflections.ReflectionJournal
+import org.chotki.core.reflections.ReflectionPeriod
+import org.chotki.core.reflections.ReflectionQuestion
+import org.chotki.core.reflections.ReflectionSeries
+import org.chotki.core.reflections.bundled
+import org.chotki.core.REFLECTION_RULE_TITLE
+import org.chotki.core.Weekday
 import org.chotki.core.store.Store
 import org.chotki.core.store.exportJson
 import org.chotki.core.store.importJson
@@ -149,6 +163,11 @@ class AppState(
         rules = store.rules()
         activations = store.activations()
         occurrences = store.occurrences()
+        // Idempotent, and it fills a gap rather than overwriting, so a question
+        // changed here survives every launch.
+        store.seedReflections()
+        reflections = store.reflections()
+        reflectionEntries = store.reflectionEntries()
         liturgical?.let { service ->
             service.setJurisdiction(settings.jurisdiction, around = today, window = 21)
         }
@@ -398,6 +417,119 @@ class AppState(
 
     /** Not archived, and with an open stretch. */
     fun isOnTheRule(rule: Rule): Boolean = !rule.isArchived && !practice.isPaused(rule)
+
+    // MARK: reflections
+
+    /**
+     * The seven questions and every answer to them. Loaded whole: seven rows
+     * and a journal are small, and the screen needs all of it at once to count
+     * what each weekday holds.
+     */
+    /**
+     * Something to say to the reader, once.
+     *
+     * macOS and iOS each have a place for this already; Android had none, so
+     * failures here would have been silent. Shown by the Reflections screen and
+     * cleared when it is read — a write that could not reach the store, or what
+     * an import did.
+     */
+    var notice by mutableStateOf<String?>(null)
+
+    var reflections by mutableStateOf<List<Reflection>>(emptyList())
+        private set
+    var reflectionEntries by mutableStateOf<List<ReflectionEntry>>(emptyList())
+        private set
+
+    fun reflection(weekday: Weekday): Reflection =
+        reflections.firstOrNull { it.weekday == weekday } ?: Reflection.bundled(weekday)
+
+    fun reflectionSeries(
+        weekday: Weekday,
+        period: ReflectionPeriod = ReflectionPeriod.ALL,
+    ): ReflectionSeries = ReflectionJournal.series(reflectionEntries, weekday, period)
+
+    /**
+     * The date this weekday fell on in the week containing today.
+     *
+     * A reflection is answered on its own weekday, so writing on Sunday's card
+     * files the answer under this week's Sunday — not under today, which may be
+     * a Wednesday.
+     */
+    fun dateOfCurrentWeek(weekday: Weekday): CalendarDate =
+        today.plusDays(weekday.number - today.weekday.number)
+
+    fun hasAnswered(weekday: Weekday): Boolean =
+        ReflectionJournal.hasEntry(reflectionEntries, dateOfCurrentWeek(weekday))
+
+    fun answer(weekday: Weekday): ReflectionEntry? {
+        val date = dateOfCurrentWeek(weekday)
+        return reflectionEntries.firstOrNull { it.weekday == weekday && it.date == date }
+    }
+
+    /** Writes an answer. It locks immediately: there is no path back through here. */
+    fun saveReflection(weekday: Weekday, text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return
+        val date = dateOfCurrentWeek(weekday)
+        val entry = ReflectionEntry.answering(reflection(weekday), date, trimmed)
+
+        // Persist and display are separate concerns. The entry is already in
+        // memory and is valid; swallowing the redraw would make a successful
+        // write look like a dead button, which is how this went wrong on the
+        // web. Show it either way and say so if the write failed.
+        reflectionEntries = reflectionEntries
+            .filterNot { it.weekday == weekday && it.date == date } + entry
+        try {
+            store.save(entry)
+        } catch (e: Exception) {
+            notice = "That was written down here but could not be saved to your record."
+        }
+    }
+
+    /**
+     * Rewrites a question from today onward. Answers already written keep the
+     * question they were written against — see ReflectionQuestion in core.
+     */
+    fun rewriteReflection(weekday: Weekday, question: ReflectionQuestion) {
+        val updated = reflection(weekday).rewritten(question)
+        reflections = (reflections.filterNot { it.weekday == weekday } + updated)
+            .sortedBy { it.weekday.number }
+        try {
+            store.save(updated)
+        } catch (e: Exception) {
+            notice = "The question was changed here but could not be saved to your record."
+        }
+    }
+
+    /** Whether Reflections is already on the rule. Matched on title, like the Psalter's. */
+    val hasReflectionsOnRule: Boolean
+        get() = rules.any { it.title == REFLECTION_RULE_TITLE }
+
+    fun exportReflectionsJson(): String = store.exportReflectionsJson()
+
+    /** Merges a journal file in. Never discards what is already held. */
+    fun importReflectionsJson(text: String): ReflectionImportResult? = try {
+        val result = store.importReflectionsJson(text)
+        reflectionEntries = store.reflectionEntries()
+        reflections = store.reflections()
+        notice = summary(result)
+        result
+    } catch (e: ReflectionImportException) {
+        notice = "That file could not be read as a journal. Nothing was changed."
+        null
+    } catch (e: Exception) {
+        notice = "That journal could not be read in. Nothing was changed."
+        null
+    }
+
+    private fun summary(result: ReflectionImportResult): String {
+        val parts = mutableListOf(
+            if (result.addedCount == 1) "1 answer added" else "${result.addedCount} answers added"
+        )
+        if (result.alreadyPresent > 0) parts += "${result.alreadyPresent} already here"
+        if (result.collided > 0) parts += "${result.collided} skipped, that day was taken"
+        return parts.joinToString(", ") + "."
+    }
 
     fun save(rule: Rule, from: CalendarDate = today) {
         val existing = store.rule(rule.id)

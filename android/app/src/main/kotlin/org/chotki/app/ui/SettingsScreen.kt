@@ -38,7 +38,11 @@ import org.chotki.app.BuildConfig
  * rather than a wizard shown once and forgotten.
  */
 @Composable
-fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    state: AppState,
+    modifier: Modifier = Modifier,
+    onOpenReflections: () -> Unit = {},
+) {
     val context = LocalContext.current
     val readiness = ReminderReadiness.of(context)
 
@@ -158,6 +162,13 @@ fun SettingsScreen(state: AppState, modifier: Modifier = Modifier) {
                 Chotki.faint,
             )
         }
+
+        // Reflections is reached from the rule that names it on the day — but
+        // only once that rule is taken on. Someone who has not taken it on has
+        // no way to find the section at all, which is how a screen ends up
+        // built and unreachable. iOS lists it here for the same reason.
+        Heading("Elsewhere")
+        Action("Reflections", onOpenReflections)
 
         Heading("Your record")
         // Android gives an app no place to leave anything behind and Chotki

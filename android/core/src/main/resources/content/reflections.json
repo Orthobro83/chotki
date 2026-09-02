@@ -1,0 +1,82 @@
+{
+  "addAsRuleLabel" : "Add this as a daily rule",
+  "closingText" : [
+    "If this week showed you something uncomfortable, that is the point. You cannot fight what you cannot see. Now you can see it.",
+    "Take what you noticed to your priest. Bring it to confession. Pray about it. Do not try to fix everything yourself. The point of this week was not to become a different person in seven days. The point was to stop pretending you do not need to change."
+  ],
+  "days" : [
+    {
+      "notice" : "Pay attention today to the moments where you feel resistance, irritation, or quiet refusal. Not the big things. The small ones. The conversation you avoided. The prayer you skipped. The moment you reached for your phone instead of sitting with a thought.",
+      "task" : "Write down two or three moments where you felt resistance. Do not analyze them yet. Just notice.",
+      "title" : "Notice the Resistance",
+      "weekday" : 1
+    },
+    {
+      "notice" : "Pay attention to where your inner life has gone silent. Where have you stopped praying about something you used to pray about? Where have you stopped caring about something you used to care about?",
+      "task" : "At the end of the day, write down one area of your life that has quietly gone silent.",
+      "title" : "Notice the Quiet",
+      "weekday" : 2
+    },
+    {
+      "notice" : "Pay attention to the things you reach for to soothe yourself. Phone. Food. Music. Distraction. Not to judge them. Just to see them.",
+      "task" : "At the end of the day, write down what you reach for when you do not want to feel something.",
+      "title" : "Notice the Comfort",
+      "weekday" : 3
+    },
+    {
+      "notice" : "Pay attention to what you are avoiding. The conversation you keep putting off. The confession you have not scheduled. The relationship you are letting drift. The thought you keep pushing away.",
+      "task" : "At the end of the day, write down one thing you have been avoiding.",
+      "title" : "Notice the Avoidance",
+      "weekday" : 4
+    },
+    {
+      "notice" : "Look back at what you have written so far this week. What is the pattern? What keeps showing up?",
+      "task" : "At the end of the day, write down what you are starting to see about yourself.",
+      "title" : "Notice the Pattern",
+      "weekday" : 5
+    },
+    {
+      "notice" : "If you keep going the way you have been going, where does it lead? Look at the patterns honestly. What is this costing you spiritually? What is it costing the people around you?",
+      "task" : "At the end of the day, write down what you are putting at risk by staying where you are.",
+      "title" : "Notice the Cost",
+      "weekday" : 6
+    },
+    {
+      "notice" : "Look at everything you have written this week. This is the honest picture of where you are. Identify one thing from this week's noticing that you need to bring to confession. Identify one thing you want to talk to your spiritual father about. Go to liturgy. Stand. Pay attention. Receive communion if you are prepared and have your priest's blessing.",
+      "task" : "At the end of the day, write down what you are taking forward from this week and what changes when you do.",
+      "title" : "Bring It Forward",
+      "weekday" : 7
+    }
+  ],
+  "explainer" : [
+    {
+      "spans" : [
+        {
+          "text" : "Most people walk into Christianity expecting peace and comfort. But a spiritual life that feels peaceful isn't always one that's making progress. This section gives you the opportunity to reflect on your spiritual life every day, to track your progress week to week, month to month, year to year."
+        }
+      ]
+    },
+    {
+      "spans" : [
+        {
+          "text" : "It is a journal for you to engage with every day. Each day has a question which presents you with an opportunity to reflect on aspects of your spiritual life. The default questions come from Father Moses' "
+        },
+        {
+          "text" : "Brotherhood of the Narrow Path",
+          "url" : "https://www.skool.com/fathermoses/"
+        },
+        {
+          "text" : ", but you can customize them as needed. It is strongly recommended that you make these customizations in consultation with your priest or spiritual father."
+        }
+      ]
+    },
+    {
+      "spans" : [
+        {
+          "text" : "Click \"Add this as a daily rule\" to put Reflection into your daily routine."
+        }
+      ]
+    }
+  ],
+  "libraryNote" : "Taking it on puts one item on every day. What you write is kept against the date and can be read back over months.\n\nClick on the Reflections tab to learn more."
+}

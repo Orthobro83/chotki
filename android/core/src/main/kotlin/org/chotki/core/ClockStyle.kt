@@ -22,6 +22,28 @@ enum class ClockStyle(val displayName: String) {
 /** Turning values into the words shown on screen. */
 object Format {
 
+    private val weekdays = listOf(
+        "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+    )
+    private val months = listOf(
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+    )
+
+    /** "Sunday" */
+    fun weekdayName(weekday: Weekday): String = weekdays[weekday.number - 1]
+
+    /**
+     * "30 August 2026"
+     *
+     * The year is not optional here. A day list looking at this week does not
+     * need it; a journal does, because two entries can share a date across years
+     * and the whole point is comparing them.
+     */
+    fun dateWithYear(date: CalendarDate): String =
+        "${date.day} ${months[date.month - 1]} ${date.year}"
+
+
     fun time(time: TimeOfDay, style: ClockStyle = ClockStyle.TWENTY_FOUR_HOUR): String =
         when (style) {
             ClockStyle.TWENTY_FOUR_HOUR -> "%02d:%02d".format(time.hour, time.minute)

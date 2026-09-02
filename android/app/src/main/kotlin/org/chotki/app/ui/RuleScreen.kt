@@ -63,6 +63,7 @@ fun RuleScreen(
     onReadPrayers: (DayEntry) -> Unit = {},
     onReadReading: () -> Unit = {},
     onReadPsalter: () -> Unit = {},
+    onReadReflections: (org.chotki.core.Weekday) -> Unit = {},
     onEdit: (DayEntry) -> Unit = {},
     onOpenLibrary: () -> Unit = {},
 ) {
@@ -106,6 +107,10 @@ fun RuleScreen(
                             onReadPrayers = { onReadPrayers(entry) },
                             onReadReading = onReadReading,
                             onReadPsalter = onReadPsalter,
+                            // The day this row is on, so the way through lands
+                            // on that question rather than at the top of a
+                            // seven-day scroll.
+                            onReadReflections = { onReadReflections(entry.date.weekday) },
                             onEdit = { onEdit(entry) },
                             onMarkKeptLate = { state.markKeptLate(entry) },
                             onStandDown = { state.standDown(entry) },
@@ -179,6 +184,7 @@ private fun EntryRow(
     onReadPrayers: () -> Unit,
     onReadReading: () -> Unit,
     onReadPsalter: () -> Unit,
+    onReadReflections: () -> Unit,
     onEdit: () -> Unit,
     onMarkKeptLate: () -> Unit,
     onStandDown: () -> Unit,
@@ -212,6 +218,7 @@ private fun EntryRow(
             onReadPrayers = onReadPrayers,
             onReadReading = onReadReading,
             onReadPsalter = onReadPsalter,
+            onReadReflections = onReadReflections,
             onToggle = onToggle,
             onMarkKeptLate = onMarkKeptLate,
             onStandDown = onStandDown,
@@ -282,6 +289,7 @@ private fun EntryRow(
                 onReadReading,
             )
             RuleReference.PSALTER -> Reference("Read today's kathisma", onReadPsalter)
+            RuleReference.REFLECTIONS -> Reference("Open Reflections", onReadReflections)
             RuleReference.NONE -> Unit
         }
 
@@ -315,6 +323,7 @@ private fun RuleMenu(
     onReadPrayers: () -> Unit,
     onReadReading: () -> Unit,
     onReadPsalter: () -> Unit,
+    onReadReflections: () -> Unit,
     onToggle: () -> Unit,
     onMarkKeptLate: () -> Unit,
     onStandDown: () -> Unit,
@@ -347,6 +356,10 @@ private fun RuleMenu(
                 }
                 RuleReference.PSALTER -> {
                     Item("Read today\u2019s kathisma", choosing(onReadPsalter))
+                    HorizontalDivider(color = Chotki.lineSoft)
+                }
+                RuleReference.REFLECTIONS -> {
+                    Item("Open Reflections", choosing(onReadReflections))
                     HorizontalDivider(color = Chotki.lineSoft)
                 }
                 RuleReference.NONE -> Unit

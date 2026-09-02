@@ -43,8 +43,50 @@ class SchemaMigrationTest {
             """UPDATE rule SET recurrence = REPLACE(recurrence, '"weekly"', '"org.chotki.core.Recurrence.Weekly"');""",
             """UPDATE rule SET recurrence = REPLACE(recurrence, '"liturgical"', '"org.chotki.core.Recurrence.Liturgical"');""",
             """UPDATE rule SET recurrence = REPLACE(recurrence, '"season"', '"org.chotki.core.LiturgicalTrigger.Season"');""",
+            // v8
+            "DROP TABLE IF EXISTS reflection_entry;",
+            "DROP TABLE IF EXISTS reflection;",
             "DELETE FROM schema_version WHERE version > 1;",
         )
+
+        /**
+         * Every table a migration creates. Checked against `Schema.kt` by
+         * [everyLaterTableIsReversed], so forgetting one is a named failure
+         * rather than "table already exists" in a suite that has nothing to do
+         * with whatever was just added.
+         *
+         * That is not hypothetical: it happened on macOS at versions 4, 5 and
+         * 7, and again here at 8.
+         */
+        val TABLES_MIGRATIONS_CREATE = listOf(
+            "rule", "activation", "occurrence",
+            "liturgical_day", "app_settings", "reflection", "reflection_entry",
+        )
+    }
+
+    /**
+     * Reads `Schema.kt` and checks that every table it creates is one this
+     * fixture knows how to remove.
+     */
+    @Test fun `the fixture reverses every table a migration creates`() {
+        val source = java.io.File(
+            "src/main/kotlin/org/chotki/core/store/Schema.kt"
+        ).let { if (it.exists()) it else java.io.File("core/$it") }
+        assertTrue(source.exists(), "cannot find Schema.kt to scan — the check is looking in the wrong place")
+
+        val created = Regex("""CREATE TABLE (?:IF NOT EXISTS )?(\w+)""")
+            .findAll(source.readText())
+            .map { it.groupValues[1] }
+            .filter { it != "schema_version" }
+            .toList()
+
+        assertTrue(created.isNotEmpty(), "no CREATE TABLE found — the scan is wrong")
+        for (table in created) {
+            assertTrue(
+                table in TABLES_MIGRATIONS_CREATE,
+                "the schema creates `$table` but the wind-back never drops it — add it to WIND_BACK and to TABLES_MIGRATIONS_CREATE",
+            )
+        }
     }
 
     /** A database as version 1 left it, holding a rule someone actually kept. */

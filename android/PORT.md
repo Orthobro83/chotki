@@ -317,140 +317,106 @@ Mac app to check something.
    content, which is already correct — do not lower-case them in the view, which
    is how the macOS app acquired the habit in six separate places.
 
-## Reflections — what iOS did, and what Android must do differently
+## Reflections — built, 2 September 2026
 
-Added to macOS and iOS on 1 September 2026. `reflections-decisions.md` at the
-repo root is the specification; this section is the delta list, written while
-the iOS version was built so that none of it has to be rediscovered.
+Seven weekday questions and a journal of answers, on all three platforms now.
+`reflections-decisions.md` at the repo root is the specification. What follows
+is what this port actually cost and what it decided, since the notes written
+before it started got two things wrong.
 
-### What comes free, and what does not
+### Two corrections to what was written beforehand
 
-iOS took about two hours because it **shares `core` unchanged** — `Reflection`,
-`ReflectionQuestion`, `ReflectionEntry`, `ReflectionPeriod`, `ReflectionSeries`,
-`ReflectionJournal`, `ReflectionArchive`, `ReflectionImport`, the seven prompts
-and the four `Store` methods were already there and already passing. Only the
-view was written.
+- **The schema step is 8, not 7.** The note said "schema 7, and `Schema.kt` here
+  stops at 6". It does not: Kotlin's 7 was the recurrence rewrite it needed and
+  Swift never did. The ladders are per-platform from 7 onward — the top of
+  `Schema.kt` says so — and Reflections is **V8** here against Swift's 7. Only
+  the table shape is shared.
+- **The text is not retyped.** It crosses as generated JSON, like the glossary
+  and the prayers: a Swift test writes
+  `core/src/main/resources/content/reflections.json` and fails if what is
+  committed has drifted. The seven prompts, the closing text, the explainer and
+  its link all come through that. Retyping them into Kotlin would have been a
+  second chance to get someone else's words wrong.
 
-**Android gets none of that.** Before a single screen exists:
+### What it actually cost
 
-| To translate | Where |
-|---|---|
-| `Reflection`, `ReflectionQuestion`, `ReflectionEntry` | `core/.../Reflections/Reflection.swift` |
-| The seven prompts, verbatim | `ReflectionContent.swift` |
-| `ReflectionPeriod`, `ReflectionSeries`, `ReflectionJournal` | `ReflectionJournal.swift` |
-| `ReflectionArchive`, `ReflectionImport` | `ReflectionArchive.swift` |
-| Four `Store` methods + `seedReflections` and the export/import extensions | `Store.swift` |
-| Schema 7 — `reflection`, `reflection_entry` | `SQLiteStore.swift`, and `Schema.kt` here stops at 6 |
-| ~50 tests | `ReflectionTests.swift`, `ReflectionStoreTests.swift` |
+Core: `Reflection`, `ReflectionQuestion`, `ReflectionEntry`, `ReflectionPeriod`,
+`ReflectionSeries`, `ReflectionJournal`, `ReflectionArchive`, `ReflectionImport`,
+four `Store` methods with the seeding and export/import extensions, schema V8,
+and a `REFLECTIONS` case on `RuleReference`. **54 new tests**, mirroring the
+Swift suite case for case so a failure here and a failure there are the same
+failure. The Kotlin core is at 336 tests.
 
-`RuleReference` gains a `.reflections` case and `reflectionRuleTitle`, both in
-`core/.../Model/RuleReference.swift`. The library rule and the glossary entry
-arrive free — both are in the generated JSON under
-`android/core/src/main/resources/content/`, already regenerated.
+Two existing tests had to change, both legitimately: `ContentTest` counts the
+glossary and the library (112 and 24 now), and `SchemaMigrationTest`'s wind-back
+had to learn to drop the two new tables. That fixture has now been forgotten at
+macOS versions 4, 5 and 7 and here at 8, so it gained a guard that reads
+`Schema.kt` and fails by name when a migration creates a table the wind-back
+does not reverse.
 
-### The three that will bite
+### What the interface decided
 
-**1. The snapshot rule is not a join.** Every `ReflectionEntry` stores its own
-copy of the question — `q_title`, `q_notice`, `q_task` — rather than a foreign
-key to `reflection`. Translating it as a join looks tidier and is wrong: editing
-a question would silently rewrite what every past answer was answering, and the
-bug would not show until someone edited one. The columns are deliberate.
+- **A screen under Rule, not a seventh bar item.** Six is already what the bar
+  carries. Reached from the rule row that names it, and from Settings — which
+  had no "Elsewhere" section before and needed one, or the screen is unreachable
+  until the rule is taken on.
+- **Past entries are a dated list you tap into**, matching iOS. No room for the
+  Mac's chevrons either side of a panel.
+- **Tapping the way through carries the weekday**, so a Tuesday rule lands on
+  Tuesday's question. `LaunchedEffect` + `animateScrollToItem`, deferred — a
+  `LazyColumn` has not built the later days on the first pass.
+- **`AppState` gained a `notice`.** macOS and iOS each had somewhere to say
+  "that could not be saved"; Android had nowhere, so failures here would have
+  been silent.
 
-**2. An answer is immutable.** Every field of `ReflectionEntry` is `let` in
-Swift. Kotlin's `val` in a `data class` gives the same thing — do not reach for
-`var` because a builder is convenient. "Locks on save" is structural, not a
-rule the interface remembers.
+### The keyboard, and what checking it actually took
 
-**3. `weekday` is the primary key of `reflection`.** There is exactly one per
-day and there always will be. No id column, no ordering, no archived state.
+`android:windowSoftInputMode="adjustResize"` on the activity and
+`Modifier.imePadding()` on the list. Verified on the **last** of the seven days
+— the worst case, nothing below it to scroll into — with a real keyboard up.
 
-### The interface, and what iOS chose
+Getting to a real keyboard took three attempts and they are worth writing down:
 
-macOS and iOS disagree in three places, each for a reason that applies to
-Android as well:
+1. `adb shell input text` types through the IME without showing it. It looks
+   like a passing test and proves nothing. iOS had the identical trap with its
+   hardware keyboard.
+2. The AVD ships `hw.keyboard=yes`, which collapses the soft keyboard to a
+   floating toolbar. `show_ime_with_hard_keyboard 1` was not enough; the AVD's
+   `config.ini` had to be set to `no` and the emulator restarted. **Restore it
+   afterwards** — it is the developer's own config, not the project's.
+3. Driving the UI by replayed coordinates drifted twice, once into a file picker
+   and once into Google Lens. Read the hierarchy with `uiautomator dump` and tap
+   by *exact* text — a substring match hit "This stays in Settings" instead of
+   the Settings tab.
 
-- **Reading past entries.** macOS uses a panel with ◀ ▶ either side. There is no
-  room for chevrons beside a full-width sheet on a phone, so **iOS uses a dated
-  list you tap into** — a date with a two-line excerpt, opening on the question
-  as it stood plus the answer. Android should do the same; a phone is a phone.
-- **Where it lives.** macOS has a sidebar entry. iOS caps at five tabs before
-  the system folds the rest into "More", so Reflections is a *route* reached
-  from the rule row that names it and from Settings — the same arrangement the
-  glossary and Psalter already use. **Android has six navigation items**, so it
-  may be able to afford a destination; decide against the existing arrangement
-  rather than copying either.
-- **The explainer.** A panel that animates down over the top on macOS; on iOS a
-  card at the head of the scroll, raised from the toolbar's help mark.
+### A real bug the test found
 
-### Behaviour to match exactly
-
-- **Tapping the way through from a rule scrolls to that weekday.** Tapping it on
-  a Tuesday lands on Tuesday's question, not at the top of a seven-day scroll.
-  Both platforms carry the weekday in the navigation value — `Route.reflections(weekday:)`
-  on iOS, `Screen.reflections(weekday:)` on macOS. In Compose this is
-  `LazyColumn` + `scrollToItem`.
-- **The scroll must be deferred one frame.** A lazy list has not built the later
-  days when the screen first appears, so scrolling to Saturday in the same pass
-  finds nothing. iOS wraps it in `DispatchQueue.main.async`; Compose wants a
-  `LaunchedEffect`.
-- **Save asks for confirmation**, because it is irreversible. There is **no
-  standing warning** under the field — a permanent notice beside every empty box
-  is a nag, and the tone rules rule it out.
-- **Neither half of the question is labelled.** The task lines say "At the end of
-  the day…" themselves, and a "Notice" label only named what the section is
-  already called. Told apart by weight.
-- **Import merges and never replaces.** `ReflectionJournal.merge` decides it;
-  the interface only reports the counts.
-- **A failed write still repaints.** The entry is in memory and valid; swallowing
-  the redraw makes a successful save look like a dead button.
-
-### The keyboard
-
-The thing Ryan flagged, and it is handled — but not by hand. SwiftUI lifts a
-focused field clear of the keyboard on its own, and it was **checked on the last
-day of the seven**, which is the worst case: nothing below it to scroll into.
-Verified in the Simulator with the software keyboard actually up, not reasoned
-about.
-
-**Android has to do this deliberately.** `android:windowSoftInputMode="adjustResize"`
-on the activity, and `Modifier.imePadding()` on the scrolling container. Then
-check it on the last day, not the first — the first day always looks fine.
-
-iOS also got `.scrollDismissesKeyboard(.interactively)`, because seven text
-fields with no way to put the keyboard away except by saving is unpleasant.
-Compose's equivalent is a `nestedScroll` connection that clears focus.
+The answer field is a `BasicTextField` in a `Box`. The min height was on the box,
+so the field wrapped its single line at the top and **five sixths of a 96dp
+target was inert** — it reads as a dead control rather than a small one. The min
+height belongs on the field.
 
 ### The typeface
 
-macOS now sets everything meant to be **read** in Iowan Old Style, and keeps the
-system sans for everything meant to be **operated** — the sidebar, the month
-grid's numerals, times, buttons and settings. That division is the thing to
-port, more than any particular file.
+macOS and iOS read in **Iowan Old Style**, which is John Downer's, licensed to
+Apple, and **may not be redistributed** — so it cannot come here at any bundle
+size.
 
-**Each platform picks the native face closest to what macOS chose.** The look
-should be recognisably the same app; matching the exact file is neither possible
-nor the point.
+The rule agreed for the ports is that each platform picks the **native face
+closest to what macOS chose**. On Android that is the platform serif —
+`FontFamily.Serif`, which is Noto Serif — present on every device, no licence to
+check, nothing to ship. Chrome keeps Roboto, which is what makes the app look
+like it belongs on the phone rather than ported to it.
 
-Android cannot have Iowan Old Style at all: it is John Downer's, released through
-Bitstream and licensed to Apple, and **redistributing it would be a licence
-violation**. So:
+An earlier note here said to bundle **Charter**, the second face in the Apple
+chain. That is still available and is freely redistributable, and it is the
+closer match to Iowan on the merits. It was not done because the platform serif
+needs no licence decision made on anyone's behalf — but if the platform serif is
+ever judged too far off with the two side by side, Charter is the answer and the
+call is a deliberate one, not a default.
 
-- **Reading face: Charter**, bundled. This is not a consolation prize. Charter is
-  Matthew Carter, 1987, also originally Bitstream, drawn to the same brief as
-  Iowan — large x-height, low stroke contrast, sturdy blunt serifs, engineered to
-  hold up at text sizes. It is already the second face in the macOS chain, so a
-  Mac without Iowan and an Android phone read the same. Bitstream released
-  Charter permissively; **XCharter** is the maintained extension and is the one
-  to ship. If bundling is refused for any reason, `Literata` and `Source Serif 4`
-  are the next nearest, both OFL.
-- **Chrome: Roboto**, the platform sans, untouched. It plays the part SF plays on
-  macOS, and swapping it for anything else would make the app look foreign on the
-  device rather than consistent with itself.
-
-One trap worth knowing when translating: on Apple platforms `Font.custom` falls
-back **silently** when a face is missing. The app asked for `Cardo` in six places
-for months and Cardo was never installed or bundled, so all six had quietly been
-rendering in the system sans, and nothing looked broken. A bundled font on
-Android fails more loudly, but the lesson holds — assert that the face resolves
-rather than trusting the call site. `TypefaceTests` and `FontCallSiteTests` in
-the macOS suite exist because of that.
+One trap worth carrying: on Apple platforms `Font.custom` falls back **silently**
+when a face is missing. The macOS app asked for `Cardo` in six places for months
+and Cardo was never installed or bundled, so all six rendered in the system sans
+and nothing looked broken. A bundled font on Android fails more loudly, but the
+lesson holds — assert the face resolves rather than trusting the call site.

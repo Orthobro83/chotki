@@ -13,6 +13,10 @@ import org.chotki.core.Recurrence
 import org.chotki.core.Rule
 import org.chotki.core.RuleCategory
 import org.chotki.core.TimeOfDay
+import org.chotki.core.Weekday
+import org.chotki.core.reflections.Reflection
+import org.chotki.core.reflections.ReflectionEntry
+import org.chotki.core.reflections.ReflectionQuestion
 import java.time.Instant
 import java.util.UUID
 
@@ -273,6 +277,99 @@ class SqliteStore(private val db: Db) : Store {
             """.trimIndent(),
             listOf(json.encodeToString(AppSettings.serializer(), settings)),
         )
+    }
+
+    // MARK: reflections
+
+    override fun reflections(): List<Reflection> =
+        db.query(
+            "SELECT weekday, title, notice, task, edited_at FROM reflection ORDER BY weekday;"
+        ) { row ->
+            Reflection(
+                weekday = Weekday.of(row.int(0)!!),
+                question = ReflectionQuestion(
+                    title = row.string(1)!!,
+                    notice = row.string(2)!!,
+                    task = row.string(3)!!,
+                ),
+                editedAt = row.string(4)?.let(Instant::parse),
+            )
+        }
+
+    override fun save(reflection: Reflection) {
+        db.update(
+            """
+            INSERT INTO reflection (weekday, title, notice, task, edited_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(weekday) DO UPDATE SET
+                title = excluded.title, notice = excluded.notice,
+                task = excluded.task, edited_at = excluded.edited_at;
+            """.trimIndent(),
+            listOf(
+                reflection.weekday.number.toString(),
+                reflection.question.title,
+                reflection.question.notice,
+                reflection.question.task,
+                reflection.editedAt?.toString(),
+            ),
+        )
+    }
+
+    override fun save(entry: ReflectionEntry) {
+        db.update(
+            """
+            INSERT INTO reflection_entry
+                (id, weekday, date, text, q_title, q_notice, q_task, written_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(weekday, date) DO UPDATE SET
+                text = excluded.text, q_title = excluded.q_title,
+                q_notice = excluded.q_notice, q_task = excluded.q_task,
+                written_at = excluded.written_at;
+            """.trimIndent(),
+            listOf(
+                entry.id.toString(),
+                entry.weekday.number.toString(),
+                entry.date.iso,
+                entry.text,
+                entry.question.title,
+                entry.question.notice,
+                entry.question.task,
+                entry.writtenAt.toString(),
+            ),
+        )
+    }
+
+    override fun reflectionEntries(
+        weekday: Weekday?,
+        from: CalendarDate?,
+        through: CalendarDate?,
+    ): List<ReflectionEntry> {
+        val sql = StringBuilder(
+            """
+            SELECT id, weekday, date, text, q_title, q_notice, q_task, written_at
+            FROM reflection_entry WHERE 1 = 1
+            """.trimIndent()
+        )
+        val bindings = mutableListOf<String?>()
+        weekday?.let { sql.append(" AND weekday = ?"); bindings += it.number.toString() }
+        from?.let { sql.append(" AND date >= ?"); bindings += it.iso }
+        through?.let { sql.append(" AND date <= ?"); bindings += it.iso }
+        sql.append(" ORDER BY date DESC;")
+
+        return db.query(sql.toString(), bindings) { row ->
+            ReflectionEntry(
+                id = UUID.fromString(row.string(0)!!),
+                weekday = Weekday.of(row.int(1)!!),
+                date = CalendarDate.parse(row.string(2)!!)!!,
+                text = row.string(3)!!,
+                question = ReflectionQuestion(
+                    title = row.string(4)!!,
+                    notice = row.string(5)!!,
+                    task = row.string(6)!!,
+                ),
+                writtenAt = Instant.parse(row.string(7)!!),
+            )
+        }
     }
 
     // MARK: the whole plan, or none of it

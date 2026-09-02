@@ -1,6 +1,7 @@
 package org.chotki.app.ui
 
 import org.chotki.core.Rule
+import org.chotki.core.Weekday
 import java.util.UUID
 
 /**
@@ -30,12 +31,24 @@ sealed interface Screen {
     data object Reading : Screen
     data object Progress : Screen
     data class Terms(val slug: String? = null) : Screen
+    /**
+     * The seven questions and the journal of answers.
+     *
+     * A screen under Rule rather than a seventh bar item: six is already what
+     * the bar carries, and this is reached the way the Psalter is — from the
+     * rule that names it on the day, and from Settings for browsing.
+     *
+     * [weekday] is the day to open on. Tapping the way through from Tuesday's
+     * rule should land on Tuesday's question rather than at the top of a
+     * seven-day scroll; null opens at the top, which is what Settings wants.
+     */
+    data class Reflections(val weekday: Weekday? = null) : Screen
     data object Settings : Screen
 
     /** Which bar item is lit while this screen is showing. */
     val place: Place
         get() = when (this) {
-            Day, Library, is Editor, is RulePrayers -> Place.RULE
+            Day, Library, is Editor, is RulePrayers, is Reflections -> Place.RULE
             Rope, Psalter -> Place.PRAYERS
             Reading -> Place.READING
             Progress -> Place.PROGRESS

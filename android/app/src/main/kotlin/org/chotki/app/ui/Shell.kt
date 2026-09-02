@@ -233,6 +233,15 @@ fun Shell(state: AppState) {
                             PsalterScreen(state, Modifier.weight(1f))
                         }
 
+                        is Screen.Reflections -> {
+                            BackLink { journey = journey.back() }
+                            ReflectionsScreen(
+                                state = state,
+                                openAt = screen.weekday,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+
                         Screen.Library -> {
                             BackLink { journey = journey.back() }
                             LibrarySheet(
@@ -252,6 +261,7 @@ fun Shell(state: AppState) {
                             // The day's readings already have a place of their own.
                             onReadReading = { journey = journey.go(Place.READING) },
                             onReadPsalter = { journey = journey.push(Screen.Psalter) },
+                            onReadReflections = { journey = journey.push(Screen.Reflections(it)) },
                             onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
                             onOpenLibrary = { journey = journey.push(Screen.Library) },
                         )
@@ -271,7 +281,11 @@ fun Shell(state: AppState) {
                         )
 
                         Screen.Progress -> ProgressScreen(state, Modifier.weight(1f))
-                        Screen.Settings -> SettingsScreen(state, Modifier.weight(1f))
+                        Screen.Settings -> SettingsScreen(
+                            state = state,
+                            modifier = Modifier.weight(1f),
+                            onOpenReflections = { journey = journey.push(Screen.Reflections()) },
+                        )
 
                         is Screen.Terms -> GlossaryScreen(
                             glossary = glossary,

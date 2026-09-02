@@ -237,8 +237,8 @@ only the view was written. `ReflectionsViews.swift`.
   hands back a security-scoped URL, so the read is wrapped in
   `startAccessingSecurityScopedResource`.
 
-`PortParityTests` still has no Reflections entry: it compares macOS with
-Android, and Android does not have the feature yet.
+Android has it now too, as of 2 September 2026 — see `android/PORT.md` for what
+that cost and where it chose differently.
 
 ## The typeface
 

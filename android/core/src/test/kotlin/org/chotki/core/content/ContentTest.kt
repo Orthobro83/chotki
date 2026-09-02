@@ -25,10 +25,13 @@ class ContentTest {
 
     @Test
     fun `everything loads and nothing is empty`() {
-        assertEquals(111, Content.glossary.size, "glossary entries")
+        assertEquals(112, Content.glossary.size, "glossary entries")
+        assertEquals(7, Content.reflections.days.size, "the seven reflections")
+        assertEquals(2, Content.reflections.closingText.size, "what closes the week")
+        assertEquals(3, Content.reflections.explainer.size, "the explainer")
         assertEquals(19, Content.prayers.size, "prayers")
         assertEquals(3, Content.prayerSequences.size, "prayer sequences")
-        assertEquals(23, Content.ruleLibrary.size, "library templates")
+        assertEquals(24, Content.ruleLibrary.size, "library templates")
         assertEquals(36, Content.patristicReadings.size, "patristic readings")
         assertEquals(24, Content.prayerSources.size, "further reading")
     }
