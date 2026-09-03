@@ -465,3 +465,54 @@ struct PrayerScreenTests {
         #expect(screen.count == 1, "the first knot after changing the target was refused")
     }
 }
+
+/// The parts of the book that are followed rather than kept as a rule.
+@Suite("The service texts")
+struct ServiceTextTests {
+
+    @Test("the book's sections are all there, in the book's order")
+    func allPresent() {
+        let all = ServiceTexts.all
+        #expect(all.count == 23)
+        #expect(all.first?.id == "vespers")
+        #expect(all.last?.id == "the-jesus-prayer")
+        #expect(all.contains { $0.id == "divine-liturgy" })
+    }
+
+    @Test("every text has a title and something in it")
+    func nonEmpty() {
+        for text in ServiceTexts.all {
+            #expect(!text.title.isEmpty, "\(text.id)")
+            #expect(!text.paragraphs.isEmpty, "\(text.id)")
+            #expect(text.paragraphs.allSatisfy { !$0.isEmpty }, "\(text.id)")
+        }
+    }
+
+    /// The scan left marks the cleaner had to repair. A backslash or a brace
+    /// surviving into the app means a repair was missed, and the reader meets
+    /// "&ader" where the book says "Reader".
+    @Test("no scanner damage survived into the text")
+    func noResidualDamage() {
+        let damage = CharacterSet(charactersIn: "\\|~^{}<>@#$%&£")
+        for text in ServiceTexts.all {
+            for paragraph in text.paragraphs {
+                #expect(
+                    paragraph.rangeOfCharacter(from: damage) == nil,
+                    "\(text.id): \(paragraph.prefix(70))"
+                )
+            }
+        }
+    }
+
+    @Test("ids are unique, so a link cannot land on two texts")
+    func idsAreUnique() {
+        let ids = ServiceTexts.all.map(\.id)
+        #expect(Set(ids).count == ids.count)
+    }
+
+    @Test("the source is named, as every bundled text must be")
+    func cited() {
+        #expect(ServiceTexts.source.contains("Jordanville"))
+        #expect(!ServiceTexts.sourceURL.isEmpty)
+    }
+}

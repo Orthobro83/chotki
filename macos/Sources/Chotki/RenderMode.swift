@@ -376,6 +376,20 @@ enum RenderMode {
                 model.prayers = PrayerScreen(selection: "jesus-prayer", count: 12)
                 model.screen = .prayerRope
             }
+            // The service texts: the list, a short one, and the Liturgy, which
+            // is the longest thing in the book. Each is a screen someone can
+            // land on, and a screen nobody has looked at is one this project
+            // has shipped broken before.
+            draw(popover, "popover-service-list", prefix: prefix) {
+                model.screen = .serviceTexts
+            }
+            draw(popover, "popover-service-text", prefix: prefix) {
+                model.screen = .serviceText("vespers")
+            }
+            draw(popover, "popover-service-liturgy", prefix: prefix) {
+                model.screen = .serviceText("divine-liturgy")
+            }
+
             draw(popover, "popover-terms-back", prefix: prefix) { model.openGlossary("amen") }
 
             // The welcome exists only on a first run, which is the record

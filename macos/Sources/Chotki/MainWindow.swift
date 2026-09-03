@@ -41,6 +41,10 @@ enum WindowRoute: Equatable {
     case editor(UUID?)
     case prayers(UUID)
     case glossary(String?)
+    /// The service texts, as a sheet over the Reading. `nil` is the list; an
+    /// id opens straight into that text, which is what a link from elsewhere
+    /// in the app would want.
+    case serviceTexts(String?)
     /// Already where it needs to be.
     case stay
 
@@ -55,6 +59,9 @@ enum WindowRoute: Equatable {
         case .prayers(let ruleID): return .prayers(ruleID)
         // The Psalter lives under Prayers in the window, as the rope does.
         case .psalter: return .section(.prayers)
+        // Under Reading in the window, as they are in the popover.
+        case .serviceTexts: return .serviceTexts(nil)
+        case .serviceText(let id): return .serviceTexts(id)
         case .reflections: return .section(.reflections)  // the weekday is read by the view
         }
     }
@@ -89,6 +96,7 @@ struct MainWindowView: View {
     @State private var editing: EditorTarget?
     @State private var reading: EditorTarget?
     @State private var pendingSlug: String?
+    @State private var services: ServiceSheet?
 
     var body: some View {
         NavigationSplitView {
@@ -123,8 +131,16 @@ struct MainWindowView: View {
                 editing = EditorTarget(ruleID: ruleID)
             case .prayers(let ruleID):
                 reading = EditorTarget(ruleID: ruleID)
+            case .serviceTexts(let id):
+                go(to: .reading)
+                services = ServiceSheet(openTextID: id)
             }
             model.screen = .main
+        }
+        .sheet(item: $services) { target in
+            ServiceSheetView(model: model, openTextID: target.openTextID) { services = nil }
+                .frame(width: 520, height: 680)
+                .background(Theme.ground)
         }
         .sheet(item: $reading) { target in
             VStack(spacing: 0) {

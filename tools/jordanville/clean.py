@@ -88,8 +88,48 @@ def clean(raw: str) -> str:
         ('H aving risen', 'Having risen'),
         ('R member, O Lord', 'Remember, O Lord'),
         ('Thol!', 'Thou'), ('Thol ', 'Thou '),
+        # The service sections carry more damage than the prayers: speaker
+        # labels and small caps confuse the scanner badly. Each of these is a
+        # word the surrounding line makes unmistakable.
+        ('\u00a3.\\lleluia', 'Alleluia'), ('\u00a3ver', 'Ever'),
+        ('e\\er,', 'ever,'), ('_.\\postles', 'Apostles'),
+        ('&ader:', 'Reader:'), ('11}f!l!kdays:', 'Weekdays:'),
+        ('{Sung', '[Sung'), ('us_ ', 'us '), ('let us_', 'let us'),
+        ('\\ictory', 'victory'), ('sinn<c:rs', 'sinners'), ('Unweddedl', 'Unwedded!'),
     ]:
         t = t.replace(wrong, right)
+
+    # The worst drop caps straddle a line break, so these have to be patterns
+    # rather than literals. A decorative W comes back as "V V" on the second
+    # line with debris on the first; each pattern carries enough of its own
+    # sentence that it cannot match anything else in the book.
+    for pattern, replacement in [
+        (r'J\\\s*s of old Thou didst redeem us from\s*\n?\s*1"1\s*',
+         'As of old Thou didst redeem us from '),
+        (r'Al>-\s*\n?\s*solver', 'Absolver'),
+        (r'"\{\s*A Jhile the angels were chanting,\s*\n?\s*V V\s*',
+         'While the angels were chanting, '),
+        (r"\"'\{\s*A 7hen the Absolver of all mankind\s*\n?\s*V V\s*",
+         'When the Absolver of all mankind '),
+        (r'heaven\s*\n?\s*\.1"\\\.\.\.\s*', 'heaven '),
+        (r'<of', 'of'),
+        (r'"\'?\{\s*', ''),          # quote-and-brace debris left by a drop cap
+        (r'\{Note:', '[Note:'),
+        # Letter-level damage the symbol check cannot see, found by reading the
+        # rendered screens rather than by grepping for punctuation.
+        (r'tit rice', 'thrice'),
+        (r'"l\'Oice', 'voice'),
+        (r'vVhen', 'When'),
+        # A word run into the next: the scanner lost the space, not the letter.
+        (r'(?<=[a-z])(?=Jesus\b)', ' '),
+        # "Lord, I have cried" opens with a drop-cap L the scanner read as
+        # "T ord", then repeated as a stray L on the following line.
+        (r'T ord,\s+I have cried unto Thee,\s+L\s+hearken',
+         'Lord, I have cried unto Thee, hearken'),
+    ]:
+        t = re.sub(pattern, replacement, t)
+
+    t = re.sub(r'(?<=[A-Za-z])\\\\(?=[A-Za-z])', '', t)   # a slash inside a word
 
     t = re.sub(r'[ \t]+', ' ', t)
     t = re.sub(r' *\n *', '\n', t)

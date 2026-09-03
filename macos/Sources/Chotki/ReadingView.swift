@@ -5,11 +5,36 @@ struct ReadingViewContent: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        if let day = model.liturgical.cachedDay(for: model.selectedDate) {
-            content(day)
-        } else {
-            waiting
+        VStack(alignment: .leading, spacing: 0) {
+            // Above the day's readings, because it is always there whether or
+            // not the calendar has been reached, and because someone looking
+            // for the Liturgy is not looking for today in particular.
+            serviceTextsLink
+            if let day = model.liturgical.cachedDay(for: model.selectedDate) {
+                content(day)
+            } else {
+                waiting
+            }
         }
+    }
+
+    private var serviceTextsLink: some View {
+        Button { model.screen = .serviceTexts } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "book.closed").font(.system(size: 10))
+                Text("Service texts")
+                    .font(.system(size: 12))
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 9))
+            }
+            .foregroundStyle(Theme.gold)
+            .padding(.horizontal, 16).padding(.vertical, 9)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Service texts")
+
+        .overlay(alignment: .bottom) { Divider().overlay(Theme.lineSoft) }
     }
 
     private func content(_ day: LiturgicalDay) -> some View {

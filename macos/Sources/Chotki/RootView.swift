@@ -42,6 +42,16 @@ struct RootView: View {
                 Header(title: "Prayers") { model.screen = .main }
                 PrayerView(model: model, ruleID: ruleID)
                     .frame(maxHeight: .infinity, alignment: .top)
+            case .serviceTexts:
+                Header(title: "Service texts") { model.screen = .main }
+                ServiceTextListContent(model: model)
+                    .frame(maxHeight: .infinity, alignment: .top)
+            case .serviceText(let id):
+                Header(title: ServiceTexts.text(id: id)?.title ?? "Service text") {
+                    model.screen = .serviceTexts
+                }
+                ServiceTextViewContent(model: model, id: id)
+                    .frame(maxHeight: .infinity, alignment: .top)
             case .psalter:
                 Header(title: "The Psalter") { model.screen = .main }
                 PsalterView(model: model)

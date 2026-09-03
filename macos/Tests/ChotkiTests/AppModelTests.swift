@@ -952,3 +952,38 @@ struct DayAdvanceTests {
     }
 }
 
+
+/// The service texts, and the two surfaces that have to agree about them.
+///
+/// The window has a sidebar where the popover has a screen stack, so a screen
+/// the window forgets to translate is a control that works perfectly in one and
+/// does nothing in the other. That has happened here twice.
+@MainActor
+@Suite("Service texts are reachable on both surfaces")
+struct ServiceTextRouteTests {
+
+    @Test("the list and a single text both route in the window")
+    func windowHandlesBoth() {
+        #expect(WindowRoute.route(for: .serviceTexts) == .serviceTexts(nil))
+        #expect(WindowRoute.route(for: .serviceText("divine-liturgy"))
+                == .serviceTexts("divine-liturgy"))
+    }
+
+    /// Neither may fall through to `.stay`, which is what a screen the window
+    /// does not know about looks like — a dead control rather than an error.
+    @Test("neither screen is quietly ignored")
+    func neitherIsIgnored() {
+        for screen in [Screen.serviceTexts, .serviceText("vespers")] {
+            #expect(WindowRoute.route(for: screen) != .stay, "\(screen)")
+        }
+    }
+
+    @Test("the book's whole list is offered, not a selection from it")
+    func offersEverything() {
+        #expect(ServiceTexts.all.count == 23)
+        // The three anyone would look for first.
+        for id in ["vespers", "matins", "divine-liturgy"] {
+            #expect(ServiceTexts.text(id: id) != nil, "\(id)")
+        }
+    }
+}

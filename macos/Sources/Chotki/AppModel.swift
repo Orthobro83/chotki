@@ -18,6 +18,10 @@ enum Screen: Hashable {
     case prayerRope
     case prayers(UUID)
     case psalter
+    /// Everything in the prayer book that is followed rather than kept as a
+    /// rule — reached from the Reading, where the day's other texts are.
+    case serviceTexts
+    case serviceText(String)
     /// Window only. The popover sends the reader to the window for it — at 400
     /// points there is no room for seven questions and a journal.
     ///
