@@ -10,6 +10,7 @@ import Foundation
 extension Glossary {
 
     public static let bundled: [GlossaryEntry] = general + prayerWords + russianPractice
+        + jordanvilleWords
 
     static let general: [GlossaryEntry] = [
 

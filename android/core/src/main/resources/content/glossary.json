@@ -2120,5 +2120,310 @@
     "traditions" : [
 
     ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "English would say \"most holy\". The Greek builds one word, panagia, and the translators kept the shape of it.\n\nUsed of the Theotokos above all — in Greek she is simply \"the Panagia\" — and of the Holy Spirit. It is not a comparison with anyone else. It says the holiness goes all the way through.",
+    "related" : [
+
+    ],
+    "short" : "Wholly holy — a title given to the Theotokos and to the Holy Spirit.",
+    "slug" : "all-holy",
+    "term" : "All-holy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "\"Most-holy Theotokos, save us\" and \"O my most holy lady Theotokos\" render the same Greek word the prayers elsewhere give as All-holy. The hyphen is a sign that one Greek word stands behind two English ones.",
+    "related" : [
+
+    ],
+    "short" : "The same title as All-holy, spelt the other way in English.",
+    "slug" : "most-holy",
+    "term" : "Most-holy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "\"O Most-good Lord\" — another compound built the Greek way. It is not \"quite good\" or \"better than others\"; it says goodness with nothing else mixed in.",
+    "related" : [
+
+    ],
+    "short" : "Wholly good. Addressed to God, in the same shape as All-holy.",
+    "slug" : "most-good",
+    "term" : "Most-good",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "The usual Orthodox name for John the Baptist. Prodromos in Greek: the one who runs in front. He came before Christ, announced him, and baptised him.\n\nYou will meet him under three names in the same book — the Forerunner, the Baptist, and John — and they are one man.",
+    "related" : [
+      "baptist"
+    ],
+    "short" : "Saint John the Baptist — the one who went ahead of Christ.",
+    "slug" : "forerunner",
+    "term" : "Forerunner",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "Not a denomination. In Orthodox prayers \"the Baptist\" is always Saint John, cousin of Christ, who preached repentance in the desert and baptised him in the river Jordan.\n\nUsually named alongside the Theotokos when the prayers ask the saints to pray for us, because the two of them stand nearest Christ.",
+    "related" : [
+      "forerunner"
+    ],
+    "short" : "Saint John, who baptised Christ in the Jordan.",
+    "slug" : "baptist",
+    "term" : "Baptist",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "faith",
+    "full" : "Aeiparthenos in Greek. The Church has held from early on that the Virgin Mary remained a virgin, and the title says so in one word.\n\nIt is a point where Orthodox teaching differs from much of Western Christianity, and it carries more than a glossary line can hold. Your priest or spiritual father is the person to ask.",
+    "related" : [
+
+    ],
+    "short" : "A title of the Theotokos: virgin before, during and after the Nativity.",
+    "slug" : "ever-virgin",
+    "term" : "Ever-Virgin",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Unwedded",
+      "Bride Unwedded"
+    ],
+    "category" : "prayer",
+    "full" : "\"Rejoice, O Bride Unwedded\" ends the Akathist to the Theotokos and turns up through the prayers. Nymphe anymphefte in Greek, which sounds like a riddle in that language too.\n\nIt holds two things at once: she is the bride — the one wholly given to God — and she was never married. The strangeness of the phrase is the point of it.",
+    "related" : [
+      "ever-virgin"
+    ],
+    "short" : "A title of the Theotokos — a bride who was never wed.",
+    "slug" : "bride-unwedded",
+    "term" : "Bride",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "Champion Leader"
+    ],
+    "category" : "prayer",
+    "full" : "\"To thee, the Champion Leader, we thy servants dedicate a feast of victory\" opens the Kontakion sung at the end of the evening prayers.\n\nA champion here is what the word once meant in English: not a winner, but the one who goes out to fight for you. The hymn was written after Constantinople survived a siege, and it thanks her as the city's defender.",
+    "related" : [
+
+    ],
+    "short" : "The Theotokos as defender — the one who fights on our side.",
+    "slug" : "champion-leader",
+    "term" : "Champion",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "Theophoros in Greek. Said of someone in whom God plainly dwells, and used almost as a surname for the fathers of the Church: \"our holy and God-bearing fathers\".\n\nNot the same as Theotokos, which means God-bearer in the sense of giving birth to him, and belongs to the Virgin alone.",
+    "related" : [
+      "theotokos"
+    ],
+    "short" : "Carrying God within — said of the saints and the holy fathers.",
+    "slug" : "god-bearing",
+    "term" : "God-bearing",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "saints",
+    "full" : "\"Pray unto God for me, O holy God-pleaser N.\" — the prayer to the saint whose name you bear, where N. stands for that saint's name.\n\nUgodnik Bozhiy in Slavonic. It is simply what a saint is: not a perfect person, but one who pleased God.",
+    "related" : [
+
+    ],
+    "short" : "A saint — someone whose life was pleasing to God.",
+    "slug" : "god-pleaser",
+    "term" : "God-pleaser",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "scripture",
+    "full" : "Theopneustos, literally God-breathed. Saint Paul uses it of the scriptures; the prayers use it of the fathers and their writings.\n\nIt says where the words came from, not that the person who wrote them stopped being themselves.",
+    "related" : [
+
+    ],
+    "short" : "Breathed into by God — said of scripture and of the fathers who wrote it down.",
+    "slug" : "god-inspired",
+    "term" : "God-inspired",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "life-creating"
+    ],
+    "category" : "faith",
+    "full" : "\"O bearer of God the Life-giver\" addresses the Theotokos and calls her son the Life-giver. \"Thine All-holy and good and life-creating Spirit\" says the same of the Holy Spirit.\n\nLife here is not only being alive. It is the life the Church means when it speaks of eternal life, which begins now.",
+    "related" : [
+
+    ],
+    "short" : "The one who gives life — Christ, and the Holy Spirit.",
+    "slug" : "life-giver",
+    "term" : "Life-giver",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "Light runs through Orthodox prayer as the plainest word available for God's presence — so an angel is light-bearing, the night of Pascha is light-bearing, and so is the day the prayers hope for.",
+    "related" : [
+      "unwaning"
+    ],
+    "short" : "Carrying light. Said of angels, of Pascha, and of the life to come.",
+    "slug" : "light-bearing",
+    "term" : "Light-bearing",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "prayer",
+    "full" : "\"O bearer of the Unwaning Light\" — the Theotokos, and the light is Christ.\n\nTo wane is what the moon does as it shrinks night by night. Unwaning light is light that never does: it does not rise, set, or grow less.",
+    "related" : [
+      "light-bearing"
+    ],
+    "short" : "Never fading. Said of light that does not dim, unlike the moon's.",
+    "slug" : "unwaning",
+    "term" : "Unwaning",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "things",
+    "full" : "Both things at once. The Cross Christ died on, and the sign a person makes over themselves — right hand, three fingers joined for the Trinity and two folded for Christ's divinity and humanity, touching forehead, stomach, right shoulder, left shoulder.\n\nOrthodox Christians cross from right to left, which is one of the visible differences from Western practice.",
+    "related" : [
+
+    ],
+    "short" : "The Cross of Christ, and the sign made with the hand.",
+    "slug" : "cross",
+    "term" : "Cross",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "scripture",
+    "full" : "Not primarily someone who predicts the future. A prophet is someone God speaks through: Moses, Elijah, Isaiah, David.\n\nThe prayers name them alongside the apostles and martyrs when they ask the whole Church, living and departed, to pray with us.",
+    "related" : [
+
+    ],
+    "short" : "One who speaks for God — usually the Old Testament figures.",
+    "slug" : "prophet",
+    "term" : "Prophet",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "faith",
+    "full" : "From two Greek words: orthos, straight or right, and doxa, which means both belief and glory. So it is read either way — believing rightly, or glorifying rightly — and the Church has never much minded which.\n\nUsed in these prayers of the Church itself, and of its people: \"Orthodox Christians\", \"the Orthodox faith\".",
+    "related" : [
+
+    ],
+    "short" : "Right belief, or right worship — the Church this book belongs to.",
+    "slug" : "orthodox",
+    "term" : "Orthodox",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "faith",
+    "full" : "A Hebrew word meaning the accuser or adversary. The prayers name him plainly and ask for deliverance, and then move on — Orthodox prayer spends very little time on him.\n\n\"Deliver us from the evil one\" at the end of the Our Father is the same request.",
+    "related" : [
+
+    ],
+    "short" : "The adversary. The evil one the prayers ask to be delivered from.",
+    "slug" : "satan",
+    "term" : "Satan",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+
+    ],
+    "category" : "faith",
+    "full" : "Greek, and older than Christianity: in the poets it is the pit beneath the underworld. The prayers use it for the depths a soul fears falling to.\n\nWhat the Church actually teaches about hell is not settled by a word borrowed from Homer, and is a question for your priest or spiritual father.",
+    "related" : [
+
+    ],
+    "short" : "The lowest depths — a word the prayers borrow for hell.",
+    "slug" : "tartarus",
+    "term" : "Tartarus",
+    "traditions" : [
+
+    ]
   }
 ]

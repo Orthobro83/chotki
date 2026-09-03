@@ -24,12 +24,18 @@ struct PrayerTests {
         #expect(Set(ids).count == ids.count)
     }
 
-    // Modern prayer books, the Jordanville book included, are in copyright.
-    // The wording here must come from older public-domain translations.
+    /// Modern prayer books are in copyright, and wording must not arrive from
+    /// one by habit.
+    ///
+    /// **Jordanville is the exception, and only Jordanville.** Ryan obtained
+    /// the copyright holder's permission on 2 September 2026 and the whole
+    /// prayer book is now the app's wording. Permission from one publisher is
+    /// not permission from the rest, so every other name stays on this list —
+    /// the guard is doing more work now than it was before, not less.
     @Test("no prayer cites a source still in copyright")
     func sourcesArePublicDomain() {
-        let forbidden = ["jordanville", "holy trinity monastery", "st vladimir",
-                         "antiochian archdiocese", "oca.org", "ancient faith"]
+        let forbidden = ["st vladimir", "antiochian archdiocese",
+                         "oca.org", "ancient faith"]
         for prayer in book.prayers {
             let source = prayer.source.lowercased()
             for phrase in forbidden {
@@ -229,19 +235,29 @@ struct PrayerSequenceTests {
         #expect(book.prayers(of: .morning).map(\.id) == PrayerSequence.morning.prayerIDs)
     }
 
-    @Test("each rule opens with the opening prayer")
+    /// Both rules begin with the Trisagion prayers, which is what makes them
+    /// recognisably one tradition's rules rather than two lists.
+    ///
+    /// Not "the first id is the same": Jordanville opens the morning with the
+    /// Publican's prayer and three bows before the Opening Prayer, and opens
+    /// the evening with the Opening Prayer directly. That difference is the
+    /// book's and is not ours to flatten.
+    @Test("each rule opens with the Trisagion prayers")
     func opensAlike() {
         for sequence in [PrayerSequence.morning, .evening] {
-            #expect(sequence.prayerIDs.first == "opening-prayer", "\(sequence.id)")
+            #expect(sequence.prayerIDs.prefix(3).contains("opening-prayer"), "\(sequence.id)")
+            #expect(sequence.prayerIDs.contains("our-father"), "\(sequence.id)")
         }
     }
 
     @Test("morning and evening differ where they should")
     func rulesDiffer() {
-        #expect(PrayerSequence.morning.prayerIDs.contains("having-risen"))
-        #expect(!PrayerSequence.morning.prayerIDs.contains("evening-forgiveness"))
-        #expect(PrayerSequence.evening.prayerIDs.contains("evening-forgiveness"))
-        #expect(!PrayerSequence.evening.prayerIDs.contains("having-risen"))
+        // Each has prayers the other does not: the morning its Troparia to the
+        // Holy Trinity, the evening its Kontakion and its confession of sins.
+        #expect(PrayerSequence.morning.prayerIDs.contains("troparia-to-the-holy-trinity"))
+        #expect(!PrayerSequence.evening.prayerIDs.contains("troparia-to-the-holy-trinity"))
+        #expect(PrayerSequence.evening.prayerIDs.contains("daily-confession-of-sins"))
+        #expect(!PrayerSequence.morning.prayerIDs.contains("daily-confession-of-sins"))
     }
 
     // One definition, used by both. If a template ever carried its own list

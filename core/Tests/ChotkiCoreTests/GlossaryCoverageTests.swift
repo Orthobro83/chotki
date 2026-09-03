@@ -37,6 +37,15 @@ struct GlossaryCoverageTests {
         "israel", "sion", "jerusalem", "david", "moses", "abraham", "jacob",
         "egypt", "jordan", "galilee", "judea", "bethlehem", "nazareth",
         "mary", "pontius", "pilate", "sisoes",
+        // More of the same, met when the whole Jordanville book arrived. Every
+        // one is ordinary English wearing a capital because it addresses God,
+        // or a pronoun doing the same. A reader who needs "Comfort" explained
+        // is not helped by a glossary.
+        "blood", "book", "comfort", "faith", "fruit", "her", "his", "high",
+        "hosts", "judge", "lady", "land", "leader", "lover", "names", "only",
+        "prayer", "provider", "ruler", "shepherd", "sinless", "sovereign",
+        "guardian", "healer", "treasury", "eternal", "divine", "christian",
+        "russian", "eastern", "passion", "whose", "christ's",
         // Divine titles. A reader of a prayer book does not stumble on
         // "Almighty" or "Maker"; they are English, and their meaning is the
         // plain one.

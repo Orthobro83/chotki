@@ -82,6 +82,12 @@ def clean(raw: str) -> str:
         ('and trength', 'and strength'),
         ('Thou earnest among', 'Thou camest among'),
         ('[ of anyone', '[of anyone'),
+        # A drop cap the scanner left standing apart from its own word. Only
+        # where the lone capital is not itself a word: "O come" and "I believe"
+        # are the book's, and must not be touched.
+        ('H aving risen', 'Having risen'),
+        ('R member, O Lord', 'Remember, O Lord'),
+        ('Thol!', 'Thou'), ('Thol ', 'Thou '),
     ]:
         t = t.replace(wrong, right)
 

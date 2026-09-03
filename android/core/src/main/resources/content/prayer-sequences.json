@@ -2,19 +2,48 @@
   {
     "id" : "morning",
     "prayerIDs" : [
+      "publican",
       "opening-prayer",
       "beginning",
       "heavenly-king",
       "trisagion",
       "all-holy-trinity",
       "our-father",
-      "macarius",
-      "having-risen",
-      "guardian-angel",
+      "troparia-to-the-holy-trinity",
+      "prayer-of-saint-basil-the-great-to-the-most",
+      "psalm-50",
+      "creed",
+      "prayer-i-of-st-macarius-the-great",
+      "prayer-ii-of-the-same-saint",
+      "prayer-iii-of-the-same-saint",
+      "prayer-iv-of-the-same-saint",
+      "prayer-v-of-st-basil-the-great",
+      "prayer-vi-likewise-by-st-basil",
+      "prayer-vii-to-the-most-holy-theotokos",
+      "prayer-viii-to-our-lord-jesus-christ",
+      "prayer-ix-to-the-holy-guardian-angel",
+      "prayer-x-to-the-most-holy-theotokos",
+      "prayer-for-the-salvation-of-russia",
+      "prayerful-invocation-of-the-saint-whose-name",
       "rejoice-o-virgin",
+      "troparion-to-the-cross",
+      "for-the-living",
+      "for-the-departed",
       "it-is-truly-meet"
     ],
     "title" : "Morning prayers"
+  },
+  {
+    "id" : "during-the-day",
+    "prayerIDs" : [
+      "before-the-beginning-of-any-work",
+      "after-the-completion-of-any-work",
+      "before-lessons",
+      "after-lessons",
+      "before-noon-and-evening-meals",
+      "after-noon-and-evening-meals"
+    ],
+    "title" : "Prayers during the day"
   },
   {
     "id" : "evening",
@@ -25,16 +54,31 @@
       "trisagion",
       "all-holy-trinity",
       "our-father",
-      "evening-forgiveness",
+      "troparia",
+      "sleep-prayer-i-of-st-macarius-the-great",
+      "prayer-ii-of-saint-antiochus",
+      "prayer-iii-to-the-holy-spirit",
+      "prayer-iv-of-st-macarius-the-great",
+      "prayer-v",
+      "prayer-vi",
+      "prayer-vii-of-st-john-chrysostom-according-t",
+      "sleep-prayer-viii-to-our-lord-jesus-christ",
+      "prayer-ix-to-the-most-holy-theotokos",
       "ioannikios",
-      "guardian-angel",
-      "it-is-truly-meet"
+      "kontakion-to-the-theotokos",
+      "prayer-of-saint-john-damascene-which-is-to-b",
+      "and-when-about-to-lie-down-in-bed-say-this",
+      "then-instead-of-forgiveness",
+      "prayer",
+      "daily-confession-of-sins",
+      "when-giving-thyself-up-to-sleep-say"
     ],
-    "title" : "Evening prayers"
+    "title" : "Prayers before sleep"
   },
   {
     "id" : "trisagion-prayers",
     "prayerIDs" : [
+      "opening-prayer",
       "beginning",
       "heavenly-king",
       "trisagion",
