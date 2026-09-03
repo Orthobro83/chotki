@@ -299,3 +299,61 @@ struct CustomLibraryTests {
         #expect(CustomLibrary.entries(from: [rule]).count == 1, "that is the point")
     }
 }
+
+/// The library after the move to Jordanville.
+///
+/// The templates that name a whole sequence updated themselves when the
+/// sequences did. The ones that named prayers directly, or named none at all,
+/// did not — and a template offering a rule with no words behind it is the
+/// quiet failure here, because it looks perfectly fine in the list.
+@Suite("The library offers the book's daily prayers")
+struct JordanvilleLibraryTests {
+
+    private let library = RuleLibrary.shared
+    private let book = PrayerBook.shared
+
+    @Test("every prayer a template names still exists")
+    func everyNamedPrayerResolves() {
+        for template in RuleLibrary.bundled {
+            for id in template.prayerIDs {
+                #expect(book.prayer(id: id) != nil, "\(template.id) names missing \(id)")
+            }
+        }
+    }
+
+    /// Two prayer rules have no text on purpose: an akathist is chosen from the
+    /// service texts, and a kathisma comes from the Psalter. Everything else in
+    /// the section should lead somewhere.
+    @Test("prayer rules lead to words, apart from the two that cannot")
+    func prayerRulesHaveText() {
+        let withoutText = Set(["akathist", "psalter-kathisma"])
+        for template in RuleLibrary.bundled where template.category == .prayer {
+            guard !withoutText.contains(template.id) else { continue }
+            #expect(!template.prayerIDs.isEmpty, "\(template.id) offers a rule with no words")
+        }
+    }
+
+    /// The prayers the book gives for the day are reachable as rules, not only
+    /// as items in a dropdown. Someone who wants grace before meals should find
+    /// it in the library.
+    @Test("the book's daily prayers are offered as rules")
+    func dailyPrayersAreOffered() {
+        let named = Set(RuleLibrary.bundled.flatMap(\.prayerIDs))
+        for id in [
+            "before-noon-and-evening-meals", "after-noon-and-evening-meals",
+            "before-the-beginning-of-any-work", "after-the-completion-of-any-work",
+            "before-lessons", "after-lessons",
+            "creed", "daily-confession-of-sins", "ephrem",
+            "for-the-living", "for-the-departed",
+            "prayerful-invocation-of-the-saint-whose-name",
+        ] {
+            #expect(named.contains(id), "no library rule offers \(id)")
+        }
+    }
+
+    @Test("the Lenten prayer is seasonal, not daily all year")
+    func ephraimIsSeasonal() {
+        let template = library.template(id: "prayer-of-st-ephraim")
+        #expect(template?.recurrence == .liturgical(.season(.greatLent)))
+    }
+}

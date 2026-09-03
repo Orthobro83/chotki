@@ -52,7 +52,82 @@ extension RuleLibrary {
         RuleTemplate(
             id: "prayer-before-meals", title: "Prayer before meals",
             summary: "Grace before eating.",
-            recurrence: .daily, category: .prayer, reminders: .silent
+            recurrence: .daily, category: .prayer, reminders: .silent,
+            glossarySlugs: ["prayer-rule"],
+            prayerIDs: ["before-noon-and-evening-meals"]
+        ),
+        // The book gives an "after" for every "before". They are separate
+        // rules because they are separate acts — someone may well keep one and
+        // not the other — and kept as separate templates so that a rule
+        // already called "Prayer before meals" is not renamed underneath
+        // anyone.
+        RuleTemplate(
+            id: "prayer-after-meals", title: "Prayer after meals",
+            summary: "Thanksgiving when the meal is finished.",
+            recurrence: .daily, category: .prayer, reminders: .silent,
+            glossarySlugs: ["prayer-rule"],
+            prayerIDs: ["after-noon-and-evening-meals"]
+        ),
+        RuleTemplate(
+            id: "prayers-during-the-day", title: "Prayers during the day",
+            summary: "The short prayers the book gives for work, lessons and meals.",
+            note: "Six prayers in pairs — one before each thing, one after.",
+            recurrence: .daily, category: .prayer, reminders: .silent,
+            glossarySlugs: ["prayer-rule"],
+            prayerIDs: PrayerSequence.duringTheDay.prayerIDs
+        ),
+        RuleTemplate(
+            id: "prayers-at-work", title: "Prayers at the start and end of work",
+            summary: "Before beginning any work, and when it is finished.",
+            recurrence: .daily, category: .prayer, reminders: .silent,
+            glossarySlugs: ["prayer-rule"],
+            prayerIDs: ["before-the-beginning-of-any-work",
+                        "after-the-completion-of-any-work"]
+        ),
+        RuleTemplate(
+            id: "prayers-at-lessons", title: "Prayers before and after lessons",
+            summary: "For a student, or for anyone sitting down to study.",
+            recurrence: .daily, category: .prayer, reminders: .silent,
+            glossarySlugs: ["prayer-rule"],
+            prayerIDs: ["before-lessons", "after-lessons"]
+        ),
+        RuleTemplate(
+            id: "lord-have-mercy", title: "Lord, have mercy",
+            summary: "Said in threes, twelves or forties, often on the rope.",
+            note: "The shortest prayer in the book, and the one said most.",
+            recurrence: .daily, category: .prayer, reminders: RuleReminders(leads: []),
+            glossarySlugs: ["chotki", "prayer-rule"],
+            prayerIDs: ["lord-have-mercy"]
+        ),
+        RuleTemplate(
+            id: "symbol-of-faith", title: "The Symbol of Faith",
+            summary: "The Creed, said daily in the morning rule.",
+            recurrence: .daily, category: .prayer,
+            glossarySlugs: ["symbol-of-faith", "prayer-rule"],
+            prayerIDs: ["creed"]
+        ),
+        RuleTemplate(
+            id: "daily-confession", title: "Daily confession of sins",
+            summary: "The examination the book sets before sleep.",
+            note: "Not the mystery of Confession, which is made to a priest.",
+            recurrence: .daily, timeOfDay: t(21, 45), category: .prayer,
+            glossarySlugs: ["confession", "prayer-rule"],
+            prayerIDs: ["daily-confession-of-sins"]
+        ),
+        RuleTemplate(
+            id: "saint-whose-name", title: "The saint whose name you bear",
+            summary: "A short prayer to your patron, said daily.",
+            recurrence: .daily, category: .prayer, reminders: .silent,
+            glossarySlugs: ["patron-saint", "name-day"],
+            prayerIDs: ["prayerful-invocation-of-the-saint-whose-name"]
+        ),
+        RuleTemplate(
+            id: "prayer-of-st-ephraim", title: "The Prayer of Saint Ephraim",
+            summary: "The Lenten prayer, with prostrations.",
+            note: "Said through Great Lent, and not on Saturdays or Sundays.",
+            recurrence: .liturgical(.season(.greatLent)), category: .prayer,
+            glossarySlugs: ["great-lent", "prostration", "saint-ephrem"],
+            prayerIDs: ["ephrem"]
         ),
         RuleTemplate(
             id: "akathist", title: "An akathist",
@@ -195,11 +270,19 @@ extension RuleLibrary {
             recurrence: .daily, category: .life, reminders: RuleReminders(leads: [])
         ),
         RuleTemplate(
+            id: "prayer-for-the-living", title: "Prayer for the living",
+            summary: "Remembering your people by name.",
+            recurrence: .daily, category: .life, reminders: .silent,
+            glossarySlugs: ["prayer-rule"],
+            prayerIDs: ["for-the-living"]
+        ),
+        RuleTemplate(
             id: "prayer-for-the-departed", title: "Prayer for the departed",
             summary: "Remembering your dead by name.",
             recurrence: .daily, category: .life, reminders: .silent,
             traditions: [.russian, .serbian, .bulgarian],
-            glossarySlugs: ["panikhida", "radonitsa", "saturday-of-souls"]
+            glossarySlugs: ["panikhida", "radonitsa", "saturday-of-souls"],
+            prayerIDs: ["for-the-departed"]
         )
     ]
 }

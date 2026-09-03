@@ -163,11 +163,11 @@
   {
     "category" : "prayer",
     "glossarySlugs" : [
-
+      "prayer-rule"
     ],
     "id" : "prayer-before-meals",
     "prayerIDs" : [
-
+      "before-noon-and-evening-meals"
     ],
     "recurrence" : {
       "kind" : "daily"
@@ -180,6 +180,242 @@
     },
     "summary" : "Grace before eating.",
     "title" : "Prayer before meals",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "prayer-rule"
+    ],
+    "id" : "prayer-after-meals",
+    "prayerIDs" : [
+      "after-noon-and-evening-meals"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Thanksgiving when the meal is finished.",
+    "title" : "Prayer after meals",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "prayer-rule"
+    ],
+    "id" : "prayers-during-the-day",
+    "note" : "Six prayers in pairs — one before each thing, one after.",
+    "prayerIDs" : [
+      "before-the-beginning-of-any-work",
+      "after-the-completion-of-any-work",
+      "before-lessons",
+      "after-lessons",
+      "before-noon-and-evening-meals",
+      "after-noon-and-evening-meals"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The short prayers the book gives for work, lessons and meals.",
+    "title" : "Prayers during the day",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "prayer-rule"
+    ],
+    "id" : "prayers-at-work",
+    "prayerIDs" : [
+      "before-the-beginning-of-any-work",
+      "after-the-completion-of-any-work"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Before beginning any work, and when it is finished.",
+    "title" : "Prayers at the start and end of work",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "prayer-rule"
+    ],
+    "id" : "prayers-at-lessons",
+    "prayerIDs" : [
+      "before-lessons",
+      "after-lessons"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "For a student, or for anyone sitting down to study.",
+    "title" : "Prayers before and after lessons",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "chotki",
+      "prayer-rule"
+    ],
+    "id" : "lord-have-mercy",
+    "note" : "The shortest prayer in the book, and the one said most.",
+    "prayerIDs" : [
+      "lord-have-mercy"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+
+      ]
+    },
+    "summary" : "Said in threes, twelves or forties, often on the rope.",
+    "title" : "Lord, have mercy",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "symbol-of-faith",
+      "prayer-rule"
+    ],
+    "id" : "symbol-of-faith",
+    "prayerIDs" : [
+      "creed"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The Creed, said daily in the morning rule.",
+    "title" : "The Symbol of Faith",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "confession",
+      "prayer-rule"
+    ],
+    "id" : "daily-confession",
+    "note" : "Not the mystery of Confession, which is made to a priest.",
+    "prayerIDs" : [
+      "daily-confession-of-sins"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The examination the book sets before sleep.",
+    "timeOfDay" : "21:45",
+    "title" : "Daily confession of sins",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "patron-saint",
+      "name-day"
+    ],
+    "id" : "saint-whose-name",
+    "prayerIDs" : [
+      "prayerful-invocation-of-the-saint-whose-name"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "A short prayer to your patron, said daily.",
+    "title" : "The saint whose name you bear",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "prayer",
+    "glossarySlugs" : [
+      "great-lent",
+      "prostration",
+      "saint-ephrem"
+    ],
+    "id" : "prayer-of-st-ephraim",
+    "note" : "Said through Great Lent, and not on Saturdays or Sundays.",
+    "prayerIDs" : [
+      "ephrem"
+    ],
+    "recurrence" : {
+      "kind" : "liturgical",
+      "season" : "greatLent",
+      "trigger" : "season"
+    },
+    "reminders" : {
+      "enabled" : true,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "The Lenten prayer, with prostrations.",
+    "title" : "The Prayer of Saint Ephraim",
     "traditions" : [
 
     ]
@@ -686,13 +922,37 @@
   {
     "category" : "life",
     "glossarySlugs" : [
+      "prayer-rule"
+    ],
+    "id" : "prayer-for-the-living",
+    "prayerIDs" : [
+      "for-the-living"
+    ],
+    "recurrence" : {
+      "kind" : "daily"
+    },
+    "reminders" : {
+      "enabled" : false,
+      "leads" : [
+        "tenMinutes"
+      ]
+    },
+    "summary" : "Remembering your people by name.",
+    "title" : "Prayer for the living",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "category" : "life",
+    "glossarySlugs" : [
       "panikhida",
       "radonitsa",
       "saturday-of-souls"
     ],
     "id" : "prayer-for-the-departed",
     "prayerIDs" : [
-
+      "for-the-departed"
     ],
     "recurrence" : {
       "kind" : "daily"
