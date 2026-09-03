@@ -987,3 +987,39 @@ struct ServiceTextRouteTests {
         }
     }
 }
+
+/// "On your rule" has to mean on the rule now.
+///
+/// Removing a rule closes its activation and leaves the row — the days it kept
+/// are still true, and deleting them would rewrite the record. A library that
+/// matches on the title alone therefore kept saying "On your rule" about
+/// something taken off weeks earlier, with no button to take it on again.
+@MainActor
+@Suite("The library knows what is actually on the rule")
+struct LibraryTakenTests {
+
+    @Test("a removed rule is offered again")
+    func removedRuleCanBeTakenOnAgain() throws {
+        let model = try makeModel()
+        let template = try #require(RuleLibrary.shared.template(id: "morning-prayers"))
+
+        model.take(on: template)
+        let rule = try #require(model.rules.first { template.answersTo($0.title) })
+        #expect(model.isOnTheRule(rule))
+
+        model.delete(rule, scope: .wholeSeries)
+        let after = model.rules.first { template.answersTo($0.title) }
+        // The row may well still be there. What matters is that it is no
+        // longer on the rule, which is what the library asks.
+        #expect(after.map { model.isOnTheRule($0) } != true,
+                "a removed rule still counts as taken, so it cannot be taken on again")
+    }
+
+    @Test("a rule kept under a template's old name still counts as taken")
+    func oldNameStillCountsAsTaken() throws {
+        let model = try makeModel()
+        let template = try #require(RuleLibrary.shared.template(id: "evening-prayers"))
+        #expect(template.answersTo("Evening prayers"))
+        #expect(template.title == "Prayers before sleep")
+    }
+}

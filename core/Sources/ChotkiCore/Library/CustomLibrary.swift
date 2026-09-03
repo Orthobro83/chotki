@@ -21,10 +21,12 @@ public enum CustomLibrary {
     /// person edits themselves. The title is what `makeRule` copies verbatim
     /// from a template, and it is already what the library matches on to show
     /// "on your rule", so the two agree by construction.
+    /// Former titles count. A template that was renamed — "Evening prayers"
+    /// became "Prayers before sleep" when the book changed — would otherwise
+    /// make every rule still carrying the old name look like one of his own,
+    /// and the Custom section would fill up with the library's own rules.
     public static func isOwn(_ rule: Rule, in library: RuleLibrary = .shared) -> Bool {
-        !library.templates.contains {
-            $0.title.compare(rule.title, options: .caseInsensitive) == .orderedSame
-        }
+        !library.templates.contains { $0.answersTo(rule.title) }
     }
 
     /// What the Custom section offers, newest first.

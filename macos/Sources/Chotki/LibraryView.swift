@@ -71,8 +71,14 @@ struct LibraryViewContent: View {
         }
     }
 
+    /// On the rule *now* — not "a rule with this name has existed".
+    ///
+    /// Removing a rule closes its activation and leaves the row, because the
+    /// days it kept are still true and deleting them would rewrite the record.
+    /// So a title match alone kept saying "On your rule" about something taken
+    /// off weeks ago, with no way to take it on again: the button was gone.
     private func isTaken(_ template: RuleTemplate) -> Bool {
-        model.rules.contains { $0.title == template.title }
+        model.rules.contains { template.answersTo($0.title) && model.isOnTheRule($0) }
     }
 }
 

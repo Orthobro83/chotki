@@ -9,6 +9,14 @@ import Foundation
 public struct RuleTemplate: Sendable, Hashable, Codable, Identifiable {
     public let id: String
     public let title: String
+    /// What this rule used to be called.
+    ///
+    /// A rule is matched to its template by title, because that is what
+    /// `makeRule` copies. Renaming a template therefore orphans every rule
+    /// already on someone's record — "Evening prayers" became "Prayers before
+    /// sleep" when the book changed, and without this the repair that gives a
+    /// rule its prayers back would stop recognising it.
+    public let formerTitles: [String]
     /// Shown under the title in the library, explaining what taking it on means.
     public let summary: String
     public let note: String?
@@ -24,17 +32,27 @@ public struct RuleTemplate: Sendable, Hashable, Codable, Identifiable {
     public let prayerIDs: [String]
 
     public init(
-        id: String, title: String, summary: String, note: String? = nil,
+        id: String, title: String, formerTitles: [String] = [],
+        summary: String, note: String? = nil,
         recurrence: Recurrence, timeOfDay: TimeOfDay? = nil,
         category: RuleCategory, reminders: RuleReminders = .default,
         traditions: Set<Tradition> = [], glossarySlugs: [String] = [],
         prayerIDs: [String] = []
     ) {
-        self.id = id; self.title = title; self.summary = summary; self.note = note
+        self.id = id; self.title = title; self.formerTitles = formerTitles
+        self.summary = summary; self.note = note
         self.recurrence = recurrence; self.timeOfDay = timeOfDay
         self.category = category; self.reminders = reminders
         self.traditions = traditions; self.glossarySlugs = glossarySlugs
         self.prayerIDs = prayerIDs
+    }
+
+    /// Whether a rule with this title belongs to this template — under its
+    /// current name, or one it used to have.
+    public func answersTo(_ ruleTitle: String) -> Bool {
+        ([title] + formerTitles).contains {
+            $0.compare(ruleTitle, options: .caseInsensitive) == .orderedSame
+        }
     }
 
     /// The observance this rule needs before it will ever come due.
@@ -114,9 +132,8 @@ public struct RuleLibrary: Sendable {
     /// eleven going from Hapgood to Jordanville, so it would have sat there
     /// showing eight prayers of twenty-eight and looking like a content bug.
     public func restoredPrayerIDs(for rule: Rule, in book: PrayerBook = .shared) -> [String]? {
-        guard let template = templates.first(where: {
-            $0.title.compare(rule.title, options: .caseInsensitive) == .orderedSame
-        }), !template.prayerIDs.isEmpty else { return nil }
+        guard let template = templates.first(where: { $0.answersTo(rule.title) }),
+              !template.prayerIDs.isEmpty else { return nil }
 
         guard let stored = rule.prayerIDs else { return template.prayerIDs }
         guard !stored.isEmpty else { return nil }   // set to none on purpose

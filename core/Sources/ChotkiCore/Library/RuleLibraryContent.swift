@@ -28,8 +28,9 @@ extension RuleLibrary {
             prayerIDs: PrayerSequence.morning.prayerIDs
         ),
         RuleTemplate(
-            id: "evening-prayers", title: "Evening prayers",
-            summary: "The evening prayers, before sleep.",
+            id: "evening-prayers", title: "Prayers before sleep",
+            formerTitles: ["Evening prayers"],
+            summary: "The prayers before sleep, as the book sets them.",
             recurrence: .daily, timeOfDay: t(21, 30), category: .prayer,
             glossarySlugs: ["prayer-rule", "compline", "icon-corner"],
             prayerIDs: PrayerSequence.evening.prayerIDs

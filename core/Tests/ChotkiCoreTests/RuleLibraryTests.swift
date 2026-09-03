@@ -357,3 +357,49 @@ struct JordanvilleLibraryTests {
         #expect(template?.recurrence == .liturgical(.season(.greatLent)))
     }
 }
+
+/// Renaming a template, and taking a rule off.
+///
+/// Both of these went wrong at once when the book changed: "Evening prayers"
+/// became "Prayers before sleep", and a rule removed weeks earlier still read
+/// "On your rule" in the library with no way to take it on again.
+@Suite("A template keeps track of what it used to be called")
+struct FormerTitleTests {
+
+    private let library = RuleLibrary.shared
+
+    @Test("a template answers to its old name as well as its new one")
+    func answersToBoth() {
+        let template = library.template(id: "evening-prayers")
+        #expect(template?.title == "Prayers before sleep")
+        #expect(template?.answersTo("Prayers before sleep") == true)
+        #expect(template?.answersTo("Evening prayers") == true, "the old name was forgotten")
+        #expect(template?.answersTo("evening prayers") == true, "matching should ignore case")
+        #expect(template?.answersTo("Morning prayers") == false)
+    }
+
+    /// The reason the old name has to be kept: a rule taken on in August is
+    /// still called "Evening prayers", and the repair that gives it the
+    /// Jordanville text finds it by name.
+    @Test("a rule kept under the old name is still repaired")
+    func oldRuleStillFound() {
+        var rule = Rule(title: "Evening prayers", recurrence: .daily)
+        rule.prayerIDs = ["opening-prayer", "macarius", "evening-forgiveness"]
+
+        let restored = library.restoredPrayerIDs(for: rule)
+        #expect(restored != nil, "a rule under the old name was orphaned by the rename")
+        #expect(restored?.count ?? 0 > 20)
+    }
+
+    @Test("every former title is unique to one template")
+    func formerTitlesDoNotCollide() {
+        var seen: Set<String> = []
+        for template in RuleLibrary.bundled {
+            for name in [template.title] + template.formerTitles {
+                let key = name.lowercased()
+                #expect(!seen.contains(key), "two templates answer to \(name)")
+                seen.insert(key)
+            }
+        }
+    }
+}
