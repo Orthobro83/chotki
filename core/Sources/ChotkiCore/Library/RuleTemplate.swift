@@ -97,12 +97,32 @@ public struct RuleLibrary: Sendable {
     /// A renamed rule is left alone rather than guessed at, and so is a rule
     /// whose prayers were set to none deliberately: only `nil`, meaning never
     /// set, is treated as missing.
-    public func restoredPrayerIDs(for rule: Rule) -> [String]? {
-        guard rule.prayerIDs == nil else { return nil }
+    /// **Also repairs a rule whose prayers have gone stale.** Moving from the
+    /// Hapgood wording to Jordanville renamed most of the prayer ids, and a
+    /// rule carries the ids it was taken on with — so a morning rule kept since
+    /// August would quietly show the eight prayers whose names happened to
+    /// survive instead of the twenty-eight it names. Not a crash: `prayers(_:)`
+    /// drops what it cannot find, which is exactly what makes it hard to see.
+    ///
+    /// Repaired when **any** stored id no longer resolves, which is the signal
+    /// that tells the two cases apart. A reader who dropped prayers on purpose
+    /// is left holding a subset of ids that all still exist; a rule the content
+    /// moved under is holding at least one that does not.
+    ///
+    /// A threshold was tried first — "most of them have gone" — and was wrong
+    /// for the case it was written for: the morning rule loses three ids of
+    /// eleven going from Hapgood to Jordanville, so it would have sat there
+    /// showing eight prayers of twenty-eight and looking like a content bug.
+    public func restoredPrayerIDs(for rule: Rule, in book: PrayerBook = .shared) -> [String]? {
         guard let template = templates.first(where: {
             $0.title.compare(rule.title, options: .caseInsensitive) == .orderedSame
-        }) else { return nil }
-        return template.prayerIDs.isEmpty ? nil : template.prayerIDs
+        }), !template.prayerIDs.isEmpty else { return nil }
+
+        guard let stored = rule.prayerIDs else { return template.prayerIDs }
+        guard !stored.isEmpty else { return nil }   // set to none on purpose
+
+        let lost = stored.contains { book.prayer(id: $0) == nil }
+        return lost ? template.prayerIDs : nil
     }
 
     /// The rules that need repairing, already repaired. Rules needing nothing

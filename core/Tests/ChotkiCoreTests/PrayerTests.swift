@@ -516,3 +516,54 @@ struct ServiceTextTests {
         #expect(!ServiceTexts.sourceURL.isEmpty)
     }
 }
+
+/// A rule keeps the prayer ids it was taken on with, so changing the book's
+/// wording moves the content out from under every rule already on someone's
+/// phone. Nothing crashes — `prayers(_:)` drops what it cannot find — which is
+/// exactly why it needs a test rather than a bug report.
+@Suite("Rules survive the book changing under them")
+struct StalePrayerRepairTests {
+
+    private let library = RuleLibrary.shared
+
+    @Test("a rule pointing at the old wording is given the new")
+    func staleRuleIsRepaired() {
+        // What a morning rule kept since August actually holds: Hapgood ids,
+        // most of which Jordanville renamed.
+        var rule = Rule(title: "Morning prayers", recurrence: .daily)
+        rule.prayerIDs = ["opening-prayer", "beginning", "heavenly-king",
+                          "having-risen", "macarius", "guardian-angel"]
+
+        let restored = library.restoredPrayerIDs(for: rule)
+        #expect(restored != nil, "a rule holding dead ids was left alone")
+        #expect(restored?.count ?? 0 > 20, "the whole Jordanville morning rule should come back")
+    }
+
+    @Test("a rule that is merely edited is left alone")
+    func editedRuleIsNotClobbered() {
+        // Every id still resolves: the reader dropped some prayers on purpose.
+        var rule = Rule(title: "Morning prayers", recurrence: .daily)
+        rule.prayerIDs = ["publican", "our-father"]
+        #expect(library.restoredPrayerIDs(for: rule) == nil)
+    }
+
+    @Test("a rule set to no prayers stays that way")
+    func emptyStaysEmpty() {
+        var rule = Rule(title: "Morning prayers", recurrence: .daily)
+        rule.prayerIDs = []
+        #expect(library.restoredPrayerIDs(for: rule) == nil)
+    }
+
+    @Test("a rule that never had prayers still gets them")
+    func nilIsStillFilled() {
+        let rule = Rule(title: "Morning prayers", recurrence: .daily)
+        #expect(library.restoredPrayerIDs(for: rule)?.isEmpty == false)
+    }
+
+    @Test("a rule of someone's own is never touched")
+    func customRuleUntouched() {
+        var rule = Rule(title: "My own rule", recurrence: .daily)
+        rule.prayerIDs = ["macarius", "having-risen"]
+        #expect(library.restoredPrayerIDs(for: rule) == nil)
+    }
+}
