@@ -36,6 +36,20 @@ data class Rule(
      * The rule and its history are untouched; it is only no longer offered.
      */
     val hiddenFromLibrary: Boolean? = null,
+    /**
+     * Marked by the person as given to them by their priest or spiritual
+     * father.
+     *
+     * A label and nothing else. It changes no scoring, no scheduling and no
+     * control: a rule under obedience is still theirs to pause, stand down or
+     * remove, and an app is in no position to hold anyone to an obedience it
+     * was not party to. What it does is let the day's list say where a rule
+     * came from, which is the difference between a rule you chose and a rule
+     * you were given.
+     *
+     * Optional so every rule written before this existed decodes unmarked.
+     */
+    val givenByPriest: Boolean? = null,
 ) {
     val isArchived: Boolean get() = archivedAt != null
 

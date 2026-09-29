@@ -619,6 +619,17 @@ final class AppModel: ObservableObject {
     @Published var reflectionsOpenAt: Weekday?
 
     /// Opens the section on a given weekday.
+    /// Opens the rope already counting the prayer a rule names.
+    ///
+    /// "Ready to begin immediately" is the whole point, so the prayer is chosen
+    /// before the screen appears rather than left to the chooser at the top of
+    /// it. `choose` is a no-op when the prayer is already selected, which is
+    /// what keeps a count going when someone steps away and comes back.
+    func openRope(counting prayerID: String) {
+        prayers.choose(prayerID)
+        screen = .prayerRope
+    }
+
     func openReflections(on weekday: Weekday?) {
         reflectionsOpenAt = weekday
         screen = .reflections(weekday: weekday)

@@ -131,7 +131,8 @@
   {
     "category" : "prayer",
     "glossarySlugs" : [
-
+      "grace-before-meals",
+      "prayer-rule"
     ],
     "id" : "prayer-before-meals",
     "prayerIDs" : [
@@ -603,7 +604,8 @@
   {
     "category" : "life",
     "glossarySlugs" : [
-
+      "almsgiving",
+      "great-lent"
     ],
     "id" : "almsgiving",
     "prayerIDs" : [
@@ -630,7 +632,8 @@
   {
     "category" : "life",
     "glossarySlugs" : [
-
+      "spiritual-reading",
+      "synaxarion"
     ],
     "id" : "spiritual-reading",
     "prayerIDs" : [

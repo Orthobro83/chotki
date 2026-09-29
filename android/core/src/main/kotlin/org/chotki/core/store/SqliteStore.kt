@@ -42,13 +42,14 @@ class SqliteStore(private val db: Db) : Store {
         db.update(
             """
             INSERT INTO rule (${Schema.RULE_COLUMNS})
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 title = excluded.title, note = excluded.note, source = excluded.source,
                 recurrence = excluded.recurrence, time_of_day = excluded.time_of_day,
                 category = excluded.category, archived_at = excluded.archived_at,
                 reminders = excluded.reminders, prayer_ids = excluded.prayer_ids,
-                hidden_from_library = excluded.hidden_from_library;
+                hidden_from_library = excluded.hidden_from_library,
+                given_by_priest = excluded.given_by_priest;
             """.trimIndent(),
             listOf(
                 rule.id.toString(),
@@ -66,6 +67,7 @@ class SqliteStore(private val db: Db) : Store {
                 rule.prayerIDs?.let { json.encodeToString(it) },
                 // Only when set, so absent goes on meaning "still offered".
                 if (rule.hiddenFromLibrary == true) "1" else null,
+                if (rule.givenByPriest == true) "1" else null,
             ),
         )
     }
@@ -105,6 +107,7 @@ class SqliteStore(private val db: Db) : Store {
             ),
             archivedAt = row.string(8)?.let(Instant::parse),
             hiddenFromLibrary = row.int(11)?.let { it == 1 },
+            givenByPriest = row.int(12)?.let { it == 1 },
         )
     }
 

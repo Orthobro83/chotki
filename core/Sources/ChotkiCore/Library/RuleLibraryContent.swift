@@ -52,7 +52,8 @@ extension RuleLibrary {
         RuleTemplate(
             id: "prayer-before-meals", title: "Prayer before meals",
             summary: "Grace before eating.",
-            recurrence: .daily, category: .prayer, reminders: .silent
+            recurrence: .daily, category: .prayer, reminders: .silent,
+            glossarySlugs: ["grace-before-meals", "prayer-rule"]
         ),
         RuleTemplate(
             id: "akathist", title: "An akathist",
@@ -187,12 +188,14 @@ extension RuleLibrary {
         RuleTemplate(
             id: "almsgiving", title: "Almsgiving",
             summary: "Giving, in whatever form you have settled on.",
-            recurrence: .weekly(days: [.sunday]), category: .life, reminders: .silent
+            recurrence: .weekly(days: [.sunday]), category: .life, reminders: .silent,
+            glossarySlugs: ["almsgiving", "great-lent"]
         ),
         RuleTemplate(
             id: "spiritual-reading", title: "Spiritual reading",
             summary: "A set time with the Fathers or a life of a saint.",
-            recurrence: .daily, category: .life, reminders: RuleReminders(leads: [])
+            recurrence: .daily, category: .life, reminders: RuleReminders(leads: []),
+            glossarySlugs: ["spiritual-reading", "synaxarion"]
         ),
         RuleTemplate(
             id: "prayer-for-the-departed", title: "Prayer for the departed",

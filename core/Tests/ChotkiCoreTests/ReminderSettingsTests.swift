@@ -246,13 +246,51 @@ struct SchemaMigrationTests {
         // — because a new migration was added without teaching this fixture to
         // reverse it. `everyLaterTableIsReversed` now fails when that happens,
         // instead of leaving a "table already exists" for someone to decode.
-        for column in ["reminders", "prayer_ids", "hidden_from_library"] {
+        for column in Self.columnsAfterVersionTwo {
             try? store.exec("ALTER TABLE rule DROP COLUMN \(column);")
         }
         for table in Self.tablesAfterVersionTwo {
             try store.exec("DROP TABLE IF EXISTS \(table);")
         }
         try store.exec("DELETE FROM schema_version WHERE version > 2;")
+    }
+
+    /// Every column a later migration adds to `rule`, so the fixture can put
+    /// the file back to what version 2 left behind.
+    private static let columnsAfterVersionTwo = [
+        "reminders", "prayer_ids", "hidden_from_library", "given_by_priest",
+    ]
+
+    /// The column half of `everyLaterTableIsReversed`, and the half that was
+    /// missing. Three of the four breakages this fixture has suffered were an
+    /// added *column*, not an added table, so the guard that only read
+    /// CREATE TABLE never caught any of them. It reads the ALTERs now.
+    @Test("the fixture reverses every column a later migration adds")
+    func everyLaterColumnIsReversed() throws {
+        let later = try migrationLadder()
+        let added = later.matches(of: /ALTER TABLE rule ADD COLUMN (\w+)/)
+            .map { String($0.1) }
+        #expect(!added.isEmpty, "no ALTER found — the scan is looking in the wrong place")
+        for column in added {
+            #expect(
+                Self.columnsAfterVersionTwo.contains(column),
+                "migration adds `\(column)` but makeLegacyDatabase never drops it — add it to columnsAfterVersionTwo"
+            )
+        }
+    }
+
+    /// Everything from the version 3 block onward, read off the source.
+    private func migrationLadder() throws -> Substring {
+        let source = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Sources/ChotkiCore/Store/SQLiteStore.swift")
+        let text = try String(contentsOf: source, encoding: .utf8)
+        guard let start = text.range(of: "if current < 3 {") else {
+            Issue.record("the migration ladder no longer looks like `if current < n {`")
+            return ""
+        }
+        return text[start.lowerBound...]
     }
 
     /// Reads `SQLiteStore.swift` and checks that every table created after

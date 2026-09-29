@@ -288,6 +288,18 @@ struct EntryRow: View {
             // and the saint's life — with no way through at all, on both
             // platforms, for the same reason.
             switch entry.rule.reference {
+            case .rope:
+                // Straight to the rope with the count already running. A rule
+                // whose text is one counted prayer wants somewhere to count,
+                // not a page holding a single paragraph.
+                Button {
+                    if let id = entry.rule.ropePrayerID { model.openRope(counting: id) }
+                } label: {
+                    Image(systemName: "circle.hexagongrid").font(.system(size: 10))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(hovering ? Theme.gold : Theme.goldDim)
+                .help("Go to the rope")
             case .prayers:
                 Button { model.screen = .prayers(entry.rule.id) } label: {
                     Image(systemName: "text.alignleft").font(.system(size: 10))
@@ -342,6 +354,11 @@ struct EntryRow: View {
                 Text("Lifted by the Church today")
             } else {
                 switch entry.rule.reference {
+                case .rope:
+                    Button("Go to the rope") {
+                        if let id = entry.rule.ropePrayerID { model.openRope(counting: id) }
+                    }
+                    Divider()
                 case .prayers:
                     Button("Read the prayers") { model.screen = .prayers(entry.rule.id) }
                     Divider()

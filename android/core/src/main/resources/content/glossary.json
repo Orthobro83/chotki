@@ -985,6 +985,64 @@
   },
   {
     "aliases" : [
+      "alms",
+      "giving alms"
+    ],
+    "category" : "faith",
+    "full" : "Prayer, fasting and almsgiving are named together in the Gospel and have been treated as one discipline ever since. Prayer turns a person toward God, fasting loosens their grip on themselves, and almsgiving turns them toward their neighbour; leaving any of the three out tends to distort the other two.\n\nIt is meant to be done without display, and it is measured against what you have rather than against what anyone else gives. What form it takes, and how much, is an ordinary thing to settle with your priest or spiritual father.",
+    "related" : [
+      "great-lent",
+      "prayer-rule",
+      "spiritual-father"
+    ],
+    "short" : "Giving to those in need, held together with prayer and fasting as one discipline.",
+    "slug" : "almsgiving",
+    "term" : "Almsgiving",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "spiritual books",
+      "reading the Fathers"
+    ],
+    "category" : "prayer",
+    "full" : "Read slowly and in small amounts rather than at the pace of ordinary reading. A few lines attended to are worth more than a chapter got through, and the Fathers are usually taken a little at a time for exactly that reason.\n\nMost rules set a time rather than a quantity, so that a hard day shortens the reading instead of cancelling it. What to read is worth asking about: it is easy to pick up a book written for someone much further along.",
+    "related" : [
+      "synaxarion",
+      "prayer-rule",
+      "spiritual-father"
+    ],
+    "short" : "A set time given to Scripture, the Fathers, or the lives of the saints.",
+    "slug" : "spiritual-reading",
+    "term" : "Spiritual reading",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
+      "prayer before meals",
+      "prayer after meals",
+      "blessing of food",
+      "grace"
+    ],
+    "category" : "prayer",
+    "full" : "The common form is the Lord's Prayer, then a short blessing asking Christ to bless the food and drink of His servants, with the sign of the cross made over the table. A thanksgiving is said when the meal is finished.\n\nHouseholds shorten it freely and the blessing on its own is a complete form of it. If a priest is at the table, the blessing is his to give.",
+    "related" : [
+      "prayer-rule",
+      "trisagion"
+    ],
+    "short" : "The blessing said over food before a meal, and the thanksgiving after it.",
+    "slug" : "grace-before-meals",
+    "term" : "Grace before meals",
+    "traditions" : [
+
+    ]
+  },
+  {
+    "aliases" : [
 
     ],
     "category" : "prayer",

@@ -30,6 +30,18 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
     /// The rule and its history are untouched; it is only no longer offered.
     /// Optional so a rule written before this existed decodes as still offered.
     public var hiddenFromLibrary: Bool?
+    /// Marked by the person as given to them by their priest or spiritual
+    /// father.
+    ///
+    /// A label and nothing else. It changes no scoring, no scheduling and no
+    /// control: a rule under obedience is still theirs to pause, stand down or
+    /// remove, and an app is in no position to hold anyone to an obedience it
+    /// was not party to. What it does is let the day's list say where a rule
+    /// came from, which is the difference between a rule you chose and a rule
+    /// you were given.
+    ///
+    /// Optional so every rule written before this existed decodes unmarked.
+    public var givenByPriest: Bool?
 
     public init(
         id: UUID = UUID(),
@@ -43,7 +55,8 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         prayerIDs: [String]? = nil,
         createdAt: Date = Date(),
         archivedAt: Date? = nil,
-        hiddenFromLibrary: Bool? = nil
+        hiddenFromLibrary: Bool? = nil,
+        givenByPriest: Bool? = nil
     ) {
         self.id = id
         self.title = title
@@ -57,6 +70,7 @@ public struct Rule: Sendable, Hashable, Codable, Identifiable {
         self.createdAt = createdAt
         self.archivedAt = archivedAt
         self.hiddenFromLibrary = hiddenFromLibrary
+        self.givenByPriest = givenByPriest
     }
 
     public var isArchived: Bool { archivedAt != nil }

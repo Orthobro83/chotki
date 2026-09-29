@@ -248,6 +248,17 @@ public final class SQLiteStore: Store, @unchecked Sendable {
                 INSERT INTO schema_version (version) VALUES (7);
                 """)
         }
+
+        if current < 8 {
+            // Whether the person was given this rule by their priest or
+            // spiritual father. Nullable with nothing to backfill: absent means
+            // unmarked, and nobody has been asked the question yet, so every
+            // existing rule is correctly unmarked rather than wrongly "no".
+            try exec("""
+                ALTER TABLE rule ADD COLUMN given_by_priest INTEGER;
+                INSERT INTO schema_version (version) VALUES (8);
+                """)
+        }
     }
 
     // MARK: liturgical cache
@@ -325,21 +336,23 @@ public final class SQLiteStore: Store, @unchecked Sendable {
     public func save(_ rule: Rule) throws {
         try locked {
             try run("""
-                INSERT INTO rule (id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders, prayer_ids, hidden_from_library)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO rule (id, title, note, source, recurrence, time_of_day, category, created_at, archived_at, reminders, prayer_ids, hidden_from_library, given_by_priest)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     title = excluded.title, note = excluded.note, source = excluded.source,
                     recurrence = excluded.recurrence, time_of_day = excluded.time_of_day,
                     category = excluded.category, archived_at = excluded.archived_at,
                     reminders = excluded.reminders, prayer_ids = excluded.prayer_ids,
-                    hidden_from_library = excluded.hidden_from_library;
+                    hidden_from_library = excluded.hidden_from_library,
+                    given_by_priest = excluded.given_by_priest;
                 """, [
                     rule.id.uuidString, rule.title, rule.note, rule.source,
                     try encodeJSON(rule.recurrence), try encodeJSON(rule.timeOfDay),
                     rule.category, encode(rule.createdAt), encode(rule.archivedAt),
                     try encodeJSON(rule.reminders), try encodeJSON(rule.prayerIDs),
                     // Written only when set, so absent goes on meaning offered.
-                    rule.hiddenFromLibrary == true ? "1" : nil
+                    rule.hiddenFromLibrary == true ? "1" : nil,
+                    rule.givenByPriest == true ? "1" : nil
                 ])
         }
     }
@@ -359,14 +372,16 @@ public final class SQLiteStore: Store, @unchecked Sendable {
             prayerIDs: try decodeJSON([String].self, text(s, 10)),
             createdAt: createdAt, archivedAt: decode(text(s, 8)),
             hiddenFromLibrary: sqlite3_column_type(s, 11) == SQLITE_NULL
-                ? nil : sqlite3_column_int(s, 11) == 1
+                ? nil : sqlite3_column_int(s, 11) == 1,
+            givenByPriest: sqlite3_column_type(s, 12) == SQLITE_NULL
+                ? nil : sqlite3_column_int(s, 12) == 1
         )
     }
 
     private static let ruleColumns =
         """
         id, title, note, source, recurrence, time_of_day, category, created_at, \
-        archived_at, reminders, prayer_ids, hidden_from_library
+        archived_at, reminders, prayer_ids, hidden_from_library, given_by_priest
         """
 
     public func rule(id: UUID) throws -> Rule? {
