@@ -449,14 +449,15 @@ struct ReflectionExplainerTests {
         #expect(whole.contains("in consultation with your priest or spiritual father"))
     }
 
-    /// One link, and it is the address already in `Welcome` — not a second one
-    /// found for the same place.
+    /// One link, and it is a source credit rather than an affiliation: the
+    /// seven questions and the closing text are theirs. The welcome screen
+    /// names nobody, so this is the only place the Brotherhood appears.
     @Test("the Brotherhood is linked, once, to the address the app already uses")
     func theLink() {
         let linked = Reflection.explainer.flatMap(\.spans).filter { $0.url != nil }
         #expect(linked.count == 1)
         #expect(linked.first?.text == "Brotherhood of the Narrow Path")
-        #expect(linked.first?.url == Welcome.brotherhoodURL)
+        #expect(linked.first?.url == Reflection.brotherhoodURL)
     }
 
     /// The last line tells the reader to click a button. If the button is

@@ -197,12 +197,7 @@ fun SettingsScreen(
         // On macOS this framing reaches you through the releases page. An apk is
         // passed from hand to hand with no page attached, so it has to travel
         // inside the app or it does not travel at all.
-        Line(
-            "Chotki is an independent project. It was inspired by The Brotherhood " +
-                "of the Narrow Path, but it is not sanctioned by, affiliated with, or " +
-                "endorsed by them, and nothing in it speaks for them.",
-            Chotki.faint,
-        )
+        Line(org.chotki.core.content.Welcome.independence, Chotki.faint)
         Line(
             "Not open source. During the alpha you may install and run it for your own " +
                 "use. Please do not sell it or pass it on further.",

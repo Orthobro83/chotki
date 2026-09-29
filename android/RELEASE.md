@@ -14,7 +14,7 @@ running Chotki has to uninstall and start their record again.
 through anyone else's hands, mine included.**
 
 ```bash
-keytool -genkeypair -v -keystore /Volumes/2TB/claude-vault/projects/chotki/android/chotki-release.jks -alias chotki -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Ryan Macfarlane, O=Chotki"
+keytool -genkeypair -v -keystore /Volumes/2TB/claude-vault/projects/chotki-alpha/android/chotki-release.jks -alias chotki -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Ryan Macfarlane, O=Chotki"
 ```
 
 It asks for a keystore password, then whether to use the same one for the key
@@ -36,7 +36,7 @@ Back up **both** the `.jks` and the passwords somewhere that is not this drive.
 ## Building
 
 ```bash
-cd /Volumes/2TB/claude-vault/projects/chotki/android && ./gradlew :app:assembleRelease
+cd /Volumes/2TB/claude-vault/projects/chotki-alpha/android && ./gradlew :app:assembleRelease
 ```
 
 The apk lands at `app/build/outputs/apk/release/app-release.apk`.
@@ -49,14 +49,14 @@ and everyone who has ever run Android Studio has the same one.
 ## Checking what you are about to send
 
 ```bash
-cd /Volumes/2TB/claude-vault/projects/chotki/android && ~/Library/Android/sdk/build-tools/36.0.0/apksigner verify --print-certs -v app/build/outputs/apk/release/app-release.apk
+cd /Volumes/2TB/claude-vault/projects/chotki-alpha/android && ~/Library/Android/sdk/build-tools/36.0.0/apksigner verify --print-certs -v app/build/outputs/apk/release/app-release.apk
 ```
 
 Look for your own name in the certificate, `Signer #1 certificate DN`, and not
 `CN=Android Debug`. Also confirm `debuggable` is false:
 
 ```bash
-cd /Volumes/2TB/claude-vault/projects/chotki/android && ~/Library/Android/sdk/build-tools/36.0.0/aapt2 dump badging app/build/outputs/apk/release/app-release.apk | grep -E "package|application-debuggable"
+cd /Volumes/2TB/claude-vault/projects/chotki-alpha/android && ~/Library/Android/sdk/build-tools/36.0.0/aapt2 dump badging app/build/outputs/apk/release/app-release.apk | grep -E "package|application-debuggable"
 ```
 
 No `application-debuggable` line at all is the correct result.

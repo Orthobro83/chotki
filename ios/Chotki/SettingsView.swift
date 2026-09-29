@@ -94,7 +94,7 @@ struct SettingsView_: View {
             Section("This is an alpha") {
                 Text("The glossary, the prayers and the readings are awaiting a priest's review. Nothing here tells you what you must do; what you keep is settled with your priest or spiritual father.")
                     .font(.footnote).foregroundStyle(Chotki.faint)
-                Text("Chotki is an independent project. It was inspired by The Brotherhood of the Narrow Path, but it is not sanctioned by, affiliated with, or endorsed by them, and nothing in it speaks for them.")
+                Text(Welcome.independence)
                     .font(.footnote).foregroundStyle(Chotki.faint)
             }
         }

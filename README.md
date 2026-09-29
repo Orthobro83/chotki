@@ -2,11 +2,13 @@
 
 An app for keeping an Orthodox routine, and honestly measuring whether it is kept, to help you hold yourself accountable.
 
-A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning practice into a scoreboard.
+A calendar tells you what is scheduled. This tells you what you actually kept, over time, without turning practice into a scoreboard.
 
-You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community — such as [The Brotherhood of the Narrow Path](https://www.skool.com/fathermoses/), who inspired this app.
+You can add items of your own, whether or not they are Church canon, so that a rule shaped by your community or your circumstances can be held in one place alongside the rest.
 
-> Chotki is an independent project. It was inspired by The Brotherhood of the Narrow Path, but it is not sanctioned by, affiliated with, or endorsed by them, and nothing in it should be taken as speaking for them.
+> **An independent project by an Orthodox Inquirer.** Chotki speaks for no parish, no jurisdiction, and no community. Nothing in it carries anyone's blessing.
+>
+> It is not a spiritual father and is not meant to stand in for one. It was written because its author has none within reach of where he lives, and the rule still had to be kept. If you have a priest or a spiritual father, settle your rule with him and let this app do nothing more than remember it. If you do not yet have one, treat what is here as a beginning rather than an authority, and go on looking.
 
 ## Status
 

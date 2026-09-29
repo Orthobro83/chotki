@@ -23,6 +23,8 @@ data class WelcomeParagraphJson(
 data class WelcomeJson(
     val title: String,
     val beginLabel: String,
+    /** The standing disclaimer. See `Welcome.independence` in the Swift core. */
+    val independence: String,
     val paragraphs: List<WelcomeParagraphJson>,
 )
 
@@ -33,5 +35,6 @@ data class WelcomeJson(
 object Welcome {
     val title: String get() = Content.welcome.title
     val beginLabel: String get() = Content.welcome.beginLabel
+    val independence: String get() = Content.welcome.independence
     val paragraphs: List<WelcomeParagraphJson> get() = Content.welcome.paragraphs
 }

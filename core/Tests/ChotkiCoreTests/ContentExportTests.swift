@@ -212,6 +212,7 @@ struct ContentExportTests {
         [
             "title": Welcome.title,
             "beginLabel": Welcome.beginLabel,
+            "independence": Welcome.independence,
             "paragraphs": Welcome.paragraphs.map { paragraph in
                 [
                     "isAside": paragraph.isAside,

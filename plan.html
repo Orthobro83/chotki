@@ -139,13 +139,13 @@ em{font-style:italic}
 
 <section class="row">
   <div class="aside">
-    <p class="rubric">Named for the prayer rope. Everything lives in the vault at <em>projects/chotki</em>.</p>
+    <p class="rubric">Named for the prayer rope. Everything lives in the vault at <em>projects/chotki-alpha</em>.</p>
   </div>
   <div class="main">
     <span class="sect-no">§ 0 — Ground already covered</span>
     <h2>Three prerequisites, all resolved</h2>
     <p><strong>Xcode is not required.</strong> A probe target using <code>MenuBarExtra</code> and <code>UserNotifications</code> compiles cleanly against the Command Line Tools SDK 15.5. We build with SwiftPM, assemble the <code>.app</code> bundle from a script, and sign ad-hoc. No 15GB download.</p>
-    <p><strong>The project has a home.</strong> <code>/Volumes/2TB/claude-vault/projects/chotki</code>, alongside <code>design.md</code>, <code>checklist.md</code> and <code>mockup.html</code>. Personal context lives in a gitignored file and never reaches the public repository.</p>
+    <p><strong>The project has a home.</strong> <code>/Volumes/2TB/claude-vault/projects/chotki-alpha</code>, alongside <code>design.md</code>, <code>checklist.md</code> and <code>mockup.html</code>. Personal context lives in a gitignored file and never reaches the public repository.</p>
     <p><strong>The port is planned for, not deferred blindly.</strong> macOS ships first with SwiftUI. Swift compiles on Windows and Linux; SwiftUI does not — so <code>core/</code> is a pure package importing only Foundation and SQLite, and the port becomes a UI rewrite rather than an app rewrite.</p>
     <div class="flag">
       <p><strong>Two unretired risks, both tested in Phase 1.</strong> That a notification with actions delivers from an ad-hoc-signed bundle. And that <code>core/</code> builds on Linux in CI — before there is anything to port, because portability that is never exercised is only ever intended.</p>

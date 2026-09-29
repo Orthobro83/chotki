@@ -1,11 +1,12 @@
 {
   "beginLabel" : "Begin",
+  "independence" : "An independent project by an Orthodox Inquirer. Chotki speaks for no parish, no jurisdiction, and no community, and nothing in it carries anyone's blessing. It is not a spiritual father and is not meant to stand in for one.",
   "paragraphs" : [
     {
       "isAside" : false,
       "spans" : [
         {
-          "text" : "This app was created for inquiring Orthodox Christians, catechumens, and anyone looking for a tool to help them keep their spiritual commitments."
+          "text" : "Chotki is a tool for keeping an Orthodox rule: for inquirers, for catechumens, and for anyone who wants their commitments written down somewhere they will be seen."
         }
       ]
     },
@@ -13,21 +14,7 @@
       "isAside" : false,
       "spans" : [
         {
-          "text" : "This app was inspired by, but is not officially affiliated with, "
-        },
-        {
-          "text" : "The Brotherhood of the Narrow Path",
-          "url" : "https://www.skool.com/fathermoses/"
-        },
-        {
-          "text" : ", an online Orthodox community by "
-        },
-        {
-          "text" : "Father Moses McPherson",
-          "url" : "https://orthodoxaustin.org/our-clergy/"
-        },
-        {
-          "text" : "."
+          "text" : "It is an independent project by an Orthodox inquirer. It exists because its author has no spiritual father within reach of where he lives, and the rule still had to be kept. It speaks for no parish, no jurisdiction, and no community, and nothing in it carries anyone's blessing."
         }
       ]
     },
@@ -35,7 +22,7 @@
       "isAside" : false,
       "spans" : [
         {
-          "text" : "To begin, select a rule from the Library. Start small, only what you can keep, and build up from there. At the bottom of the Library is the option to write your own rule."
+          "text" : "To begin, take a rule from the Library. Choose what you can actually keep rather than what you would like to keep, and add to it slowly. At the foot of the Library you can write a rule of your own."
         }
       ]
     },
@@ -43,7 +30,7 @@
       "isAside" : true,
       "spans" : [
         {
-          "text" : "A note on writing your own rules: in Orthodoxy, it is generally understood that everybody needs a spiritual father who helps them build their own discipline. We all need somebody guiding and directing us, so that we are going toward God's will and not our own. Chotki's author recommends writing your own rules in consultation with your Orthodox community and its leadership."
+          "text" : "No application is a spiritual father. The Church has always held that a person needs someone who knows them to shape their discipline, and a record of what was kept is no substitute for that counsel. If you have a priest or a spiritual father, settle your rule with him and let this app do nothing more than remember it. If you do not yet have one, treat what is here as a beginning rather than an authority, and go on looking."
         }
       ]
     }
