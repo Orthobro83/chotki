@@ -38,6 +38,13 @@ enum RenderMode {
             if let morning = model.rules.first(where: { $0.hasPrayers }) {
                 render(PrayerViewContent(model: model, ruleID: morning.id),
                        to: "\(prefix)-prayers.png")
+                // The framed version. The content view composes without a
+                // scroll container and so carries no border; this is the one
+                // a reader actually sees.
+                render(PrayerView(model: model, ruleID: morning.id)
+                        .frame(height: Theme.popoverHeight)
+                        .background(Theme.ground),
+                       to: "\(prefix)-prayers-framed.png")
             }
 
             render(RopeWords(model: model, selection: "morning").padding(20), to: "\(prefix)-ropewords.png")

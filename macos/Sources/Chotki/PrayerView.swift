@@ -6,6 +6,13 @@ import ChotkiCore
 /// Set in the serif and given room: this is the one screen in the app whose
 /// whole purpose is to be read slowly, so it is spaced for reading rather than
 /// for scanning.
+/// How far the words are held from the edge.
+///
+/// Wider than the app's usual 16 because the ornament sits between the two.
+/// The inner edge of the band is 25 points in, so this leaves about 19 points
+/// of air around the text.
+let readingMargin: CGFloat = 44
+
 struct PrayerViewContent: View {
     @ObservedObject var model: AppModel
     let ruleID: UUID
@@ -25,7 +32,7 @@ struct PrayerViewContent: View {
                     prayerBlock(prayer, matches: found[index])
                     if index < rule.prayers.count - 1 {
                         Rectangle().fill(Theme.lineSoft).frame(height: 1)
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, readingMargin)
                     }
                 }
                 note
@@ -33,7 +40,7 @@ struct PrayerViewContent: View {
                 empty
             }
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 34)
     }
 
     private func prayerBlock(_ prayer: Prayer, matches: [[TermMatch]]) -> some View {
@@ -55,7 +62,7 @@ struct PrayerViewContent: View {
             PrayerAttribution(prayer: prayer)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16).padding(.vertical, 12)
+        .padding(.horizontal, readingMargin).padding(.vertical, 12)
     }
 
     /// Said plainly, because the difference between "these are the prayers" and
@@ -95,7 +102,7 @@ struct PrayerViewContent: View {
             }
             .padding(.bottom, 6)
         }
-        .padding(.horizontal, 16).padding(.top, 6)
+        .padding(.horizontal, readingMargin).padding(.top, 6)
     }
 
     private var empty: some View {
@@ -142,8 +149,16 @@ struct PrayerView: View {
     let ruleID: UUID
 
     var body: some View {
-        ScrollView { PrayerViewContent(model: model, ruleID: ruleID) }
-            .frame(maxHeight: .infinity)
-            .scrollContentBackgroundHidden()
+        // The ornament sits over the words rather than around them, so the
+        // text keeps its full width and nothing reflows at a large type size.
+        // The fade goes between the two: a line arriving at the top of the
+        // page comes out from behind the border rather than across it.
+        ZStack {
+            ScrollView { PrayerViewContent(model: model, ruleID: ruleID) }
+                .scrollContentBackgroundHidden()
+            EdgeFade()
+            VenerationBorder()
+        }
+        .frame(maxHeight: .infinity)
     }
 }
