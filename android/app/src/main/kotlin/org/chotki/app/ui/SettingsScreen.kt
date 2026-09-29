@@ -11,6 +11,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
@@ -41,7 +45,7 @@ import org.chotki.app.BuildConfig
 fun SettingsScreen(
     state: AppState,
     modifier: Modifier = Modifier,
-    onOpenReflections: () -> Unit = {},
+    onOpenGlossary: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val readiness = ReminderReadiness.of(context)
@@ -80,6 +84,20 @@ fun SettingsScreen(
             .background(Chotki.ground)
             .verticalScroll(rememberScrollState()),
     ) {
+        Heading("You")
+        // The same two names the welcome and the later prompt write. Settings
+        // is where either is changed; a blank field is "not given", not a name.
+        NameField(
+            label = "My name",
+            value = state.settings.displayName,
+            hint = "First name or Baptismal name.",
+        ) { next -> state.updateSettings { it.copy(displayName = next) } }
+        NameField(
+            label = "My spiritual father's name",
+            value = state.settings.spiritualFatherName,
+            hint = "Name",
+        ) { next -> state.updateSettings { it.copy(spiritualFatherName = next) } }
+
         Heading("Your church")
         // Both were read-only here: the church could not be changed and the
         // calendar could not be chosen at all, though macOS has offered both
@@ -163,12 +181,9 @@ fun SettingsScreen(
             )
         }
 
-        // Reflections is reached from the rule that names it on the day — but
-        // only once that rule is taken on. Someone who has not taken it on has
-        // no way to find the section at all, which is how a screen ends up
-        // built and unreachable. iOS lists it here for the same reason.
+        // Off the bar. A word in the text opens one entry; this opens the list.
         Heading("Elsewhere")
-        Action("Reflections", onOpenReflections)
+        Action("Glossary", onOpenGlossary)
 
         Heading("Your record")
         // Android gives an app no place to leave anything behind and Chotki
@@ -205,6 +220,41 @@ fun SettingsScreen(
         )
         Spacer(Modifier.size(32.dp))
     }
+}
+
+@Composable
+private fun NameField(
+    label: String,
+    value: String,
+    hint: String,
+    onChange: (String) -> Unit,
+) {
+    Text(
+        label,
+        color = Chotki.parchment,
+        fontSize = 14.sp,
+        modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 2.dp),
+    )
+    TextField(
+        value = value,
+        onValueChange = onChange,
+        placeholder = { Text(hint, color = Chotki.faint) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Chotki.panel,
+            unfocusedContainerColor = Chotki.panel,
+            focusedTextColor = Chotki.parchment,
+            unfocusedTextColor = Chotki.parchment,
+            cursorColor = Chotki.gold,
+            focusedIndicatorColor = Chotki.goldDim,
+            unfocusedIndicatorColor = Chotki.line,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .semantics { contentDescription = label },
+    )
 }
 
 @Composable

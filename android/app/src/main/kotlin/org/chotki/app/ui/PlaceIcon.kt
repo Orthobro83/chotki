@@ -36,7 +36,7 @@ fun PlaceIcon(place: Place, tint: Color, size: androidx.compose.ui.unit.Dp = 22.
             Place.READING -> openBook(tint, stroke)
             Place.PROGRESS -> risingLine(tint, stroke)
             Place.GLOSSARY -> closedBook(tint, stroke)
-            Place.SETTINGS -> sliders(tint, stroke)
+            Place.SETTINGS -> gear(tint, stroke)
         }
     }
 }
@@ -197,12 +197,21 @@ private fun DrawScope.closedBook(tint: Color, stroke: Stroke) {
     drawLine(tint, Offset(w * 0.34f, h * 0.14f), Offset(w * 0.34f, h * 0.86f), stroke.width)
 }
 
-/** Settings: three things that can be set. */
-private fun DrawScope.sliders(tint: Color, stroke: Stroke) {
-    val w = size.width
-    val rows = listOf(0.28f to 0.62f, 0.5f to 0.38f, 0.72f to 0.7f)
-    for ((y, knob) in rows) {
-        drawLine(tint, Offset(w * 0.14f, size.height * y), Offset(w * 0.86f, size.height * y), stroke.width)
-        drawCircle(tint, radius = stroke.width * 1.5f, center = Offset(w * knob, size.height * y))
+/** Settings: a gear, not a row of sliders. */
+private fun DrawScope.gear(tint: Color, stroke: Stroke) {
+    val centre = Offset(size.width / 2f, size.height / 2f)
+    val radius = size.minDimension * 0.22f
+    drawCircle(tint, radius = radius, center = centre, style = stroke)
+    drawCircle(tint, radius = radius * 0.38f, center = centre, style = stroke)
+    for (tooth in 0 until 8) {
+        val angle = tooth * (PI.toFloat() / 4f)
+        val inner = radius * 1.05f
+        val outer = radius * 1.55f
+        drawLine(
+            tint,
+            Offset(centre.x + cos(angle) * inner, centre.y + sin(angle) * inner),
+            Offset(centre.x + cos(angle) * outer, centre.y + sin(angle) * outer),
+            stroke.width,
+        )
     }
 }

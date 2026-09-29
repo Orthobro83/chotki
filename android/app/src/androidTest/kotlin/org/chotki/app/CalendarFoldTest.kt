@@ -82,9 +82,15 @@ class CalendarFoldTest {
         )
     }
 
-    /** Scrolling the rules folds the month down to the week being looked at. */
-    @Test fun scrollingTheRulesFoldsTheCalendarToAWeek() {
+    /**
+     * The day opens on one week. The month is asked for, and reading the rules
+     * does not take it away again.
+     */
+    @Test fun theMonthStaysOpenWhileTheRulesAreRead() {
         show(stateWithRules(30))
+        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Show the whole month").performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
 
         val before = compose.onNodeWithTag("the calendar").fetchSemanticsNode().size.height
@@ -92,8 +98,8 @@ class CalendarFoldTest {
         compose.waitForIdle()
 
         val after = compose.onNodeWithTag("the calendar").fetchSemanticsNode().size.height
-        assertTrue("the calendar did not fold: $before then $after", after < before)
-        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
+        assertTrue("reading the rules folded the month: $before then $after", after == before)
+        compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
     }
 
     /** Folded, the arrows step a week. A month would move it out of view. */
@@ -113,17 +119,19 @@ class CalendarFoldTest {
         )
     }
 
-    /** Back at the top, the whole month comes back. */
-    @Test fun returningToTheTopUnfoldsTheMonth() {
+    /** The grip opens the month and closes it, whichever way the list sits. */
+    @Test fun theGripOpensTheMonthAndClosesIt() {
         show(stateWithRules(30))
+        compose.onNodeWithContentDescription("Show the whole month").performClick()
+        compose.waitForIdle()
 
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Rule number 29"))
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
-
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Rule number 0"))
-        compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
+
+        compose.onNodeWithContentDescription("Show one week").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
     }
 
     /**
@@ -144,8 +152,9 @@ class CalendarFoldTest {
             }
         }
 
-        // Folded, the arrows say "week"; unfolded they say "month".
-        compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
+        // A week is what fits under the banner. The month is still offered.
+        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Show the whole month").assertIsDisplayed()
     }
 
     /** And it does still fold when the space is genuinely too small. */

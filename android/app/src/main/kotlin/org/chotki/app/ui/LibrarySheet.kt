@@ -69,15 +69,17 @@ fun LibrarySheet(
     LazyColumn(modifier.fillMaxWidth().background(Chotki.ground)) {
         item {
             Text(
-                "Take on what you are ready for. Two or three is a good beginning.",
+                "Select a prayer, reading, or discipline to add to your routine.",
                 color = Chotki.faint,
                 fontSize = 13.sp,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
 
         for (section in SECTIONS) {
-            val templates = Content.ruleLibrary.filter { it.category == section.key }
+            val templates = Content.ruleLibrary.filter {
+                it.category == section.key && it.id != "reflection"
+            }
             if (templates.isEmpty()) continue
             item(key = "section-${section.key}") {
                 Panel(
@@ -94,6 +96,19 @@ fun LibrarySheet(
         // Rules of his own, kept so setting one down for a season does not mean
         // writing it out again. The order inside is Ryan's: the way to make a
         // new one, then the caution, then the rules.
+        item(key = "write-your-own") {
+            Text(
+                "＋ Write your own rule",
+                color = Chotki.gold,
+                fontSize = 15.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onWriteYourOwn)
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
+                    .semantics { contentDescription = "Write your own rule" },
+            )
+        }
+
         item(key = "section-custom") {
             Panel(
                 name = "Custom",
@@ -101,23 +116,6 @@ fun LibrarySheet(
                 isOpen = open == "custom",
                 onToggle = { open = if (open == "custom") null else "custom" },
             ) {
-                Text(
-                    "＋ Write your own rule",
-                    color = Chotki.gold,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onWriteYourOwn)
-                        .padding(horizontal = 18.dp, vertical = 12.dp)
-                        .semantics { contentDescription = "Write your own rule" },
-                )
-                Text(
-                    "Custom routines are usually taken on the advice of your priest or " +
-                        "spiritual father.",
-                    color = Chotki.faint,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 10.dp),
-                )
                 if (custom.isEmpty()) {
                     Text(
                         "Nothing of your own yet.",
@@ -209,7 +207,7 @@ private fun CustomRow(rule: Rule, state: AppState) {
             if (note != null) Text(note, color = Chotki.faint, fontSize = 12.sp)
             if (rule.givenByPriest == true) {
                 Text(
-                    "GIVEN BY A PRIEST",
+                    state.settings.givenByPriestPhrase() ?: "GIVEN BY A PRIEST",
                     color = Chotki.goldDim,
                     fontSize = 9.sp,
                     modifier = Modifier

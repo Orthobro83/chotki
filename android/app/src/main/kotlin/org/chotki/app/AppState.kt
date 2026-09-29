@@ -174,6 +174,13 @@ class AppState(
 
     fun load() {
         settings = store.loadSettings() ?: AppSettings.DEFAULT
+        // A record that finished the welcome before this date existed would
+        // otherwise be asked for a spiritual father on the first launch.
+        if (settings.hasCompletedFirstRun && settings.firstRunOn == null) {
+            val stamped = settings.copy(firstRunOn = today)
+            store.saveSettings(stamped)
+            settings = stamped
+        }
         rules = store.rules()
         activations = store.activations()
         occurrences = store.occurrences()
@@ -296,6 +303,15 @@ class AppState(
      * It did not, and that is half of why a rule went on buzzing after it had
      * been kept — the plan stopped including it and nothing acted on that.
      */
+    /**
+     * Mark kept, and leave it kept. Scrolling a reading to its end, or finishing
+     * the Jesus Prayer, must not clear a mark that is already there.
+     */
+    fun markKept(entry: DayEntry) {
+        if (entry.isDispensed || entry.isKept) return
+        toggleKept(entry)
+    }
+
     fun toggleKept(entry: DayEntry) {
         if (entry.isDispensed) return
         if (entry.isKept) {

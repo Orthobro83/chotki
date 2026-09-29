@@ -53,10 +53,14 @@ class ShellTest {
     @Test
     fun everyPlaceIsReachable() {
         show()
-        for (place in Place.entries) {
+        // The glossary is not on the bar. It is reached from Settings.
+        for (place in listOf(Place.RULE, Place.PRAYERS, Place.READING, Place.PROGRESS, Place.SETTINGS)) {
             compose.onNodeWithContentDescription("Go to ${place.title}").performClick()
             compose.waitForIdle()
         }
+        compose.onNodeWithContentDescription("Glossary").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Search terms").assertIsDisplayed()
     }
 
     @Test
@@ -64,6 +68,10 @@ class ShellTest {
         show()
         compose.onNodeWithContentDescription("Go to Rule").performClick()
         compose.onNodeWithContentDescription("The day").assertIsDisplayed()
+        // The week is what the day opens on. The month is one grip away.
+        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Show the whole month").performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
     }
 
@@ -89,6 +97,8 @@ class ShellTest {
         compose.setContent { ChotkiTheme { Shell(state) } }
         val before = state.visibleMonth.month
 
+        compose.onNodeWithContentDescription("Show the whole month").performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").performClick()
         compose.waitForIdle()
         assertTrue("the month did not change", state.visibleMonth.month != before)
@@ -122,7 +132,8 @@ class ShellTest {
     @Test
     fun theGlossarySearchesAndOpensATerm() {
         show()
-        compose.onNodeWithContentDescription("Go to Glossary").performClick()
+        compose.onNodeWithContentDescription("Go to Settings").performClick()
+        compose.onNodeWithContentDescription("Glossary").performScrollTo().performClick()
         compose.onNodeWithContentDescription("Search terms").performTextInput("theotokos")
         compose.waitForIdle()
 
@@ -173,7 +184,9 @@ class ShellTest {
         compose.onNodeWithContentDescription("Open the library").assertIsDisplayed()
         // No performScrollTo: the empty day is a plain Column, not a scroller,
         // and asking to scroll to a node with no scrollable parent throws.
-        compose.onNodeWithContentDescription("Take something on from the library")
+        // A day with no rules at all offers this, not the library mark used
+        // once something is already on the rule.
+        compose.onNodeWithContentDescription("Create your first rule")
             .performClick()
         compose.waitForIdle()
 

@@ -13,14 +13,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +37,13 @@ import org.chotki.app.platform.Sounds
 import org.chotki.core.PrayerScreen
 import org.chotki.core.content.Glossary
 import org.chotki.core.content.Content
+import org.chotki.core.ropePrayerId
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 
 /**
  * The prayer rope: a count, the knots, and the words beneath.
@@ -114,6 +124,15 @@ fun RopeScreen(
                             // closed they would run together.
                             if (completed) {
                                 if (state.settings.chimeOnCompletion) Sounds.playBell()
+                                // Only the Jesus Prayer, and only while it is the prayer open.
+                                if (screen.selection == "jesus-prayer") {
+                                    state.entries(state.selectedDate)
+                                        .filter {
+                                            it.rule.ropePrayerId == "jesus-prayer" ||
+                                                it.rule.title == "The Jesus Prayer"
+                                        }
+                                        .forEach(state::markKept)
+                                }
                             } else if (state.settings.tickEachKnot) {
                                 Sounds.playTick()
                             }
@@ -155,20 +174,8 @@ fun RopeScreen(
             }
         }
 
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Text(
-                if (showsRope) "Hide rope" else "Show rope",
-                color = Chotki.gold,
-                fontSize = 13.sp,
-                modifier = Modifier
-                    .clickable { screen = screen.showingRope(!showsRope) }
-                    .padding(vertical = 8.dp)
-                    .semantics { contentDescription = "Show or hide the rope" },
-            )
-        }
-
-        // The words below the count, the knots and the button — so the rope is
-        // in the same place whether or not there is anything to read.
+        // The words. A rope prayer keeps them under the count. A rule that is
+        // read fades at the edges, and reaching the last line marks it.
         val paragraphs = when {
             sequence != null -> sequence.prayerIDs
                 .mapNotNull { id -> Content.prayers.firstOrNull { it.id == id } }
@@ -190,7 +197,17 @@ fun RopeScreen(
             }
 
             Box(Modifier.fillMaxWidth().padding(top = 8.dp).size(1.dp).background(Chotki.lineSoft))
-            LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
+            val prayerList = rememberLazyListState()
+            if (!showsRope) {
+                PrayerEnd(prayerList, screen.selection, state)
+            }
+            LazyColumn(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .then(if (showsRope) Modifier else Modifier.edgeFade()),
+                state = prayerList,
+            ) {
                 items(paragraphs.size, key = { paragraphs[it].id }) { index ->
                     val each = paragraphs[index]
                     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -214,6 +231,7 @@ fun RopeScreen(
                         Text("Source · ${each.source}", color = Chotki.faint, fontSize = 11.sp)
                     }
                 }
+                item(key = "prayer-end") { Spacer(Modifier.size(24.dp)) }
             }
         } else {
             Spacer(Modifier.weight(1f))
@@ -228,12 +246,12 @@ fun RopeScreen(
 @Composable
 private fun ChooserRow(screen: PrayerScreen, onChoose: (String?) -> Unit) {
     var open by remember { mutableStateOf(false) }
-    val label = when (val selection = screen.selection) {
-        null -> "The rope alone"
-        else -> Content.prayerSequences.firstOrNull { it.id == selection }?.title
+    // The rope on its own is not a choice. A rope prayer brings the rope;
+    // a rule that is read does not.
+    val label = screen.selection?.let { selection ->
+        Content.prayerSequences.firstOrNull { it.id == selection }?.title
             ?: Content.prayers.firstOrNull { it.id == selection }?.title
-            ?: "The rope alone"
-    }
+    } ?: "Prayers"
 
     Column(Modifier.fillMaxWidth()) {
         // The chevron is what says this is a menu. Without it the title read as
@@ -257,7 +275,6 @@ private fun ChooserRow(screen: PrayerScreen, onChoose: (String?) -> Unit) {
         if (open) {
             LazyColumn(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 item {
-                    Option("The rope alone") { onChoose(null); open = false }
                     Text("Rules", color = Chotki.gold, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
                 }
                 items(Content.prayerSequences.size) { index ->
@@ -281,6 +298,51 @@ private fun ChooserRow(screen: PrayerScreen, onChoose: (String?) -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun PrayerEnd(
+    list: androidx.compose.foundation.lazy.LazyListState,
+    selection: String?,
+    state: AppState,
+) {
+    var scrolled by remember(selection) { mutableStateOf(false) }
+    var marked by remember(selection) { mutableStateOf(false) }
+    LaunchedEffect(list, selection) {
+        snapshotFlow { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
+            .collect { (index, offset) -> if (index > 0 || offset > 8) scrolled = true }
+    }
+    LaunchedEffect(list, scrolled, selection) {
+        if (!scrolled || marked) return@LaunchedEffect
+        snapshotFlow { list.layoutInfo.visibleItemsInfo.any { it.key == "prayer-end" } }
+            .collect { visible ->
+                if (!visible || marked) return@collect
+                val title = when (selection) {
+                    "morning" -> "Morning prayers"
+                    "evening" -> "Evening prayers"
+                    else -> return@collect
+                }
+                marked = true
+                state.entries(state.selectedDate)
+                    .filter { it.rule.title == title }
+                    .forEach(state::markKept)
+            }
+    }
+}
+
+private fun Modifier.edgeFade(): Modifier = graphicsLayer {
+    compositingStrategy = CompositingStrategy.Offscreen
+}.drawWithContent {
+    drawContent()
+    drawRect(
+        brush = Brush.verticalGradient(
+            0f to Color.Transparent,
+            0.1f to Color.Black,
+            0.9f to Color.Black,
+            1f to Color.Transparent,
+        ),
+        blendMode = BlendMode.DstIn,
+    )
 }
 
 @Composable

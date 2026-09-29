@@ -86,6 +86,9 @@ class CustomRuleTest {
         state.save(org.chotki.core.Rule(title = "Cold plunge", recurrence = Recurrence.Daily))
         openLibrary(state)
 
+        compose.onNode(hasContentDescription("Open Custom", substring = true))
+            .performScrollTo().performClick()
+        compose.waitForIdle()
         scrollTo("Set aside Cold plunge")
         compose.onNodeWithContentDescription("Set aside Cold plunge").performClick()
         compose.waitForIdle()
@@ -104,6 +107,9 @@ class CustomRuleTest {
         assertTrue("removing it should stop it being due", state.entries(state.today).isEmpty())
 
         openLibrary(state)
+        compose.onNode(hasContentDescription("Open Custom", substring = true))
+            .performScrollTo().performClick()
+        compose.waitForIdle()
         scrollTo("Take up Cold plunge")
         compose.onNodeWithContentDescription("Take up Cold plunge").performClick()
         compose.waitForIdle()
@@ -161,7 +167,7 @@ class CustomRuleTest {
         state.take("morning-prayers")
         compose.setContent { ChotkiTheme { Shell(state) } }
 
-        compose.onNodeWithContentDescription("Read the prayers for Morning prayers").performClick()
+        compose.onNodeWithContentDescription("Go to prayer").performScrollTo().performClick()
         compose.waitForIdle()
 
         compose.onNodeWithText("O Heavenly King").assertIsDisplayed()
@@ -177,7 +183,7 @@ class CustomRuleTest {
         compose.onNodeWithContentDescription("Edit Cold plunge").assertIsDisplayed()
         assertEquals(
             0,
-            compose.onAllNodesWithContentDescription("Read the prayers for Cold plunge")
+            compose.onAllNodesWithContentDescription("Go to prayer")
                 .fetchSemanticsNodes().size,
         )
     }

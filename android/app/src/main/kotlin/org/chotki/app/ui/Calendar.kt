@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.CalendarDate
 import org.chotki.core.Observance
+import org.chotki.core.Weekday
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -305,9 +307,13 @@ private fun DayCell(state: AppState, date: CalendarDate, modifier: Modifier, cel
     val fast = day?.isFast == true && day.isFastFree == false &&
         observances.fasting != Observance.HIDDEN
 
+    // Feast gold outranks Sunday ochre outranks a fast's violet fill.
+    // A feast that falls in a fast keeps the gold, not the fast.
+    val showFast = fast && !feast
     val mark: Color? = when {
-        feast -> Chotki.violet
-        fast -> Chotki.ochre
+        feast -> Chotki.gold
+        date.weekday == Weekday.SUNDAY -> Chotki.ochre
+        showFast -> Chotki.violet
         else -> null
     }
 
@@ -317,8 +323,18 @@ private fun DayCell(state: AppState, date: CalendarDate, modifier: Modifier, cel
         modifier
             .height(animatedSize)
             .padding(2.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(if (selected) Chotki.gold else Color.Transparent)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                when {
+                    selected -> Color(0xFF17160F)
+                    showFast -> Color(0xFF3A3454)
+                    else -> Color.Transparent
+                },
+            )
+            .then(
+                if (selected) Modifier.border(1.5.dp, Chotki.gold, RoundedCornerShape(8.dp))
+                else Modifier,
+            )
             .clickable { state.selectedDate = date }
             .semantics {
                 contentDescription = buildString {
@@ -333,7 +349,6 @@ private fun DayCell(state: AppState, date: CalendarDate, modifier: Modifier, cel
             Text(
                 "${date.day}",
                 color = when {
-                    selected -> Chotki.ground
                     mark != null -> mark
                     hasAnything -> Chotki.parchment
                     else -> Chotki.faint

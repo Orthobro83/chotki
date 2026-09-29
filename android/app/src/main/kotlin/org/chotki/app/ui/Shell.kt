@@ -81,34 +81,49 @@ enum class Place(val title: String) {
  * header.
  */
 @Composable
-private fun TopBar(screen: Screen, onLibrary: () -> Unit, onGlossary: () -> Unit) {
-    val readingHere = screen.place == Place.READING
+private fun TitleLine(screen: Screen, state: AppState, onLibrary: () -> Unit) {
+    val title = when (screen) {
+        Screen.Day -> greetingLine(state.settings.displayName)
+        Screen.Library -> "Library"
+        else -> screen.place.title
+    }
     Row(
-        Modifier.fillMaxWidth().padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 2.dp),
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            if (screen == Screen.Day) "Chotki" else screen.place.title,
+            title,
             color = Chotki.parchment,
-            fontSize = 17.sp,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+            fontSize = 26.sp,
             modifier = Modifier.weight(1f),
         )
-        Column(
-            Modifier
-                .clickable(onClick = if (readingHere) onGlossary else onLibrary)
-                .padding(10.dp)
-                .semantics {
-                    contentDescription =
-                        if (readingHere) "Open the glossary" else "Open the library"
-                },
-        ) {
-            if (readingHere) {
-                GlossaryIcon(Chotki.gold, 24.dp)
-            } else {
-                LibraryIcon(Chotki.gold, 24.dp)
-            }
+        // On the day, and only there. The other sections are their own places.
+        if (screen == Screen.Day) {
+            Text(
+                "+",
+                color = Chotki.gold,
+                fontSize = 28.sp,
+                modifier = Modifier
+                    .clickable(onClick = onLibrary)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .semantics { contentDescription = "Open the library" },
+            )
         }
     }
+}
+
+/** Morning until noon, afternoon until five, evening after. */
+private fun greetingLine(name: String): String {
+    val hour = java.time.LocalTime.now().hour
+    val part = when {
+        hour < 12 -> "morning"
+        hour < 17 -> "afternoon"
+        else -> "evening"
+    }
+    val trimmed = name.trim()
+    return if (trimmed.isEmpty()) "Good $part" else "Good $part, $trimmed"
 }
 
 /** The way back out of a screen that was pushed rather than chosen. */
@@ -159,16 +174,21 @@ fun Shell(state: AppState) {
     // fields into the editor, back closed Chotki.
     BackHandler(enabled = journey.canGoBack) { journey = journey.back() }
 
-    // First run, before anything else. Nothing on it can be reached until it is
-    // read, which is the point of it.
+    // The mark, then the welcome. Nothing else can be reached until Continue.
     if (!state.settings.hasCompletedFirstRun) {
-        WelcomeScreen(state, Modifier.fillMaxSize())
+        var opened by remember { mutableStateOf(false) }
+        if (!opened) {
+            OpeningMark { opened = true }
+        } else {
+            WelcomeScreen(state, Modifier.fillMaxSize())
+        }
         return
     }
 
     // The status bar is the app's to clear now. The bottom bar clears the
     // navigation bar itself, further down, so its background still runs to the
     // bottom of the screen while its labels sit above the gesture pill.
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Chotki.ground).statusBarsPadding()) {
         if (!dismissed) {
             ReadinessBanner(readiness) {
@@ -181,10 +201,10 @@ fun Shell(state: AppState) {
         // where the glossary takes its place. The library used to be a word at
         // the foot of the day and nowhere else, so it was invisible from every
         // other screen and easy to miss on the one that had it.
-        TopBar(
+        TitleLine(
             screen = journey.page,
+            state = state,
             onLibrary = { journey = journey.push(Screen.Library) },
-            onGlossary = { journey = journey.push(Screen.Terms()) },
         )
 
         Box(Modifier.weight(1f)) {
@@ -307,7 +327,7 @@ fun Shell(state: AppState) {
                         Screen.Settings -> SettingsScreen(
                             state = state,
                             modifier = Modifier.weight(1f),
-                            onOpenReflections = { journey = journey.push(Screen.Reflections()) },
+                            onOpenGlossary = { journey = journey.push(Screen.Terms()) },
                         )
 
                         is Screen.Terms -> GlossaryScreen(
@@ -370,7 +390,9 @@ fun Shell(state: AppState) {
                 .navigationBarsPadding(),
         ) {
             val lit = journey.page.place
-            for (candidate in Place.entries) {
+            // Five places. The glossary is reached from a word, and from Settings.
+            val bar = listOf(Place.RULE, Place.PRAYERS, Place.READING, Place.PROGRESS, Place.SETTINGS)
+            for (candidate in bar) {
                 val colour = if (candidate == lit) Chotki.gold else Chotki.muted
                 Column(
                     Modifier
@@ -390,6 +412,10 @@ fun Shell(state: AppState) {
                     )
                 }
             }
+        }
+    }
+        if (state.settings.shouldAskForSpiritualFather(state.today)) {
+            FatherPrompt(state)
         }
     }
 }

@@ -114,7 +114,7 @@ class BackTest {
     @Test
     fun backFromARulesPrayersReturnsToTheDay() {
         withState { it.take("morning-prayers") }
-        compose.onNodeWithContentDescription("Read the prayers for Morning prayers").performClick()
+        compose.onNodeWithContentDescription("Go to prayer").performScrollTo().performClick()
         compose.waitForIdle()
 
         pressBack()
@@ -138,7 +138,9 @@ class BackTest {
     @Test
     fun backFromATermReturnsToTheTerms() {
         show()
-        compose.onNodeWithContentDescription("Go to Glossary").performClick()
+        compose.onNodeWithContentDescription("Go to Settings").performClick()
+        compose.onNodeWithContentDescription("Glossary").performScrollTo().performClick()
+        compose.waitForIdle()
         compose.onNode(hasScrollAction())
             .performScrollToNode(hasContentDescription("Open Amen"))
         compose.onNodeWithContentDescription("Open Amen").performClick()
@@ -157,7 +159,7 @@ class BackTest {
         show()
         compose.onNodeWithContentDescription("Go to Reading").performClick()
         compose.onNodeWithContentDescription("Go to Progress").performClick()
-        compose.onNodeWithContentDescription("Go to Glossary").performClick()
+        compose.onNodeWithContentDescription("Go to Settings").performClick()
 
         pressBack()
         compose.onNodeWithContentDescription("Open the library").assertIsDisplayed()

@@ -322,6 +322,27 @@ class SettingsStoreTest {
             "and what was not gets a default",
         )
         assertNull(loaded.reckoningChangedOn)
+        assertEquals("", loaded.displayName, "a record from before names has none")
+        assertEquals("", loaded.spiritualFatherName)
+        assertNull(loaded.givenByPriestPhrase())
+    }
+
+    @Test
+    fun `a name and a spiritual father's name round-trip, and blank is not a name`() {
+        val named = org.chotki.core.AppSettings.DEFAULT.copy(
+            displayName = "Anna",
+            spiritualFatherName = "Fr. Peter",
+        )
+        store.saveSettings(named)
+        val loaded = store.loadSettings()
+        assertEquals("Anna", loaded?.displayName)
+        assertEquals("Fr. Peter", loaded?.spiritualFatherName)
+        assertEquals("Given to me by Fr. Peter", loaded?.givenByPriestPhrase())
+
+        store.saveSettings(named.copy(displayName = "", spiritualFatherName = "   "))
+        val cleared = store.loadSettings()
+        assertEquals("", cleared?.displayName)
+        assertNull(cleared?.givenByPriestPhrase(), "whitespace is not a name")
     }
 
     @Test

@@ -106,30 +106,18 @@ class RopeTest {
     }
 
     @Test
-    fun theRopeCanBeAskedForAnyway() {
+    fun theRopeIsNotAChoiceOfItsOwn() {
         show()
         compose.onNodeWithContentDescription("Choose what to pray").performClick()
-        compose.onNodeWithContentDescription("Pray Morning prayers").performScrollTo().performClick()
         compose.waitForIdle()
 
-        compose.onNodeWithContentDescription("Show or hide the rope").performClick()
-        compose.waitForIdle()
-        compose.onNodeWithContentDescription("Count a knot").assertIsDisplayed()
-    }
-
-    @Test
-    fun choosingNothingLeavesTheRopeAlone() {
-        show()
-        compose.onNodeWithContentDescription("Choose what to pray").performClick()
-        compose.onNodeWithContentDescription("Pray The rope alone").performClick()
-        compose.waitForIdle()
-
-        compose.onNodeWithContentDescription("Count a knot").assertIsDisplayed()
-        // Nothing to read, which is the point: the words are already known.
         assertEquals(
             0,
-            compose.onAllNodesWithContentDescription("Source · Common usage")
-                .fetchSemanticsNodes().size,
+            compose.onAllNodesWithContentDescription("Pray The rope alone").fetchSemanticsNodes().size,
+        )
+        assertEquals(
+            0,
+            compose.onAllNodesWithContentDescription("Show or hide the rope").fetchSemanticsNodes().size,
         )
     }
 

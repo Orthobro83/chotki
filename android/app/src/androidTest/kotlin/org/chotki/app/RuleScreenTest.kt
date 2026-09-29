@@ -49,7 +49,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { RuleScreen(state) } }
 
-        compose.onNodeWithText("Nothing on the rule for this day.").assertIsDisplayed()
+        compose.onNodeWithText("Create your first rule").assertIsDisplayed()
     }
 
     /**
@@ -62,8 +62,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         assertEquals("it was saved before the editor was even answered", 0, state.rules.size)
 
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
@@ -82,8 +81,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 
@@ -102,8 +100,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
 
         compose.onNodeWithContentDescription("How often — Every day").performScrollTo().performClick()
         compose.waitForIdle()
@@ -176,12 +173,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        // A LazyColumn composes only what is on screen, so the fasting section
-        // has to be scrolled to — which is what a person does too.
-        compose.onNode(hasScrollAction())
-            .performScrollToNode(hasContentDescription("Take on Great Lent"))
-        compose.onNodeWithContentDescription("Take on Great Lent").performClick()
-        compose.waitForIdle()
+        takeOn("Great Lent", "Fasting")
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 
@@ -190,6 +182,18 @@ class RuleScreenTest {
             org.chotki.core.Observance.OBSERVED,
             state.settings.observances.fasting,
         )
+    }
+
+    /** A folded section hides its rows until it is opened, which is the tap. */
+    private fun takeOn(title: String, section: String) {
+        compose.onNode(hasContentDescription("Open $section", substring = true))
+            .performScrollTo()
+            .performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction())
+            .performScrollToNode(hasContentDescription("Take on $title"))
+        compose.onNodeWithContentDescription("Take on $title").performClick()
+        compose.waitForIdle()
     }
 
     /**
@@ -225,8 +229,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
 
         compose.onNode(hasContentDescription("Hour", substring = true))
             .performScrollTo().performClick()
@@ -256,8 +259,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         compose.onNodeWithContentDescription("Choose Remind me").performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
@@ -270,8 +272,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         compose.onNodeWithContentDescription("Choose 1 hour before").performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()

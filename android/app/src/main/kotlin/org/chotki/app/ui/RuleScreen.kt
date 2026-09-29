@@ -50,6 +50,10 @@ import org.chotki.core.RuleReference
 import org.chotki.core.glossarySlug
 import org.chotki.core.reference
 import org.chotki.core.ropePrayerId
+import org.chotki.core.Observance
+import org.chotki.core.FastingSeason
+import org.chotki.core.content.Glossary
+import androidx.compose.ui.text.style.TextAlign
 
 /**
  * The day, and what is on the rule for it.
@@ -92,6 +96,9 @@ fun RuleScreen(
         // where nothing could reach them because this column does not scroll.
         val cap = this@BoxWithConstraints.maxHeight / 2
 
+        val glossary = remember(state.settings.jurisdiction.tradition) {
+            Glossary.shared(state.settings.jurisdiction.tradition)
+        }
         Column(Modifier.fillMaxSize()) {
             Calendar(
                 state,
@@ -99,17 +106,36 @@ fun RuleScreen(
                 onToggleExpanded = { monthOpen = !monthOpen },
                 maxHeight = cap,
             )
+            FastNote(state, glossary, onOpenTerm)
+            val liturgical = state.liturgicalDay(state.selectedDate)?.title
+            if (liturgical != null) {
+                Text(
+                    liturgical,
+                    color = Chotki.muted,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
             DayHeader(state.selectedDate)
 
-            if (entries.isEmpty()) {
-                // Takes the room the rules would have had, so the mark sits in
-                // the space that is actually free rather than under the bar.
+            if (state.rules.isEmpty()) {
+                FirstRun(onOpenLibrary, state.selectedDate, Modifier.weight(1f))
+            } else if (entries.isEmpty()) {
                 EmptyDay(onOpenLibrary, Modifier.weight(1f))
             } else {
                 // The weight is the fix. Without it this takes whatever height
                 // is left over, which can be none, and a list of zero height
                 // scrolls nowhere.
                 LazyColumn(Modifier.fillMaxWidth().weight(1f), state = list) {
+                    item {
+                        Text(
+                            "Today's commitments",
+                            color = Chotki.muted,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 6.dp),
+                        )
+                    }
                     items(entries, key = { it.id }) { entry ->
                         EntryRow(
                             entry = entry,
@@ -130,8 +156,10 @@ fun RuleScreen(
                             onStandDown = { state.standDown(entry) },
                             onPause = { state.pause(entry.rule) },
                             onResume = { state.resume(entry.rule) },
+                            givenBy = state.settings.givenByPriestPhrase(),
                         )
                     }
+                    item { SayingCard(state.selectedDate) }
                 }
             }
         }
@@ -159,6 +187,86 @@ private fun DayHeader(date: CalendarDate) {
  * how the library is reached on every other day, and a control that moves
  * depending on whether the day is empty is worse than one that does not.
  */
+@Composable
+private fun FirstRun(onOpenLibrary: () -> Unit, date: CalendarDate, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .clickable(onClick = onOpenLibrary)
+                .semantics { contentDescription = "Create your first rule" },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Box(
+                Modifier
+                    .size(54.dp)
+                    .border(1.5.dp, Chotki.goldDim, androidx.compose.foundation.shape.CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("+", color = Chotki.gold, fontSize = 28.sp)
+            }
+            Text(
+                "Create your first rule",
+                color = Chotki.parchment,
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                fontWeight = FontWeight.Medium,
+                fontSize = 22.sp,
+                modifier = Modifier.padding(top = 14.dp),
+            )
+        }
+        SayingCard(date)
+    }
+}
+
+@Composable
+private fun FastNote(
+    state: AppState,
+    glossary: Glossary,
+    onOpenTerm: (String) -> Unit,
+) {
+    val day = state.liturgicalDay(state.selectedDate) ?: return
+    val due = state.entries(state.selectedDate).any { it.rule.isFastingRule }
+    val observed = state.settings.observances.fasting == Observance.OBSERVED
+    if (!due && !observed) return
+    if (!day.isFast || day.isFastFree) return
+    Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp)) {
+        Text(
+            "The calendar marks this as ${day.fastDescription}.",
+            color = Chotki.violet,
+            fontSize = 14.sp,
+        )
+        if (day.abstentions.isNotEmpty()) {
+            Text(
+                "Customarily set aside: ${day.abstentions.joinToString(", ")}.",
+                color = Chotki.faint,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        val slugs = buildList {
+            when (day.season) {
+                FastingSeason.GREAT_LENT -> add("great-lent")
+                FastingSeason.APOSTLES_FAST -> add("apostles-fast")
+                FastingSeason.DORMITION_FAST -> add("dormition-fast")
+                FastingSeason.NATIVITY_FAST -> add("nativity-fast")
+                null -> Unit
+            }
+            if (day.fastLevel == 1 || due) add("wednesday-friday-fast")
+        }
+        for (slug in slugs.distinct()) {
+            val full = glossary.entry(slug)?.full ?: continue
+            Text(
+                full,
+                color = Chotki.muted,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+    }
+}
+
 @Composable
 private fun EmptyDay(onOpenLibrary: () -> Unit, modifier: Modifier = Modifier) {
     Column(
@@ -206,6 +314,8 @@ private fun EntryRow(
     onStandDown: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
+    /** The stored name, or null when none has been given. */
+    givenBy: String?,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
 
@@ -307,12 +417,12 @@ private fun EntryRow(
                 RuleReference.PRAYERS -> GoTo("Go to prayer", onReadPrayers)
                 RuleReference.READING -> GoTo("Go to reading", onReadReading)
                 RuleReference.PSALTER -> GoTo("Go to psalter", onReadPsalter)
-                RuleReference.REFLECTIONS -> GoTo("Go to Reflections", onReadReflections)
+                RuleReference.REFLECTIONS -> Unit
                 RuleReference.NONE -> Unit
             }
 
             if (entry.rule.givenByPriest == true) {
-                GivenByPriest()
+                GivenByPriest(givenBy)
             }
 
             val dispensation = entry.dispensation
@@ -404,10 +514,7 @@ private fun RuleMenu(
                     Item("Read today\u2019s kathisma", choosing(onReadPsalter))
                     HorizontalDivider(color = Chotki.lineSoft)
                 }
-                RuleReference.REFLECTIONS -> {
-                    Item("Open Reflections", choosing(onReadReflections))
-                    HorizontalDivider(color = Chotki.lineSoft)
-                }
+                RuleReference.REFLECTIONS -> Unit
                 RuleReference.NONE -> Unit
             }
 
@@ -473,9 +580,11 @@ private fun GoTo(label: String, onTap: () -> Unit) {
  * line of their day.
  */
 @Composable
-private fun GivenByPriest() {
+private fun GivenByPriest(phrase: String?) {
     Text(
-        "GIVEN BY A PRIEST",
+        // A stored name replaces the nameless mark. No name stays nameless —
+        // the app does not invent one.
+        phrase ?: "GIVEN BY A PRIEST",
         color = Chotki.goldDim,
         fontSize = 9.sp,
         letterSpacing = 0.09.em,

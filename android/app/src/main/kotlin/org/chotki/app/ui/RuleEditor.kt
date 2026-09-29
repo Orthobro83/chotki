@@ -105,6 +105,20 @@ fun RuleEditor(
             fontSize = 18.sp,
             modifier = Modifier.semantics { contentDescription = "Rule editor" },
         )
+        if (existing == null && startingFrom == null) {
+            Text(
+                "This section is for personalized routines aimed at improving your overall " +
+                    "physical, mental, and spiritual health. It is not intended to enable you " +
+                    "to manufacture your own Orthodoxy. We strongly recommend that where " +
+                    "appropriate, custom rules be discussed with your priest or spiritual father. " +
+                    "If that is not possible, keep these custom rules simple and attainable " +
+                    "(e.g., jogging, swimming, sobriety).",
+                color = Chotki.faint,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
         Spacer(Modifier.size(14.dp))
 
         Field("What is it?", title, "Write something…", "Rule title") { title = it }
@@ -120,7 +134,16 @@ fun RuleEditor(
         // say where a rule came from. This can. It is a label and nothing more
         // — it changes no scoring, no scheduling and no control, because an app
         // is in no position to hold anyone to an obedience it was not party to.
-        GivenByPriestBox(givenByPriest) { givenByPriest = it }
+        // The named option replaces the generic one, and only while a name is
+        // stored. A rule already marked stays editable. No name is invented.
+        val father = state.settings.spiritualFatherName.trim()
+        if (father.isNotEmpty() || givenByPriest) {
+            GivenByPriestBox(
+                checked = givenByPriest,
+                label = state.settings.givenByPriestPhrase()
+                    ?: "Given by my priest or spiritual father",
+            ) { givenByPriest = it }
+        }
 
         Spacer(Modifier.size(10.dp))
         // Seven full-width choices stacked took most of a phone screen before
@@ -333,7 +356,7 @@ private fun Choice(label: String, chosen: Boolean, compact: Boolean = false, onP
  * over and over.
  */
 @Composable
-private fun GivenByPriestBox(checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun GivenByPriestBox(checked: Boolean, label: String, onChange: (Boolean) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -341,9 +364,7 @@ private fun GivenByPriestBox(checked: Boolean, onChange: (Boolean) -> Unit) {
             .padding(top = 12.dp, bottom = 4.dp)
             .semantics {
                 role = Role.Checkbox
-                contentDescription =
-                    if (checked) "Given by my priest or spiritual father, checked"
-                    else "Given by my priest or spiritual father, not checked"
+                contentDescription = if (checked) "$label, checked" else "$label, not checked"
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(11.dp),
@@ -361,7 +382,7 @@ private fun GivenByPriestBox(checked: Boolean, onChange: (Boolean) -> Unit) {
             }
         }
         Text(
-            "Given by my priest or spiritual father",
+            label,
             color = Chotki.parchment,
             fontSize = 14.sp,
         )
