@@ -21,6 +21,18 @@ What that means in practice:
 - iOS is in development and a Linux version is planned.
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 
+### 0.1.14, a release candidate
+
+The Android interface follows the redesign. It supersedes 0.1.13-rc2.
+
+- The mark plays once, before a welcome that asks what to call you. Settings keeps that name, and a spiritual father's name, and either can be changed later.
+- The day opens on one week. A grip beneath it opens the month, and reading the rules does not fold it shut. A great feast is gold, a Sunday is ochre, and a fast is violet. The selected day is outlined, not filled.
+- Home shows what the calendar marks for a fast when a fasting rule is due, or when fasting is set to observed. It describes the day. It does not tell anyone what to eat.
+- The prayer list is a menu. A counted prayer keeps the rope. A rule that is read scrolls, and fades at the edges. Reaching the count, or the last line, marks that rule and does not unmark it.
+- The day's readings are always there, with a rule's own readings first. Scrolling to the end of one marks it, when it is on the rule.
+- The bar is Rule, Prayers, Reading, Progress, and Settings. The glossary is reached from a word, and from Settings.
+- A saying of the fathers sits at the foot of the day, on a public-domain picture chosen for that date.
+
 ### 0.1.13, a release candidate
 
 The Android interface has been redrawn, and the parts of it that live in
