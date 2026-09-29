@@ -32,7 +32,7 @@ The Android interface has been redrawn, and the parts of it that live in
 - Every rule the library offers now has a glossary entry behind it. Three had none.
 - A rule can be marked as given by a priest or spiritual father. It is a label and changes nothing else.
 - Answering the day's question keeps the Reflection rule, rather than asking you to say twice that you wrote something.
-- The prayers are framed by a drawn border, at low opacity, in the app's own parchment.
+- The prayers are framed by a drawn border, at low opacity, in the app's own parchment, on both platforms. Text passes behind it rather than across it.
 - Subsections slide over the screen that opened them and are dismissed by tapping away or dragging down.
 
 
