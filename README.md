@@ -4,13 +4,13 @@ An app for keeping an Orthodox routine, and honestly measuring whether it is kep
 
 A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning practice into a scoreboard.
 
-You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community — such as [The Brotherhood of the Narrow Path](https://www.skool.com/fathermoses/), who inspired this app.
+You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community, or are private lifestyle goals for yourself. Use these with caution: do not invent your own Orthodoxy. Consult a priest or spiritual father.
 
-> Chotki is an independent project. It was inspired by The Brotherhood of the Narrow Path, but it is not sanctioned by, affiliated with, or endorsed by them, and nothing in it should be taken as speaking for them.
+> Chotki is an independent project. It is not sanctioned by, affiliated with, or endorsed by any Orthodox church or parish, and nothing in it should be taken as speaking for them. All prayers and other material are sourced from public-domain texts.
 
 ## Status
 
-**Alpha.** It runs, and it is in daily use by its author. It has not been used by anyone else yet.
+**Alpha.** It runs, and it is in daily use by its author.
 
 What that means in practice:
 
@@ -26,12 +26,6 @@ What that means in practice:
 - [plan.html](plan.html) — the full plan, formatted
 
 ## What it looks like
-
-<p align="center">
-  <img src="screenshots/chotki-welcome.png" width="330" alt="The first-run welcome: the prayer rope mark, an introduction, and a note set apart about writing rules with your community.">
-</p>
-
-**The welcome**, shown once and then not again. Who the app is for, what it is not affiliated with, and where to begin — start small, only what you can keep. The note set apart is about spiritual direction: writing your own rule is something to do with your community and its leadership, not alone.
 
 <p align="center">
   <img src="screenshots/chotki-rule.png" width="330" alt="The month, shaded for fasts and feasts, above the day's rules with checkboxes.">
@@ -106,7 +100,7 @@ That is a fixed constraint rather than a style choice, and it is enforced by tes
 4. Go to **System Settings › Privacy & Security**, scroll down, and next to the message about Chotki click **Open Anyway**. Confirm.
 5. It will ask permission to send notifications. Allow it if you want reminders; the app works either way.
 
-A cross appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
+A Chotki icon appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
 
 To check which half you are running: `lipo -archs /Applications/Chotki.app/Contents/MacOS/Chotki` lists both, and `uname -m` says which one your Mac will use — `arm64` for Apple Silicon, `x86_64` for Intel.
 
