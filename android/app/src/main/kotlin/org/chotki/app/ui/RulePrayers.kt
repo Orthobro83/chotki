@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -47,23 +48,28 @@ fun RulePrayers(
     }
     var paragraphIndex = 0
 
-    Box(modifier.fillMaxSize().background(Chotki.ground)) {
-    // Room at both ends for the ornament. Without it the back link sits on
-    // the top rule and the last source line disappears behind the bottom one.
+    Column(modifier.fillMaxSize().background(Chotki.ground)) {
+        // Outside the border, and above it. The ornament is for the words that
+        // were received, not for the app's own furniture: a way out of the
+        // page is not part of what is being read, and framing it alongside the
+        // prayers says that it is.
+        Text(
+            "\u2039 The day",
+            color = Chotki.gold,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .clickable(onClick = onBack)
+                .padding(horizontal = READING_MARGIN, vertical = 14.dp)
+                .semantics { contentDescription = "Back to the day" },
+        )
+
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+    // Room at both ends for the ornament, so nothing sits on the rules.
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 14.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(top = 34.dp, bottom = 38.dp),
     ) {
         item {
-            Text(
-                "‹ The day",
-                color = Chotki.gold,
-                fontSize = 14.sp,
-                modifier = Modifier
-                    .clickable(onClick = onBack)
-                    .padding(horizontal = READING_MARGIN, vertical = 16.dp)
-                    .semantics { contentDescription = "Back to the day" },
-            )
             Text(
                 rule.title,
                 color = Chotki.parchment,
@@ -110,17 +116,19 @@ fun RulePrayers(
         }
     }
 
-    // Over the words rather than around them, so the text keeps its full width
-    // and nothing reflows at a large font scale.
-    VenerationBorder()
+            // Over the words rather than around them, so the text keeps its
+            // full width and nothing reflows at a large font scale.
+            VenerationBorder()
+        }
     }
 }
 
 /**
  * How far the words are held from the edge.
  *
- * Wider than the app's usual 16dp because the ornament sits between the two,
- * and Ryan asked for the air back after the first drawing had them almost
- * touching.
+ * Wider than the app's usual 16dp because the ornament sits between the two.
+ * The inner edge of the band is 25dp in, so this leaves about 19dp of air
+ * around the text. Thirty was the first attempt and left five, which Ryan
+ * rightly said was still crowding it.
  */
-private val READING_MARGIN = 30.dp
+private val READING_MARGIN = 44.dp
