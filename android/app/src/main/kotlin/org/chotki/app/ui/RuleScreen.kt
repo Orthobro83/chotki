@@ -224,7 +224,10 @@ private fun EntryRow(
                 interactionSource = remember { MutableInteractionSource() },
             )
             .padding(horizontal = 10.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        // Top, not centre. The row grew a line for the destination and another
+        // for the badge, and a centred checkbox floated down the middle of it,
+        // level with the link rather than with the title it belongs to.
+        verticalAlignment = Alignment.Top,
     ) {
         RuleMenu(
             open = menuOpen,
@@ -328,6 +331,7 @@ private fun EntryRow(
             text = entry.rule.timeOfDay?.let { Format.time(it, clock) } ?: "All day",
             color = if (entry.isKept) Chotki.faint else Chotki.muted,
             fontSize = 13.sp,
+            modifier = Modifier.padding(top = 13.dp),
         )
 
         Text(

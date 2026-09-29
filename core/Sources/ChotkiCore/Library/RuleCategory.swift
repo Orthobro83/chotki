@@ -14,5 +14,11 @@ public enum RuleCategory: String, Sendable, Hashable, Codable, CaseIterable {
     }
 
     /// The order they appear in the library.
-    public static let ordered: [RuleCategory] = [.prayer, .fasting, .services, .reading, .life]
+    ///
+    /// Ryan's, and deliberately not alphabetical or historical: what happens
+    /// in church first, then what is said at home, then what is read, then
+    /// what is kept from food, then the rest of a life. Rules of one's own
+    /// come after all of them, and are not a category here because they are
+    /// not the library's.
+    public static let ordered: [RuleCategory] = [.services, .prayer, .reading, .fasting, .life]
 }

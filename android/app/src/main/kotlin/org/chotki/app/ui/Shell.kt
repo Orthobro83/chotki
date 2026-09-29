@@ -38,6 +38,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.content.Glossary
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsets
 
 /**
  * Where the app can be: the same seven places the macOS sidebar offers.
@@ -173,7 +182,7 @@ fun Shell(state: AppState) {
         // the foot of the day and nowhere else, so it was invisible from every
         // other screen and easy to miss on the one that had it.
         TopBar(
-            screen = journey.current,
+            screen = journey.page,
             onLibrary = { journey = journey.push(Screen.Library) },
             onGlossary = { journey = journey.push(Screen.Terms()) },
         )
@@ -204,7 +213,7 @@ fun Shell(state: AppState) {
                 label = "screen",
             ) { destination ->
                 Column(Modifier.fillMaxSize()) {
-                    when (val screen = destination.current) {
+                    when (val screen = destination.page) {
                         is Screen.Editor -> RuleEditor(
                             state = state,
                             existing = screen.rule,
@@ -311,6 +320,47 @@ fun Shell(state: AppState) {
                     }
                 }
             }
+
+            // A subsection rides over its root rather than replacing it:
+            // writing a rule over the library, a word's meaning over whatever
+            // you were reading. Tapping the scrim or dragging it down is back,
+            // which is the gesture people already make.
+            val riding = journey.sheet
+            if (riding != null) {
+                Detour(onDismiss = { journey = journey.back() }) {
+                    when (riding) {
+                        is Screen.Editor -> RuleEditor(
+                            state = state,
+                            existing = riding.rule,
+                            startingFrom = riding.startingFrom,
+                            onDone = { journey = journey.back() },
+                        )
+
+                        is Screen.RulePrayers -> {
+                            val rule = state.rule(riding.ruleID)
+                            if (rule == null) {
+                                journey = journey.back()
+                            } else {
+                                RulePrayers(
+                                    rule = rule,
+                                    onBack = { journey = journey.back() },
+                                    glossary = glossary,
+                                    onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
+                                )
+                            }
+                        }
+
+                        is Screen.Terms -> GlossaryScreen(
+                            glossary = glossary,
+                            openSlug = riding.slug,
+                            onOpen = { journey = journey.push(Screen.Terms(it)) },
+                            onBack = { journey = journey.back() },
+                        )
+
+                        else -> Unit
+                    }
+                }
+            }
         }
 
         Row(
@@ -319,7 +369,7 @@ fun Shell(state: AppState) {
                 .background(Chotki.panel)
                 .navigationBarsPadding(),
         ) {
-            val lit = journey.current.place
+            val lit = journey.page.place
             for (candidate in Place.entries) {
                 val colour = if (candidate == lit) Chotki.gold else Chotki.muted
                 Column(
@@ -341,5 +391,46 @@ fun Shell(state: AppState) {
                 }
             }
         }
+    }
+}
+
+/**
+ * A subsection, sliding up over the screen that opened it.
+ *
+ * Ryan: "each subsection slides on top of its root. Tapping outside of its
+ * boundaries or sliding it downward hides it." Material's modal sheet is
+ * exactly that gesture, and using the platform's own means the drag, the
+ * fling, the scrim and the predictive back all behave the way they do
+ * everywhere else on the phone rather than the way this app reinvented them.
+ *
+ * Taken straight to full height. A half-open stop is useful for a short form
+ * and a nuisance for a long prayer, and every detour here is the second kind.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Detour(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheet,
+        // The sheet is its own window, so the shell's `statusBarsPadding` does
+        // not reach it. Without this the title of a full-height sheet draws
+        // underneath the clock.
+        contentWindowInsets = { WindowInsets.statusBars },
+        containerColor = Chotki.ground,
+        contentColor = Chotki.parchment,
+        scrimColor = Chotki.ground.copy(alpha = 0.62f),
+        dragHandle = {
+            Box(
+                Modifier
+                    .padding(top = 10.dp, bottom = 4.dp)
+                    .width(34.dp)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Chotki.line),
+            )
+        },
+    ) {
+        Box(Modifier.fillMaxSize()) { content() }
     }
 }

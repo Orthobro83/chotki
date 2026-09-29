@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,7 +48,12 @@ fun RulePrayers(
     var paragraphIndex = 0
 
     Box(modifier.fillMaxSize().background(Chotki.ground)) {
-    LazyColumn(Modifier.fillMaxSize()) {
+    // Room at both ends for the ornament. Without it the back link sits on
+    // the top rule and the last source line disappears behind the bottom one.
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 14.dp, bottom = 28.dp),
+    ) {
         item {
             Text(
                 "‹ The day",
