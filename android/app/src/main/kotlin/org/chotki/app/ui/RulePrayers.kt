@@ -116,8 +116,10 @@ fun RulePrayers(
         }
     }
 
-            // Over the words rather than around them, so the text keeps its
-            // full width and nothing reflows at a large font scale.
+            // Order matters. The fade is over the text and under the
+            // ornament, so a line arriving at the top of the page comes out
+            // from behind the border rather than across it.
+            EdgeFade()
             VenerationBorder()
         }
     }

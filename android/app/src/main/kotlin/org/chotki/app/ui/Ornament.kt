@@ -214,3 +214,58 @@ private fun DrawScope.edge(ink: Color, from: Offset, to: Offset) {
         strokeWidth = 0.9.dp.toPx(),
     )
 }
+
+
+/**
+ * Where scrolling text goes to disappear.
+ *
+ * The ornament is drawn over the words, so a line of text arriving at the top
+ * of the page crossed the border and sat on top of it for a moment before
+ * leaving. It should come out from behind it instead.
+ *
+ * A band of the page's own ground at each end, solid at the very edge and gone
+ * by the time it is clear of the band, drawn under the ornament and over the
+ * text. Nothing is clipped and nothing reflows: the text still has the full
+ * height of the page, it simply dissolves before it reaches the frame.
+ */
+@Composable
+fun EdgeFade(
+    modifier: Modifier = Modifier,
+    ground: Color = Chotki.ground,
+    depth: Dp = FADE,
+) {
+    Canvas(modifier.fillMaxSize()) {
+        val band = depth.toPx()
+        if (band <= 0f || size.height < band * 2) return@Canvas
+
+        drawRect(
+            brush = Brush.verticalGradient(
+                0f to ground,
+                0.55f to ground,
+                1f to Color.Transparent,
+                startY = 0f,
+                endY = band,
+            ),
+            size = androidx.compose.ui.geometry.Size(size.width, band),
+        )
+        drawRect(
+            brush = Brush.verticalGradient(
+                0f to Color.Transparent,
+                0.45f to ground,
+                1f to ground,
+                startY = size.height - band,
+                endY = size.height,
+            ),
+            topLeft = Offset(0f, size.height - band),
+            size = androidx.compose.ui.geometry.Size(size.width, band),
+        )
+    }
+}
+
+/**
+ * How deep the fade runs.
+ *
+ * Far enough to clear the ornament: the band's inner edge is 25dp in, and the
+ * text should already be gone by then rather than arriving at it.
+ */
+private val FADE: Dp = 40.dp
