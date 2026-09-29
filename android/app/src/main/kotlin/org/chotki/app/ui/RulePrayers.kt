@@ -2,6 +2,7 @@ package org.chotki.app.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,7 +46,8 @@ fun RulePrayers(
     }
     var paragraphIndex = 0
 
-    LazyColumn(modifier.fillMaxSize().background(Chotki.ground)) {
+    Box(modifier.fillMaxSize().background(Chotki.ground)) {
+    LazyColumn(Modifier.fillMaxSize()) {
         item {
             Text(
                 "‹ The day",
@@ -53,21 +55,21 @@ fun RulePrayers(
                 fontSize = 14.sp,
                 modifier = Modifier
                     .clickable(onClick = onBack)
-                    .padding(16.dp)
+                    .padding(horizontal = READING_MARGIN, vertical = 16.dp)
                     .semantics { contentDescription = "Back to the day" },
             )
             Text(
                 rule.title,
                 color = Chotki.parchment,
                 fontSize = 18.sp,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = READING_MARGIN),
             )
             Spacer(Modifier.size(10.dp))
         }
 
         items(prayers.size, key = { prayers[it].id }) { index ->
             val prayer = prayers[index]
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(Modifier.padding(horizontal = READING_MARGIN, vertical = 8.dp)) {
                 Text(prayer.title, color = Chotki.gold, fontSize = 13.sp)
                 val rubric = prayer.rubric
                 if (rubric != null) Text(rubric, color = Chotki.faint, fontSize = 12.sp)
@@ -97,8 +99,22 @@ fun RulePrayers(
                     "differ, and the full rule is settled with your priest or spiritual father.",
                 color = Chotki.faint,
                 fontSize = 12.sp,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = READING_MARGIN, vertical = 16.dp),
             )
         }
     }
+
+    // Over the words rather than around them, so the text keeps its full width
+    // and nothing reflows at a large font scale.
+    VenerationBorder()
+    }
 }
+
+/**
+ * How far the words are held from the edge.
+ *
+ * Wider than the app's usual 16dp because the ornament sits between the two,
+ * and Ryan asked for the air back after the first drawing had them almost
+ * touching.
+ */
+private val READING_MARGIN = 30.dp

@@ -41,6 +41,11 @@ import org.chotki.core.RecurrenceForm
 import org.chotki.core.Rule
 import org.chotki.core.TimeOfDay
 import org.chotki.core.Weekday
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Arrangement
 
 /**
  * Writing a rule, and changing one.
@@ -72,6 +77,7 @@ fun RuleEditor(
     var title by remember { mutableStateOf(filling?.title ?: "") }
     var note by remember { mutableStateOf(filling?.note ?: "") }
     var source by remember { mutableStateOf(filling?.source ?: "") }
+    var givenByPriest by remember { mutableStateOf(filling?.givenByPriest == true) }
     var form by remember {
         mutableStateOf(filling?.let { RecurrenceForm.of(it.recurrence) } ?: RecurrenceForm())
     }
@@ -108,7 +114,13 @@ fun RuleEditor(
         // neutral rather than an example, because an example that contradicts
         // the rule being taken on — "before sleep" under Morning prayers —
         // reads as the app not paying attention.
-        Field("Where it came from", source, "Write something…", "Rule source") { source = it }
+        Field("Who suggested it?", source, "Write something…", "Rule source") { source = it }
+
+        // `source` is free text the person edits, so it cannot be trusted to
+        // say where a rule came from. This can. It is a label and nothing more
+        // — it changes no scoring, no scheduling and no control, because an app
+        // is in no position to hold anyone to an obedience it was not party to.
+        GivenByPriestBox(givenByPriest) { givenByPriest = it }
 
         Spacer(Modifier.size(10.dp))
         // Seven full-width choices stacked took most of a phone screen before
@@ -218,6 +230,7 @@ fun RuleEditor(
                                 title = title.trim(),
                                 note = note.ifBlank { null },
                                 source = source.ifBlank { null },
+                                givenByPriest = if (givenByPriest) true else null,
                                 recurrence = form.recurrence(fallback = state.today),
                                 timeOfDay = if (hasTime) TimeOfDay.of(hour, minute) else null,
                                 reminders = RuleReminders(
@@ -308,4 +321,49 @@ private fun Choice(label: String, chosen: Boolean, compact: Boolean = false, onP
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .semantics { contentDescription = "Choose $label" },
     )
+}
+
+
+/**
+ * Whether this rule was given rather than chosen.
+ *
+ * Only the positive is ever stored or shown. Marking every other rule "not
+ * given by a priest" would put a mark on every line of the day, which is a mark
+ * on none, and would tell someone without a spiritual father the same thing
+ * over and over.
+ */
+@Composable
+private fun GivenByPriestBox(checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onChange(!checked) }
+            .padding(top = 12.dp, bottom = 4.dp)
+            .semantics {
+                role = Role.Checkbox
+                contentDescription =
+                    if (checked) "Given by my priest or spiritual father, checked"
+                    else "Given by my priest or spiritual father, not checked"
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(11.dp),
+    ) {
+        Box(
+            Modifier
+                .size(19.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (checked) Chotki.gold else Chotki.panel)
+                .border(1.dp, if (checked) Chotki.gold else Chotki.line, RoundedCornerShape(4.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) {
+                Text("\u2713", color = Chotki.ground, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Text(
+            "Given by my priest or spiritual father",
+            color = Chotki.parchment,
+            fontSize = 14.sp,
+        )
+    }
 }

@@ -270,6 +270,14 @@ fun Shell(state: AppState) {
                             onReadReflections = { journey = journey.push(Screen.Reflections(it)) },
                             onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
                             onOpenLibrary = { journey = journey.push(Screen.Library) },
+                            // The rope is a bar destination, so it is gone to
+                            // rather than pushed — but the prayer is chosen
+                            // first, so it is already counting on arrival.
+                            onGoToRope = {
+                                state.countOnTheRope(it)
+                                journey = journey.go(Place.PRAYERS)
+                            },
+                            onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
                         )
 
                         Screen.Rope -> RopeScreen(

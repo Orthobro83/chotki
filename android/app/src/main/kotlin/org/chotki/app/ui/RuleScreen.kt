@@ -1,6 +1,7 @@
 package org.chotki.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
@@ -24,9 +25,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.CalendarDate
@@ -45,7 +47,9 @@ import org.chotki.core.ClockStyle
 import org.chotki.core.DayEntry
 import org.chotki.core.Format
 import org.chotki.core.RuleReference
+import org.chotki.core.glossarySlug
 import org.chotki.core.reference
+import org.chotki.core.ropePrayerId
 
 /**
  * The day, and what is on the rule for it.
@@ -66,18 +70,21 @@ fun RuleScreen(
     onReadReflections: (org.chotki.core.Weekday) -> Unit = {},
     onEdit: (DayEntry) -> Unit = {},
     onOpenLibrary: () -> Unit = {},
+    /** Straight to the rope, already counting the prayer the rule names. */
+    onGoToRope: (String) -> Unit = {},
+    /** The glossary, opened at the entry that explains this rule. */
+    onOpenTerm: (String) -> Unit = {},
 ) {
     val entries = state.entries(state.selectedDate)
     val list = rememberLazyListState()
 
-    // Folded as soon as the rules are moved at all, and unfolded only back at
-    // the very top. A threshold in the middle would flap: folding gives the
-    // list more room, which moves it, which would unfold it again.
-    val collapsed by remember {
-        derivedStateOf {
-            list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 0
-        }
-    }
+    // Held here rather than inside the calendar, and deliberately not derived
+    // from the scroll position any more. It used to fold the moment the rules
+    // were touched, so reading your rules took the month away and getting it
+    // back meant scrolling to the very top; Ryan asked for a control instead.
+    // Surviving the composition is the point: following a rule to its prayers
+    // and coming back should find the calendar as it was left.
+    var monthOpen by rememberSaveable { mutableStateOf(false) }
 
     BoxWithConstraints(modifier.fillMaxSize().background(Chotki.ground)) {
         // Half, and no more. The calendar used to take whatever it wanted and
@@ -86,7 +93,12 @@ fun RuleScreen(
         val cap = this@BoxWithConstraints.maxHeight / 2
 
         Column(Modifier.fillMaxSize()) {
-            Calendar(state, collapsed = collapsed, maxHeight = cap)
+            Calendar(
+                state,
+                expanded = monthOpen,
+                onToggleExpanded = { monthOpen = !monthOpen },
+                maxHeight = cap,
+            )
             DayHeader(state.selectedDate)
 
             if (entries.isEmpty()) {
@@ -111,6 +123,8 @@ fun RuleScreen(
                             // on that question rather than at the top of a
                             // seven-day scroll.
                             onReadReflections = { onReadReflections(entry.date.weekday) },
+                            onGoToRope = onGoToRope,
+                            onOpenTerm = onOpenTerm,
                             onEdit = { onEdit(entry) },
                             onMarkKeptLate = { state.markKeptLate(entry) },
                             onStandDown = { state.standDown(entry) },
@@ -185,6 +199,8 @@ private fun EntryRow(
     onReadReading: () -> Unit,
     onReadPsalter: () -> Unit,
     onReadReflections: () -> Unit,
+    onGoToRope: (String) -> Unit,
+    onOpenTerm: (String) -> Unit,
     onEdit: () -> Unit,
     onMarkKeptLate: () -> Unit,
     onStandDown: () -> Unit,
@@ -219,6 +235,7 @@ private fun EntryRow(
             onReadReading = onReadReading,
             onReadPsalter = onReadPsalter,
             onReadReflections = onReadReflections,
+            onGoToRope = onGoToRope,
             onToggle = onToggle,
             onMarkKeptLate = onMarkKeptLate,
             onStandDown = onStandDown,
@@ -251,12 +268,50 @@ private fun EntryRow(
         }
 
         Column(Modifier.weight(1f).padding(start = 4.dp)) {
+            // The title carries the glossary only where the rule leads nowhere
+            // else. A row with two tap targets a line apart is a row where
+            // people hit the wrong one, so the destination wins when there is
+            // one and the long press offers the meaning instead.
+            val destination = entry.rule.reference
+            val slug = entry.rule.glossarySlug
+            val titleIsLink = destination == RuleReference.NONE && slug != null
+
             Text(
                 text = entry.rule.title,
                 color = if (entry.showsAsSatisfied) Chotki.muted else Chotki.parchment,
                 fontSize = 15.sp,
-                textDecoration = if (entry.showsAsSatisfied) TextDecoration.LineThrough else null,
+                textDecoration = when {
+                    entry.showsAsSatisfied -> TextDecoration.LineThrough
+                    titleIsLink -> TextDecoration.Underline
+                    else -> null
+                },
+                modifier = if (titleIsLink) {
+                    Modifier
+                        .clickable { onOpenTerm(slug!!) }
+                        .semantics { contentDescription = "What ${entry.rule.title} means" }
+                } else {
+                    Modifier
+                },
             )
+
+            // Named rather than drawn. This was a "☰" at the far right of the
+            // row, which said nothing about where it went and was easy to miss
+            // entirely; Ryan asked for the destination in words.
+            when (destination) {
+                RuleReference.ROPE -> GoTo("Go to rope") {
+                    entry.rule.ropePrayerId?.let(onGoToRope)
+                }
+                RuleReference.PRAYERS -> GoTo("Go to prayer", onReadPrayers)
+                RuleReference.READING -> GoTo("Go to reading", onReadReading)
+                RuleReference.PSALTER -> GoTo("Go to psalter", onReadPsalter)
+                RuleReference.REFLECTIONS -> GoTo("Go to Reflections", onReadReflections)
+                RuleReference.NONE -> Unit
+            }
+
+            if (entry.rule.givenByPriest == true) {
+                GivenByPriest()
+            }
+
             val dispensation = entry.dispensation
             if (dispensation != null) {
                 // The Church lifted it. Said plainly, so the day teaches
@@ -274,24 +329,6 @@ private fun EntryRow(
             color = if (entry.isKept) Chotki.faint else Chotki.muted,
             fontSize = 13.sp,
         )
-
-        // The way to the words, which is the point of the rule. Shown whenever
-        // the app holds the text the rule names — the reading rules had no way
-        // through for months because this asked only about prayers, and the
-        // day's Gospel is no less a text for not being one.
-        when (entry.rule.reference) {
-            RuleReference.PRAYERS -> Reference(
-                "Read the prayers for ${entry.rule.title}",
-                onReadPrayers,
-            )
-            RuleReference.READING -> Reference(
-                "Read ${entry.rule.title.replaceFirstChar { it.lowercase() }}",
-                onReadReading,
-            )
-            RuleReference.PSALTER -> Reference("Read today's kathisma", onReadPsalter)
-            RuleReference.REFLECTIONS -> Reference("Open Reflections", onReadReflections)
-            RuleReference.NONE -> Unit
-        }
 
         Text(
             "✎",
@@ -324,6 +361,7 @@ private fun RuleMenu(
     onReadReading: () -> Unit,
     onReadPsalter: () -> Unit,
     onReadReflections: () -> Unit,
+    onGoToRope: (String) -> Unit,
     onToggle: () -> Unit,
     onMarkKeptLate: () -> Unit,
     onStandDown: () -> Unit,
@@ -346,6 +384,10 @@ private fun RuleMenu(
             )
         } else {
             when (entry.rule.reference) {
+                RuleReference.ROPE -> {
+                    Item("Go to the rope", choosing { entry.rule.ropePrayerId?.let(onGoToRope) })
+                    HorizontalDivider(color = Chotki.lineSoft)
+                }
                 RuleReference.PRAYERS -> {
                     Item("Read the prayers", choosing(onReadPrayers))
                     HorizontalDivider(color = Chotki.lineSoft)
@@ -405,15 +447,37 @@ internal fun longDate(date: CalendarDate): String =
 
 /** The three lines that lead to the text, wherever that text lives. */
 @Composable
-private fun Reference(description: String, onTap: () -> Unit) {
-    Text(
-        "☰",
-        color = Chotki.goldDim,
-        fontSize = 16.sp,
-        modifier = Modifier
-            .size(44.dp)
-            .wrapContentSize()
+private fun GoTo(label: String, onTap: () -> Unit) {
+    Row(
+        Modifier
             .clickable(onClick = onTap)
-            .semantics { contentDescription = description },
+            .padding(top = 3.dp, bottom = 3.dp, end = 8.dp)
+            .semantics { contentDescription = label },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = Chotki.gold, fontSize = 13.sp)
+        Text(" \u2192", color = Chotki.gold, fontSize = 13.sp)
+    }
+}
+
+/**
+ * Where a rule came from, when the person said so.
+ *
+ * Only ever the positive. An earlier drawing carried "not given by a priest"
+ * on everything else, which makes a mark on every rule and therefore a mark on
+ * none, and tells someone without a spiritual father the same thing on every
+ * line of their day.
+ */
+@Composable
+private fun GivenByPriest() {
+    Text(
+        "GIVEN BY A PRIEST",
+        color = Chotki.goldDim,
+        fontSize = 9.sp,
+        letterSpacing = 0.09.em,
+        modifier = Modifier
+            .padding(top = 5.dp)
+            .border(1.dp, Chotki.line, RoundedCornerShape(3.dp))
+            .padding(horizontal = 7.dp, vertical = 3.dp),
     )
 }

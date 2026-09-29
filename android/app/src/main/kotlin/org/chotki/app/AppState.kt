@@ -23,6 +23,8 @@ import org.chotki.core.NoLiturgicalData
 import org.chotki.core.Practice
 import org.chotki.core.PrayerScreen
 import org.chotki.core.Rule
+import org.chotki.core.RuleReference
+import org.chotki.core.reference
 import org.chotki.core.content.Content
 import org.chotki.core.content.model
 import org.chotki.core.content.modelCategory
@@ -119,6 +121,18 @@ class AppState(
      * `by`, which is how core's `PrayerScreen` wants to be used.
      */
     val prayers = mutableStateOf(PrayerScreen())
+
+    /**
+     * Chooses the prayer the rope should be counting, before the screen opens.
+     *
+     * "Ready to begin immediately" is the whole of the request, so the choice
+     * is made here rather than left to the chooser at the top of the rope.
+     * `choose` is a no-op when the prayer is already selected, which is what
+     * lets someone step away and come back to a count still running.
+     */
+    fun countOnTheRope(prayerID: String) {
+        prayers.value = prayers.value.choosing(prayerID)
+    }
 
     var selectedDate by mutableStateOf(CalendarDate.from(Instant.now(), zone))
     var visibleMonth by mutableStateOf(CalendarDate.from(Instant.now(), zone))
@@ -404,9 +418,19 @@ class AppState(
         store.saveSettings(updated)
     }
 
+    /**
+     * Whether this template is on the rule right now.
+     *
+     * "On the rule" and "a rule with this title exists" are not the same
+     * question, and asking the second one was a bug the Mac had first: removing
+     * a rule closes its activation and leaves the row, because the days it kept
+     * are still true and deleting them would rewrite the record. So the library
+     * went on saying "On your rule" about a rule taken off, and since that
+     * label replaces the button there was no way to take it on again.
+     */
     fun isTaken(templateID: String): Boolean {
         val title = Content.ruleLibrary.firstOrNull { it.id == templateID }?.title ?: return false
-        return rules.any { it.title == title }
+        return rules.any { it.title == title && isOnTheRule(it) }
     }
 
     // MARK: rules of one's own
@@ -484,6 +508,26 @@ class AppState(
         } catch (e: Exception) {
             notice = "That was written down here but could not be saved to your record."
         }
+        markReflectionKept(date)
+    }
+
+    /**
+     * Answering the day's question is keeping the Reflection rule.
+     *
+     * Asking someone to write their answer and then tick a box saying they
+     * wrote it is asking them to do the same thing twice. The write is the
+     * evidence, so saving one marks the day.
+     *
+     * Only the rule that actually leads to Reflections, only on the day the
+     * answer belongs to, and never on a day already marked: this adds a
+     * completion, it never removes one, and it will not overwrite a day marked
+     * kept late with a plain completion.
+     */
+    private fun markReflectionKept(date: CalendarDate) {
+        val entry = entries(date).firstOrNull { it.rule.reference == RuleReference.REFLECTIONS }
+            ?: return
+        if (entry.isKept || entry.isDispensed) return
+        toggleKept(entry)
     }
 
     /**
