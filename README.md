@@ -17,9 +17,23 @@ You can add items of your own, whether or not they are Church canon, so that a r
 What that means in practice:
 
 - **Android is available**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android).
-- **macOS is available** — macOS 13 or later, Apple Silicon and Intel. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
+- **macOS is available**, macOS 13 or later, Apple Silicon and Intel. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - iOS is in development and a Linux version is planned.
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
+
+### 0.1.13, a release candidate
+
+The Android interface has been redrawn, and the parts of it that live in
+`core/` have come to macOS with it.
+
+- The day's rules name where they lead. A rule whose whole text is one counted prayer goes to the rope with the count already running; a rule with nowhere else to go carries its glossary entry on its title.
+- The calendar opens to a full month when you ask it to, by the grip beneath it, and steps a week or a month on a horizontal swipe. Feasts and fasts colour the date and add a dot beneath it, where you have asked to see them.
+- The library folds into sections: Services, Prayer, Reading, Fasting, Life, and your own.
+- Every rule the library offers now has a glossary entry behind it. Three had none.
+- A rule can be marked as given by a priest or spiritual father. It is a label and changes nothing else.
+- Answering the day's question keeps the Reflection rule, rather than asking you to say twice that you wrote something.
+- The prayers are framed by a drawn border, at low opacity, in the app's own parchment.
+- Subsections slide over the screen that opened them and are dismissed by tapping away or dragging down.
 
 
 - [design.md](design.md) — data model, liturgical handling, scoring
