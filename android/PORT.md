@@ -19,7 +19,7 @@ expensive later. Open questions are listed at the end of `README.md`.
 
 Settle: feature scope for v1, minimum Android version, which device it must run
 on, whether the database should be interchangeable with the macOS one, how the
-alpha reaches the Brotherhood, and whether shared content moves to JSON.
+alpha is handed out, and whether shared content moves to JSON.
 
 **Done when:** the answers are written into `README.md` and this file's
 assumptions are either confirmed or corrected.
@@ -254,16 +254,16 @@ the managed-device sources cannot name. Run it against a local emulator.
 battery handling, real Doze across days — no emulator at any API level has
 them.
 
-## Phase 11 — On the device, then to the Brotherhood
+## Phase 11 — On the device, then handed on
 
 Ryan's own device first, with his real rule, for several days. Then an APK for
-the Brotherhood with the same alpha framing as the macOS release, and the same
+the people it is meant for, with the same alpha framing as the macOS release, and the same
 licence terms.
 
 Ready for the device: the release build type signs from a gitignored
 `keystore.properties` and shouts if it falls back to the debug key
-(`RELEASE.md`); Settings carries the version, the alpha notice, the Brotherhood
-disclaimer and the licence, because an apk is passed hand to hand with no
+(`RELEASE.md`); Settings carries the version, the alpha notice, the independence
+line and the licence, because an apk is passed hand to hand with no
 releases page attached; the README says how to sideload it **without developer
 mode or USB debugging**, which was the thing standing between this app and
 Ryan's daily-driver phone; and `DEVICE-CHECKLIST.md` is the week itself.

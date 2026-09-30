@@ -1,75 +1,55 @@
 package org.chotki.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.CalendarDate
-import org.chotki.core.ClockStyle
 import org.chotki.core.DayEntry
-import org.chotki.core.Format
-import org.chotki.core.RuleReference
-import org.chotki.core.glossarySlug
-import org.chotki.core.reference
-import org.chotki.core.ropePrayerId
 import org.chotki.core.Observance
-import org.chotki.core.FastingSeason
 import org.chotki.core.content.Glossary
-import androidx.compose.ui.text.style.TextAlign
 
 /**
  * The day, and what is on the rule for it.
  *
- * The one thing carried over from the macOS app deliberately: **only the box
- * marks a rule kept.** Making the whole row the target there fixed an
- * unclickable checkbox and broke everything sitting beside it — the prayers
- * link and the edit control both ticked the rule off. The answer to a small
- * target is padding around it.
+ * Commitments are cards. Only the circle marks one kept, and it sits off the
+ * card's own tap, which opens the prayers or the reading. A fast has nothing
+ * to open: the card turns over. The circle toggles, including a mark the
+ * reading or the rope put there on its own.
  */
 @Composable
 fun RuleScreen(
     state: AppState,
     modifier: Modifier = Modifier,
     onReadPrayers: (DayEntry) -> Unit = {},
-    onReadReading: () -> Unit = {},
+    onReadReading: (Int?) -> Unit = {},
     onReadPsalter: () -> Unit = {},
     onReadReflections: (org.chotki.core.Weekday) -> Unit = {},
     onEdit: (DayEntry) -> Unit = {},
@@ -80,7 +60,6 @@ fun RuleScreen(
     onOpenTerm: (String) -> Unit = {},
 ) {
     val entries = state.entries(state.selectedDate)
-    val list = rememberLazyListState()
 
     // Held here rather than inside the calendar, and deliberately not derived
     // from the scroll position any more. It used to fold the moment the rules
@@ -90,7 +69,7 @@ fun RuleScreen(
     // and coming back should find the calendar as it was left.
     var monthOpen by rememberSaveable { mutableStateOf(false) }
 
-    BoxWithConstraints(modifier.fillMaxSize().background(Chotki.ground)) {
+    BoxWithConstraints(modifier.fillMaxSize()) {
         // Half, and no more. The calendar used to take whatever it wanted and
         // the rules it sits above were pushed off the bottom of the screen,
         // where nothing could reach them because this column does not scroll.
@@ -106,76 +85,122 @@ fun RuleScreen(
                 onToggleExpanded = { monthOpen = !monthOpen },
                 maxHeight = cap,
             )
-            FastNote(state, glossary, onOpenTerm)
-            val liturgical = state.liturgicalDay(state.selectedDate)?.title
-            if (liturgical != null) {
-                Text(
-                    liturgical,
-                    color = Chotki.muted,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                )
-            }
-            DayHeader(state.selectedDate)
+            // One column, in document order. The saying follows whatever is
+            // above it. It is not pinned to the bottom of the screen, and a
+            // tall day scrolls to reach it.
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .testTag("the day"),
+            ) {
+                val liturgical = state.liturgicalDay(state.selectedDate)?.title
+                if (liturgical != null) {
+                    Text(
+                        liturgical,
+                        color = Chotki.muted,
+                        fontFamily = Chotki.reading,
+                        fontSize = 15.5.sp,
+                        lineHeight = 22.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 18.dp, vertical = 12.dp),
+                    )
+                }
+                FastNote(state)
+                DayHeader(state)
 
-            if (state.rules.isEmpty()) {
-                FirstRun(onOpenLibrary, state.selectedDate, Modifier.weight(1f))
-            } else if (entries.isEmpty()) {
-                EmptyDay(onOpenLibrary, Modifier.weight(1f))
-            } else {
-                // The weight is the fix. Without it this takes whatever height
-                // is left over, which can be none, and a list of zero height
-                // scrolls nowhere.
-                LazyColumn(Modifier.fillMaxWidth().weight(1f), state = list) {
-                    item {
+                if (state.rules.isEmpty()) {
+                    FirstRun(onOpenLibrary)
+                } else if (entries.isEmpty()) {
+                    EmptyDay(onOpenLibrary)
+                } else {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 18.dp, top = 14.dp, end = 18.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
                             "Today's commitments",
                             color = Chotki.muted,
+                            fontFamily = Chotki.reading,
                             fontSize = 13.sp,
-                            modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 6.dp),
+                        )
+                        Text(
+                            " · ",
+                            color = Chotki.muted,
+                            fontFamily = Chotki.reading,
+                            fontSize = 13.sp,
+                        )
+                        Text(
+                            "Add a new rule.",
+                            color = Chotki.gold,
+                            fontFamily = Chotki.reading,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .clickable(onClick = onOpenLibrary)
+                                .semantics { contentDescription = "Add a new rule" },
                         )
                     }
-                    items(entries, key = { it.id }) { entry ->
-                        EntryRow(
-                            entry = entry,
-                            clock = state.settings.clockStyle,
-                            isPaused = state.isPaused(entry.rule),
-                            onToggle = { state.toggleKept(entry) },
-                            onReadPrayers = { onReadPrayers(entry) },
-                            onReadReading = onReadReading,
-                            onReadPsalter = onReadPsalter,
-                            // The day this row is on, so the way through lands
-                            // on that question rather than at the top of a
-                            // seven-day scroll.
-                            onReadReflections = { onReadReflections(entry.date.weekday) },
-                            onGoToRope = onGoToRope,
-                            onOpenTerm = onOpenTerm,
-                            onEdit = { onEdit(entry) },
-                            onMarkKeptLate = { state.markKeptLate(entry) },
-                            onStandDown = { state.standDown(entry) },
-                            onPause = { state.pause(entry.rule) },
-                            onResume = { state.resume(entry.rule) },
-                            givenBy = state.settings.givenByPriestPhrase(),
-                        )
-                    }
-                    item { SayingCard(state.selectedDate) }
+                    Commitments(
+                        entries = entries,
+                        clock = state.settings.clockStyle,
+                        glossary = glossary,
+                        isPaused = { state.isPaused(it) },
+                        onToggle = { state.toggleKept(it) },
+                        onReadPrayers = onReadPrayers,
+                        onReadReading = onReadReading,
+                        onReadPsalter = onReadPsalter,
+                        onGoToRope = onGoToRope,
+                        onOpenTerm = onOpenTerm,
+                        onEdit = onEdit,
+                        onMarkKeptLate = { state.markKeptLate(it) },
+                        onStandDown = { state.standDown(it) },
+                        onPause = { state.pause(it.rule) },
+                        onResume = { state.resume(it.rule) },
+                        onOpenLibrary = onOpenLibrary,
+                        givenBy = state.settings.givenByPriestPhrase(),
+                    )
                 }
+                SayingCard(
+                    state.selectedDate,
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun DayHeader(date: CalendarDate) {
-    Text(
-        text = longDate(date),
-        color = Chotki.parchment,
-        fontSize = 17.sp,
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 14.dp)
-            .semantics { contentDescription = "The day" },
-    )
+private fun DayHeader(state: AppState) {
+    val date = state.selectedDate
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 18.dp, end = 18.dp, top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = longDate(date),
+            color = Chotki.parchment,
+            fontFamily = Chotki.reading,
+            fontSize = 17.sp,
+            modifier = Modifier
+                .weight(1f)
+                .semantics { contentDescription = "The day" },
+        )
+        if (state.settings.showOldStyleDates) {
+            Text(
+                oldStyleDate(date),
+                color = Chotki.faint,
+                fontFamily = Chotki.reading,
+                fontSize = 13.sp,
+            )
+        }
+    }
 }
 
 /**
@@ -188,16 +213,17 @@ private fun DayHeader(date: CalendarDate) {
  * depending on whether the day is empty is worse than one that does not.
  */
 @Composable
-private fun FirstRun(onOpenLibrary: () -> Unit, date: CalendarDate, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+private fun FirstRun(onOpenLibrary: () -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().padding(top = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Column(
             Modifier
-                .weight(1f)
                 .fillMaxWidth()
                 .clickable(onClick = onOpenLibrary)
                 .semantics { contentDescription = "Create your first rule" },
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
             Box(
                 Modifier
@@ -216,71 +242,65 @@ private fun FirstRun(onOpenLibrary: () -> Unit, date: CalendarDate, modifier: Mo
                 modifier = Modifier.padding(top = 14.dp),
             )
         }
-        SayingCard(date)
     }
 }
 
+/**
+ * What the calendar says about the fast, and nothing more.
+ *
+ * The purpose of the fast used to be pasted here in full, which pushed the
+ * day down into the cards. That account lives on the fast's own card, and
+ * from there in the glossary.
+ */
 @Composable
-private fun FastNote(
-    state: AppState,
-    glossary: Glossary,
-    onOpenTerm: (String) -> Unit,
-) {
+private fun FastNote(state: AppState) {
     val day = state.liturgicalDay(state.selectedDate) ?: return
     val due = state.entries(state.selectedDate).any { it.rule.isFastingRule }
     val observed = state.settings.observances.fasting == Observance.OBSERVED
     if (!due && !observed) return
     if (!day.isFast || day.isFastFree) return
-    Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp)) {
+    Column(
+        Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 8.dp),
+    ) {
         Text(
             "The calendar marks this as ${day.fastDescription}.",
             color = Chotki.violet,
-            fontSize = 14.sp,
+            fontFamily = Chotki.reading,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
         )
         if (day.abstentions.isNotEmpty()) {
             Text(
                 "Customarily set aside: ${day.abstentions.joinToString(", ")}.",
                 color = Chotki.faint,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-        val slugs = buildList {
-            when (day.season) {
-                FastingSeason.GREAT_LENT -> add("great-lent")
-                FastingSeason.APOSTLES_FAST -> add("apostles-fast")
-                FastingSeason.DORMITION_FAST -> add("dormition-fast")
-                FastingSeason.NATIVITY_FAST -> add("nativity-fast")
-                null -> Unit
-            }
-            if (day.fastLevel == 1 || due) add("wednesday-friday-fast")
-        }
-        for (slug in slugs.distinct()) {
-            val full = glossary.entry(slug)?.full ?: continue
-            Text(
-                full,
-                color = Chotki.muted,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(top = 6.dp),
+                fontFamily = FontFamily.SansSerif,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                modifier = Modifier.padding(top = 10.dp),
             )
         }
     }
 }
 
 @Composable
-private fun EmptyDay(onOpenLibrary: () -> Unit, modifier: Modifier = Modifier) {
+private fun EmptyDay(onOpenLibrary: () -> Unit) {
     Column(
-        modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Nothing on the rule for this day.", color = Chotki.muted, fontSize = 14.sp)
+        Text(
+            "Nothing on the rule for this day.",
+            color = Chotki.muted,
+            fontFamily = Chotki.reading,
+            fontSize = 14.sp,
+        )
         Spacer(Modifier.size(6.dp))
         Text(
             "Take something on from the library when you are ready.",
             color = Chotki.faint,
+            fontFamily = Chotki.reading,
             fontSize = 13.sp,
         )
-        Spacer(Modifier.weight(1f))
         Column(
             Modifier
                 .clickable(onClick = onOpenLibrary)
@@ -293,255 +313,7 @@ private fun EmptyDay(onOpenLibrary: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             LibraryIcon(Chotki.gold, 56.dp)
         }
-        Spacer(Modifier.weight(1.4f))
     }
-}
-
-@Composable
-private fun EntryRow(
-    entry: DayEntry,
-    clock: ClockStyle,
-    isPaused: Boolean,
-    onToggle: () -> Unit,
-    onReadPrayers: () -> Unit,
-    onReadReading: () -> Unit,
-    onReadPsalter: () -> Unit,
-    onReadReflections: () -> Unit,
-    onGoToRope: (String) -> Unit,
-    onOpenTerm: (String) -> Unit,
-    onEdit: () -> Unit,
-    onMarkKeptLate: () -> Unit,
-    onStandDown: () -> Unit,
-    onPause: () -> Unit,
-    onResume: () -> Unit,
-    /** The stored name, or null when none has been given. */
-    givenBy: String?,
-) {
-    var menuOpen by remember { mutableStateOf(false) }
-
-    Row(
-        Modifier
-            .fillMaxWidth()
-            // Long press is the Mac's right click. On the row itself, so the
-            // checkbox and the two icons keep their own gestures — the whole
-            // row was a tap target once and it ticked rules off by accident.
-            .combinedClickable(
-                onClick = {},
-                onLongClick = { menuOpen = true },
-                // No ripple on the plain tap: nothing happens on a plain tap,
-                // and a flash that says otherwise is a lie about the control.
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-            )
-            .padding(horizontal = 10.dp, vertical = 2.dp),
-        // Top, not centre. The row grew a line for the destination and another
-        // for the badge, and a centred checkbox floated down the middle of it,
-        // level with the link rather than with the title it belongs to.
-        verticalAlignment = Alignment.Top,
-    ) {
-        RuleMenu(
-            open = menuOpen,
-            entry = entry,
-            isPaused = isPaused,
-            onDismiss = { menuOpen = false },
-            onReadPrayers = onReadPrayers,
-            onReadReading = onReadReading,
-            onReadPsalter = onReadPsalter,
-            onReadReflections = onReadReflections,
-            onGoToRope = onGoToRope,
-            onToggle = onToggle,
-            onMarkKeptLate = onMarkKeptLate,
-            onStandDown = onStandDown,
-            onEdit = onEdit,
-            onPause = onPause,
-            onResume = onResume,
-        )
-
-        // The box, and only the box. It draws at 20dp and responds across 44,
-        // which is the platform's minimum target and the right answer to a small
-        // control — rather than a tap gesture over the whole row.
-        Box(
-            Modifier
-                .size(44.dp)
-                .clickable(enabled = !entry.isDispensed, onClick = onToggle)
-                .semantics { contentDescription = "Mark ${entry.rule.title} kept" },
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                Modifier
-                    .size(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(if (entry.showsAsSatisfied) Chotki.gold else Chotki.panel),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (entry.showsAsSatisfied) {
-                    Text("✓", color = Chotki.ground, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        Column(Modifier.weight(1f).padding(start = 4.dp)) {
-            // The title carries the glossary only where the rule leads nowhere
-            // else. A row with two tap targets a line apart is a row where
-            // people hit the wrong one, so the destination wins when there is
-            // one and the long press offers the meaning instead.
-            val destination = entry.rule.reference
-            val slug = entry.rule.glossarySlug
-            val titleIsLink = destination == RuleReference.NONE && slug != null
-
-            Text(
-                text = entry.rule.title,
-                color = if (entry.showsAsSatisfied) Chotki.muted else Chotki.parchment,
-                fontSize = 15.sp,
-                textDecoration = when {
-                    entry.showsAsSatisfied -> TextDecoration.LineThrough
-                    titleIsLink -> TextDecoration.Underline
-                    else -> null
-                },
-                modifier = if (titleIsLink) {
-                    Modifier
-                        .clickable { onOpenTerm(slug!!) }
-                        .semantics { contentDescription = "What ${entry.rule.title} means" }
-                } else {
-                    Modifier
-                },
-            )
-
-            // Named rather than drawn. This was a "☰" at the far right of the
-            // row, which said nothing about where it went and was easy to miss
-            // entirely; Ryan asked for the destination in words.
-            when (destination) {
-                RuleReference.ROPE -> GoTo("Go to rope") {
-                    entry.rule.ropePrayerId?.let(onGoToRope)
-                }
-                RuleReference.PRAYERS -> GoTo("Go to prayer", onReadPrayers)
-                RuleReference.READING -> GoTo("Go to reading", onReadReading)
-                RuleReference.PSALTER -> GoTo("Go to psalter", onReadPsalter)
-                RuleReference.REFLECTIONS -> Unit
-                RuleReference.NONE -> Unit
-            }
-
-            if (entry.rule.givenByPriest == true) {
-                GivenByPriest(givenBy)
-            }
-
-            val dispensation = entry.dispensation
-            if (dispensation != null) {
-                // The Church lifted it. Said plainly, so the day teaches
-                // something rather than the rule seeming to have broken.
-                Text("Not observed during $dispensation", color = Chotki.goldDim, fontSize = 12.sp)
-            } else if (entry.isStoodDown) {
-                Text("Stood down", color = Chotki.faint, fontSize = 12.sp)
-            }
-        }
-
-        // "All day" rather than "anytime": a fast is not optional, and
-        // "anytime" reads as though it were.
-        Text(
-            text = entry.rule.timeOfDay?.let { Format.time(it, clock) } ?: "All day",
-            color = if (entry.isKept) Chotki.faint else Chotki.muted,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(top = 13.dp),
-        )
-
-        Text(
-            "✎",
-            color = Chotki.faint,
-            fontSize = 16.sp,
-            modifier = Modifier
-                .size(44.dp)
-                .wrapContentSize()
-                .clickable(onClick = onEdit)
-                .semantics { contentDescription = "Edit ${entry.rule.title}" },
-        )
-    }
-}
-
-/**
- * What the Mac's right-click menu offers, in the same order and the same words.
- *
- * Neither mobile platform had any of this. Android could edit a rule through
- * the pencil and nothing else: `standDown` and `remove` existed on `AppState`
- * and were called from nowhere, so a rule once taken on could not be stood down
- * for a day or paused at all.
- */
-@Composable
-private fun RuleMenu(
-    open: Boolean,
-    entry: DayEntry,
-    isPaused: Boolean,
-    onDismiss: () -> Unit,
-    onReadPrayers: () -> Unit,
-    onReadReading: () -> Unit,
-    onReadPsalter: () -> Unit,
-    onReadReflections: () -> Unit,
-    onGoToRope: (String) -> Unit,
-    onToggle: () -> Unit,
-    onMarkKeptLate: () -> Unit,
-    onStandDown: () -> Unit,
-    onEdit: () -> Unit,
-    onPause: () -> Unit,
-    onResume: () -> Unit,
-) {
-    DropdownMenu(
-        expanded = open,
-        onDismissRequest = onDismiss,
-        modifier = Modifier.background(Chotki.panel),
-    ) {
-        fun choosing(action: () -> Unit): () -> Unit = { onDismiss(); action() }
-
-        if (entry.isDispensed) {
-            // The Church lifted it. Nothing to mark, nothing to stand down.
-            DropdownMenuItem(
-                text = { Text("Lifted by the Church today", color = Chotki.muted) },
-                onClick = onDismiss,
-            )
-        } else {
-            when (entry.rule.reference) {
-                RuleReference.ROPE -> {
-                    Item("Go to the rope", choosing { entry.rule.ropePrayerId?.let(onGoToRope) })
-                    HorizontalDivider(color = Chotki.lineSoft)
-                }
-                RuleReference.PRAYERS -> {
-                    Item("Read the prayers", choosing(onReadPrayers))
-                    HorizontalDivider(color = Chotki.lineSoft)
-                }
-                RuleReference.READING -> {
-                    Item("Read the day\u2019s readings", choosing(onReadReading))
-                    HorizontalDivider(color = Chotki.lineSoft)
-                }
-                RuleReference.PSALTER -> {
-                    Item("Read today\u2019s kathisma", choosing(onReadPsalter))
-                    HorizontalDivider(color = Chotki.lineSoft)
-                }
-                RuleReference.REFLECTIONS -> Unit
-                RuleReference.NONE -> Unit
-            }
-
-            Item(
-                if (entry.isKept) "Clear this day" else "Mark as kept",
-                choosing(onToggle),
-            )
-            if (!entry.isKept) Item("Mark as kept, late", choosing(onMarkKeptLate))
-            Item("Stand down for this day", choosing(onStandDown))
-        }
-
-        HorizontalDivider(color = Chotki.lineSoft)
-        Item("Edit rule\u2026", choosing(onEdit))
-        if (isPaused) {
-            Item("Resume this rule", choosing(onResume))
-        } else {
-            Item("Pause this rule", choosing(onPause))
-        }
-    }
-}
-
-@Composable
-private fun Item(label: String, onClick: () -> Unit) {
-    DropdownMenuItem(
-        text = { Text(label, color = Chotki.parchment, fontSize = 15.sp) },
-        onClick = onClick,
-    )
 }
 
 private val months = listOf(
@@ -556,41 +328,8 @@ private val weekdays = listOf(
 internal fun longDate(date: CalendarDate): String =
     "${weekdays[date.weekday.number - 1]} ${date.day} ${months[date.month - 1]}"
 
-/** The three lines that lead to the text, wherever that text lives. */
-@Composable
-private fun GoTo(label: String, onTap: () -> Unit) {
-    Row(
-        Modifier
-            .clickable(onClick = onTap)
-            .padding(top = 3.dp, bottom = 3.dp, end = 8.dp)
-            .semantics { contentDescription = label },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, color = Chotki.gold, fontSize = 13.sp)
-        Text(" \u2192", color = Chotki.gold, fontSize = 13.sp)
-    }
-}
-
-/**
- * Where a rule came from, when the person said so.
- *
- * Only ever the positive. An earlier drawing carried "not given by a priest"
- * on everything else, which makes a mark on every rule and therefore a mark on
- * none, and tells someone without a spiritual father the same thing on every
- * line of their day.
- */
-@Composable
-private fun GivenByPriest(phrase: String?) {
-    Text(
-        // A stored name replaces the nameless mark. No name stays nameless —
-        // the app does not invent one.
-        phrase ?: "GIVEN BY A PRIEST",
-        color = Chotki.goldDim,
-        fontSize = 9.sp,
-        letterSpacing = 0.09.em,
-        modifier = Modifier
-            .padding(top = 5.dp)
-            .border(1.dp, Chotki.line, RoundedCornerShape(3.dp))
-            .padding(horizontal = 7.dp, vertical = 3.dp),
-    )
+/** "6 Aug o.s." The civil day, thirteen days earlier, which is the Julian date. */
+internal fun oldStyleDate(date: CalendarDate): String {
+    val julian = date.plusDays(-13)
+    return "${julian.day} ${months[julian.month - 1].take(3)} o.s."
 }

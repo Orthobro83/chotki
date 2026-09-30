@@ -57,7 +57,7 @@ object Content {
     /**
      * The seven questions and the fixed copy around them.
      *
-     * Generated like the rest. The text is the Brotherhood's, transcribed once
+     * Generated like the rest. The text was transcribed once
      * into the Swift core; retyping it here would be a second chance to get it
      * wrong.
      */

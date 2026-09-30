@@ -47,9 +47,9 @@ Builds, signs, and installs on whichever iPhone is connected.
   That is the free Personal Team, not a fault. It is why the Simulator stays the
   daily loop.
 - Three devices, ten app identifiers.
-- **No TestFlight.** Getting this to anyone else — Father Moses, Maximos —
-  needs the Developer Program at $99/yr. There is no free path, unlike Android
-  where an apk can simply be handed over.
+- **No TestFlight.** Getting this to anyone else needs the Developer Program at
+  $99/yr. There is no free path, unlike Android where an apk can simply be
+  handed over.
 
 ## What only the phone can answer
 

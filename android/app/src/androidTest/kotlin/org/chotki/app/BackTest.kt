@@ -6,8 +6,11 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.chotki.app.platform.AndroidDb
@@ -37,7 +40,9 @@ class BackTest {
         val state = AppState(SqliteStore(AndroidDb.inMemory())).also {
             it.load()
             // Past the welcome; back-navigation is what these are about.
-            it.updateSettings { settings -> settings.copy(hasCompletedFirstRun = true) }
+            it.updateSettings { settings ->
+                settings.copy(hasCompletedFirstRun = true, customCautionDismissed = true)
+            }
         }
         compose.setContent { ChotkiTheme { Shell(state) } }
     }
@@ -46,7 +51,9 @@ class BackTest {
         val state = AppState(SqliteStore(AndroidDb.inMemory())).also {
             it.load()
             // Past the welcome; back-navigation is what these are about.
-            it.updateSettings { settings -> settings.copy(hasCompletedFirstRun = true) }
+            it.updateSettings { settings ->
+                settings.copy(hasCompletedFirstRun = true, customCautionDismissed = true)
+            }
         }
         configure(state)
         compose.setContent { ChotkiTheme { Shell(state) } }
@@ -114,41 +121,38 @@ class BackTest {
     @Test
     fun backFromARulesPrayersReturnsToTheDay() {
         withState { it.take("morning-prayers") }
-        compose.onNodeWithContentDescription("Go to prayer").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Morning prayers").performClick()
         compose.waitForIdle()
 
         pressBack()
-        compose.onNodeWithContentDescription("Edit Morning prayers").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Morning prayers").assertIsDisplayed()
         assertTrue(stillOpen)
     }
 
     @Test
     fun backFromEditingARuleReturnsToTheDay() {
         withState { it.take("morning-prayers") }
-        compose.onNodeWithContentDescription("Edit Morning prayers").performClick()
+        compose.onNodeWithContentDescription("Morning prayers").performTouchInput { longClick() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Edit rule\u2026").performClick()
         compose.waitForIdle()
 
         pressBack()
-        compose.onNodeWithContentDescription("Edit Morning prayers").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Morning prayers").assertIsDisplayed()
         assertTrue(stillOpen)
     }
 
-    // A term opened from the glossary is a step of its own, so back returns to
-    // the list rather than jumping out of the glossary altogether.
+    // Settings is a place of its own. Back returns to the day, and does not
+    // leave the app. The glossary list is no longer a row on this page.
     @Test
-    fun backFromATermReturnsToTheTerms() {
+    fun backFromSettingsReturnsToTheDay() {
         show()
         compose.onNodeWithContentDescription("Go to Settings").performClick()
-        compose.onNodeWithContentDescription("Glossary").performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNode(hasScrollAction())
-            .performScrollToNode(hasContentDescription("Open Amen"))
-        compose.onNodeWithContentDescription("Open Amen").performClick()
-        compose.waitForIdle()
-        compose.onNodeWithContentDescription("Back to all terms").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Old-style dates").assertIsDisplayed()
 
         pressBack()
-        compose.onNodeWithContentDescription("Search terms").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Open the library").assertIsDisplayed()
         assertTrue(stillOpen)
     }
 

@@ -178,9 +178,9 @@ struct ContentExportTests {
     /// The seven questions and the fixed copy around them.
     ///
     /// Exported rather than retyped for the same reason the prayers are: this
-    /// is someone else's text, transcribed once, and a second transcription
+    /// was transcribed once, and a second transcription
     /// into Kotlin is a second chance to get it wrong. The explainer keeps its
-    /// spans so the link survives the crossing.
+    /// spans so a link is not flattened away if one is ever added.
     private func reflections() -> [String: Any] {
         [
             "days": Reflection.bundled.map { reflection in

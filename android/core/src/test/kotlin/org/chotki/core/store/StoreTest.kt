@@ -325,6 +325,8 @@ class SettingsStoreTest {
         assertEquals("", loaded.displayName, "a record from before names has none")
         assertEquals("", loaded.spiritualFatherName)
         assertNull(loaded.givenByPriestPhrase())
+        assertEquals(true, loaded.showOldStyleDates, "old-style dates start on")
+        assertEquals(true, loaded.showConsistencyNumber)
     }
 
     @Test

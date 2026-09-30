@@ -4,7 +4,7 @@ import org.chotki.core.Weekday
 import org.chotki.core.content.Content
 
 /**
- * The seven reflections, from the Brotherhood of the Narrow Path.
+ * The seven reflections. Transcribed once, and not reworded.
  *
  * **Loaded from generated JSON, not retyped.** The text is someone else's,
  * transcribed once into the Swift core, and a second transcription here would

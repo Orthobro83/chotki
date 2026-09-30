@@ -216,7 +216,7 @@ public final class SQLiteStore: Store, @unchecked Sendable {
             // a day and no archived state.
             //
             // The seven are NOT seeded here. `Store.seedReflections()` does it
-            // from `Reflection.bundled`, so the Brotherhood's text lives in one
+            // from `Reflection.bundled`, so the shipped text lives in one
             // place rather than being copied into a migration where it would
             // drift.
             try exec("""

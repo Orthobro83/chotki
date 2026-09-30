@@ -75,7 +75,6 @@ fun WelcomeScreen(state: AppState, modifier: Modifier = Modifier) {
     BoxWithConstraints(
         modifier
             .fillMaxSize()
-            .background(Chotki.ground)
             .safeDrawingPadding(),
     ) {
         Column(

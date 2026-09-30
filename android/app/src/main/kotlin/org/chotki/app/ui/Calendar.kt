@@ -3,6 +3,7 @@ package org.chotki.app.ui
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,31 +12,52 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import org.chotki.app.AppState
 import org.chotki.core.CalendarDate
 import org.chotki.core.Observance
@@ -60,6 +82,11 @@ import kotlin.math.min
  * The automatic fold survives as one thing only: a legibility floor. A month on
  * a short landscape screen leaves cells too small to draw a date in, and the
  * grid draws as a page of empty boxes. A week always fits.
+ *
+ * Folded, the week is a strip that follows the finger, the way the commitment
+ * cards do. Today — or whichever day is selected — sits in the middle. Dragging
+ * does not select. A tap does. A drag that is never followed by a tap returns
+ * to that day, centered, after half a minute.
  */
 @Composable
 fun Calendar(
@@ -91,6 +118,12 @@ fun Calendar(
 
         val rows = if (folded) 1 else weeks
         val cell = min((forCells / rows).value, widest.value).dp
+        // The selected day's center, in window pixels. The grip uses it so its
+        // vertex sits on that centerline rather than on the column's own middle.
+        var dayCenterX by remember { mutableStateOf<Float?>(null) }
+        val reportDay: (LayoutCoordinates) -> Unit = { coords ->
+            dayCenterX = coords.positionInWindow().x + coords.size.width / 2f
+        }
 
         fun step(by: Int) {
             if (folded) {
@@ -105,46 +138,38 @@ fun Calendar(
         Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Navigation(folded, month, weekStart, ::step)
 
-            Row(Modifier.fillMaxWidth()) {
-                for (initial in listOf("s", "m", "t", "w", "t", "f", "s")) {
-                    Text(
-                        initial,
-                        color = Chotki.faint,
-                        fontSize = 11.sp,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-
-            // The whole grid takes the swipe, not a strip of it. Ryan asked for
-            // "swiping left or right anywhere on the week", and a gesture that
-            // only works on part of a target reads as a gesture that does not
-            // work. The arrows stay: they are the larger target and they are
-            // what a screen reader reaches.
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .pointerInput(folded, state.selectedDate, state.visibleMonth) {
-                        var travelled = 0f
-                        detectHorizontalDragGestures(
-                            onDragStart = { travelled = 0f },
-                            onDragEnd = {
-                                if (abs(travelled) > SWIPE) step(if (travelled < 0) 1 else -1)
-                            },
-                        ) { change, amount ->
-                            change.consume()
-                            travelled += amount
-                        }
-                    },
-            ) {
-                if (folded) {
-                    Row(Modifier.fillMaxWidth()) {
-                        for (offset in 0 until 7) {
-                            DayCell(state, weekStart.plusDays(offset), Modifier.weight(1f), cell)
-                        }
+            if (folded) {
+                WeekStrip(state, reportDay)
+            } else {
+                Row(Modifier.fillMaxWidth()) {
+                    for (initial in listOf("s", "m", "t", "w", "t", "f", "s")) {
+                        Text(
+                            initial,
+                            color = Chotki.faint,
+                            fontSize = 11.sp,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center,
+                        )
                     }
-                } else {
+                }
+                // The month still takes a swipe as a page. The week above it,
+                // when it is showing, follows the finger instead.
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .pointerInput(state.visibleMonth) {
+                            var travelled = 0f
+                            detectHorizontalDragGestures(
+                                onDragStart = { travelled = 0f },
+                                onDragEnd = {
+                                    if (abs(travelled) > SWIPE) step(if (travelled < 0) 1 else -1)
+                                },
+                            ) { change, amount ->
+                                change.consume()
+                                travelled += amount
+                            }
+                        },
+                ) {
                     var day = 1
                     while (day <= days) {
                         Row(Modifier.fillMaxWidth()) {
@@ -158,6 +183,7 @@ fun Calendar(
                                         CalendarDate.of(month.year, month.month, day)!!,
                                         Modifier.weight(1f),
                                         cell,
+                                        reportDay,
                                     )
                                     day += 1
                                 }
@@ -169,14 +195,14 @@ fun Calendar(
 
             // Hidden when a month could not be drawn legibly anyway, so the
             // control is never offered where pressing it would do nothing.
-            if (monthCell >= LEGIBLE) Grip(expanded, onToggleExpanded)
+            if (monthCell >= LEGIBLE) Grip(expanded, onToggleExpanded, dayCenterX)
         }
     }
 }
 
 const val TAG = "the calendar"
 
-/** How far a finger must travel before it counts as a week rather than a tap. */
+/** How far a finger must travel before a month counts as turned. */
 private val SWIPE = 48f
 
 /**
@@ -198,6 +224,13 @@ private val CHROME = 82.dp
  * than an illegible month.
  */
 private val LEGIBLE = 24.dp
+
+/** One day in the strip. The mockup's chip, not a cell stretched to the width. */
+private val CHIP = 44.dp
+private val CHIP_HEIGHT = 56.dp
+
+/** A browse that never becomes a tap comes back after this long. */
+private const val RETURN_AFTER_MS = 30_000L
 
 /**
  * Folded, the arrows move the selected day by a week rather than moving a
@@ -224,6 +257,7 @@ private fun Navigation(
         Text(
             if (collapsed) weekLabel(weekStart) else "${monthName(month.month)} ${month.year}",
             color = Chotki.parchment,
+            fontFamily = Chotki.reading,
             fontSize = 16.sp,
             modifier = Modifier.align(Alignment.Center),
         )
@@ -254,29 +288,158 @@ private fun Arrow(
     )
 }
 
-/** The handle that opens the month and closes it again. */
+/**
+ * Days in a row, dragged like the commitment cards.
+ *
+ * The selected day is centered. Dragging looks at other days and does not
+ * choose one. Choosing is a tap. If the strip is left somewhere else, it
+ * comes back to the selected day — today, until a day is tapped — after
+ * [RETURN_AFTER_MS].
+ */
 @Composable
-private fun Grip(expanded: Boolean, onToggle: () -> Unit) {
-    val turn by animateFloatAsState(if (expanded) 180f else 0f, tween(320), label = "chevron")
-    Row(
+private fun WeekStrip(state: AppState, onDayPlaced: (LayoutCoordinates) -> Unit) {
+    val today = state.today
+    val selected = state.selectedDate
+    val span = remember(today, selected) {
+        val start = earlier(today.plusDays(-420), selected.plusDays(-30))
+        val end = later(today.plusDays(420), selected.plusDays(30))
+        buildList {
+            var day = start
+            while (day <= end) {
+                add(day)
+                day = day.plusDays(1)
+            }
+        }
+    }
+    val initial = span.indexOf(selected).coerceAtLeast(0)
+    // Start on the selected day. The first placement jumps to the centre,
+    // rather than flying in from the first day or sliding in from the edge.
+    val list = rememberLazyListState(initialFirstVisibleItemIndex = initial)
+    var generation by remember { mutableIntStateOf(0) }
+    var centering by remember { mutableStateOf(false) }
+    var placed by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    // One query for the whole strip, before a finger can drag across it.
+    // A miss is remembered, so a later day does not open the database.
+    LaunchedEffect(span.first().iso, span.last().iso, state.calendarVersion) {
+        state.warmCalendar(span.first(), span.last())
+    }
+
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("the week")) {
+        val viewport = with(density) { maxWidth.roundToPx() }
+        val chip = with(density) { CHIP.roundToPx() }
+
+        suspend fun centerOn(date: CalendarDate, animate: Boolean) {
+            val index = span.indexOf(date)
+            if (index < 0 || viewport <= 0) return
+            centering = true
+            try {
+                val offset = -((viewport - chip) / 2)
+                val distance = kotlin.math.abs(list.firstVisibleItemIndex - index)
+                if (!animate || distance > 10) list.scrollToItem(index, offset)
+                else list.animateScrollToItem(index, offset)
+            } finally {
+                centering = false
+            }
+        }
+
+        LaunchedEffect(selected, span, viewport) {
+            generation = 0
+            centerOn(selected, animate = placed)
+            placed = true
+        }
+
+        LaunchedEffect(list) {
+            var drifted = false
+            snapshotFlow { list.isScrollInProgress to centering }.collect { (moving, programmatic) ->
+                if (programmatic) {
+                    drifted = false
+                    return@collect
+                }
+                if (moving) drifted = true
+                else if (drifted) {
+                    drifted = false
+                    generation++
+                }
+            }
+        }
+
+        LaunchedEffect(generation) {
+            if (generation == 0) return@LaunchedEffect
+            delay(RETURN_AFTER_MS)
+            centerOn(state.selectedDate, animate = true)
+        }
+
+        LazyRow(
+            state = list,
+            modifier = Modifier.fillMaxWidth().height(CHIP_HEIGHT),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(horizontal = 2.dp),
+        ) {
+            items(span, key = { it.iso }) { date ->
+                WeekChip(state, date, onDayPlaced)
+            }
+        }
+    }
+}
+
+/** The handle under the week. A shallow gold chevron, turned over when open. */
+@Composable
+private fun Grip(expanded: Boolean, onToggle: () -> Unit, dayCenterX: Float?) {
+    val turn by animateFloatAsState(if (expanded) 180f else 0f, tween(500), label = "chevron")
+    var originX by remember { mutableStateOf(0f) }
+    var widthPx by remember { mutableIntStateOf(0) }
+    // The week's centered chip is not the same pixel as this box's center.
+    // The vertex follows the day that was actually measured.
+    val shift = if (dayCenterX != null && widthPx > 0) {
+        dayCenterX - (originX + widthPx / 2f)
+    } else {
+        0f
+    }
+    Box(
         Modifier
             .fillMaxWidth()
+            .onGloballyPositioned {
+                originX = it.positionInWindow().x
+                widthPx = it.size.width
+            }
             .clickable(onClick = onToggle)
-            .padding(top = 4.dp, bottom = 8.dp)
+            .padding(top = 2.dp, bottom = 8.dp)
             .semantics {
                 contentDescription = if (expanded) "Show one week" else "Show the whole month"
             },
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.width(30.dp).height(2.dp).clip(CircleShape).background(Chotki.line))
-        Text(
-            "⌄",
-            color = Chotki.muted,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(horizontal = 8.dp).rotate(turn),
-        )
-        Box(Modifier.width(30.dp).height(2.dp).clip(CircleShape).background(Chotki.line))
+        // The mockup's mark: viewBox 0 0 48 10, drawn 52 by 12, gold and dim.
+        // The point of the chevron is the horizontal center of this canvas.
+        Canvas(
+            Modifier
+                .size(52.dp, 12.dp)
+                .offset { IntOffset(shift.roundToInt(), 0) }
+                .rotate(turn),
+        ) {
+            val stroke = Stroke(
+                width = 1.4.dp.toPx(),
+                cap = StrokeCap.Round,
+                join = androidx.compose.ui.graphics.StrokeJoin.Round,
+            )
+            val sx = size.width / 48f
+            val sy = size.height / 10f
+            drawLine(
+                color = Chotki.goldDim,
+                start = Offset(2f * sx, 2.5f * sy),
+                end = Offset(24f * sx, 8f * sy),
+                strokeWidth = stroke.width,
+                cap = StrokeCap.Round,
+            )
+            drawLine(
+                color = Chotki.goldDim,
+                start = Offset(24f * sx, 8f * sy),
+                end = Offset(46f * sx, 2.5f * sy),
+                strokeWidth = stroke.width,
+                cap = StrokeCap.Round,
+            )
+        }
     }
 }
 
@@ -292,35 +455,75 @@ private fun weekLabel(start: CalendarDate): String {
     }
 }
 
+private val chipShape = RoundedCornerShape(14.dp)
+
 @Composable
-private fun DayCell(state: AppState, date: CalendarDate, modifier: Modifier, cell: Dp) {
+private fun WeekChip(
+    state: AppState,
+    date: CalendarDate,
+    onDayPlaced: (LayoutCoordinates) -> Unit,
+) {
+    val selected = date == state.selectedDate
+    val (feast, fast, mark) = marks(state, date)
+    val showFast = fast && !feast
+    val letter = listOf("s", "m", "t", "w", "t", "f", "s")[date.weekday.number - 1]
+
+    Column(
+        Modifier
+            .onGloballyPositioned { if (selected) onDayPlaced(it) }
+            .width(CHIP)
+            .height(CHIP_HEIGHT)
+            .clip(chipShape)
+            .background(
+                when {
+                    selected -> Color(0xFF17160F)
+                    showFast -> Color(0xFF3A3454)
+                    else -> Color(0xFF12131A)
+                },
+            )
+            .then(
+                if (selected) Modifier.border(1.5.dp, Chotki.gold, chipShape) else Modifier,
+            )
+            .clickable {
+                state.selectedDate = date
+                state.visibleMonth = date
+            }
+            .semantics { contentDescription = describe(date, feast, fast) },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(letter, color = Chotki.faint, fontFamily = Chotki.reading, fontSize = 10.sp)
+        Text(
+            "${date.day}",
+            color = when {
+                mark != null -> mark
+                else -> Chotki.parchmentDim
+            },
+            fontFamily = Chotki.reading,
+            fontSize = 16.sp,
+        )
+    }
+}
+
+@Composable
+private fun DayCell(
+    state: AppState,
+    date: CalendarDate,
+    modifier: Modifier,
+    cell: Dp,
+    onDayPlaced: (LayoutCoordinates) -> Unit,
+) {
     val selected = date == state.selectedDate
     val settled = state.isSettled(date)
     val hasAnything = state.entries(date).isNotEmpty()
-
-    // Only what the person has asked to see. Hidden means the calendar looks
-    // like an ordinary calendar, which is the whole point of that setting, and
-    // a fast day quietly coloured red would be the app overriding it.
-    val observances = state.settings.observances
-    val day = state.liturgicalDay(date)
-    val feast = day?.isGreatFeast == true && observances.feasts != Observance.HIDDEN
-    val fast = day?.isFast == true && day.isFastFree == false &&
-        observances.fasting != Observance.HIDDEN
-
-    // Feast gold outranks Sunday ochre outranks a fast's violet fill.
-    // A feast that falls in a fast keeps the gold, not the fast.
+    val (feast, fast, mark) = marks(state, date)
     val showFast = fast && !feast
-    val mark: Color? = when {
-        feast -> Chotki.gold
-        date.weekday == Weekday.SUNDAY -> Chotki.ochre
-        showFast -> Chotki.violet
-        else -> null
-    }
 
     val animatedSize by animateDpAsState(cell, tween(300), label = "cell")
 
     Box(
         modifier
+            .onGloballyPositioned { if (selected) onDayPlaced(it) }
             .height(animatedSize)
             .padding(2.dp)
             .clip(RoundedCornerShape(8.dp))
@@ -335,14 +538,11 @@ private fun DayCell(state: AppState, date: CalendarDate, modifier: Modifier, cel
                 if (selected) Modifier.border(1.5.dp, Chotki.gold, RoundedCornerShape(8.dp))
                 else Modifier,
             )
-            .clickable { state.selectedDate = date }
-            .semantics {
-                contentDescription = buildString {
-                    append("Day ${date.day}")
-                    if (feast) append(", a great feast")
-                    if (fast) append(", a fast day")
-                }
-            },
+            .clickable {
+                state.selectedDate = date
+                state.visibleMonth = date
+            }
+            .semantics { contentDescription = describe(date, feast, fast) },
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -353,6 +553,7 @@ private fun DayCell(state: AppState, date: CalendarDate, modifier: Modifier, cel
                     hasAnything -> Chotki.parchment
                     else -> Chotki.faint
                 },
+                fontFamily = Chotki.reading,
                 fontSize = 14.sp,
             )
             // Quiet marks, never a score. The gold one says a day was seen
@@ -370,10 +571,36 @@ private fun DayCell(state: AppState, date: CalendarDate, modifier: Modifier, cel
     }
 }
 
+/** Feast, then fast, then the colour a number wears. Feast gold outranks both. */
+private fun marks(state: AppState, date: CalendarDate): Triple<Boolean, Boolean, Color?> {
+    val observances = state.settings.observances
+    val day = state.liturgicalDay(date)
+    val feast = day?.isGreatFeast == true && observances.feasts != Observance.HIDDEN
+    val fast = day?.isFast == true && day.isFastFree == false &&
+        observances.fasting != Observance.HIDDEN
+    val showFast = fast && !feast
+    val mark: Color? = when {
+        feast -> Chotki.gold
+        date.weekday == Weekday.SUNDAY -> Chotki.ochre
+        showFast -> Chotki.violet
+        else -> null
+    }
+    return Triple(feast, fast, mark)
+}
+
+private fun describe(date: CalendarDate, feast: Boolean, fast: Boolean) = buildString {
+    append("Day ${date.iso}")
+    if (feast) append(", a great feast")
+    if (fast) append(", a fast day")
+}
+
 @Composable
 private fun Dot(colour: Color) {
     Box(Modifier.size(4.dp).clip(CircleShape).background(colour))
 }
+
+private fun earlier(a: CalendarDate, b: CalendarDate) = if (a <= b) a else b
+private fun later(a: CalendarDate, b: CalendarDate) = if (a >= b) a else b
 
 private fun monthName(month: Int) = listOf(
     "January", "February", "March", "April", "May", "June",

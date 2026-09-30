@@ -13,7 +13,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.chotki.app.platform.AndroidDb
@@ -65,7 +64,7 @@ class CalendarFoldTest {
     @Test fun everyRuleCanBeReachedNoMatterHowManyThereAre() {
         show(stateWithRules(30))
 
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Rule number 29"))
+        compose.onNodeWithTag("commitments").performScrollToNode(hasText("Rule number 29"))
         compose.onNodeWithText("Rule number 29").assertIsDisplayed()
     }
 
@@ -94,7 +93,7 @@ class CalendarFoldTest {
         compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
 
         val before = compose.onNodeWithTag("the calendar").fetchSemanticsNode().size.height
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Rule number 29"))
+        compose.onNodeWithTag("commitments").performScrollToNode(hasText("Rule number 29"))
         compose.waitForIdle()
 
         val after = compose.onNodeWithTag("the calendar").fetchSemanticsNode().size.height
@@ -108,7 +107,7 @@ class CalendarFoldTest {
         show(state)
         val started = state.selectedDate
 
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Rule number 29"))
+        compose.onNodeWithTag("commitments").performScrollToNode(hasText("Rule number 29"))
         compose.waitForIdle()
         compose.onNodeWithContentDescription("The week after").performClick()
         compose.waitForIdle()
@@ -125,7 +124,7 @@ class CalendarFoldTest {
         compose.onNodeWithContentDescription("Show the whole month").performClick()
         compose.waitForIdle()
 
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Rule number 29"))
+        compose.onNodeWithTag("commitments").performScrollToNode(hasText("Rule number 29"))
         compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
 

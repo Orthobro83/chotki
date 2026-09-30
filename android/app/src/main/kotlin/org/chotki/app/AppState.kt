@@ -170,6 +170,14 @@ class AppState(
         return liturgical?.cachedDay(date)
     }
 
+    /**
+     * Load a stretch of the calendar into memory before a strip is dragged
+     * across it. Does not redraw by itself: the days were already absent.
+     */
+    fun warmCalendar(from: CalendarDate, through: CalendarDate) {
+        liturgical?.absorb(from, through)
+    }
+
     val isOffline: Boolean get() = liturgical?.isOffline ?: false
 
     fun load() {
@@ -278,6 +286,9 @@ class AppState(
             liturgical?.let { runCatching { it.setJurisdiction(settled.jurisdiction, around = today, window = 21) } }
             refreshCalendar()
         }
+        // Silence, and the lead, are the policy. The alarms have to hear it
+        // now, not the next time the app is opened.
+        if (settled.reminders != before.reminders) rescheduleReminders()
         calendarVersion += 1
     }
 
@@ -306,15 +317,26 @@ class AppState(
     /**
      * Mark kept, and leave it kept. Scrolling a reading to its end, or finishing
      * the Jesus Prayer, must not clear a mark that is already there.
+     *
+     * The record is what counts, not the entry a screen happened to be holding.
+     * That entry can still say "not yet" after the circle has already been
+     * filled, and trusting it would write the mark again instead of leaving it.
      */
     fun markKept(entry: DayEntry) {
-        if (entry.isDispensed || entry.isKept) return
+        if (entry.isDispensed || keptNow(entry)) return
         toggleKept(entry)
     }
 
+    /**
+     * The circle. On, then off, then on again, as many times as it is tapped.
+     *
+     * Same rule as [markKept]: decide from the record. A tap that still carries
+     * the entry from before the check appeared must take the mark off, not
+     * put it on a second time.
+     */
     fun toggleKept(entry: DayEntry) {
         if (entry.isDispensed) return
-        if (entry.isKept) {
+        if (keptNow(entry)) {
             store.removeOccurrence(entry.rule.id, entry.date)
         } else {
             val late = entry.date < today
@@ -330,6 +352,14 @@ class AppState(
         load()
         rescheduleReminders()
     }
+
+    private fun keptNow(entry: DayEntry): Boolean =
+        occurrences.any {
+            it.ruleID == entry.rule.id &&
+                it.date == entry.date &&
+                (it.status == OccurrenceStatus.COMPLETED ||
+                    it.status == OccurrenceStatus.COMPLETED_LATE)
+        }
 
     /**
      * Kept, but after its moment had passed.

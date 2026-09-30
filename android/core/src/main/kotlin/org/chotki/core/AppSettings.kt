@@ -61,6 +61,26 @@ data class AppSettings(
      * this, or from [firstRunOn] when it has never been deferred.
      */
     val spiritualFatherDeferredOn: CalendarDate? = null,
+    /**
+     * The Julian date beside the civil one, as "6 Aug o.s."
+     *
+     * On by default. It is the one setting that starts on, so a day can show
+     * both reckonings before anyone has opened Settings. A record that never
+     * stored the key gets this default; one that stored false keeps false.
+     * The Swift app starts with it off. This port does not, on purpose.
+     */
+    val showOldStyleDates: Boolean = true,
+    /**
+     * The percentage on Progress. Off leaves the prose and hides the figure.
+     */
+    val showConsistencyNumber: Boolean = true,
+    /**
+     * The caution before writing a rule of one's own.
+     *
+     * Set only when "Don't show again" was chosen. Clearing a spiritual
+     * father's name does not bring the caution back.
+     */
+    val customCautionDismissed: Boolean = false,
 ) {
     /**
      * How a rule says it was given, once a name is stored.

@@ -1,6 +1,6 @@
 import Foundation
 
-// The seven reflections, from the Brotherhood of the Narrow Path.
+// The seven reflections. Transcribed once, and not reworded.
 //
 // Transcribed verbatim from the source and **not to be reworded**. Sunday is
 // the first, running through to Saturday, which is the order they were given in
@@ -94,14 +94,8 @@ extension Reflection {
     /// alternative is the same paragraph typed into three languages, which is
     /// how the Mac and Android came to disagree about several other things.
     ///
-    /// The link is `brotherhoodURL`. It is a source credit for the seven
-    /// questions and the closing text, which are theirs, and not a claim of
-    /// any connection: the welcome screen names no one.
-    /// Where the seven questions and the closing text come from. Kept because
-    /// the words are theirs and a credit is owed for them, not because the app
-    /// claims any tie to them.
-    public static let brotherhoodURL = "https://www.skool.com/fathermoses/"
-
+    /// It names no one and links nowhere. The app is an independent project
+    /// and is not affiliated with any church.
     public static let explainer: [WelcomeParagraph] = [
         WelcomeParagraph([
             WelcomeSpan(
@@ -115,12 +109,9 @@ extension Reflection {
             WelcomeSpan(
                 "It is a journal for you to engage with every day. Each day has a "
                 + "question which presents you with an opportunity to reflect on aspects "
-                + "of your spiritual life. The default questions come from Father Moses' "),
-            WelcomeSpan("Brotherhood of the Narrow Path", url: brotherhoodURL),
-            WelcomeSpan(
-                ", but you can customize them as needed. It is strongly recommended that "
-                + "you make these customizations in consultation with your priest or "
-                + "spiritual father.")
+                + "of your spiritual life. You can customize the questions as needed. It "
+                + "is strongly recommended that you make these customizations in consultation "
+                + "with your priest or spiritual father.")
         ]),
         WelcomeParagraph([
             WelcomeSpan("Click \"\(addAsRuleLabel)\" to put Reflection into your daily routine.")

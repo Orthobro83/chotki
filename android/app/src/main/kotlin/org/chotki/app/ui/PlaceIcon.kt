@@ -127,7 +127,7 @@ private fun DrawScope.calendar(tint: Color, stroke: Stroke) {
 }
 
 /** A prayer rope: knots round a circle, with the knot where it is joined. */
-private fun DrawScope.rope(tint: Color, stroke: Stroke) {
+internal fun DrawScope.rope(tint: Color, stroke: Stroke) {
     val centre = Offset(size.width / 2, size.height * 0.54f)
     val radius = size.minDimension * 0.34f
     val knots = 9

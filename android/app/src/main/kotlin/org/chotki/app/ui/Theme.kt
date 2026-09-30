@@ -2,9 +2,11 @@ package org.chotki.app.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 
 /**
@@ -44,9 +46,8 @@ object Chotki {
      * That is a decision to take deliberately with the font in front of you,
      * not one to make by default.
      *
-     * Chrome keeps the platform sans: the month grid's figures want to be tight
-     * and unambiguous, and Roboto is what makes the app look like it belongs on
-     * the device.
+     * The face for the whole app, not only the readings. Sans is reserved for
+     * tooltips, explainer lines, and the Settings tab.
      */
     val reading = FontFamily.Serif
 
@@ -69,6 +70,29 @@ fun ChotkiTheme(content: @Composable () -> Unit) {
             onSurface = Chotki.parchment,
             error = Chotki.ochre,
         ),
+        typography = serifTypography,
         content = content,
+    )
+}
+
+/** Every Material text role, in the platform serif. Settings opts back out. */
+private val serifTypography = Typography().run {
+    fun TextStyle.face() = copy(fontFamily = FontFamily.Serif)
+    copy(
+        displayLarge = displayLarge.face(),
+        displayMedium = displayMedium.face(),
+        displaySmall = displaySmall.face(),
+        headlineLarge = headlineLarge.face(),
+        headlineMedium = headlineMedium.face(),
+        headlineSmall = headlineSmall.face(),
+        titleLarge = titleLarge.face(),
+        titleMedium = titleMedium.face(),
+        titleSmall = titleSmall.face(),
+        bodyLarge = bodyLarge.face(),
+        bodyMedium = bodyMedium.face(),
+        bodySmall = bodySmall.face(),
+        labelLarge = labelLarge.face(),
+        labelMedium = labelMedium.face(),
+        labelSmall = labelSmall.face(),
     )
 }

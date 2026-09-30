@@ -11,12 +11,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,9 +30,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
@@ -65,8 +72,10 @@ fun LibrarySheet(
     // One at a time. With six sections and a phone screen, letting them all
     // stand open simply rebuilds the scroll the sections were meant to replace.
     var open by rememberSaveable { mutableStateOf<String?>(null) }
+    var asking by rememberSaveable { mutableStateOf(false) }
+    var hideCaution by rememberSaveable { mutableStateOf(false) }
 
-    LazyColumn(modifier.fillMaxWidth().background(Chotki.ground)) {
+    LazyColumn(modifier.fillMaxWidth()) {
         item {
             Text(
                 "Select a prayer, reading, or discipline to add to your routine.",
@@ -94,21 +103,7 @@ fun LibrarySheet(
         }
 
         // Rules of his own, kept so setting one down for a season does not mean
-        // writing it out again. The order inside is Ryan's: the way to make a
-        // new one, then the caution, then the rules.
-        item(key = "write-your-own") {
-            Text(
-                "＋ Write your own rule",
-                color = Chotki.gold,
-                fontSize = 15.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onWriteYourOwn)
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
-                    .semantics { contentDescription = "Write your own rule" },
-            )
-        }
-
+        // writing it out again. The way to make a new one sits under this list.
         item(key = "section-custom") {
             Panel(
                 name = "Custom",
@@ -128,6 +123,114 @@ fun LibrarySheet(
                 }
             }
         }
+
+        item(key = "write-your-own") {
+            WriteYourOwn {
+                if (state.settings.customCautionDismissed) onWriteYourOwn() else asking = true
+            }
+        }
+    }
+
+    if (asking) {
+        AlertDialog(
+            onDismissRequest = { asking = false },
+            containerColor = Chotki.panel,
+            text = {
+                Column {
+                    Text(
+                        CUSTOM_CAUTION,
+                        color = Chotki.parchmentDim,
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                    )
+                    Row(
+                        Modifier
+                            .padding(top = 16.dp)
+                            .clickable { hideCaution = !hideCaution }
+                            .semantics { contentDescription = "Don't show again" },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Box(
+                            Modifier
+                                .size(18.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (hideCaution) Chotki.gold else Chotki.ground)
+                                .border(
+                                    1.dp,
+                                    if (hideCaution) Chotki.gold else Chotki.line,
+                                    RoundedCornerShape(4.dp),
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (hideCaution) Text("✓", color = Chotki.ground, fontSize = 12.sp)
+                        }
+                        Text(
+                            "Don't show again",
+                            color = Chotki.parchment,
+                            fontFamily = FontFamily.SansSerif,
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Text(
+                    "I understand",
+                    color = Chotki.gold,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .clickable {
+                            if (hideCaution) {
+                                state.updateSettings { it.copy(customCautionDismissed = true) }
+                            }
+                            asking = false
+                            onWriteYourOwn()
+                        }
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
+                        .semantics { contentDescription = "I understand" },
+                )
+            },
+        )
+    }
+}
+
+private const val CUSTOM_CAUTION =
+    "This section is for personalized routines aimed at improving your overall " +
+        "physical, mental, and spiritual health. It is not intended to enable you " +
+        "to manufacture your own Orthodoxy. We strongly recommend that where " +
+        "appropriate, custom rules be discussed with your priest or spiritual father. " +
+        "If that is not possible, keep these custom rules simple and attainable " +
+        "(e.g., jogging, swimming, sobriety)."
+
+/** A circle under the list, not a row between Life and Custom. */
+@Composable
+private fun WriteYourOwn(onClick: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(top = 28.dp, bottom = 32.dp)
+            .semantics { contentDescription = "Write your own rule" },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            Modifier
+                .size(54.dp)
+                .border(1.5.dp, Chotki.goldDim, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("+", color = Chotki.gold, fontFamily = FontFamily.Serif, fontSize = 30.sp)
+        }
+        Text(
+            "Write your own rule",
+            color = Chotki.parchment,
+            fontFamily = FontFamily.Serif,
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 10.dp),
+        )
     }
 }
 

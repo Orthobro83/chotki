@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,7 @@ import org.chotki.core.ReadingOrder
 import org.chotki.core.Reckoning
 import org.chotki.core.content.Glossary
 import org.chotki.core.content.PatristicReadings
+import kotlinx.coroutines.flow.first
 
 /**
  * The day as the Church has it: what is commemorated, what the calendar marks,
@@ -51,17 +53,36 @@ fun ReadingScreen(
     modifier: Modifier = Modifier,
     glossary: Glossary = Glossary.SHARED,
     onOpenTerm: (String) -> Unit = {},
+    /** The section a reading rule asked for. Null when the tab itself was opened. */
+    focusBand: Int? = null,
+    /** Bumps when a rule asks again, so the same section can be requested twice. */
+    focusNonce: Int = 0,
+    onOpenGlossary: () -> Unit = {},
 ) {
     // liturgicalDay reads the calendar counter itself, so this redraws when
     // the fortnight ahead arrives.
     val day = state.liturgicalDay(state.selectedDate)
-    if (day == null) {
-        Column(
-            modifier.fillMaxSize().background(Chotki.ground).padding(horizontal = 16.dp, vertical = 12.dp),
-        ) { Waiting(state) }
-        return
+    Column(modifier.fillMaxSize()) {
+        if (day == null) {
+            // Nothing here scrolls, so a top fade would only let the wash
+            // through the message.
+            Waiting(
+                state,
+                Modifier.weight(1f).edgeFade(topBand = 0f).padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+        } else {
+            Readings(
+                state,
+                day,
+                glossary,
+                onOpenTerm,
+                focusBand,
+                focusNonce,
+                Modifier.weight(1f),
+            )
+        }
+        GlossaryOfTerms(onOpenGlossary)
     }
-    Readings(state, day, glossary, onOpenTerm, modifier)
 }
 
 @Composable
@@ -70,6 +91,8 @@ private fun Readings(
     day: LiturgicalDay,
     glossary: Glossary,
     onOpenTerm: (String) -> Unit,
+    focusBand: Int?,
+    focusNonce: Int,
     modifier: Modifier,
 ) {
     val held = state.entries(state.selectedDate)
@@ -79,10 +102,31 @@ private fun Readings(
     val chunks = ordered.groupBy { ReadingOrder.band(it.source) }
     val list = rememberLazyListState()
     var scrolled by remember { mutableStateOf(false) }
+    var following by remember { mutableStateOf(false) }
     val marked = remember { mutableStateListOf<Int>() }
+    LaunchedEffect(focusNonce, focusBand, chunks.keys.toList()) {
+        val band = focusBand ?: return@LaunchedEffect
+        if (band !in chunks) return@LaunchedEffect
+        var index = 1
+        for ((key, readings) in chunks) {
+            if (key == band) break
+            index += readings.size + 1
+        }
+        // The list reports its length after the first layout. Scrolling
+        // before that is a no-op, and the section is never reached.
+        snapshotFlow { list.layoutInfo.totalItemsCount }.first { it > index }
+        following = true
+        try {
+            list.animateScrollToItem(index)
+        } finally {
+            following = false
+        }
+    }
+    // A jump to a section is not the reader reaching the end of it.
     LaunchedEffect(list) {
-        snapshotFlow { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
-            .collect { (index, offset) -> if (index > 0 || offset > 8) scrolled = true }
+        snapshotFlow { list.isScrollInProgress to following }.collect { (moving, auto) ->
+            if (moving && !auto) scrolled = true
+        }
     }
     LaunchedEffect(list, scrolled) {
         snapshotFlow { list.layoutInfo.visibleItemsInfo.map { it.key } }
@@ -99,8 +143,9 @@ private fun Readings(
             }
     }
 
+    val top = list.scrolledTopBand()
     LazyColumn(
-        modifier.fillMaxSize().background(Chotki.ground).padding(horizontal = 16.dp),
+        modifier.fillMaxWidth().edgeFade(topBand = top).padding(horizontal = 16.dp),
         state = list,
     ) {
         item { Heading(state, day, glossary, onOpenTerm) }
@@ -151,14 +196,20 @@ private fun Heading(
 @Composable
 private fun ReadingBlock(reading: Reading) {
     Column(Modifier.padding(vertical = 10.dp)) {
-        Text("${reading.source} · ${reading.display}", color = Chotki.muted, fontSize = 13.sp)
+        Text(
+            "${reading.source} · ${reading.display}",
+            color = Chotki.muted,
+            fontFamily = Chotki.reading,
+            fontSize = 13.sp,
+        )
         if (reading.text.isNotEmpty()) {
             Spacer(Modifier.size(4.dp))
             Text(
                 reading.text,
-                color = Chotki.parchmentDim,
-                fontSize = 15.sp,
-                lineHeight = 23.sp,
+                color = Chotki.parchment,
+                fontFamily = Chotki.reading,
+                fontSize = 17.sp,
+                lineHeight = 17.sp * 1.45f,
             )
         }
     }
@@ -172,13 +223,25 @@ private fun Fathers(state: AppState, day: LiturgicalDay) {
             Text(
                 "From the fathers",
                 color = Chotki.muted,
+                fontFamily = Chotki.reading,
                 fontSize = 13.sp,
                 modifier = Modifier.semantics { contentDescription = "The reading" },
             )
             Spacer(Modifier.size(6.dp))
-            Text(patristic.text, color = Chotki.parchmentDim, fontSize = 16.sp, lineHeight = 25.sp)
+            Text(
+                patristic.text,
+                color = Chotki.parchment,
+                fontFamily = Chotki.reading,
+                fontSize = 17.sp,
+                lineHeight = 17.sp * 1.45f,
+            )
             Spacer(Modifier.size(6.dp))
-            Text("${patristic.author} · ${patristic.source}", color = Chotki.faint, fontSize = 13.sp)
+            Text(
+                "${patristic.author} · ${patristic.source}",
+                color = Chotki.faint,
+                fontFamily = FontFamily.SansSerif,
+                fontSize = 13.sp,
+            )
         }
     }
     Rule()
@@ -192,6 +255,7 @@ private fun Fathers(state: AppState, day: LiturgicalDay) {
                 day.tone?.let { append(" · tone $it") }
             },
             color = Chotki.faint,
+            fontFamily = Chotki.reading,
             fontSize = 13.sp,
         )
         Text(
@@ -201,24 +265,26 @@ private fun Fathers(state: AppState, day: LiturgicalDay) {
                 else -> "new calendar"
             },
             color = Chotki.faint,
+            fontFamily = Chotki.reading,
             fontSize = 13.sp,
         )
     }
 }
 
 @Composable
-private fun Waiting(state: AppState) {
+private fun Waiting(state: AppState, modifier: Modifier = Modifier) {
     // "It will fill in shortly" is a promise, and the app should not make it
     // when it has never reached the calendar at all.
     val neverFetched = state.hasNoCalendarAtAll
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 48.dp),
+        modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             "No reading stored for this day yet.",
             color = Chotki.muted,
-            fontSize = 15.sp,
+            fontFamily = Chotki.reading,
+            fontSize = 17.sp,
             modifier = Modifier.semantics { contentDescription = "The reading" },
         )
         Spacer(Modifier.size(6.dp))
@@ -230,6 +296,7 @@ private fun Waiting(state: AppState) {
                 "Readings are fetched a fortnight ahead and kept, so this fills in shortly."
             },
             color = Chotki.faint,
+            fontFamily = FontFamily.SansSerif,
             fontSize = 13.sp,
             textAlign = TextAlign.Center,
         )

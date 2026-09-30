@@ -91,7 +91,6 @@ fun RuleEditor(
     Column(
         modifier
             .fillMaxSize()
-            .background(Chotki.ground)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
     ) {
@@ -105,30 +104,55 @@ fun RuleEditor(
             fontSize = 18.sp,
             modifier = Modifier.semantics { contentDescription = "Rule editor" },
         )
-        if (existing == null && startingFrom == null) {
-            Text(
-                "This section is for personalized routines aimed at improving your overall " +
-                    "physical, mental, and spiritual health. It is not intended to enable you " +
-                    "to manufacture your own Orthodoxy. We strongly recommend that where " +
-                    "appropriate, custom rules be discussed with your priest or spiritual father. " +
-                    "If that is not possible, keep these custom rules simple and attainable " +
-                    "(e.g., jogging, swimming, sobriety).",
-                color = Chotki.faint,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                modifier = Modifier.padding(top = 12.dp),
-            )
-        }
         Spacer(Modifier.size(14.dp))
 
         Field("What is it?", title, "Write something…", "Rule title") { title = it }
         Field("A note, if you want one", note, "Write something…", "Rule note") { note = it }
-        // Rules arrive from other people over months and their origin matters
-        // later: "Fr. Peter", "my godfather", "the parish bulletin". The hint is
-        // neutral rather than an example, because an example that contradicts
-        // the rule being taken on — "before sleep" under Morning prayers —
-        // reads as the app not paying attention.
-        Field("Who suggested it?", source, "Write something…", "Rule source") { source = it }
+        // With no spiritual father stored, this stays a plain line. With a name
+        // stored, it offers that name or someone else. Choosing the name writes
+        // it into the rule, so clearing the name in Settings later does not
+        // erase who was recorded here.
+        val father = state.settings.spiritualFatherName.trim()
+        var suggester by remember(father) {
+            mutableStateOf(
+                when {
+                    father.isNotEmpty() && source == father -> Suggestion.Father
+                    father.isNotEmpty() && source.isNotBlank() -> Suggestion.Other
+                    father.isNotEmpty() -> Suggestion.Unset
+                    else -> Suggestion.Plain
+                },
+            )
+        }
+        if (father.isEmpty()) {
+            Field("Who suggested it?", source, "Write something…", "Rule source") { source = it }
+        } else {
+            Dropdown(
+                label = "Who suggested it?",
+                chosen = when (suggester) {
+                    Suggestion.Father -> father
+                    Suggestion.Other -> "Someone else"
+                    else -> ""
+                },
+                options = listOf(father, "Someone else"),
+            ) { index ->
+                if (index == 0) {
+                    suggester = Suggestion.Father
+                    source = father
+                } else {
+                    suggester = Suggestion.Other
+                    if (source == father) source = ""
+                }
+            }
+            if (suggester == Suggestion.Other) {
+                Field(
+                    label = "Who suggested it?",
+                    value = source,
+                    hint = "Write something…",
+                    description = "Rule source",
+                    showLabel = false,
+                ) { source = it }
+            }
+        }
 
         // `source` is free text the person edits, so it cannot be trusted to
         // say where a rule came from. This can. It is a label and nothing more
@@ -136,7 +160,6 @@ fun RuleEditor(
         // is in no position to hold anyone to an obedience it was not party to.
         // The named option replaces the generic one, and only while a name is
         // stored. A rule already marked stays editable. No name is invented.
-        val father = state.settings.spiritualFatherName.trim()
         if (father.isNotEmpty() || givenByPriest) {
             GivenByPriestBox(
                 checked = givenByPriest,
@@ -304,15 +327,20 @@ fun RuleEditor(
     }
 }
 
+private enum class Suggestion { Plain, Unset, Father, Other }
+
 @Composable
 private fun Field(
     label: String,
     value: String,
     hint: String,
     description: String,
+    showLabel: Boolean = true,
     onChange: (String) -> Unit,
 ) {
-    Text(label, color = Chotki.gold, fontSize = 13.sp, modifier = Modifier.padding(top = 10.dp))
+    if (showLabel) {
+        Text(label, color = Chotki.gold, fontSize = 13.sp, modifier = Modifier.padding(top = 10.dp))
+    }
     TextField(
         value = value,
         onValueChange = onChange,

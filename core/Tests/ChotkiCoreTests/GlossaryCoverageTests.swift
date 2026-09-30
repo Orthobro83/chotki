@@ -61,7 +61,7 @@ struct GlossaryCoverageTests {
     ///
     /// "Spiritual father" was here and has been written — Ryan supplied the
     /// definition. It is worth remembering how it was found: not by this scan,
-    /// which looks for capitals, but by reading the Brotherhood's plain prose.
+    /// which looks for capitals, but by reading the plain prose.
     static let awaitingAnEntry = ["Abba", "Apostolic", "Catholic", "Church"]
 
     private var glossary: Glossary { Glossary.shared }
@@ -115,7 +115,7 @@ struct GlossaryCoverageTests {
     ///
     /// **What this catches and what it does not.** The scan looks for
     /// capitalised words mid-sentence, which in liturgical English is very
-    /// nearly the definition of a term of art. The Brotherhood's prose is plain
+    /// nearly the definition of a term of art. The prose is plain
     /// modern English and capitalises nothing, so this test guards future edits
     /// to the seven rather than finding much today. Terms of art that appear in
     /// lowercase — "liturgy", "confession", "communion", "spiritual father" —

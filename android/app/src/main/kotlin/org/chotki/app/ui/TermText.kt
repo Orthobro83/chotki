@@ -53,8 +53,10 @@ fun TermText(
         style = TextStyle(
             color = colour,
             fontSize = size,
+            fontFamily = Chotki.reading,
             fontStyle = if (italic) FontStyle.Italic else FontStyle.Normal,
             textAlign = textAlign,
+            lineHeight = if (size != androidx.compose.ui.unit.TextUnit.Unspecified) size * 1.45 else androidx.compose.ui.unit.TextUnit.Unspecified,
         ),
         modifier = if (textAlign == TextAlign.Center) modifier.fillMaxWidth() else modifier,
     )

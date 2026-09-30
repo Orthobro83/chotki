@@ -50,7 +50,7 @@ README for the five steps.
       debug key.
 - [ ] Restore a backup onto a second install and confirm the record comes back.
 - [ ] Decide what you are telling people it is. The Settings screen says alpha,
-      says it is not affiliated with the Brotherhood, and says the texts await a
+      says it is not affiliated with any church, and says the texts await a
       priest's review — but a sentence from you when you send it will be read
       more carefully than anything in the app.
 

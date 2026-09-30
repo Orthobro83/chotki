@@ -5,10 +5,13 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -56,6 +59,14 @@ class CustomRuleTest {
         compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription(description))
     }
 
+    /** The pencil is gone. A long press on the card is the way into the rule. */
+    private fun edit(title: String) {
+        compose.onNodeWithContentDescription(title).performTouchInput { longClick() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Edit rule\u2026").performClick()
+        compose.waitForIdle()
+    }
+
     @Test
     fun aRuleOfOnesOwnCanBeWritten() {
         val state = state()
@@ -64,7 +75,15 @@ class CustomRuleTest {
         scrollTo("Write your own rule")
         compose.onNodeWithContentDescription("Write your own rule").performClick()
         compose.waitForIdle()
+        compose.onNodeWithText("manufacture", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("I understand").performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("Rule editor").assertIsDisplayed()
+        assertEquals(
+            "the caution stayed on the page",
+            0,
+            compose.onAllNodesWithText("manufacture", substring = true).fetchSemanticsNodes().size,
+        )
 
         compose.onNodeWithContentDescription("Rule title").performTextInput("Cold plunge")
         compose.waitForIdle()
@@ -77,6 +96,92 @@ class CustomRuleTest {
         assertTrue(
             "it was saved but is not due today",
             state.entries(state.today).any { it.rule.title == "Cold plunge" },
+        )
+    }
+
+    @Test
+    fun theCautionCanBeSetAside() {
+        val state = state()
+        openLibrary(state)
+
+        scrollTo("Write your own rule")
+        compose.onNodeWithContentDescription("Write your own rule").performClick()
+        compose.onNodeWithContentDescription("Don't show again").performClick()
+        compose.onNodeWithContentDescription("I understand").performClick()
+        compose.waitForIdle()
+        assertTrue(state.settings.customCautionDismissed)
+
+        compose.onNodeWithContentDescription("Cancel editing").performClick()
+        compose.waitForIdle()
+        scrollTo("Write your own rule")
+        compose.onNodeWithContentDescription("Write your own rule").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Rule editor").assertIsDisplayed()
+        assertEquals(
+            0,
+            compose.onAllNodesWithContentDescription("I understand").fetchSemanticsNodes().size,
+        )
+    }
+
+    @Test
+    fun aSpiritualFatherIsOneWayToSayWhoSuggestedIt() {
+        val state = state()
+        state.updateSettings {
+            it.copy(spiritualFatherName = "Fr. Peter", customCautionDismissed = true)
+        }
+        openLibrary(state)
+
+        scrollTo("Write your own rule")
+        compose.onNodeWithContentDescription("Write your own rule").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Rule title").performTextInput("Cold plunge")
+        compose.onNodeWithContentDescription("Who suggested it?").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Someone else").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Rule source").performTextInput("my godfather")
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        assertEquals("my godfather", state.rules.single().source)
+
+        compose.onNodeWithContentDescription("Go to Home").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Open the library").performClick()
+        scrollTo("Write your own rule")
+        compose.onNodeWithContentDescription("Write your own rule").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Who suggested it?").performScrollTo().performClick()
+        compose.onNodeWithText("Fr. Peter").performClick()
+        compose.onNodeWithContentDescription("Rule title").performTextInput("A walk")
+        compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        val walk = state.rules.single { it.title == "A walk" }
+        assertEquals("Fr. Peter", walk.source)
+
+        compose.onNodeWithContentDescription("Go to Settings").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Clear spiritual father's name").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        assertEquals("", state.settings.spiritualFatherName)
+        assertEquals("Fr. Peter", state.rules.single { it.title == "A walk" }.source)
+        assertEquals("my godfather", state.rules.single { it.title == "Cold plunge" }.source)
+
+        // The library control lives on the day, not on Settings.
+        compose.onNodeWithContentDescription("Go to Home").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Open the library").performClick()
+        compose.waitForIdle()
+        scrollTo("Write your own rule")
+        compose.onNodeWithContentDescription("Write your own rule").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Rule source").performScrollTo().assertIsDisplayed()
+        assertEquals(
+            "the suggestion should be a plain field again",
+            0,
+            compose.onAllNodesWithText("Someone else").fetchSemanticsNodes().size,
         )
     }
 
@@ -128,8 +233,7 @@ class CustomRuleTest {
         state.take("morning-prayers")
         compose.setContent { ChotkiTheme { Shell(state) } }
 
-        compose.onNodeWithContentDescription("Edit Morning prayers").performClick()
-        compose.waitForIdle()
+        edit("Morning prayers")
         compose.onNodeWithContentDescription("Rule editor").assertIsDisplayed()
 
         // How often is a menu now, so it is opened before it is chosen from.
@@ -153,7 +257,7 @@ class CustomRuleTest {
         state.take("morning-prayers")
         compose.setContent { ChotkiTheme { Shell(state) } }
 
-        compose.onNodeWithContentDescription("Edit Morning prayers").performClick()
+        edit("Morning prayers")
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 
@@ -167,11 +271,11 @@ class CustomRuleTest {
         state.take("morning-prayers")
         compose.setContent { ChotkiTheme { Shell(state) } }
 
-        compose.onNodeWithContentDescription("Go to prayer").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Morning prayers").performClick()
         compose.waitForIdle()
 
-        compose.onNodeWithText("O Heavenly King").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Back to the day").assertIsDisplayed()
+        compose.onNodeWithText("O Heavenly King").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("Choose what to pray").assertIsDisplayed()
     }
 
     @Test
@@ -180,7 +284,12 @@ class CustomRuleTest {
         state.save(org.chotki.core.Rule(title = "Cold plunge", recurrence = Recurrence.Daily))
         compose.setContent { ChotkiTheme { Shell(state) } }
 
-        compose.onNodeWithContentDescription("Edit Cold plunge").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Cold plunge").assertIsDisplayed()
+        assertEquals(
+            0,
+            compose.onAllNodesWithContentDescription("Choose what to pray")
+                .fetchSemanticsNodes().size,
+        )
         assertEquals(
             0,
             compose.onAllNodesWithContentDescription("Go to prayer")
@@ -198,8 +307,7 @@ class CustomRuleTest {
         assertEquals(1, state.occurrences.size)
 
         compose.setContent { ChotkiTheme { Shell(state) } }
-        compose.onNodeWithContentDescription("Edit Morning prayers").performClick()
-        compose.waitForIdle()
+        edit("Morning prayers")
         compose.onNodeWithContentDescription("Remove the rule").performScrollTo().performClick()
         compose.waitForIdle()
 

@@ -1,6 +1,5 @@
 package org.chotki.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.core.Rule
@@ -48,7 +48,7 @@ fun RulePrayers(
     }
     var paragraphIndex = 0
 
-    Column(modifier.fillMaxSize().background(Chotki.ground)) {
+    Column(modifier.fillMaxSize()) {
         // Outside the border, and above it. The ornament is for the words that
         // were received, not for the app's own furniture: a way out of the
         // page is not part of what is being read, and framing it alongside the
@@ -73,7 +73,9 @@ fun RulePrayers(
             Text(
                 rule.title,
                 color = Chotki.parchment,
-                fontSize = 18.sp,
+                fontFamily = Chotki.reading,
+                fontWeight = FontWeight.Medium,
+                fontSize = 22.sp,
                 modifier = Modifier.padding(horizontal = READING_MARGIN),
             )
             Spacer(Modifier.size(10.dp))
@@ -82,7 +84,12 @@ fun RulePrayers(
         items(prayers.size, key = { prayers[it].id }) { index ->
             val prayer = prayers[index]
             Column(Modifier.padding(horizontal = READING_MARGIN, vertical = 8.dp)) {
-                Text(prayer.title, color = Chotki.gold, fontSize = 13.sp)
+                Text(
+                    prayer.title,
+                    color = Chotki.gold,
+                    fontFamily = Chotki.reading,
+                    fontSize = 13.sp,
+                )
                 val rubric = prayer.rubric
                 if (rubric != null) Text(rubric, color = Chotki.faint, fontSize = 12.sp)
                 Spacer(Modifier.size(6.dp))

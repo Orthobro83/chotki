@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /**
  * The shape of `reflections.json`, generated from the Swift core.
  *
- * The text is the Brotherhood of the Narrow Path's, transcribed once there. A
+ * The text was transcribed once there. A
  * Swift test writes this file and fails if what is committed has drifted, so
  * retyping any of it here would be both redundant and a second chance to get it
  * wrong.

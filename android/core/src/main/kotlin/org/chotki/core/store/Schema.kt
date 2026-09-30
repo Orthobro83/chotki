@@ -178,7 +178,7 @@ object Schema {
      * removed, so there is no ordering within a day and no archived state.
      *
      * The seven are NOT seeded here. `Store.seedReflections()` does it from the
-     * generated content, so the Brotherhood's text lives in one place rather
+     * generated content, so the shipped text lives in one place rather
      * than being copied into a migration where it would drift.
      */
     private val V8 = """

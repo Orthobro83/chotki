@@ -111,7 +111,7 @@ fun ReflectionsScreen(
         state = list,
         // The whole point of the manifest's adjustResize: the list shortens by
         // the height of the keyboard instead of being covered by it.
-        modifier = modifier.fillMaxWidth().background(Chotki.ground).imePadding(),
+        modifier = modifier.fillMaxWidth().imePadding(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             start = 18.dp, end = 18.dp, bottom = 40.dp,
         ),
