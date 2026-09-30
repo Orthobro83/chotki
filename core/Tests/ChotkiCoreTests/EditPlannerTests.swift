@@ -271,6 +271,7 @@ struct SuccessorShapeTests {
         )
         rule.archivedAt = Date(timeIntervalSince1970: 1)
         rule.hiddenFromLibrary = true
+        rule.givenByPriest = true
         return rule
     }
 

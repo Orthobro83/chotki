@@ -1,24 +1,39 @@
-# Chotki (alpha)
+# Chotki
 
 An app for keeping an Orthodox routine, and honestly measuring whether it is kept, to help you hold yourself accountable.
 
-A calendar tells you what is scheduled. This tells you what you actually kept, over time — without turning practice into a scoreboard.
+A calendar tells you what is scheduled. This tells you what you actually kept, over time, without turning practice into a scoreboard.
 
-You can add custom items to your practice which may not be Church canon, but are part of your Orthodox community, or are private lifestyle goals for yourself. Use these with caution: do not invent your own Orthodoxy. Consult a priest or spiritual father.
+You can add items of your own, whether or not they are Church canon, so that a rule shaped by your community or your circumstances can be held in one place alongside the rest.
 
-> Chotki is an independent project. It is not sanctioned by, affiliated with, or endorsed by any Orthodox church or parish, and nothing in it should be taken as speaking for them. All prayers and other material are sourced from public-domain texts.
+> **An independent project.** Chotki is not affiliated with or sanctioned by any church, parish, jurisdiction, or community. Nothing in it carries anyone's blessing.
+>
+> It is not a spiritual father and is not meant to stand in for one. If you have a priest or a spiritual father, settle your rule with him and let this app do nothing more than remember it. If you do not yet have one, treat what is here as a beginning rather than an authority, and go on looking.
+>
+> To give new and existing Orthodox Christians a way to build their practice before they find a spiritual father, to encourage finding one, and to facilitate that relationship once one is found.
 
 ## Status
 
-**Alpha.** It runs, and it is in daily use by its author.
+**1.0 beta, build 23.** Android is the current release. It runs, and it is in daily use by its author.
 
 What that means in practice:
 
-- **Android is available**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android).
-- **macOS is available** — macOS 13 or later, Apple Silicon and Intel. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
+- **Android is 1.0 beta, build 23**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 0.1.14-rc1.
+- **macOS is available**, macOS 13 or later, Apple Silicon and Intel. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - iOS is in development and a Linux version is planned.
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 
+### 1.0 beta, build 23
+
+The Android interface follows the redesign.
+
+- The mark plays once, before a welcome that asks what to call you. Settings keeps that name, and a spiritual father's name, and either can be changed later.
+- The day opens on one week. A grip beneath it opens the month, and reading the rules does not fold it shut. A great feast is gold, a Sunday is ochre, and a fast is violet. The selected day is outlined, not filled.
+- Home shows what the calendar marks for a fast when a fasting rule is due, or when fasting is set to observed. It describes the day. It does not tell anyone what to eat.
+- Prayers is a menu. A counted prayer keeps the rope. A prayer that is read does not. Reaching the count, or the last line, marks that rule. The circle on the day can be checked and unchecked at will.
+- The day's readings are always there, with a rule's own readings first. Scrolling to the end of one marks it, when it is on the rule.
+- The bar is Home, Prayers, Reading, Progress, and Settings. The glossary is reached from a word, and from Settings.
+- A saying of the fathers sits on the picture at the foot of Progress.
 
 - [design.md](design.md) — data model, liturgical handling, scoring
 - [checklist.md](checklist.md) — build order, phase by phase
@@ -28,24 +43,24 @@ What that means in practice:
 ## What it looks like
 
 <p align="center">
-  <img src="screenshots/chotki-rule.png" width="330" alt="The month, shaded for fasts and feasts, above the day's rules with checkboxes.">
-  <img src="screenshots/chotki-progress.png" width="330" alt="A progress report leading with sentences, then a percentage, then a breakdown by rule.">
+  <img src="screenshots/chotki-welcome.png" width="330" alt="The first-run welcome: an independent project, not affiliated with any church, asking what to call you.">
 </p>
 
-**The day's rule**, and **progress**. The month is shaded by the church calendar — violet for fasting days, gold for great feasts, ochre for Sundays. Progress leads with what happened in words, notices patterns on its own, and puts the figure second. It covers finished days only; today is never judged.
+**The welcome**, shown once and then not again. It says the app is not affiliated with any church, that it is not a spiritual father, and it asks what to call you.
 
 <p align="center">
-  <img src="screenshots/chotki-reading.png" width="330" alt="The day's commemoration, fasting rule and scripture readings, with glossary terms underlined.">
-  <img src="screenshots/chotki-library.png" width="330" alt="A library of rules grouped by category, each with a Take on button.">
+  <img src="screenshots/chotki-prayers-rope.png" width="330" alt="The Jesus Prayer on the rope, eight of thirty-three knots counted.">
+  <img src="screenshots/chotki-prayers.png" width="330" alt="Morning prayers read as text, without the rope.">
 </p>
 
-**The day's reading**, and **the library**. Commemoration, what the calendar marks, and the appointed readings — with unfamiliar terms underlined and tappable, so the explanation is one click from the word. Nothing in the library is switched on until you choose it.
+**Prayers.** A counted prayer brings the rope: thirty-three, fifty, or a hundred, with the words underneath. A prayer that is read does not. The menu at the top switches between them.
 
 <p align="center">
-  <img src="screenshots/chotki-rope.png" width="330" alt="A prayer rope counter partway through a knot of thirty-three, with preset buttons.">
+  <img src="screenshots/chotki-reading.png" width="330" alt="The day's commemoration and the Gospel, with glossary terms underlined.">
+  <img src="screenshots/chotki-progress.png" width="330" alt="Progress in words, then a percentage, then each rule, over a picture of four saints.">
 </p>
 
-**The prayer rope.** Thirty-three, fifty or a hundred, counted by click or spacebar, with a chime when the knot is complete — so you can pray with your eyes closed.
+**The day's reading**, and **progress**. The reading is the commemoration and the appointed passages, with unfamiliar terms underlined. Progress leads with what happened in words, puts the figure second, and stops at yesterday. Today is never judged.
 
 ## What it does
 
@@ -100,13 +115,13 @@ That is a fixed constraint rather than a style choice, and it is enforced by tes
 4. Go to **System Settings › Privacy & Security**, scroll down, and next to the message about Chotki click **Open Anyway**. Confirm.
 5. It will ask permission to send notifications. Allow it if you want reminders; the app works either way.
 
-A Chotki icon appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
+A cross appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
 
 To check which half you are running: `lipo -archs /Applications/Chotki.app/Contents/MacOS/Chotki` lists both, and `uname -m` says which one your Mac will use — `arm64` for Apple Silicon, `x86_64` for Intel.
 
 #### Why macOS blocks it
 
-Because this build is signed by its author rather than notarised by Apple, which costs a hundred dollars a year and is not worth it for an alpha. macOS cannot tell an unnotarised app from a harmful one, so it refuses both. The source is here to read if you would rather check it yourself, and the whole app is built by the script in `macos/build-app.sh` if you would rather build it than trust a download.
+Because this build is signed by its author rather than notarised by Apple, which costs a hundred dollars a year and is not worth it for a beta. macOS cannot tell an unnotarised app from a harmful one, so it refuses both. The source is here to read if you would rather check it yourself, and the whole app is built by the script in `macos/build-app.sh` if you would rather build it than trust a download.
 
 #### Removing it
 
@@ -120,7 +135,7 @@ You do **not** need developer mode, USB debugging, or Android Studio. Those are
 for building the app, not for running it, and turning them on is what upsets
 banking apps — installing an apk does not.
 
-1. Download `chotki-<version>.apk` onto the phone from the
+1. Download `Chotki-1.0-beta.23.apk` onto the phone from the
    [releases page](../../releases).
 2. Open it — from the notification, or from Files › Downloads.
 3. Android will say it cannot install apps from this source. Tap **Settings**

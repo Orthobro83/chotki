@@ -22,12 +22,32 @@ struct RuleReferenceTests {
         }
     }
 
+    /// Carrying prayers means leading to them, but not always to the same
+    /// screen: a rule whose whole text is one counted prayer belongs on the
+    /// rope, with the count already running, rather than on a page holding a
+    /// single short paragraph.
     @Test("every rule carrying prayers leads to them")
     func prayerRulesLeadToTheirPrayers() {
         let carrying = library.filter { $0.hasPrayers }
         #expect(!carrying.isEmpty)
         for rule in carrying {
-            #expect(rule.reference == .prayers, "\(rule.title) has no way to its prayers")
+            let expected: RuleReference = rule.ropePrayerID == nil ? .prayers : .rope
+            #expect(rule.reference == expected, "\(rule.title) has no way to its prayers")
+        }
+    }
+
+    /// The rope has to arrive already counting something, or "ready to begin"
+    /// is a claim the screen does not keep.
+    @Test("a rule that leads to the rope names the prayer the rope will count")
+    func ropeRulesNameTheirPrayer() {
+        let onTheRope = library.filter { $0.reference == .rope }
+        #expect(!onTheRope.isEmpty, "the library has no rope rules, so this proves nothing")
+        for rule in onTheRope {
+            let id = rule.ropePrayerID
+            #expect(id != nil, "\(rule.title) leads to the rope with no prayer")
+            let prayer = id.flatMap { PrayerBook.shared.prayer(id: $0) }
+            #expect(prayer != nil, "\(rule.title) names a prayer that is not in the book")
+            #expect(prayer?.isForRope == true, "\(rule.title) sends a read-through prayer to the rope")
         }
     }
 
@@ -57,5 +77,34 @@ struct RuleReferenceTests {
     @Test("the library still uses the title the reference matches on")
     func theTitleStillMatches() {
         #expect(RuleLibrary.bundled.contains { $0.title == psalterRuleTitle })
+    }
+}
+
+/// Ryan: "so that information about the rule is clickable and gives the user
+/// meaningful information about the rule."
+@Suite("What a rule means")
+struct RuleGlossaryTests {
+    private var library: [Rule] { RuleLibrary.bundled.map { $0.makeRule() } }
+
+    @Test("every rule taken from the library can be looked up")
+    func everyLibraryRuleExplained() {
+        let mute = library.filter { $0.glossarySlug == nil }.map(\.title)
+        #expect(mute.isEmpty, "nothing to open: \(mute.joined(separator: ", "))")
+    }
+
+    @Test("the curated entry wins over anything the title happens to contain")
+    func curatedWins() {
+        let lent = library.first { $0.title == "Great Lent" }
+        #expect(lent?.glossarySlug == "great-lent")
+    }
+
+    /// The case the scan exists for. Renaming a rule is normal and expected —
+    /// the library is a starting point — and a renamed rule should not go mute.
+    @Test("a renamed rule is still recognised by what its name contains")
+    func renamedStillFound() {
+        var rule = Rule(title: "The Jesus Prayer, 33 repetitions", recurrence: .daily)
+        #expect(rule.glossarySlug == "jesus-prayer")
+        rule.title = "Cold plunge"
+        #expect(rule.glossarySlug == nil, "and a rule of one's own stays the person's own")
     }
 }

@@ -1,54 +1,71 @@
 package org.chotki.app.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
-import org.chotki.core.Jurisdiction
-import org.chotki.core.Reckoning
 import org.chotki.core.ClockStyle
-import org.chotki.app.BuildConfig
+import org.chotki.core.Jurisdiction
+import org.chotki.core.Observance
+import org.chotki.core.Reckoning
+import org.chotki.core.scheduling.ReminderLead
 
 /**
- * What can be changed, and a plain account of whether reminders will arrive.
+ * The settings page, as the mockup draws it.
  *
- * The diagnostic is the part that matters. Permissions get revoked, phones get
- * replaced, and OEM updates reset these lists — so this is a standing report
- * rather than a wizard shown once and forgotten.
+ * Sans throughout, except the two name fields, which are set in the reading
+ * face. The controls do what their labels say: a name is the greeting, a
+ * church is the calendar that is fetched, Shown and Observed are different,
+ * and turning notifications off silences the app without touching the record.
  */
 @Composable
 fun SettingsScreen(
     state: AppState,
     modifier: Modifier = Modifier,
-    onOpenReflections: () -> Unit = {},
 ) {
     val context = LocalContext.current
-    val readiness = ReminderReadiness.of(context)
-
-    // The two pickers are Android's own, so no storage permission is involved
-    // and the person chooses where their record goes.
     var keepingNotice by remember { mutableStateOf<String?>(null) }
+    var churchOpen by remember { mutableStateOf(false) }
+    var leadOpen by remember { mutableStateOf(false) }
     val save = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri ->
@@ -74,198 +91,345 @@ fun SettingsScreen(
         }
     }
 
-    Column(
-        modifier
-            .fillMaxSize()
-            .background(Chotki.ground)
-            .verticalScroll(rememberScrollState()),
-    ) {
-        Heading("Your church")
-        // Both were read-only here: the church could not be changed and the
-        // calendar could not be chosen at all, though macOS has offered both
-        // since the day the reckoning was made configurable.
-        Dropdown(
-            label = "Church",
-            chosen = state.settings.jurisdiction.name,
-            options = Jurisdiction.KNOWN.map { it.name },
-            inset = 16.dp,
-        ) { index ->
-            state.updateSettings { it.copy(jurisdiction = Jurisdiction.KNOWN[index]) }
-        }
+    // The rest of the app is serif. This page is not.
+    MaterialTheme(typography = Typography(), colorScheme = MaterialTheme.colorScheme) {
+        Column(
+            modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+        ) {
+            Group("You")
+            Panel {
+                NameField(
+                    label = "My name",
+                    value = state.settings.displayName,
+                    hint = "First name or Baptismal name.",
+                ) { next -> state.updateSettings { it.copy(displayName = next) } }
+                Hairline()
+                NameField(
+                    label = "My spiritual father's name",
+                    value = state.settings.spiritualFatherName,
+                    hint = "Name",
+                ) { next -> state.updateSettings { it.copy(spiritualFatherName = next) } }
+                // Blanks the name only. Rules that already recorded it as who
+                // suggested them keep that text.
+                Text(
+                    "Clear",
+                    color = if (state.settings.spiritualFatherName.isEmpty()) Chotki.faint else Chotki.gold,
+                    fontSize = 13.5.sp,
+                    modifier = Modifier
+                        .padding(start = 12.dp, end = 12.dp, bottom = 10.dp)
+                        .clickable {
+                            state.updateSettings { it.copy(spiritualFatherName = "") }
+                        }
+                        .semantics { contentDescription = "Clear spiritual father's name" },
+                )
+            }
 
-        // Set apart from the church on purpose. Picking a church sets this to
-        // whatever that church usually keeps, which is right nearly always —
-        // but a parish sometimes differs from the body it belongs to, and the
-        // app should record what is actually kept rather than what is usual.
-        Dropdown(
-            label = "Calendar",
-            chosen = state.settings.jurisdiction.reckoning.displayName,
-            options = Reckoning.entries.map { it.displayName },
-            inset = 16.dp,
-        ) { index ->
-            state.updateSettings {
-                it.copy(jurisdiction = it.jurisdiction.copy(reckoning = Reckoning.entries[index]))
+            Group("Your church")
+            Panel {
+                Box {
+                    ValueRow("Jurisdiction", state.settings.jurisdiction.name) { churchOpen = true }
+                    DropdownMenu(expanded = churchOpen, onDismissRequest = { churchOpen = false }) {
+                        Jurisdiction.KNOWN.forEach { church ->
+                            DropdownMenuItem(
+                                text = { Text(church.name, color = Chotki.parchment, fontSize = 14.sp) },
+                                onClick = {
+                                    churchOpen = false
+                                    state.updateSettings { it.copy(jurisdiction = church) }
+                                },
+                            )
+                        }
+                    }
+                }
+                Hairline()
+                ValueRow("Reckoning", state.settings.jurisdiction.reckoning.shortName()) {
+                    val next = if (state.settings.jurisdiction.reckoning == Reckoning.JULIAN) {
+                        Reckoning.REVISED_JULIAN
+                    } else {
+                        Reckoning.JULIAN
+                    }
+                    state.updateSettings { it.copy(jurisdiction = it.jurisdiction.copy(reckoning = next)) }
+                }
+            }
+
+            Group("The calendar")
+            Panel {
+                SegmentRow("Fasting", state.settings.observances.fasting) { chosen ->
+                    state.updateSettings {
+                        it.copy(observances = it.observances.copy(fasting = chosen))
+                    }
+                }
+                Hairline()
+                SegmentRow("Feasts", state.settings.observances.feasts) { chosen ->
+                    state.updateSettings {
+                        it.copy(observances = it.observances.copy(feasts = chosen))
+                    }
+                }
+                Hairline()
+                SwitchRow("Old-style dates", state.settings.showOldStyleDates) { on ->
+                    state.updateSettings { it.copy(showOldStyleDates = on) }
+                }
+            }
+            Help("Shown reports what the calendar marks. Observed is a rule you take on. Neither is assumed.")
+
+            Group("Reminders")
+            Panel {
+                SwitchRow("Notifications", state.settings.reminders.notificationsEnabled) { on ->
+                    state.updateSettings {
+                        it.copy(reminders = it.reminders.copy(notificationsEnabled = on))
+                    }
+                }
+                Hairline()
+                Box {
+                    ValueRow("Lead", state.settings.reminders.defaultLead.shortName()) { leadOpen = true }
+                    DropdownMenu(expanded = leadOpen, onDismissRequest = { leadOpen = false }) {
+                        ReminderLead.CHOICES.forEach { lead ->
+                            DropdownMenuItem(
+                                text = { Text(lead.shortName(), color = Chotki.parchment, fontSize = 14.sp) },
+                                onClick = {
+                                    leadOpen = false
+                                    state.updateSettings {
+                                        it.copy(reminders = it.reminders.copy(defaultLead = lead))
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            Help("Turning these off silences the app. It does not change what is due, or how anything is counted.")
+
+            Group("Prayer rope")
+            Panel {
+                SwitchRow("Chime when a knot is complete", state.settings.chimeOnCompletion) { on ->
+                    state.updateSettings { it.copy(chimeOnCompletion = on) }
+                }
+                Hairline()
+                SwitchRow("Click on each knot", state.settings.tickEachKnot) { on ->
+                    state.updateSettings { it.copy(tickEachKnot = on) }
+                }
+            }
+
+            Group("Your record")
+            Panel {
+                ValueRow("Export a backup", "JSON") { save.launch(Keeping.suggestedName()) }
+                Hairline()
+                ValueRow("Restore from a backup", "Merges") {
+                    restore.launch(arrayOf("application/json", "*/*"))
+                }
+            }
+            keepingNotice?.let { Help(it) }
+
+            Group("General")
+            Panel {
+                SwitchRow("Consistency figure", state.settings.showConsistencyNumber) { on ->
+                    state.updateSettings { it.copy(showConsistencyNumber = on) }
+                }
+                Hairline()
+                ValueRow("Clock", state.settings.clockStyle.shortName()) {
+                    val next = if (state.settings.clockStyle == ClockStyle.TWENTY_FOUR_HOUR) {
+                        ClockStyle.TWELVE_HOUR
+                    } else {
+                        ClockStyle.TWENTY_FOUR_HOUR
+                    }
+                    state.setClockStyle(next)
+                }
             }
         }
-        Line(
-            "Changing the calendar moves fasts and feasts by thirteen days from " +
-                "today. What you have already kept is untouched.",
-            Chotki.faint,
-        )
-        for (note in state.settings.jurisdiction.practice.notes) Line(note, Chotki.faint)
-
-        Heading("The calendar")
-        Line("Fasting — ${state.settings.observances.fasting.name.lowercase()}", Chotki.parchment)
-        Line("Feasts — ${state.settings.observances.feasts.name.lowercase()}", Chotki.parchment)
-
-        Heading("The clock")
-        // Missing entirely until now, which left the hour picker labelling
-        // itself 00 to 23 with no way to change it — and made "08:45" read as
-        // a quarter to nine in the evening to anyone thinking in twelve hours.
-        Dropdown(
-            label = "How times are written",
-            chosen = state.settings.clockStyle.displayName,
-            options = ClockStyle.entries.map { it.displayName },
-            inset = 16.dp,
-        ) { index -> state.setClockStyle(ClockStyle.entries[index]) }
-
-        Heading("Reminders")
-        // Always here, whether or not the banner has been put away — and each
-        // one opens the screen where it is actually changed, rather than naming
-        // a setting and leaving the person to find it.
-        Diagnostic("Notifications", readiness.notificationsAllowed) {
-            context.startActivity(notificationSettingsIntent(context))
-        }
-        Diagnostic("Exact alarms", readiness.exactAlarmsAllowed) {
-            exactAlarmSettingsIntent(context)?.let(context::startActivity)
-        }
-        Diagnostic(
-            "Allowed to run in the background",
-            readiness.exemptFromBatteryOptimisation,
-        ) {
-            context.startActivity(batteryExemptionIntent(context))
-        }
-        if (readiness.hasVendorSleepList) {
-            Line(
-                "This phone also keeps its own list, on top of Android's. Add " +
-                    "Chotki to ${ReminderReadiness.VENDOR_ROUTE}, or reminders stop " +
-                    "after a day or two.",
-                Chotki.faint,
-            )
-            // No app can read or set that list, so the app cannot tell you
-            // whether it worked — and saying so is better than implying it can.
-            Line(
-                "Chotki cannot see that list or change it, so it cannot tell you " +
-                    "whether it took. If Chotki is not offered there, open it and " +
-                    "leave it a moment first — some phones only list apps they have " +
-                    "seen running. The setting above is Android's own and matters most.",
-                Chotki.faint,
-            )
-        }
-
-        // Reflections is reached from the rule that names it on the day — but
-        // only once that rule is taken on. Someone who has not taken it on has
-        // no way to find the section at all, which is how a screen ends up
-        // built and unreachable. iOS lists it here for the same reason.
-        Heading("Elsewhere")
-        Action("Reflections", onOpenReflections)
-
-        Heading("Your record")
-        // Android gives an app no place to leave anything behind and Chotki
-        // turns Android's own backup off, so this is the only way a record
-        // reaches a new phone. Said plainly, because someone who does not know
-        // it will find out the hard way.
-        Line(
-            "Your record is kept on this phone only. It is not sent anywhere, and " +
-                "uninstalling Chotki takes it with it. Save a copy before you change phones.",
-            Chotki.faint,
-        )
-        Action("Save a copy of your record") { save.launch(Keeping.suggestedName()) }
-        Action("Restore from a copy") { restore.launch(arrayOf("application/json", "*/*")) }
-        keepingNotice?.let { Line(it, Chotki.gold) }
-
-        Heading("This is an alpha")
-        Line(
-            "Chotki ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})",
-            Chotki.parchment,
-        )
-        Line(
-            "The glossary, the prayers and the readings are awaiting a priest's review. " +
-                "Nothing here tells you what you must do; what you keep is settled with your priest or spiritual father.",
-            Chotki.faint,
-        )
-        // On macOS this framing reaches you through the releases page. An apk is
-        // passed from hand to hand with no page attached, so it has to travel
-        // inside the app or it does not travel at all.
-        Line(
-            "Chotki is an independent project. It was inspired by The Brotherhood " +
-                "of the Narrow Path, but it is not sanctioned by, affiliated with, or " +
-                "endorsed by them, and nothing in it speaks for them.",
-            Chotki.faint,
-        )
-        Line(
-            "Not open source. During the alpha you may install and run it for your own " +
-                "use. Please do not sell it or pass it on further.",
-            Chotki.faint,
-        )
-        Spacer(Modifier.size(32.dp))
     }
 }
 
+private fun Reckoning.shortName(): String = when (this) {
+    Reckoning.JULIAN -> "Old calendar"
+    Reckoning.REVISED_JULIAN -> "New calendar"
+}
+
+private fun ClockStyle.shortName(): String = when (this) {
+    ClockStyle.TWENTY_FOUR_HOUR -> "24-hour"
+    ClockStyle.TWELVE_HOUR -> "12-hour"
+}
+
+private fun ReminderLead.shortName(): String = when (this) {
+    ReminderLead.AT_THE_TIME -> "At the time"
+    ReminderLead.TEN_MINUTES -> "10 minutes"
+    ReminderLead.THIRTY_MINUTES -> "30 minutes"
+    ReminderLead.ONE_HOUR -> "1 hour"
+    ReminderLead.TWO_HOURS -> "2 hours"
+    ReminderLead.THE_EVENING_BEFORE -> "The evening before"
+}
+
 @Composable
-private fun Heading(text: String) {
+private fun Group(title: String) {
     Text(
-        text,
-        color = Chotki.gold,
-        fontSize = 13.sp,
-        modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 4.dp),
+        title,
+        color = Chotki.faint,
+        fontSize = 11.sp,
+        modifier = Modifier.padding(start = 6.dp, top = 8.dp, bottom = 3.dp),
     )
 }
 
 @Composable
-private fun Line(text: String, colour: androidx.compose.ui.graphics.Color) {
-    Text(text, color = colour, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 3.dp))
+private fun Help(text: String) {
+    Text(
+        text,
+        color = Chotki.faint,
+        fontSize = 11.sp,
+        lineHeight = 15.sp,
+        modifier = Modifier.padding(start = 6.dp, end = 6.dp, top = 4.dp),
+    )
 }
 
-/**
- * Stated as a fact, never as a scolding. The app is reporting on itself.
- *
- * Tapping opens the system screen where the setting lives. Naming a permission
- * and leaving someone to hunt for it through Android's settings is not help.
- */
 @Composable
-private fun Diagnostic(label: String, allowed: Boolean, onOpen: () -> Unit) {
+private fun Panel(content: @Composable () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clickable(onClick = onOpen)
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .semantics { contentDescription = "$label readiness" },
-    ) {
-        Text(
-            "$label — ${if (allowed) "allowed" else "not allowed"}",
-            color = if (allowed) Chotki.parchment else Chotki.gold,
-            fontSize = 14.sp,
-        )
-        Text(
-            if (allowed) "Tap to review" else "Tap to change this",
-            color = Chotki.faint,
-            fontSize = 12.sp,
+            .clip(RoundedCornerShape(14.dp))
+            .background(Chotki.panel),
+    ) { content() }
+}
+
+@Composable
+private fun Hairline() {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF23242C)))
+}
+
+@Composable
+private fun NameField(
+    label: String,
+    value: String,
+    hint: String,
+    onChange: (String) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Text(label, color = Chotki.parchment, fontSize = 13.5.sp)
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            textStyle = TextStyle(
+                color = Chotki.parchment,
+                fontFamily = FontFamily.Serif,
+                fontSize = 15.sp,
+            ),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+            cursorBrush = SolidColor(Chotki.gold),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF12131A))
+                .padding(horizontal = 10.dp, vertical = 8.dp)
+                .semantics { contentDescription = label },
+            decorationBox = { inner ->
+                Box {
+                    if (value.isEmpty()) {
+                        Text(
+                            hint,
+                            color = Chotki.faint,
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 15.sp,
+                        )
+                    }
+                    inner()
+                }
+            },
         )
     }
 }
 
-/** A line that does something, told apart from the rest by being gold. */
 @Composable
-private fun Action(label: String, onTap: () -> Unit) {
-    Text(
-        label,
-        color = Chotki.gold,
-        fontSize = 15.sp,
-        modifier = Modifier
+private fun ValueRow(label: String, value: String, onClick: () -> Unit) {
+    Row(
+        Modifier
             .fillMaxWidth()
-            .clickable(onClick = onTap)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
             .semantics { contentDescription = label },
-    )
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = Chotki.parchment, fontSize = 13.5.sp)
+        Text(
+            value,
+            color = Chotki.muted,
+            fontSize = 12.sp,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f).padding(start = 12.dp),
+        )
+    }
+}
+
+@Composable
+private fun SwitchRow(label: String, on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onChange(!on) }
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .semantics { contentDescription = label },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            color = Chotki.parchment,
+            fontSize = 13.5.sp,
+            modifier = Modifier.weight(1f).padding(end = 10.dp),
+        )
+        Switch(on)
+    }
+}
+
+@Composable
+private fun Switch(on: Boolean) {
+    Box(
+        Modifier
+            .size(width = 32.dp, height = 18.dp)
+            .clip(RoundedCornerShape(99.dp))
+            .background(if (on) Color(0xFF3D3418) else Color(0xFF2A2C34)),
+    ) {
+        Box(
+            Modifier
+                .padding(2.dp)
+                .size(14.dp)
+                .align(if (on) Alignment.CenterEnd else Alignment.CenterStart)
+                .clip(CircleShape)
+                .background(if (on) Chotki.gold else Chotki.faint),
+        )
+    }
+}
+
+@Composable
+private fun SegmentRow(label: String, selected: Observance, onSelect: (Observance) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = Chotki.parchment, fontSize = 13.5.sp, modifier = Modifier.weight(1f))
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF12131A))
+                .padding(2.dp),
+        ) {
+            for (option in Observance.entries) {
+                val on = option == selected
+                val name = option.name.lowercase().replaceFirstChar { it.uppercase() }
+                Text(
+                    name,
+                    color = if (on) Chotki.gold else Chotki.faint,
+                    fontSize = 11.sp,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (on) Color(0xFF2A2618) else Color.Transparent)
+                        .clickable { onSelect(option) }
+                        .padding(horizontal = 7.dp, vertical = 4.dp)
+                        .semantics { contentDescription = "$label $name" },
+                )
+            }
+        }
+    }
 }

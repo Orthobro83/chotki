@@ -22,15 +22,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +40,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.content.Glossary
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsets
 
 /**
  * Where the app can be: the same seven places the macOS sidebar offers.
@@ -56,7 +67,7 @@ import org.chotki.core.content.Glossary
  * reading, a rising line for progress, a closed book for the terms.
  */
 enum class Place(val title: String) {
-    RULE("Rule"),
+    RULE("Home"),
     PRAYERS("Prayers"),
     READING("Reading"),
     PROGRESS("Progress"),
@@ -72,34 +83,49 @@ enum class Place(val title: String) {
  * header.
  */
 @Composable
-private fun TopBar(screen: Screen, onLibrary: () -> Unit, onGlossary: () -> Unit) {
-    val readingHere = screen.place == Place.READING
+private fun TitleLine(screen: Screen, state: AppState, onLibrary: () -> Unit) {
+    val title = when (screen) {
+        Screen.Day -> greetingLine(state.settings.displayName)
+        Screen.Library -> "Library"
+        else -> screen.place.title
+    }
     Row(
-        Modifier.fillMaxWidth().padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 2.dp),
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            if (screen == Screen.Day) "Chotki" else screen.place.title,
+            title,
             color = Chotki.parchment,
-            fontSize = 17.sp,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+            fontSize = 26.sp,
             modifier = Modifier.weight(1f),
         )
-        Column(
-            Modifier
-                .clickable(onClick = if (readingHere) onGlossary else onLibrary)
-                .padding(10.dp)
-                .semantics {
-                    contentDescription =
-                        if (readingHere) "Open the glossary" else "Open the library"
-                },
-        ) {
-            if (readingHere) {
-                GlossaryIcon(Chotki.gold, 24.dp)
-            } else {
-                LibraryIcon(Chotki.gold, 24.dp)
-            }
+        // On the day, and only there. The other sections are their own places.
+        if (screen == Screen.Day) {
+            Text(
+                "+",
+                color = Chotki.gold,
+                fontSize = 28.sp,
+                modifier = Modifier
+                    .clickable(onClick = onLibrary)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                    .semantics { contentDescription = "Open the library" },
+            )
         }
     }
+}
+
+/** Morning until noon, afternoon until five, evening after. */
+private fun greetingLine(name: String): String {
+    val hour = java.time.LocalTime.now().hour
+    val part = when {
+        hour < 12 -> "morning"
+        hour < 17 -> "afternoon"
+        else -> "evening"
+    }
+    val trimmed = name.trim()
+    return if (trimmed.isEmpty()) "Good $part" else "Good $part, $trimmed"
 }
 
 /** The way back out of a screen that was pushed rather than chosen. */
@@ -119,6 +145,9 @@ private fun BackLink(onBack: () -> Unit) {
 @Composable
 fun Shell(state: AppState) {
     var journey by remember { mutableStateOf(Journey()) }
+    // A reading card names the section it opens. The bar does not.
+    var readingBand by remember { mutableStateOf<Int?>(null) }
+    var readingNonce by remember { mutableIntStateOf(0) }
     // Scoped once, here. Building it inside a screen would redo the filtering
     // and index rebuilding on every recomposition, and the linked text needs it
     // for every term on screen.
@@ -126,6 +155,9 @@ fun Shell(state: AppState) {
         Glossary.shared(state.settings.jurisdiction.tradition)
     }
     val context = LocalContext.current
+    // Edge-to-edge otherwise sets the first line flush under the clock.
+    // Half again the status-bar inset is the gap under it.
+    val belowStatusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() * 1.5f
 
     // Honoured, not assumed.
     //
@@ -150,17 +182,24 @@ fun Shell(state: AppState) {
     // fields into the editor, back closed Chotki.
     BackHandler(enabled = journey.canGoBack) { journey = journey.back() }
 
-    // First run, before anything else. Nothing on it can be reached until it is
-    // read, which is the point of it.
+    // The mark, then the welcome. Nothing else can be reached until Continue.
     if (!state.settings.hasCompletedFirstRun) {
-        WelcomeScreen(state, Modifier.fillMaxSize())
+        var opened by remember { mutableStateOf(false) }
+        ChotkiBackdrop {
+            if (!opened) {
+                OpeningMark { opened = true }
+            } else {
+                WelcomeScreen(state, Modifier.fillMaxSize())
+            }
+        }
         return
     }
 
     // The status bar is the app's to clear now. The bottom bar clears the
     // navigation bar itself, further down, so its background still runs to the
     // bottom of the screen while its labels sit above the gesture pill.
-    Column(Modifier.fillMaxSize().background(Chotki.ground).statusBarsPadding()) {
+    ChotkiBackdrop {
+    Column(Modifier.fillMaxSize().padding(top = belowStatusBar)) {
         if (!dismissed) {
             ReadinessBanner(readiness) {
                 dismissals.dismiss(readiness)
@@ -172,10 +211,10 @@ fun Shell(state: AppState) {
         // where the glossary takes its place. The library used to be a word at
         // the foot of the day and nowhere else, so it was invisible from every
         // other screen and easy to miss on the one that had it.
-        TopBar(
-            screen = journey.current,
+        TitleLine(
+            screen = journey.page,
+            state = state,
             onLibrary = { journey = journey.push(Screen.Library) },
-            onGlossary = { journey = journey.push(Screen.Terms()) },
         )
 
         Box(Modifier.weight(1f)) {
@@ -204,7 +243,7 @@ fun Shell(state: AppState) {
                 label = "screen",
             ) { destination ->
                 Column(Modifier.fillMaxSize()) {
-                    when (val screen = destination.current) {
+                    when (val screen = destination.page) {
                         is Screen.Editor -> RuleEditor(
                             state = state,
                             existing = screen.rule,
@@ -265,11 +304,23 @@ fun Shell(state: AppState) {
                             modifier = Modifier.weight(1f),
                             onReadPrayers = { journey = journey.push(Screen.RulePrayers(it.rule.id)) },
                             // The day's readings already have a place of their own.
-                            onReadReading = { journey = journey.go(Place.READING) },
+                            onReadReading = { band ->
+                                readingBand = band
+                                readingNonce += 1
+                                journey = journey.go(Place.READING)
+                            },
                             onReadPsalter = { journey = journey.push(Screen.Psalter) },
                             onReadReflections = { journey = journey.push(Screen.Reflections(it)) },
                             onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
                             onOpenLibrary = { journey = journey.push(Screen.Library) },
+                            // The rope is a bar destination, so it is gone to
+                            // rather than pushed — but the prayer is chosen
+                            // first, so it is already counting on arrival.
+                            onGoToRope = {
+                                state.countOnTheRope(it)
+                                journey = journey.go(Place.PRAYERS)
+                            },
+                            onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
                         )
 
                         Screen.Rope -> RopeScreen(
@@ -277,6 +328,7 @@ fun Shell(state: AppState) {
                             modifier = Modifier.weight(1f),
                             glossary = glossary,
                             onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
+                            onOpenGlossary = { journey = journey.push(Screen.Terms()) },
                         )
 
                         Screen.Reading -> ReadingScreen(
@@ -284,40 +336,88 @@ fun Shell(state: AppState) {
                             modifier = Modifier.weight(1f),
                             glossary = glossary,
                             onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
+                            focusBand = readingBand,
+                            focusNonce = readingNonce,
+                            onOpenGlossary = { journey = journey.push(Screen.Terms()) },
                         )
 
                         Screen.Progress -> ProgressScreen(state, Modifier.weight(1f))
                         Screen.Settings -> SettingsScreen(
                             state = state,
                             modifier = Modifier.weight(1f),
-                            onOpenReflections = { journey = journey.push(Screen.Reflections()) },
                         )
 
                         is Screen.Terms -> GlossaryScreen(
                             glossary = glossary,
                             modifier = Modifier.weight(1f),
                             openSlug = screen.slug,
-                            onOpen = { journey = journey.push(Screen.Terms(it)) },
-                            onBack = { journey = journey.back() },
                         )
+                    }
+                }
+            }
+
+            // A subsection rides over its root rather than replacing it:
+            // writing a rule over the library, a word's meaning over whatever
+            // you were reading. Tapping the scrim or dragging it down is back,
+            // which is the gesture people already make.
+            val riding = journey.sheet
+            if (riding != null) {
+                Detour(onDismiss = { journey = journey.back() }) {
+                    when (riding) {
+                        is Screen.Editor -> RuleEditor(
+                            state = state,
+                            existing = riding.rule,
+                            startingFrom = riding.startingFrom,
+                            onDone = { journey = journey.back() },
+                        )
+
+                        is Screen.RulePrayers -> {
+                            val rule = state.rule(riding.ruleID)
+                            if (rule == null) {
+                                journey = journey.back()
+                            } else {
+                                RulePrayers(
+                                    rule = rule,
+                                    onBack = { journey = journey.back() },
+                                    glossary = glossary,
+                                    onOpenTerm = { journey = journey.push(Screen.Terms(it)) },
+                                )
+                            }
+                        }
+
+                        is Screen.Terms -> GlossaryScreen(
+                            glossary = glossary,
+                            openSlug = riding.slug,
+                        )
+
+                        else -> Unit
                     }
                 }
             }
         }
 
+        // Inset, as in the mockup. A full-bleed bar covers the lower-right
+        // gold wash, which sits on the ground in that corner.
         Row(
             Modifier
                 .fillMaxWidth()
-                .background(Chotki.panel)
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(Chotki.panel),
         ) {
-            val lit = journey.current.place
-            for (candidate in Place.entries) {
+            val lit = journey.page.place
+            // Five places. The glossary is reached from a word, not from this bar.
+            val bar = listOf(Place.RULE, Place.PRAYERS, Place.READING, Place.PROGRESS, Place.SETTINGS)
+            for (candidate in bar) {
                 val colour = if (candidate == lit) Chotki.gold else Chotki.muted
                 Column(
                     Modifier
                         .weight(1f)
-                        .clickable { journey = journey.go(candidate) }
+                        .clickable {
+                            if (candidate == Place.READING) readingBand = null
+                            journey = journey.go(candidate)
+                        }
                         .padding(vertical = 8.dp)
                         .semantics { contentDescription = "Go to ${candidate.title}" },
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -332,6 +432,54 @@ fun Shell(state: AppState) {
                     )
                 }
             }
+        }
+    }
+        if (state.settings.shouldAskForSpiritualFather(state.today)) {
+            FatherPrompt(state)
+        }
+    }
+}
+
+/**
+ * A subsection, sliding up over the screen that opened it.
+ *
+ * Ryan: "each subsection slides on top of its root. Tapping outside of its
+ * boundaries or sliding it downward hides it." Material's modal sheet is
+ * exactly that gesture, and using the platform's own means the drag, the
+ * fling, the scrim and the predictive back all behave the way they do
+ * everywhere else on the phone rather than the way this app reinvented them.
+ *
+ * Taken straight to full height. A half-open stop is useful for a short form
+ * and a nuisance for a long prayer, and every detour here is the second kind.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Detour(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetTop = (WindowInsets.statusBars.getTop(LocalDensity.current) * 1.5f).toInt()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheet,
+        // The sheet is its own window, so the page's top inset does not reach
+        // it. The status bar, and half of it again, keeps the title off the clock.
+        contentWindowInsets = { WindowInsets(top = sheetTop) },
+        containerColor = Chotki.ground,
+        contentColor = Chotki.parchment,
+        scrimColor = Chotki.ground.copy(alpha = 0.62f),
+        dragHandle = {
+            Box(
+                Modifier
+                    .padding(top = 10.dp, bottom = 4.dp)
+                    .width(34.dp)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Chotki.line),
+            )
+        },
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            CornerWash(Modifier.matchParentSize())
+            content()
         }
     }
 }

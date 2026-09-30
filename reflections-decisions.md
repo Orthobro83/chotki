@@ -23,9 +23,8 @@ foot, and the overlay.
 
 What does not exist: the iOS and Android views. See §8.1.
 
-Source material: `~/Downloads/nepsis-seven-reflections.html`, from the
-Brotherhood of the Narrow Path. The seven prompts and the closing text below are
-transcribed from it verbatim and must not be reworded.
+Source material was transcribed once. The seven prompts and the closing text below are
+verbatim and must not be reworded.
 
 ---
 
@@ -166,9 +165,8 @@ Two details that were got wrong first:
 It comes down *over* the section rather than pushing it apart, so nothing under
 it moves and the place someone was reading stays where they left it.
 
-**The link** is `Welcome.brotherhoodURL` — the address already in the app, and
-already Ryan's. Not a second one found for the same place. A test asserts there
-is exactly one link in the explainer and that it is that constant.
+**There is no link.** The explainer names nobody and sends the reader nowhere.
+A test asserts the explainer contains no link.
 
 **The button** puts all seven on the rule in one action: one question a day,
 each on its own weekday. Its label is `Reflection.addAsRuleLabel`, and the last
@@ -487,7 +485,7 @@ has it too.
 
 Worth knowing about the scan: it looks for **capitalised** words mid-sentence,
 which in liturgical English is very nearly the definition of a term of art. The
-Brotherhood's prose is plain modern English and capitalises nothing, so on this
+The prose is plain modern English and capitalises nothing, so on this
 text the ratchet guards future edits rather than finding much today. All four
 terms above were found by reading. Titles are excluded, since "Notice the
 Resistance" is title case and every capital in it would read as a term.

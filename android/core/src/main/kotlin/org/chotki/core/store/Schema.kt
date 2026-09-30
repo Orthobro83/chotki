@@ -22,7 +22,7 @@ import org.chotki.core.store.Db
  */
 object Schema {
 
-    const val CURRENT_VERSION = 8
+    const val CURRENT_VERSION = 9
 
     fun migrate(db: Db) {
         db.execute("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);")
@@ -37,6 +37,7 @@ object Schema {
         if (current < 6) db.execute(V6)
         if (current < 7) db.execute(V7)
         if (current < 8) db.execute(V8)
+        if (current < 9) db.execute(V9)
     }
 
     private val V1 = """
@@ -118,7 +119,26 @@ object Schema {
      */
     const val RULE_COLUMNS =
         "id, title, note, source, recurrence, time_of_day, category, created_at, " +
-            "archived_at, reminders, prayer_ids, hidden_from_library"
+            "archived_at, reminders, prayer_ids, hidden_from_library, given_by_priest"
+
+    /**
+     * Whether the person was given this rule by their priest or spiritual
+     * father.
+     *
+     * Nullable with nothing to backfill: absent means unmarked, and nobody has
+     * been asked the question yet, so every existing rule is correctly
+     * unmarked rather than wrongly "no".
+     *
+     * Numbered nine here and eight in the Swift core. The ladders diverged at
+     * seven, where this side needed a step Swift never did, and they are
+     * separate files on separate devices that never meet. Matching the numbers
+     * would mean shipping a no-op step on one side to keep a tally nothing
+     * reads.
+     */
+    private val V9 = """
+        ALTER TABLE rule ADD COLUMN given_by_priest INTEGER;
+        INSERT INTO schema_version (version) VALUES (9);
+    """.trimIndent()
 
     /**
      * Frees the stored recurrence from Kotlin's class names.
@@ -158,7 +178,7 @@ object Schema {
      * removed, so there is no ordering within a day and no archived state.
      *
      * The seven are NOT seeded here. `Store.seedReflections()` does it from the
-     * generated content, so the Brotherhood's text lives in one place rather
+     * generated content, so the shipped text lives in one place rather
      * than being copied into a migration where it would drift.
      */
     private val V8 = """

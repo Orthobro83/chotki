@@ -9,7 +9,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +23,8 @@ import org.chotki.app.platform.AndroidDb
 import org.chotki.app.ui.ChotkiTheme
 import org.chotki.app.ui.LibrarySheet
 import org.chotki.app.ui.RuleScreen
+import org.chotki.core.Recurrence
+import org.chotki.core.Rule as PrayerRule
 import org.chotki.core.store.SqliteStore
 import org.junit.Rule
 import org.junit.Test
@@ -49,7 +53,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { RuleScreen(state) } }
 
-        compose.onNodeWithText("Nothing on the rule for this day.").assertIsDisplayed()
+        compose.onNodeWithText("Create your first rule").assertIsDisplayed()
     }
 
     /**
@@ -62,8 +66,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         assertEquals("it was saved before the editor was even answered", 0, state.rules.size)
 
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
@@ -82,8 +85,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 
@@ -102,8 +104,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
 
         compose.onNodeWithContentDescription("How often — Every day").performScrollTo().performClick()
         compose.waitForIdle()
@@ -116,34 +117,74 @@ class RuleScreenTest {
         assertTrue("it was saved as $recurrence", recurrence is org.chotki.core.Recurrence.Weekly)
     }
 
-    // The bug this exists to prevent, carried from macOS: the box is the only
-    // thing that marks a rule kept.
+    // The circle marks a rule, and marks it again after it has been cleared.
+    // A real tap, not the semantics action: the card underneath fills the same
+    // corner, and a click that only the semantics node heard would leave a
+    // finger tap opening the card instead of taking the mark off.
     @Test
     fun tappingTheBoxMarksTheRuleKept() {
         val state = freshState().also { it.load() }
-        state.take("morning-prayers")
+        state.save(PrayerRule(title = "Cold plunge", recurrence = Recurrence.Daily))
 
         compose.setContent { ChotkiTheme { RuleScreen(state) } }
-        compose.onNodeWithContentDescription("Mark Morning prayers kept").performClick()
+        compose.onNodeWithContentDescription("Mark Cold plunge kept").performTouchInput { click() }
         compose.waitForIdle()
 
         val entry = state.entries(state.today).single()
-        assertTrue("the box did nothing", entry.isKept)
+        assertTrue("the circle did nothing", entry.isKept)
         assertEquals(1, state.occurrences.size)
     }
 
     @Test
     fun tappingItAgainTakesTheRecordAwayRatherThanWritingSkipped() {
         val state = freshState().also { it.load() }
-        state.take("morning-prayers")
+        state.save(PrayerRule(title = "Cold plunge", recurrence = Recurrence.Daily))
 
         compose.setContent { ChotkiTheme { RuleScreen(state) } }
-        compose.onNodeWithContentDescription("Mark Morning prayers kept").performClick()
+        val circle = compose.onNodeWithContentDescription("Mark Cold plunge kept")
+        circle.performTouchInput { click() }
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("Mark Morning prayers kept").performClick()
+        circle.performTouchInput { click() }
         compose.waitForIdle()
 
         assertTrue("un-ticking left a record behind", state.occurrences.isEmpty())
+        assertTrue(!state.entries(state.today).single().isKept)
+    }
+
+    @Test
+    fun tappingItAThirdTimeMarksItKeptAgain() {
+        val state = freshState().also { it.load() }
+        state.save(PrayerRule(title = "Cold plunge", recurrence = Recurrence.Daily))
+
+        compose.setContent { ChotkiTheme { RuleScreen(state) } }
+        val circle = compose.onNodeWithContentDescription("Mark Cold plunge kept")
+        circle.performTouchInput { click() }
+        compose.waitForIdle()
+        circle.performTouchInput { click() }
+        compose.waitForIdle()
+        circle.performTouchInput { click() }
+        compose.waitForIdle()
+
+        assertTrue("checking again after an un-check did nothing", state.entries(state.today).single().isKept)
+        assertEquals(1, state.occurrences.size)
+    }
+
+    // Finishing the prayers still marks them. The circle has to be able to
+    // undo that, and to put it back, or an accidental mark stays for the day.
+    @Test
+    fun aPrayerTheAppCanSeeTogglesFromTheCircle() {
+        val state = freshState().also { it.load() }
+        state.take("morning-prayers")
+
+        compose.setContent { ChotkiTheme { RuleScreen(state) } }
+        val circle = compose.onNodeWithContentDescription("Mark Morning prayers kept")
+        circle.performTouchInput { click() }
+        compose.waitForIdle()
+        assertTrue("the circle left the prayer unmarked", state.entries(state.today).single().isKept)
+
+        circle.performTouchInput { click() }
+        compose.waitForIdle()
+        assertTrue("un-ticking a prayer the app can also mark left the record", state.occurrences.isEmpty())
         assertTrue(!state.entries(state.today).single().isKept)
     }
 
@@ -176,12 +217,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        // A LazyColumn composes only what is on screen, so the fasting section
-        // has to be scrolled to — which is what a person does too.
-        compose.onNode(hasScrollAction())
-            .performScrollToNode(hasContentDescription("Take on Great Lent"))
-        compose.onNodeWithContentDescription("Take on Great Lent").performClick()
-        compose.waitForIdle()
+        takeOn("Great Lent", "Fasting")
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
         compose.waitForIdle()
 
@@ -190,6 +226,18 @@ class RuleScreenTest {
             org.chotki.core.Observance.OBSERVED,
             state.settings.observances.fasting,
         )
+    }
+
+    /** A folded section hides its rows until it is opened, which is the tap. */
+    private fun takeOn(title: String, section: String) {
+        compose.onNode(hasContentDescription("Open $section", substring = true))
+            .performScrollTo()
+            .performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction())
+            .performScrollToNode(hasContentDescription("Take on $title"))
+        compose.onNodeWithContentDescription("Take on $title").performClick()
+        compose.waitForIdle()
     }
 
     /**
@@ -225,8 +273,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
 
         compose.onNode(hasContentDescription("Hour", substring = true))
             .performScrollTo().performClick()
@@ -256,8 +303,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         compose.onNodeWithContentDescription("Choose Remind me").performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
@@ -270,8 +316,7 @@ class RuleScreenTest {
         val state = freshState().also { it.load() }
         compose.setContent { ChotkiTheme { LibraryThenEditor(state) } }
 
-        compose.onNodeWithContentDescription("Take on Morning prayers").performClick()
-        compose.waitForIdle()
+        takeOn("Morning prayers", "Prayer")
         compose.onNodeWithContentDescription("Choose 1 hour before").performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()

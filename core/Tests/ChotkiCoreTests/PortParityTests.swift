@@ -558,9 +558,9 @@ struct PortParityTests {
 
     /// The fixed copy is read from core on every platform, not typed into any.
     ///
-    /// The seven questions are the Brotherhood's and the closing text is theirs
-    /// too. Typed into three interfaces they are three chances to get someone
-    /// else's words wrong, and no way to notice.
+    /// The seven questions and the closing text were transcribed once.
+    /// Typed into three interfaces they are three chances to get the words
+    /// wrong, and no way to notice.
     @Test("no platform types the reflections text into itself")
     func reflectionTextComesFromCore() throws {
         for (platform, path) in Self.appTrees {

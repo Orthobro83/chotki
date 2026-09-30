@@ -478,7 +478,7 @@ private struct ReflectionExplainer: View {
     }
 }
 
-/// The Brotherhood's closing text, verbatim. Kept because it names who to ask —
+/// The closing text, verbatim. Kept because it names who to ask —
 /// a priest, confession — which is what the app is meant to do instead of
 /// instructing. It is quoted, not the app's own voice, and is not reworded.
 private struct Colophon: View {

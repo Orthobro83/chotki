@@ -4,15 +4,18 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.chotki.app.platform.AndroidDb
 import org.chotki.app.ui.ChotkiTheme
+import org.chotki.app.ui.GlossaryScreen
 import org.chotki.app.ui.Place
 import org.chotki.app.ui.Shell
 import org.chotki.core.store.SqliteStore
@@ -53,17 +56,24 @@ class ShellTest {
     @Test
     fun everyPlaceIsReachable() {
         show()
-        for (place in Place.entries) {
+        // The glossary is not on the bar. It is reached from Settings.
+        for (place in listOf(Place.RULE, Place.PRAYERS, Place.READING, Place.PROGRESS, Place.SETTINGS)) {
             compose.onNodeWithContentDescription("Go to ${place.title}").performClick()
             compose.waitForIdle()
         }
+        // The glossary is not a settings row. A word in the text still opens it.
+        compose.onNodeWithText("Old-style dates").assertIsDisplayed()
     }
 
     @Test
     fun theRuleShowsTheDayAndTheMonth() {
         show()
-        compose.onNodeWithContentDescription("Go to Rule").performClick()
+        compose.onNodeWithContentDescription("Go to Home").performClick()
         compose.onNodeWithContentDescription("The day").assertIsDisplayed()
+        // The week is what the day opens on. The month is one grip away.
+        compose.onNodeWithContentDescription("The week before").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Show the whole month").performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").assertIsDisplayed()
     }
 
@@ -75,12 +85,13 @@ class ShellTest {
         state.take("morning-prayers")
         compose.setContent { ChotkiTheme { Shell(state) } }
 
+        compose.onNodeWithContentDescription("Add a new rule").assertIsDisplayed()
         val today = state.today
-        val earlier = if (today.day > 1) today.day - 1 else today.day
-        compose.onNodeWithContentDescription("Day $earlier").performClick()
+        val earlier = if (today.day > 1) today.plusDays(-1) else today
+        compose.onNode(hasContentDescription("Day ${earlier.iso}", substring = true)).performClick()
         compose.waitForIdle()
 
-        assertEquals(earlier, state.selectedDate.day)
+        assertEquals(earlier, state.selectedDate)
     }
 
     @Test
@@ -89,6 +100,8 @@ class ShellTest {
         compose.setContent { ChotkiTheme { Shell(state) } }
         val before = state.visibleMonth.month
 
+        compose.onNodeWithContentDescription("Show the whole month").performClick()
+        compose.waitForIdle()
         compose.onNodeWithContentDescription("The month before").performClick()
         compose.waitForIdle()
         assertTrue("the month did not change", state.visibleMonth.month != before)
@@ -103,6 +116,8 @@ class ShellTest {
         // than reported as nought per cent.
         compose.onNodeWithText("Nothing has come due yet. This fills in as the days pass.")
             .assertIsDisplayed()
+        compose.onNodeWithText("Those who have really determined", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("Icon caption").assertIsDisplayed()
     }
 
     // Prayers is the rope: the count, the knots, and the words beneath them.
@@ -114,6 +129,7 @@ class ShellTest {
 
         compose.onNodeWithContentDescription("The count").assertIsDisplayed()
         compose.onNodeWithContentDescription("Count a knot").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Glossary of terms").assertIsDisplayed()
         compose.onNodeWithText(
             "Lord Jesus Christ, Son of God, have mercy on me, a sinner.",
         ).assertIsDisplayed()
@@ -121,14 +137,23 @@ class ShellTest {
 
     @Test
     fun theGlossarySearchesAndOpensATerm() {
-        show()
-        compose.onNodeWithContentDescription("Go to Glossary").performClick()
-        compose.onNodeWithContentDescription("Search terms").performTextInput("theotokos")
+        compose.setContent {
+            ChotkiTheme { GlossaryScreen() }
+        }
+        // A match is the leading characters, not a piece from the middle.
+        compose.onNodeWithContentDescription("Search terms").performTextInput("okos")
         compose.waitForIdle()
+        assertEquals(0, compose.onAllNodesWithText("Theotokos").fetchSemanticsNodes().size)
 
-        compose.onNodeWithContentDescription("Open Theotokos").performClick()
+        compose.onNodeWithContentDescription("Search terms").performTextReplacement("theotokos")
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("Back to all terms").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Theotokos").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Council of Ephesus", substring = true).assertIsDisplayed()
+
+        compose.onNodeWithContentDescription("Theotokos").performClick()
+        compose.waitForIdle()
+        assertEquals(0, compose.onAllNodesWithText("Council of Ephesus", substring = true).fetchSemanticsNodes().size)
     }
 
     @Test
@@ -136,6 +161,7 @@ class ShellTest {
         show()
         compose.onNodeWithContentDescription("Go to Reading").performClick()
         compose.onNodeWithContentDescription("The reading").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Glossary of terms").assertIsDisplayed()
     }
 
     // The app reporting on itself, not on the person.
@@ -143,17 +169,12 @@ class ShellTest {
     fun settingsSaysWhetherRemindersWillArrive() {
         show()
         compose.onNodeWithContentDescription("Go to Settings").performClick()
-        // Scrolled to, not merely present. The three diagnostics moved below
-        // the fold when the church and calendar pickers were added above them,
-        // and asserting "displayed" without scrolling made that read as the
-        // diagnostics disappearing.
-        for (diagnostic in listOf(
-            "Notifications readiness",
-            "Exact alarms readiness",
-            "Allowed to run in the background readiness",
-        )) {
-            compose.onNodeWithContentDescription(diagnostic).performScrollTo().assertIsDisplayed()
-        }
+        compose.onNodeWithContentDescription("Notifications").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(
+            "Turning these off silences the app. It does not change what is due, or how anything is counted.",
+        ).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Old calendar").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("24-hour").performScrollTo().assertIsDisplayed()
     }
 
     /**
@@ -167,13 +188,15 @@ class ShellTest {
     @Test
     fun anEmptyDayOffersTheLibraryInTheMiddleAsWellAsTheBar() {
         show()
-        compose.onNodeWithContentDescription("Go to Rule").performClick()
+        compose.onNodeWithContentDescription("Go to Home").performClick()
         compose.waitForIdle()
 
         compose.onNodeWithContentDescription("Open the library").assertIsDisplayed()
         // No performScrollTo: the empty day is a plain Column, not a scroller,
         // and asking to scroll to a node with no scrollable parent throws.
-        compose.onNodeWithContentDescription("Take something on from the library")
+        // A day with no rules at all offers this, not the library mark used
+        // once something is already on the rule.
+        compose.onNodeWithContentDescription("Create your first rule")
             .performClick()
         compose.waitForIdle()
 
@@ -184,7 +207,7 @@ class ShellTest {
     @Test
     fun theLibraryIsReachedFromTheDayAndComesBack() {
         show()
-        compose.onNodeWithContentDescription("Go to Rule").performClick()
+        compose.onNodeWithContentDescription("Go to Home").performClick()
         compose.onNodeWithContentDescription("Open the library").performClick()
         compose.waitForIdle()
 

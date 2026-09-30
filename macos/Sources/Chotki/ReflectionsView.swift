@@ -472,7 +472,7 @@ private struct ReflectionEditor: View {
 
 // MARK: what closes the week
 
-/// The Brotherhood's closing text, verbatim.
+/// The closing text, verbatim.
 ///
 /// This is the one piece of fixed copy in the app that tells the reader to do
 /// something. It is kept because it names who to ask — a priest, confession —

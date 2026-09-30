@@ -1,6 +1,5 @@
 package org.chotki.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +39,7 @@ fun PsalterScreen(state: AppState, modifier: Modifier = Modifier) {
     val appointed = Kathisma.appointed(state.selectedDate.weekday, season)
     var open by remember { mutableStateOf<Int?>(null) }
 
-    LazyColumn(modifier.fillMaxSize().background(Chotki.ground)) {
+    LazyColumn(modifier.fillMaxSize()) {
         if (appointed.isEmpty()) {
             item {
                 Column(Modifier.fillMaxWidth().padding(24.dp)) {

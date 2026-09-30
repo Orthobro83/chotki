@@ -23,6 +23,8 @@ import org.chotki.core.NoLiturgicalData
 import org.chotki.core.Practice
 import org.chotki.core.PrayerScreen
 import org.chotki.core.Rule
+import org.chotki.core.RuleReference
+import org.chotki.core.reference
 import org.chotki.core.content.Content
 import org.chotki.core.content.model
 import org.chotki.core.content.modelCategory
@@ -120,6 +122,18 @@ class AppState(
      */
     val prayers = mutableStateOf(PrayerScreen())
 
+    /**
+     * Chooses the prayer the rope should be counting, before the screen opens.
+     *
+     * "Ready to begin immediately" is the whole of the request, so the choice
+     * is made here rather than left to the chooser at the top of the rope.
+     * `choose` is a no-op when the prayer is already selected, which is what
+     * lets someone step away and come back to a count still running.
+     */
+    fun countOnTheRope(prayerID: String) {
+        prayers.value = prayers.value.choosing(prayerID)
+    }
+
     var selectedDate by mutableStateOf(CalendarDate.from(Instant.now(), zone))
     var visibleMonth by mutableStateOf(CalendarDate.from(Instant.now(), zone))
 
@@ -156,10 +170,25 @@ class AppState(
         return liturgical?.cachedDay(date)
     }
 
+    /**
+     * Load a stretch of the calendar into memory before a strip is dragged
+     * across it. Does not redraw by itself: the days were already absent.
+     */
+    fun warmCalendar(from: CalendarDate, through: CalendarDate) {
+        liturgical?.absorb(from, through)
+    }
+
     val isOffline: Boolean get() = liturgical?.isOffline ?: false
 
     fun load() {
         settings = store.loadSettings() ?: AppSettings.DEFAULT
+        // A record that finished the welcome before this date existed would
+        // otherwise be asked for a spiritual father on the first launch.
+        if (settings.hasCompletedFirstRun && settings.firstRunOn == null) {
+            val stamped = settings.copy(firstRunOn = today)
+            store.saveSettings(stamped)
+            settings = stamped
+        }
         rules = store.rules()
         activations = store.activations()
         occurrences = store.occurrences()
@@ -257,6 +286,9 @@ class AppState(
             liturgical?.let { runCatching { it.setJurisdiction(settled.jurisdiction, around = today, window = 21) } }
             refreshCalendar()
         }
+        // Silence, and the lead, are the policy. The alarms have to hear it
+        // now, not the next time the app is opened.
+        if (settled.reminders != before.reminders) rescheduleReminders()
         calendarVersion += 1
     }
 
@@ -282,9 +314,29 @@ class AppState(
      * It did not, and that is half of why a rule went on buzzing after it had
      * been kept — the plan stopped including it and nothing acted on that.
      */
+    /**
+     * Mark kept, and leave it kept. Scrolling a reading to its end, or finishing
+     * the Jesus Prayer, must not clear a mark that is already there.
+     *
+     * The record is what counts, not the entry a screen happened to be holding.
+     * That entry can still say "not yet" after the circle has already been
+     * filled, and trusting it would write the mark again instead of leaving it.
+     */
+    fun markKept(entry: DayEntry) {
+        if (entry.isDispensed || keptNow(entry)) return
+        toggleKept(entry)
+    }
+
+    /**
+     * The circle. On, then off, then on again, as many times as it is tapped.
+     *
+     * Same rule as [markKept]: decide from the record. A tap that still carries
+     * the entry from before the check appeared must take the mark off, not
+     * put it on a second time.
+     */
     fun toggleKept(entry: DayEntry) {
         if (entry.isDispensed) return
-        if (entry.isKept) {
+        if (keptNow(entry)) {
             store.removeOccurrence(entry.rule.id, entry.date)
         } else {
             val late = entry.date < today
@@ -300,6 +352,14 @@ class AppState(
         load()
         rescheduleReminders()
     }
+
+    private fun keptNow(entry: DayEntry): Boolean =
+        occurrences.any {
+            it.ruleID == entry.rule.id &&
+                it.date == entry.date &&
+                (it.status == OccurrenceStatus.COMPLETED ||
+                    it.status == OccurrenceStatus.COMPLETED_LATE)
+        }
 
     /**
      * Kept, but after its moment had passed.
@@ -404,9 +464,19 @@ class AppState(
         store.saveSettings(updated)
     }
 
+    /**
+     * Whether this template is on the rule right now.
+     *
+     * "On the rule" and "a rule with this title exists" are not the same
+     * question, and asking the second one was a bug the Mac had first: removing
+     * a rule closes its activation and leaves the row, because the days it kept
+     * are still true and deleting them would rewrite the record. So the library
+     * went on saying "On your rule" about a rule taken off, and since that
+     * label replaces the button there was no way to take it on again.
+     */
     fun isTaken(templateID: String): Boolean {
         val title = Content.ruleLibrary.firstOrNull { it.id == templateID }?.title ?: return false
-        return rules.any { it.title == title }
+        return rules.any { it.title == title && isOnTheRule(it) }
     }
 
     // MARK: rules of one's own
@@ -484,6 +554,26 @@ class AppState(
         } catch (e: Exception) {
             notice = "That was written down here but could not be saved to your record."
         }
+        markReflectionKept(date)
+    }
+
+    /**
+     * Answering the day's question is keeping the Reflection rule.
+     *
+     * Asking someone to write their answer and then tick a box saying they
+     * wrote it is asking them to do the same thing twice. The write is the
+     * evidence, so saving one marks the day.
+     *
+     * Only the rule that actually leads to Reflections, only on the day the
+     * answer belongs to, and never on a day already marked: this adds a
+     * completion, it never removes one, and it will not overwrite a day marked
+     * kept late with a plain completion.
+     */
+    private fun markReflectionKept(date: CalendarDate) {
+        val entry = entries(date).firstOrNull { it.rule.reference == RuleReference.REFLECTIONS }
+            ?: return
+        if (entry.isKept || entry.isDispensed) return
+        toggleKept(entry)
     }
 
     /**

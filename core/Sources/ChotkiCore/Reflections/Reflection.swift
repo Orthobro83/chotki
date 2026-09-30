@@ -16,7 +16,7 @@ public struct ReflectionQuestion: Sendable, Hashable, Codable {
     /// What to write at the end of it.
     ///
     /// Six of the seven begin "At the end of the day, write down…". The text is
-    /// the Brotherhood's and is not reworded, so an interface must not label
+    /// transcribed once and is not reworded, so an interface must not label
     /// this row with words that say the same thing again.
     public var task: String
 
@@ -62,7 +62,7 @@ public struct Reflection: Sendable, Hashable, Codable, Identifiable {
     }
 
     /// True when the wording has been returned to what it shipped with, whatever
-    /// `editedAt` says. Used to answer "is this still the Brotherhood's text",
+    /// `editedAt` says. Used to answer "is this still the text that shipped",
     /// which is a question about the words rather than about the history.
     public var matchesBundled: Bool {
         question == Reflection.bundled(for: weekday).question

@@ -619,6 +619,17 @@ final class AppModel: ObservableObject {
     @Published var reflectionsOpenAt: Weekday?
 
     /// Opens the section on a given weekday.
+    /// Opens the rope already counting the prayer a rule names.
+    ///
+    /// "Ready to begin immediately" is the whole point, so the prayer is chosen
+    /// before the screen appears rather than left to the chooser at the top of
+    /// it. `choose` is a no-op when the prayer is already selected, which is
+    /// what keeps a count going when someone steps away and comes back.
+    func openRope(counting prayerID: String) {
+        prayers.choose(prayerID)
+        screen = .prayerRope
+    }
+
     func openReflections(on weekday: Weekday?) {
         reflectionsOpenAt = weekday
         screen = .reflections(weekday: weekday)
@@ -671,6 +682,24 @@ final class AppModel: ObservableObject {
         } catch {
             notice = "That was written down here but could not be saved to your record."
         }
+        markReflectionKept(on: date)
+    }
+
+    /// Answering the day's question is keeping the Reflection rule.
+    ///
+    /// Asking someone to write their answer and then tick a box saying they
+    /// wrote it is asking them to do the same thing twice. The write is the
+    /// evidence, so saving one marks the day.
+    ///
+    /// Only the rule that actually leads to Reflections, only on the day the
+    /// answer belongs to, and never on a day already marked: this adds a
+    /// completion, it never removes one, and it will not overwrite a day
+    /// marked kept late with a plain completion.
+    private func markReflectionKept(on date: CalendarDate) {
+        guard let entry = entries(on: date).first(where: { $0.rule.reference == .reflections }),
+              !entry.isKept, !entry.isDispensed
+        else { return }
+        toggleKept(entry)
     }
 
     /// Rewrites a question from today onward. Answers already written keep the

@@ -170,10 +170,7 @@ struct ScreenTests {
     func welcomeReadsFromCore() {
         #expect(Welcome.beginLabel == "Begin")
         let urls = Welcome.paragraphs.flatMap(\.spans).compactMap(\.url)
-        #expect(urls == [
-            "https://www.skool.com/fathermoses/",
-            "https://orthodoxaustin.org/our-clergy/",
-        ])
+        #expect(urls.isEmpty)
     }
 
     /// Moving the reckoning shifts every fast and feast by thirteen days.

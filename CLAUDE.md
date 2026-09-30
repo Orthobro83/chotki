@@ -177,9 +177,8 @@ Three platforms, all in daily testing by Ryan.
 | Android | `v0.1.8-alpha` published, prerelease, signed with his own key |
 | iOS | on his iPhone 13 by free provisioning, seven days at a time |
 
-**Published is not delivered.** Father Moses and Maximos are the only intended
-eyes on the alpha and Ryan hands it to them himself. As of 26 August neither had
-received any build. Never write that a named person has one.
+**Published is not delivered.** The author hands builds to people himself. As of
+26 August nobody else had received any build. Never write that a named person has one.
 
 Outstanding, in rough priority:
 

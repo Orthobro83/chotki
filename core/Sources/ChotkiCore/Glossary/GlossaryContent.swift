@@ -690,6 +690,58 @@ extension Glossary {
             learn who the saints are — one at a time, on their own day, rather than all at once.
             """,
             category: .saints, related: ["matins", "patron-saint", "wonderworker"]
+        ),
+
+        // Three rules in the library pointed at no entry at all: almsgiving,
+        // spiritual reading, and the blessing of food. A rule the app offers
+        // and cannot explain is the worst kind of gap, because the person who
+        // most needs the explanation is the one who just took it on.
+
+        GlossaryEntry(
+            slug: "almsgiving", term: "Almsgiving", aliases: ["alms", "giving alms"],
+            short: "Giving to those in need, held together with prayer and fasting as one discipline.",
+            full: """
+            Prayer, fasting and almsgiving are named together in the Gospel and have been treated \
+            as one discipline ever since. Prayer turns a person toward God, fasting loosens their \
+            grip on themselves, and almsgiving turns them toward their neighbour; leaving any of \
+            the three out tends to distort the other two.
+
+            It is meant to be done without display, and it is measured against what you have \
+            rather than against what anyone else gives. What form it takes, and how much, is an \
+            ordinary thing to settle with your priest or spiritual father.
+            """,
+            category: .faith, related: ["great-lent", "prayer-rule", "spiritual-father"]
+        ),
+
+        GlossaryEntry(
+            slug: "spiritual-reading", term: "Spiritual reading",
+            aliases: ["spiritual books", "reading the Fathers"],
+            short: "A set time given to Scripture, the Fathers, or the lives of the saints.",
+            full: """
+            Read slowly and in small amounts rather than at the pace of ordinary reading. A few \
+            lines attended to are worth more than a chapter got through, and the Fathers are \
+            usually taken a little at a time for exactly that reason.
+
+            Most rules set a time rather than a quantity, so that a hard day shortens the reading \
+            instead of cancelling it. What to read is worth asking about: it is easy to pick up a \
+            book written for someone much further along.
+            """,
+            category: .prayer, related: ["synaxarion", "prayer-rule", "spiritual-father"]
+        ),
+
+        GlossaryEntry(
+            slug: "grace-before-meals", term: "Grace before meals",
+            aliases: ["prayer before meals", "prayer after meals", "blessing of food", "grace"],
+            short: "The blessing said over food before a meal, and the thanksgiving after it.",
+            full: """
+            The common form is the Lord's Prayer, then a short blessing asking Christ to bless the \
+            food and drink of His servants, with the sign of the cross made over the table. A \
+            thanksgiving is said when the meal is finished.
+
+            Households shorten it freely and the blessing on its own is a complete form of it. If \
+            a priest is at the table, the blessing is his to give.
+            """,
+            category: .prayer, related: ["prayer-rule", "trisagion"]
         )
     ]
 }

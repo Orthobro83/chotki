@@ -1,10 +1,12 @@
 package org.chotki.app.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.core.Rule
@@ -45,30 +48,48 @@ fun RulePrayers(
     }
     var paragraphIndex = 0
 
-    LazyColumn(modifier.fillMaxSize().background(Chotki.ground)) {
+    Column(modifier.fillMaxSize()) {
+        // Outside the border, and above it. The ornament is for the words that
+        // were received, not for the app's own furniture: a way out of the
+        // page is not part of what is being read, and framing it alongside the
+        // prayers says that it is.
+        Text(
+            "\u2039 The day",
+            color = Chotki.gold,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .clickable(onClick = onBack)
+                .padding(horizontal = READING_MARGIN, vertical = 14.dp)
+                .semantics { contentDescription = "Back to the day" },
+        )
+
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+    // Room at both ends for the ornament, so nothing sits on the rules.
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 34.dp, bottom = 38.dp),
+    ) {
         item {
-            Text(
-                "‹ The day",
-                color = Chotki.gold,
-                fontSize = 14.sp,
-                modifier = Modifier
-                    .clickable(onClick = onBack)
-                    .padding(16.dp)
-                    .semantics { contentDescription = "Back to the day" },
-            )
             Text(
                 rule.title,
                 color = Chotki.parchment,
-                fontSize = 18.sp,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                fontFamily = Chotki.reading,
+                fontWeight = FontWeight.Medium,
+                fontSize = 22.sp,
+                modifier = Modifier.padding(horizontal = READING_MARGIN),
             )
             Spacer(Modifier.size(10.dp))
         }
 
         items(prayers.size, key = { prayers[it].id }) { index ->
             val prayer = prayers[index]
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Text(prayer.title, color = Chotki.gold, fontSize = 13.sp)
+            Column(Modifier.padding(horizontal = READING_MARGIN, vertical = 8.dp)) {
+                Text(
+                    prayer.title,
+                    color = Chotki.gold,
+                    fontFamily = Chotki.reading,
+                    fontSize = 13.sp,
+                )
                 val rubric = prayer.rubric
                 if (rubric != null) Text(rubric, color = Chotki.faint, fontSize = 12.sp)
                 Spacer(Modifier.size(6.dp))
@@ -97,8 +118,26 @@ fun RulePrayers(
                     "differ, and the full rule is settled with your priest or spiritual father.",
                 color = Chotki.faint,
                 fontSize = 12.sp,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = READING_MARGIN, vertical = 16.dp),
             )
         }
     }
+
+            // Order matters. The fade is over the text and under the
+            // ornament, so a line arriving at the top of the page comes out
+            // from behind the border rather than across it.
+            EdgeFade()
+            VenerationBorder()
+        }
+    }
 }
+
+/**
+ * How far the words are held from the edge.
+ *
+ * Wider than the app's usual 16dp because the ornament sits between the two.
+ * The inner edge of the band is 25dp in, so this leaves about 19dp of air
+ * around the text. Thirty was the first attempt and left five, which Ryan
+ * rightly said was still crowding it.
+ */
+private val READING_MARGIN = 44.dp

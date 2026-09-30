@@ -38,7 +38,7 @@ struct ReflectionContentTests {
         #expect(Reflection.bundled.last?.weekday == .saturday)
     }
 
-    /// The titles are the Brotherhood's; the mapping to weekdays was Ryan's
+    /// The titles shipped as transcribed; the mapping to weekdays was Ryan's
     /// instruction — the first is Sunday, running through to Saturday.
     @Test("the titles land on the weekdays they were given for")
     func titles() {
@@ -449,14 +449,12 @@ struct ReflectionExplainerTests {
         #expect(whole.contains("in consultation with your priest or spiritual father"))
     }
 
-    /// One link, and it is the address already in `Welcome` — not a second one
-    /// found for the same place.
-    @Test("the Brotherhood is linked, once, to the address the app already uses")
-    func theLink() {
+    /// The explainer names nobody and sends the reader nowhere.
+    @Test("the explainer links nowhere")
+    func noLink() {
         let linked = Reflection.explainer.flatMap(\.spans).filter { $0.url != nil }
-        #expect(linked.count == 1)
-        #expect(linked.first?.text == "Brotherhood of the Narrow Path")
-        #expect(linked.first?.url == Welcome.brotherhoodURL)
+        #expect(linked.isEmpty)
+        #expect(whole.contains("customize the questions as needed"))
     }
 
     /// The last line tells the reader to click a button. If the button is

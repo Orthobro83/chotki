@@ -50,7 +50,7 @@ class ReflectionContentTest {
     }
 
     /**
-     * The titles are the Brotherhood's; the mapping to weekdays was Ryan's
+     * The titles shipped as transcribed; the mapping to weekdays was Ryan's
      * instruction — the first is Sunday, running through to Saturday.
      */
     @Test fun `the titles land on the weekdays they were given for`() {
@@ -105,9 +105,8 @@ class ReflectionContentTest {
         assertFalse(whole.contains("aspect of your"), "the singular was corrected")
 
         val linked = Reflection.explainer.flatMap { it.spans }.filter { it.url != null }
-        assertEquals(1, linked.size)
-        assertEquals("Brotherhood of the Narrow Path", linked.first().text)
-        assertEquals(Content.welcome.let { "https://www.skool.com/fathermoses/" }, linked.first().url)
+        assertEquals(0, linked.size)
+        assertTrue(whole.contains("customize the questions as needed"))
 
         assertEquals("Add this as a daily rule", Reflection.addAsRuleLabel)
         assertTrue(whole.contains("\"${Reflection.addAsRuleLabel}\""))

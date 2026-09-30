@@ -80,6 +80,31 @@ class LiturgicalService(
         }
     }
 
+    /**
+     * One query for a stretch of days, and the gaps remembered.
+     *
+     * The week can be dragged across a year. Looking each new day up as it
+     * reaches the screen is a query on the finger's path, and the strip
+     * stutters. Days with nothing stored stay absent until a refresh writes
+     * them; [refresh] still asks the network, because a miss is not a skip.
+     */
+    fun absorb(from: CalendarDate, through: CalendarDate) {
+        if (through < from) return
+        val reckoning = jurisdiction.reckoning
+        val days = runCatching { store.liturgicalDays(reckoning, from, through) }.getOrDefault(emptyList())
+        synchronized(lock) {
+            for (day in days) {
+                snapshot[day.civilDate] = day
+                knownAbsent.remove(day.civilDate)
+            }
+            var date = from
+            while (date <= through) {
+                if (date !in snapshot) knownAbsent.add(date)
+                date = date.plusDays(1)
+            }
+        }
+    }
+
     fun cachedDay(date: CalendarDate): LiturgicalDay? {
         synchronized(lock) { snapshot[date] }?.let { return it }
         // A month grid asks about forty-two days on every redraw, and most of

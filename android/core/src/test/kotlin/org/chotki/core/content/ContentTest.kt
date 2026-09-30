@@ -25,7 +25,7 @@ class ContentTest {
 
     @Test
     fun `everything loads and nothing is empty`() {
-        assertEquals(112, Content.glossary.size, "glossary entries")
+        assertEquals(133, Content.glossary.size, "glossary entries")
         assertEquals(7, Content.reflections.days.size, "the seven reflections")
         assertEquals(2, Content.reflections.closingText.size, "what closes the week")
         assertEquals(3, Content.reflections.explainer.size, "the explainer")

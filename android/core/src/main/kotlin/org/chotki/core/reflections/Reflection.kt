@@ -31,7 +31,7 @@ data class ReflectionQuestion(
      * What to write at the end of it.
      *
      * Six of the seven begin "At the end of the day, write down…". The text is
-     * the Brotherhood's and is not reworded, so an interface must not label
+     * transcribed once and is not reworded, so an interface must not label
      * this with words that say the same thing again.
      */
     val task: String,

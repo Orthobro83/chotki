@@ -1,11 +1,12 @@
 {
-  "beginLabel" : "Begin",
+  "beginLabel" : "Continue",
+  "independence" : "Chotki is an independent project. It is not affiliated with or sanctioned by any church authority. It is not a spiritual father and is not meant to stand in for one.",
   "paragraphs" : [
     {
       "isAside" : false,
       "spans" : [
         {
-          "text" : "This app was created for inquiring Orthodox Christians, catechumens, and anyone looking for a tool to help them keep their spiritual commitments."
+          "text" : "Chotki is an independent project. It is not affiliated with or sanctioned by any church authority. The intention is to give new and existing Christians a way to build an initial daily routine in an Orthodox context."
         }
       ]
     },
@@ -13,21 +14,7 @@
       "isAside" : false,
       "spans" : [
         {
-          "text" : "This app was inspired by, but is not officially affiliated with, "
-        },
-        {
-          "text" : "The Brotherhood of the Narrow Path",
-          "url" : "https://www.skool.com/fathermoses/"
-        },
-        {
-          "text" : ", an online Orthodox community by "
-        },
-        {
-          "text" : "Father Moses McPherson",
-          "url" : "https://orthodoxaustin.org/our-clergy/"
-        },
-        {
-          "text" : "."
+          "text" : "All content contained in this app is gathered from the public domain. Prayers, readings, and disciplines vary from church to church. Chotki is not a substitute for a priest or spiritual father."
         }
       ]
     },
@@ -35,18 +22,10 @@
       "isAside" : false,
       "spans" : [
         {
-          "text" : "To begin, select a rule from the Library. Start small, only what you can keep, and build up from there. At the bottom of the Library is the option to write your own rule."
-        }
-      ]
-    },
-    {
-      "isAside" : true,
-      "spans" : [
-        {
-          "text" : "A note on writing your own rules: in Orthodoxy, it is generally understood that everybody needs a spiritual father who helps them build their own discipline. We all need somebody guiding and directing us, so that we are going toward God's will and not our own. Chotki's author recommends writing your own rules in consultation with your Orthodox community and its leadership."
+          "text" : "Chotki is best used in cooperation with a spiritual father, and we encourage you to find one as soon as possible."
         }
       ]
     }
   ],
-  "title" : "Welcome to Chotki"
+  "title" : "Welcome"
 }

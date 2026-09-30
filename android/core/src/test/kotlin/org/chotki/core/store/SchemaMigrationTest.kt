@@ -36,6 +36,7 @@ class SchemaMigrationTest {
             "DROP TABLE IF EXISTS app_settings;",             // v4
             "ALTER TABLE rule DROP COLUMN prayer_ids;",       // v5
             "ALTER TABLE rule DROP COLUMN hidden_from_library;", // v6
+            "ALTER TABLE rule DROP COLUMN given_by_priest;",  // v9
             // v7 changed stored data rather than shape: put Kotlin's class
             // names back into the column, which is what every database written
             // before the names were frozen actually holds.
@@ -110,6 +111,7 @@ class SchemaMigrationTest {
         assertEquals(1, version(), "the fixture is not at version 1")
         assertTrue("prayer_ids" !in ruleColumns(), "a later column survived the wind-back")
         assertTrue("hidden_from_library" !in ruleColumns())
+        assertTrue("given_by_priest" !in ruleColumns())
         assertTrue("reminders" !in ruleColumns())
         assertTrue(tables().none { it == "app_settings" || it == "liturgical_day" })
     }
@@ -120,7 +122,7 @@ class SchemaMigrationTest {
         SqliteStore(db)
 
         assertEquals(Schema.CURRENT_VERSION, version())
-        for (column in listOf("reminders", "prayer_ids", "hidden_from_library")) {
+        for (column in listOf("reminders", "prayer_ids", "hidden_from_library", "given_by_priest")) {
             assertTrue(column in ruleColumns(), "$column was not added")
         }
         assertTrue("app_settings" in tables())

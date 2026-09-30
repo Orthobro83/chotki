@@ -299,3 +299,50 @@ struct CustomLibraryTests {
         #expect(CustomLibrary.entries(from: [rule]).count == 1, "that is the point")
     }
 }
+
+/// Ryan's rule, made mechanical: "There should be no knowledge-gaps anywhere
+/// in the app."
+///
+/// A library template is an offer. Someone taking one on has, by definition,
+/// not kept it before, so the moment they most need it explained is the moment
+/// they accept it. Three templates reached this point declaring nothing at all
+/// — almsgiving, spiritual reading, and the blessing of food — and the reader
+/// had no way to find out what they had agreed to.
+///
+/// A reviewer will not catch the fourth one. This will.
+@Suite("Every rule can be looked up")
+struct LibraryGlossaryCoverageTests {
+
+    @Test("every template names at least one glossary entry")
+    func everyTemplateExplained() {
+        let bare = RuleLibrary.shared.templates
+            .filter { $0.glossarySlugs.isEmpty }
+            .map(\.title)
+        #expect(bare.isEmpty, "no entry to open from: \(bare.joined(separator: ", "))")
+    }
+
+    @Test("every slug a template names is an entry that exists")
+    func everySlugResolves() {
+        let known = Set(Glossary.shared.entries.map(\.slug))
+        for template in RuleLibrary.shared.templates {
+            let dangling = template.glossarySlugs.filter { !known.contains($0) }
+            #expect(dangling.isEmpty, "\(template.title) points at nothing: \(dangling)")
+        }
+    }
+
+    /// The first slug is the one a title links to, so it has to be about the
+    /// rule rather than merely near it. Checked by hand once, and held here so
+    /// a reordering cannot silently send "Almsgiving" to "Great Lent".
+    @Test("the first entry named is the one about the rule itself")
+    func firstSlugIsTheSubject() {
+        let expected = [
+            "prayer-before-meals": "grace-before-meals",
+            "almsgiving": "almsgiving",
+            "spiritual-reading": "spiritual-reading",
+        ]
+        for (id, slug) in expected {
+            let template = RuleLibrary.shared.templates.first { $0.id == id }
+            #expect(template?.glossarySlugs.first == slug, "\(id)")
+        }
+    }
+}

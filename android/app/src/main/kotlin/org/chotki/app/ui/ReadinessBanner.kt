@@ -11,10 +11,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.LocalTextStyle
 
 /**
  * Says plainly whether reminders are going to arrive.
@@ -37,6 +41,9 @@ fun ReadinessBanner(
     if (readiness.allClear && !readiness.hasVendorSleepList) return
     val context = LocalContext.current
 
+    CompositionLocalProvider(
+        LocalTextStyle provides TextStyle(fontFamily = FontFamily.SansSerif),
+    ) {
     Column(
         modifier
             .fillMaxWidth()
@@ -111,10 +118,11 @@ fun ReadinessBanner(
         }
 
         Text(
-            "This stays in Settings.",
+            "Settings can silence reminders. These are the phone's own permissions.",
             color = Chotki.faint,
             fontSize = 11.sp,
             modifier = Modifier.padding(top = 6.dp),
         )
+    }
     }
 }

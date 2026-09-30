@@ -56,10 +56,17 @@ fun Dropdown(
                 .border(1.dp, Chotki.goldDim, RoundedCornerShape(4.dp))
                 .clickable { open = true }
                 .padding(horizontal = 12.dp, vertical = 10.dp)
-                .semantics { contentDescription = "$label — $chosen" },
+                .semantics {
+                    contentDescription = if (chosen.isBlank()) label else "$label — $chosen"
+                },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(chosen, color = Chotki.parchment, fontSize = 15.sp, modifier = Modifier.weight(1f))
+            Text(
+                chosen.ifBlank { "Choose" },
+                color = if (chosen.isBlank()) Chotki.faint else Chotki.parchment,
+                fontSize = 15.sp,
+                modifier = Modifier.weight(1f),
+            )
             Text(if (open) "⌃" else "⌄", color = Chotki.goldDim, fontSize = 14.sp)
         }
 

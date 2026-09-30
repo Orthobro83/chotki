@@ -1,6 +1,7 @@
 package org.chotki.app.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Text
@@ -13,6 +14,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
@@ -41,6 +43,7 @@ fun TermText(
     italic: Boolean = false,
     /** Pre-scanned, when a run of prayers should link each term only once. */
     matches: List<TermMatch>? = null,
+    textAlign: TextAlign = TextAlign.Start,
     onOpenTerm: (String) -> Unit,
 ) {
     val found = matches ?: glossary.scan(text)
@@ -50,9 +53,12 @@ fun TermText(
         style = TextStyle(
             color = colour,
             fontSize = size,
+            fontFamily = Chotki.reading,
             fontStyle = if (italic) FontStyle.Italic else FontStyle.Normal,
+            textAlign = textAlign,
+            lineHeight = if (size != androidx.compose.ui.unit.TextUnit.Unspecified) size * 1.45 else androidx.compose.ui.unit.TextUnit.Unspecified,
         ),
-        modifier = modifier,
+        modifier = if (textAlign == TextAlign.Center) modifier.fillMaxWidth() else modifier,
     )
 }
 

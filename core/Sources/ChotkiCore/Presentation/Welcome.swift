@@ -35,8 +35,8 @@ public struct WelcomeParagraph: Sendable, Hashable, Codable {
 /// which is how the Mac and Android came to disagree about several other
 /// things in this app.
 ///
-/// The two links are the only places Chotki sends anyone else's way, and the
-/// only outbound traffic besides the church calendar.
+/// It carries no links. Chotki positions itself as an independent project and
+/// speaks for nobody, so the first screen sends the reader nowhere.
 public enum Welcome {
 
     public static let title = "Welcome to Chotki"
@@ -45,42 +45,54 @@ public enum Welcome {
     /// someone to accept a welcome sets up a decision that is not being offered.
     public static let beginLabel = "Begin"
 
-    public static let brotherhoodURL = "https://www.skool.com/fathermoses/"
-    public static let fatherMosesURL = "https://orthodoxaustin.org/our-clergy/"
+    /// The standing disclaimer, wherever the app has to state what it is.
+    ///
+    /// One string in core because it was three literals before: the Android
+    /// settings screen, the iOS settings screen, and the README each carried
+    /// its own copy, and three copies of a sentence about what the app is not
+    /// is three chances to say something different.
+    public static let independence =
+        "An independent project by an Orthodox Inquirer. Chotki speaks for no "
+        + "parish, no jurisdiction, and no community, and nothing in it carries "
+        + "anyone's blessing. It is not a spiritual father and is not meant to "
+        + "stand in for one."
 
     public static let paragraphs: [WelcomeParagraph] = [
         WelcomeParagraph([
             WelcomeSpan(
-                "This app was created for inquiring Orthodox Christians, catechumens, "
-                + "and anyone looking for a tool to help them keep their spiritual "
-                + "commitments."
-            )
-        ]),
-
-        WelcomeParagraph([
-            WelcomeSpan("This app was inspired by, but is not officially affiliated with, "),
-            WelcomeSpan("The Brotherhood of the Narrow Path", url: brotherhoodURL),
-            WelcomeSpan(", an online Orthodox community by "),
-            WelcomeSpan("Father Moses McPherson", url: fatherMosesURL),
-            WelcomeSpan(".")
-        ]),
-
-        WelcomeParagraph([
-            WelcomeSpan(
-                "To begin, select a rule from the Library. Start small, only what you "
-                + "can keep, and build up from there. At the bottom of the Library is "
-                + "the option to write your own rule."
+                "Chotki is a tool for keeping an Orthodox rule: for inquirers, for "
+                + "catechumens, and for anyone who wants their commitments written "
+                + "down somewhere they will be seen."
             )
         ]),
 
         WelcomeParagraph([
             WelcomeSpan(
-                "A note on writing your own rules: in Orthodoxy, it is generally "
-                + "understood that everybody needs a spiritual father who helps them "
-                + "build their own discipline. We all need somebody guiding and "
-                + "directing us, so that we are going toward God's will and not our "
-                + "own. Chotki's author recommends writing your own rules in "
-                + "consultation with your Orthodox community and its leadership."
+                "It is an independent project by an Orthodox inquirer. It exists "
+                + "because its author has no spiritual father within reach of where he "
+                + "lives, and the rule still had to be kept. It speaks for no parish, "
+                + "no jurisdiction, and no community, and nothing in it carries "
+                + "anyone's blessing."
+            )
+        ]),
+
+        WelcomeParagraph([
+            WelcomeSpan(
+                "To begin, take a rule from the Library. Choose what you can actually "
+                + "keep rather than what you would like to keep, and add to it slowly. "
+                + "At the foot of the Library you can write a rule of your own."
+            )
+        ]),
+
+        WelcomeParagraph([
+            WelcomeSpan(
+                "No application is a spiritual father. The Church has always held that "
+                + "a person needs someone who knows them to shape their discipline, and "
+                + "a record of what was kept is no substitute for that counsel. If you "
+                + "have a priest or a spiritual father, settle your rule with him and "
+                + "let this app do nothing more than remember it. If you do not yet "
+                + "have one, treat what is here as a beginning rather than an "
+                + "authority, and go on looking."
             )
         ], isAside: true)
     ]

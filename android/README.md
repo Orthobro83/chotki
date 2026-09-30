@@ -142,7 +142,7 @@ Answers change the work; guesses would be expensive.
 
     My answer: We're not going to worry about sync at all for now. The idea will be that you'll run it on one device, and this device will *the* device the user uses for this app.
 
-4. **Distribution to the Brotherhood** — a direct APK, as with the Mac alpha, or
+4. **Distribution** — a direct APK, as with the Mac alpha, or
    the Play Store? Play means a developer account, a review process, and a
    privacy policy; direct means asking people to permit installing from an
    unknown source.
