@@ -123,6 +123,12 @@ struct RootView: View {
         HStack(spacing: 0) {
             ForEach(Tab.allCases, id: \.self) { candidate in
                 Button {
+                    // The tab itself is not a reading rule, so it does not
+                    // leave the last rule's section open.
+                    if candidate == .reading {
+                        model.readingFocus = nil
+                        model.readingRequest = UUID()
+                    }
                     withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.28)) { model.tab = candidate }
                 } label: {
                     Text(candidate.rawValue)

@@ -8,10 +8,9 @@ import Foundation
 /// rules had no way through on either, for the same reason, and were noticed
 /// on one.
 ///
-/// `none` is a real answer and not a failure. An akathist and a kathisma of the
-/// Psalter are named in the library because people keep them, but their texts
-/// are long and not ours to ship; offering a link to nothing would be worse
-/// than offering none.
+/// `none` is a real answer and not a failure. A kathisma of the Psalter is
+/// named in the library because people keep it; the text it points at is the
+/// Psalter itself, matched by title below.
 public enum RuleReference: Sendable, Hashable {
     /// The rope, already counting the prayer this rule carries.
     case rope
@@ -40,6 +39,13 @@ let psalterRuleTitle = "A kathisma of the Psalter"
 /// It is theirs at that point, not ours.
 public let reflectionRuleTitle = "Reflection"
 
+/// The library title of the Akathist rule. A copy taken from the library has
+/// no link back, so the title is how the Reading section is found.
+public let akathistRuleTitle = "An akathist"
+
+/// The library title of the daily commemoration of the departed.
+public let departedRuleTitle = "Prayer for the departed"
+
 public extension Rule {
     /// The prayer the rope should already be counting when this rule is opened.
     ///
@@ -63,6 +69,7 @@ public extension Rule {
         if category == RuleCategory.reading.rawValue { return .reading }
         if title == psalterRuleTitle { return .psalter }
         if title == reflectionRuleTitle { return .reflections }
+        if title == akathistRuleTitle || title == departedRuleTitle { return .reading }
         return .none
     }
 }

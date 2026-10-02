@@ -142,7 +142,16 @@ struct MainWindowView: View {
                         .padding(.leading, 10).padding(.top, 16).padding(.bottom, 3)
                 } else { Spacer().frame(height: 12) }
                 ForEach(items, id: \.self) { item in
-                    Button { psalter = false; prayerRuleID = nil; model.screen = .main; go(to: item) } label: {
+                    Button {
+                        if item == .reading {
+                            model.readingFocus = nil
+                            model.readingRequest = UUID()
+                        }
+                        psalter = false
+                        prayerRuleID = nil
+                        model.screen = .main
+                        go(to: item)
+                    } label: {
                         HStack(spacing: 10) {
                             Image(systemName: item.symbol).frame(width: 18)
                             if !collapsed { Text(item.rawValue); Spacer(minLength: 0) }

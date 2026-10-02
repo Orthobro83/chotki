@@ -17,6 +17,7 @@ public struct RecurrenceForm: Equatable, Sendable {
         case fastDays = "Fast days"
         case season = "Through a fasting season"
         case greatFeasts = "Great feasts"
+        case akathist = "The Fridays of the Akathist"
     }
 
     public var kind: Kind = .daily
@@ -44,6 +45,7 @@ public struct RecurrenceForm: Equatable, Sendable {
             case .fastDay: kind = .fastDays
             case .greatFeast: kind = .greatFeasts
             case .season(let which): kind = .season; season = which
+            case .akathist: kind = .akathist
             }
         }
     }
@@ -59,6 +61,7 @@ public struct RecurrenceForm: Equatable, Sendable {
         case .fastDays: return .liturgical(.fastDay)
         case .season: return .liturgical(.season(season))
         case .greatFeasts: return .liturgical(.greatFeast)
+        case .akathist: return .liturgical(.akathist)
         }
     }
 }

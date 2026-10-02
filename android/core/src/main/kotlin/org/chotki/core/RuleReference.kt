@@ -49,6 +49,12 @@ const val PSALTER_RULE_TITLE = "A kathisma of the Psalter"
  */
 const val REFLECTION_RULE_TITLE = "Reflection"
 
+/** The library title of the Akathist rule. A copy has no link back to its template. */
+const val AKATHIST_RULE_TITLE = "An akathist"
+
+/** The library title of the daily commemoration of the departed. */
+const val DEPARTED_RULE_TITLE = "Prayer for the departed"
+
 /**
  * The prayer the rope should already be counting when this rule is opened.
  *
@@ -75,6 +81,7 @@ val Rule.reference: RuleReference
         category == RuleCategory.READING -> RuleReference.READING
         title == PSALTER_RULE_TITLE -> RuleReference.PSALTER
         title == REFLECTION_RULE_TITLE -> RuleReference.REFLECTIONS
+        title == AKATHIST_RULE_TITLE || title == DEPARTED_RULE_TITLE -> RuleReference.READING
         else -> RuleReference.NONE
     }
 

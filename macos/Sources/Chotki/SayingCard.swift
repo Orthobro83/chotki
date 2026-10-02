@@ -86,7 +86,8 @@ struct DriftingArtwork: View {
     let persistDailyPosition: Bool
     @State private var progress: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    private let duration: TimeInterval = 2 * 36 / 1.15
+    /// Twice the earlier pace: 2 × 36s, 15% faster, then halved. `SayingPan.kt` uses the same figure.
+    private let duration: TimeInterval = 2 * 36 / 1.15 / 2
     var body: some View {
         GeometryReader { proxy in
             let scale = max(proxy.size.width / image.size.width, proxy.size.height / image.size.height) * 1.08

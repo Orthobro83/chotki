@@ -109,6 +109,7 @@ class RecurrenceEngine(
                         LiturgicalTrigger.FastDay -> liturgical.isFastDay(date)
                         LiturgicalTrigger.GreatFeast -> liturgical.isGreatFeast(date)
                         is LiturgicalTrigger.Season -> liturgical.season(date) == trigger.season
+                        LiturgicalTrigger.Akathist -> liturgical.akathistWeek(date) != null
                     }
                 }
             }

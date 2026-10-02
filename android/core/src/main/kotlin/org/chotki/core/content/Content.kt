@@ -74,6 +74,21 @@ object Content {
     val saintLives: List<SaintLifeJson> by lazy {
         json.decodeFromString(load("saint-lives"))
     }
+
+    /**
+     * The life for a church day. Old Calendar and New Calendar both pass the
+     * observed date, which is a different month and day on the same civil day.
+     */
+    private val saintLifeByDay: Map<Int, SaintLifeJson> by lazy {
+        saintLives.associateBy { it.month * 100 + it.day }
+    }
+
+    fun saintLife(month: Int, day: Int): SaintLifeJson? = saintLifeByDay[month * 100 + day]
+
+    /** The Akathist and the prayer for the departed, exported from the Swift text. */
+    val appointed: AppointedReadingsJson by lazy {
+        json.decodeFromString(load("appointed-readings"))
+    }
     val prayerSources: List<PrayerSourceJson> by lazy {
         json.decodeFromString(load("prayer-sources"))
     }
@@ -86,13 +101,65 @@ object Content {
 }
 
 @Serializable
-data class SaintLifeJson(
-    val month: Int,
-    val day: Int,
-    val title: String,
+data class AppointedReadingsJson(
+    val departed: DepartedJson,
+    val akathist: AkathistJson,
+)
+
+@Serializable
+data class DepartedJson(
+    val rubric: String,
     val paragraphs: List<String>,
     val source: String,
     val sourceURL: String,
+)
+
+@Serializable
+data class AkathistJson(
+    val kontakion: String,
+    val again: String,
+    val stanzas: List<String>,
+    val source: String,
+    val sourceURL: String,
+)
+
+@Serializable
+data class SaintLifeJson(
+    val month: Int,
+    val day: Int,
+    val gregorianMonth: Int,
+    val gregorianDay: Int,
+    /** The page's own line, such as "December 19 / January 1". */
+    val dates: String,
+    /** A title line a few days print before the sections, such as "22. April". */
+    val preface: String? = null,
+    val sections: List<SaintLifeSectionJson>,
+    val source: String,
+    val sourceURL: String,
+    val license: String,
+    val licenseURL: String,
+    val licenseNote: String,
+)
+
+@Serializable
+data class SaintLifeSectionJson(
+    val heading: String,
+    val blocks: List<SaintLifeBlockJson>,
+)
+
+@Serializable
+data class SaintLifeBlockJson(
+    val kind: String,
+    val text: String? = null,
+    val spans: List<SaintLifeSpanJson>? = null,
+    val rows: List<List<SaintLifeSpanJson>>? = null,
+)
+
+@Serializable
+data class SaintLifeSpanJson(
+    val text: String,
+    val italic: Boolean = false,
+    val bold: Boolean = false,
 )
 
 @Serializable
@@ -232,6 +299,7 @@ val RuleTemplateJson.RecurrenceJson.model: Recurrence
                 "season" -> LiturgicalTrigger.Season(
                     season(season ?: error("season with no season")),
                 )
+                "akathist" -> LiturgicalTrigger.Akathist
                 else -> error("unknown trigger: $trigger")
             },
         )

@@ -168,6 +168,7 @@ fun RuleScreen(
                 SayingCard(
                     state.selectedDate,
                     Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    persistMotion = state.selectedDate == state.today,
                 )
             }
         }

@@ -1,4 +1,15 @@
 import java.util.Properties
+import javax.inject.Inject
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 
 plugins {
     // Kotlin support is built into the Android plugin from AGP 9; applying
@@ -17,8 +28,10 @@ android {
         // essentially every device in use. The test device runs 13.
         minSdk = 26
         targetSdk = 37
-        versionCode = 23
-        versionName = "1.0-beta.23"
+        // A local LAN build so it installs over the published beta 23.
+        // It is not a GitHub release.
+        versionCode = 28
+        versionName = "1.0-beta.28-local"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -158,6 +171,52 @@ android {
     }
 }
 
+// The year's pictures live with the Mac app, which is where they were chosen
+// and where each focal point was recorded. The package step fits a copy inside
+// 1280×1920 as WebP. The Mac files are left at their original size.
+val syncDailyImages = tasks.register<SyncDailyImagesTask>("syncDailyImages") {
+    macSayings.set(rootProject.file("../macos/Sources/Chotki/Resources/sayings"))
+    script.set(rootProject.file("tools/shrink_sayings.py"))
+    output.set(layout.buildDirectory.dir("generated/dailyImages"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        val assets = variant.sources.assets ?: error("Android assets source is missing")
+        assets.addGeneratedSourceDirectory(syncDailyImages) { it.output }
+    }
+}
+
+/**
+ * Writes the shrunk picture library into a generated asset root.
+ * Gradle 9's Sync task no longer exposes a [org.gradle.api.file.DirectoryProperty]
+ * for that output, and the Android variant API will not take a plain file.
+ */
+abstract class SyncDailyImagesTask @Inject constructor(
+    private val execOperations: ExecOperations,
+) : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val macSayings: DirectoryProperty
+
+    @get:InputFile
+    abstract val script: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val output: DirectoryProperty
+
+    @TaskAction
+    fun shrink() {
+        execOperations.exec {
+            commandLine(
+                "python3",
+                script.get().asFile.absolutePath,
+                macSayings.get().asFile.absolutePath,
+                output.get().asFile.absolutePath,
+            )
+        }
+    }
+}
 
 dependencies {
     implementation(project(":core"))

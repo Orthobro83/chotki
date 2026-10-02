@@ -56,8 +56,12 @@ struct OverhaulBehaviorTests {
         #expect(app.tab == .reading)
         #expect(app.screen == .main)
         #expect(app.readingFocus == ReadingOrder.saintLifeBand)
-        #expect(SaintLives.reading(on: date)?.title == "The Holy Apostle Ananias of the Seventy")
-        #expect(SaintLives.reading(on: date.adding(days: -13))?.title == "Venerable Eumenios, Bishop of Gortyna")
+        let october = try #require(SaintLives.reading(on: date))
+        #expect(october.dates == "October 1 / October 14")
+        #expect(october.license == "CC BY-SA 4.0")
+        let september = try #require(SaintLives.reading(on: date.adding(days: -13)))
+        #expect(september.month == 9 && september.day == 18)
+        #expect(september.dates == "September 18 / October 1")
     }
 
     @Test("a long saint-life title uses a smaller card face")

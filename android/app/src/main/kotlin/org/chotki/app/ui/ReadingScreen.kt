@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,21 +26,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
+import org.chotki.core.Akathist
 import org.chotki.core.LiturgicalDay
 import org.chotki.core.Reading
 import org.chotki.core.ReadingOrder
 import org.chotki.core.Reckoning
+import org.chotki.core.content.Content
 import org.chotki.core.content.Glossary
 import org.chotki.core.content.PatristicReadings
-import org.chotki.core.content.Content
 import org.chotki.core.content.SaintLifeJson
+import org.chotki.core.content.SaintLifeSpanJson
 import kotlinx.coroutines.flow.first
 
 /**
@@ -103,26 +112,35 @@ private fun Readings(
         .toSet()
     val ordered = ReadingOrder.sorted(day.readings, { it.source }) { ReadingOrder.band(it.source) in held }
     val chunks = ordered.groupBy { ReadingOrder.band(it.source) }
-    val saintLife = Content.saintLives.firstOrNull {
-        it.month == day.observedDate.month && it.day == day.observedDate.day
+    val scripture = chunks.map { (band, readings) -> band to readings.size }
+    val saintLife = Content.saintLife(day.observedDate.month, day.observedDate.day)
+    val showDeparted = state.settings.jurisdiction.tradition.isSlavic ||
+        ReadingOrder.DEPARTED_BAND in held
+    val akathistWeek = Akathist.week(day.paschaDistance, state.settings.jurisdiction.tradition)
+    val trailing = buildList {
+        add(ReadingOrder.SAINT_LIFE_BAND)
+        if (showDeparted) add(ReadingOrder.DEPARTED_BAND)
+        if (akathistWeek != null) add(ReadingOrder.AKATHIST_BAND)
     }
-    var saintExpanded by remember(day.observedDate) { mutableStateOf(true) }
-    LaunchedEffect(focusNonce, focusBand) {
-        if (focusBand == ReadingOrder.SAINT_LIFE_BAND) saintExpanded = true
+    // A rule opens its own section. The tab itself opens with every section
+    // closed, because the four readings together are a book, not a page.
+    var expanded by remember(day.observedDate) { mutableStateOf(emptySet<Int>()) }
+    val present = chunks.keys + trailing.toSet()
+    val availableBands = chunks.keys + buildSet {
+        if (saintLife != null) add(ReadingOrder.SAINT_LIFE_BAND)
+        if (showDeparted) add(ReadingOrder.DEPARTED_BAND)
+        if (akathistWeek != null) add(ReadingOrder.AKATHIST_BAND)
     }
-    val availableBands = chunks.keys + if (saintLife != null) setOf(ReadingOrder.SAINT_LIFE_BAND) else emptySet()
     val list = rememberLazyListState()
     var scrolled by remember { mutableStateOf(false) }
     var following by remember { mutableStateOf(false) }
     val marked = remember { mutableStateListOf<Int>() }
-    LaunchedEffect(focusNonce, focusBand, availableBands.toList()) {
+    LaunchedEffect(focusNonce, focusBand, day.observedDate) {
+        val open = if (focusBand != null && focusBand in present) setOf(focusBand) else emptySet()
+        expanded = open
         val band = focusBand ?: return@LaunchedEffect
-        if (band !in availableBands) return@LaunchedEffect
-        var index = 1
-        for ((key, readings) in chunks) {
-            if (key == band) break
-            index += readings.size + 1
-        }
+        val index = ReadingOrder.headerIndex(band, scripture, open, trailing)
+        if (index < 0) return@LaunchedEffect
         // The list reports its length after the first layout. Scrolling
         // before that is a no-op, and the section is never reached.
         snapshotFlow { list.layoutInfo.totalItemsCount }.first { it > index }
@@ -161,14 +179,61 @@ private fun Readings(
     ) {
         item { Heading(state, day, glossary, onOpenTerm) }
         for ((band, readings) in chunks) {
-            items(readings.size, key = { "${band}-${readings[it].display}-${readings[it].source}" }) { index ->
-                ReadingBlock(readings[index])
+            item(key = "head-$band") {
+                SectionHeader(ReadingOrder.sectionTitle(band, readings.map { it.source }), band in expanded) {
+                    expanded = if (band in expanded) expanded - band else expanded + band
+                }
             }
-            item(key = "end-$band") { Spacer(Modifier.size(1.dp)) }
+            if (band in expanded) {
+                items(readings.size, key = { "${band}-${readings[it].display}-${readings[it].source}" }) { index ->
+                    ReadingBlock(readings[index])
+                }
+                item(key = "end-$band") { Spacer(Modifier.size(1.dp)) }
+            }
         }
-        item(key = "saint-life") { SaintLifeBlock(day, saintLife, saintExpanded) { saintExpanded = !saintExpanded } }
-        if (saintLife != null && saintExpanded) {
+        item(key = "saint-life") {
+            SectionHeader(
+                ReadingOrder.sectionTitle(ReadingOrder.SAINT_LIFE_BAND),
+                ReadingOrder.SAINT_LIFE_BAND in expanded,
+            ) {
+                expanded = if (ReadingOrder.SAINT_LIFE_BAND in expanded) {
+                    expanded - ReadingOrder.SAINT_LIFE_BAND
+                } else {
+                    expanded + ReadingOrder.SAINT_LIFE_BAND
+                }
+            }
+        }
+        if (ReadingOrder.SAINT_LIFE_BAND in expanded) {
+            item(key = "saint-life-body") { SaintLifeBody(day, saintLife) }
             item(key = "end-${ReadingOrder.SAINT_LIFE_BAND}") { Spacer(Modifier.size(1.dp)) }
+        }
+        if (showDeparted) {
+            val departed = Content.appointed.departed
+            appointedSection(
+                ReadingOrder.DEPARTED_BAND,
+                expanded,
+                { expanded = it },
+                departed.rubric,
+                departed.paragraphs,
+                departed.source,
+                departed.sourceURL,
+            )
+        }
+        if (akathistWeek != null) {
+            val hymn = Content.appointed.akathist
+            appointedSection(
+                ReadingOrder.AKATHIST_BAND,
+                expanded,
+                { expanded = it },
+                Akathist.heading(akathistWeek),
+                Akathist.paragraphs(akathistWeek),
+                hymn.source,
+                hymn.sourceURL,
+                note = Akathist.fallbackNote(state.settings.jurisdiction.tradition),
+                linkTerms = true,
+                glossary = glossary,
+                onOpenTerm = onOpenTerm,
+            )
         }
         item { Fathers(state, day) }
         item { Spacer(Modifier.size(32.dp)) }
@@ -176,27 +241,174 @@ private fun Readings(
 }
 
 @Composable
-private fun SaintLifeBlock(day: LiturgicalDay, life: SaintLifeJson?, expanded: Boolean, toggle: () -> Unit) {
+private fun SectionHeader(title: String, expanded: Boolean, toggle: () -> Unit) {
     Rule()
-    Column(Modifier.padding(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth().clickable(onClick = toggle), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Life of the Day’s Saint", color = Chotki.gold, fontFamily = Chotki.reading, fontSize = 19.sp)
-            Text(if (expanded) "⌃" else "⌄", color = Chotki.gold, fontSize = 19.sp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = toggle)
+            .padding(vertical = 14.dp)
+            .semantics { contentDescription = if (expanded) "Collapse $title" else "Expand $title" },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, color = Chotki.gold, fontFamily = Chotki.reading, fontSize = 19.sp, modifier = Modifier.weight(1f))
+        Text(if (expanded) "⌃" else "⌄", color = Chotki.gold, fontSize = 19.sp)
+    }
+}
+
+private fun LazyListScope.appointedSection(
+    band: Int,
+    expanded: Set<Int>,
+    onExpanded: (Set<Int>) -> Unit,
+    heading: String,
+    paragraphs: List<String>,
+    source: String,
+    sourceURL: String,
+    note: String? = null,
+    linkTerms: Boolean = false,
+    glossary: Glossary? = null,
+    onOpenTerm: (String) -> Unit = {},
+) {
+    val title = ReadingOrder.sectionTitle(band)
+    item(key = "head-$band") {
+        SectionHeader(title, band in expanded) {
+            onExpanded(if (band in expanded) expanded - band else expanded + band)
         }
-        if (expanded && life == null) {
+    }
+    if (band in expanded) {
+        item(key = "body-$band") {
+            AppointedBody(heading, paragraphs, source, sourceURL, note, linkTerms, glossary, onOpenTerm)
+        }
+        item(key = "end-$band") { Spacer(Modifier.size(1.dp)) }
+    }
+}
+
+@Composable
+private fun AppointedBody(
+    heading: String,
+    paragraphs: List<String>,
+    source: String,
+    sourceURL: String,
+    note: String? = null,
+    linkTerms: Boolean = false,
+    glossary: Glossary? = null,
+    onOpenTerm: (String) -> Unit = {},
+) {
+    val links = LocalUriHandler.current
+    val linked = if (linkTerms && glossary != null) glossary.scanOnce(paragraphs) else null
+    Column(Modifier.padding(bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(heading, color = Chotki.muted, fontSize = 13.sp)
+        if (note != null && glossary != null) {
+            TermText(note, glossary, colour = Chotki.muted, size = 13.sp, onOpenTerm = onOpenTerm)
+        } else if (note != null) {
+            Text(note, color = Chotki.muted, fontSize = 13.sp)
+        }
+        paragraphs.forEachIndexed { index, paragraph ->
+            if (linked != null && glossary != null) {
+                TermText(
+                    paragraph,
+                    glossary,
+                    colour = Chotki.parchment,
+                    size = 17.sp,
+                    matches = linked[index],
+                    onOpenTerm = onOpenTerm,
+                )
+            } else {
+                Text(
+                    paragraph,
+                    color = Chotki.parchment,
+                    fontFamily = Chotki.reading,
+                    fontSize = 17.sp,
+                    lineHeight = 17.sp * 1.45f,
+                )
+            }
+        }
+        Text(
+            source,
+            color = Chotki.faint,
+            fontSize = 12.sp,
+            modifier = Modifier.clickable { links.openUri(sourceURL) },
+        )
+    }
+}
+
+@Composable
+private fun SaintLifeBody(day: LiturgicalDay, life: SaintLifeJson?) {
+    Column(Modifier.padding(bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (life == null) {
             if (day.saints.isNotEmpty()) {
                 Text(day.saints.joinToString(" · "), color = Chotki.muted, fontSize = 13.sp)
             }
-            Text("A public-domain English life is not yet available for this day.",
-                color = Chotki.faint, fontSize = 13.sp)
-        } else if (expanded && life != null) {
-            Text(life.title, color = Chotki.parchment, fontFamily = Chotki.reading, fontSize = 18.sp)
-            life.paragraphs.forEach { paragraph ->
-                Text(paragraph, color = Chotki.parchment, fontFamily = Chotki.reading,
-                    fontSize = 17.sp, lineHeight = 17.sp * 1.45f)
-            }
-            Text(life.source, color = Chotki.faint, fontSize = 12.sp)
+            Text("No life is stored for this day.", color = Chotki.faint, fontSize = 13.sp)
+            return
         }
+        // The page's own date line. It names the old-calendar day and the
+        // new-calendar day, and it is not reworded.
+        Text(life.dates, color = Chotki.gold, fontFamily = Chotki.reading, fontSize = 18.sp)
+        life.preface?.let {
+            Text(it, color = Chotki.parchment, fontFamily = Chotki.reading, fontSize = 17.sp)
+        }
+        for (section in life.sections) {
+            Text(section.heading, color = Chotki.parchment, fontFamily = Chotki.reading, fontSize = 17.sp)
+            for (block in section.blocks) {
+                when (block.kind) {
+                    "heading" -> Text(
+                        block.text.orEmpty(),
+                        color = Chotki.parchment,
+                        fontFamily = Chotki.reading,
+                        fontSize = 16.sp,
+                    )
+                    "lines" -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        for (row in block.rows.orEmpty()) {
+                            SpanText(row)
+                        }
+                    }
+                    else -> SpanText(block.spans.orEmpty())
+                }
+            }
+        }
+        Citation(life)
+    }
+}
+
+@Composable
+private fun SpanText(spans: List<SaintLifeSpanJson>) {
+    Text(
+        buildAnnotatedString {
+            for (span in spans) {
+                withStyle(
+                    SpanStyle(
+                        fontStyle = if (span.italic) FontStyle.Italic else FontStyle.Normal,
+                        fontWeight = if (span.bold) FontWeight.Medium else FontWeight.Normal,
+                    ),
+                ) { append(span.text) }
+            }
+        },
+        color = Chotki.parchment,
+        fontFamily = Chotki.reading,
+        fontSize = 17.sp,
+        lineHeight = 17.sp * 1.45f,
+    )
+}
+
+@Composable
+private fun Citation(life: SaintLifeJson) {
+    val links = LocalUriHandler.current
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            life.source,
+            color = Chotki.faint,
+            fontSize = 12.sp,
+            modifier = Modifier.clickable { links.openUri(life.sourceURL) },
+        )
+        Text(life.licenseNote, color = Chotki.faint, fontSize = 12.sp)
+        Text(
+            life.license,
+            color = Chotki.faint,
+            fontSize = 12.sp,
+            modifier = Modifier.clickable { links.openUri(life.licenseURL) },
+        )
     }
 }
 

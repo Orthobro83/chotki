@@ -136,7 +136,8 @@
     ],
     "id" : "prayer-before-meals",
     "prayerIDs" : [
-
+      "our-father",
+      "table-blessing"
     ],
     "recurrence" : {
       "kind" : "daily"
@@ -147,7 +148,7 @@
         "tenMinutes"
       ]
     },
-    "summary" : "Grace before eating.",
+    "summary" : "The Lord's Prayer, and the blessing of the table.",
     "title" : "Prayer before meals",
     "traditions" : [
 
@@ -160,22 +161,21 @@
       "theotokos"
     ],
     "id" : "akathist",
+    "note" : "The whole hymn is appointed for Friday of the fifth week. Greek and Antiochian practice also reads one part on each of the first four Fridays. The Fridays follow Pascha, so they are the same civil days on the old calendar and the new.",
     "prayerIDs" : [
 
     ],
     "recurrence" : {
-      "days" : [
-        "saturday"
-      ],
-      "kind" : "weekly"
+      "kind" : "liturgical",
+      "trigger" : "akathist"
     },
     "reminders" : {
-      "enabled" : true,
+      "enabled" : false,
       "leads" : [
         "tenMinutes"
       ]
     },
-    "summary" : "A hymn of praise, most often to the Theotokos or a saint.",
+    "summary" : "The Akathist to the Theotokos, on the Fridays of Great Lent when the Church appoints it.",
     "title" : "An akathist",
     "traditions" : [
 
@@ -633,36 +633,12 @@
   {
     "category" : "life",
     "glossarySlugs" : [
-      "spiritual-reading",
-      "synaxarion"
-    ],
-    "id" : "spiritual-reading",
-    "prayerIDs" : [
-
-    ],
-    "recurrence" : {
-      "kind" : "daily"
-    },
-    "reminders" : {
-      "enabled" : true,
-      "leads" : [
-
-      ]
-    },
-    "summary" : "A set time with the Fathers or a life of a saint.",
-    "title" : "Spiritual reading",
-    "traditions" : [
-
-    ]
-  },
-  {
-    "category" : "life",
-    "glossarySlugs" : [
       "panikhida",
       "radonitsa",
       "saturday-of-souls"
     ],
     "id" : "prayer-for-the-departed",
+    "note" : "Said daily, by name. The Church also remembers the departed at the Liturgy, and on the Saturdays of Souls.",
     "prayerIDs" : [
 
     ],

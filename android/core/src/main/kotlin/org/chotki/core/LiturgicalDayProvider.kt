@@ -12,6 +12,12 @@ interface LiturgicalDayProvider {
      * Providers that know nothing about dispensations simply have none.
      */
     fun fastFreeReason(date: CalendarDate): String? = null
+
+    /**
+     * Which Friday of the Akathist this is, if it is one: 1..4 a single stasis,
+     * 5 the whole hymn. Null on every other day, and when the day is not cached.
+     */
+    fun akathistWeek(date: CalendarDate): Int? = null
 }
 
 /**

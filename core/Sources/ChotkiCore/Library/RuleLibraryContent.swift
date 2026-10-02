@@ -51,14 +51,16 @@ extension RuleLibrary {
         ),
         RuleTemplate(
             id: "prayer-before-meals", title: "Prayer before meals",
-            summary: "Grace before eating.",
+            summary: "The Lord's Prayer, and the blessing of the table.",
             recurrence: .daily, category: .prayer, reminders: .silent,
-            glossarySlugs: ["grace-before-meals", "prayer-rule"]
+            glossarySlugs: ["grace-before-meals", "prayer-rule"],
+            prayerIDs: ["our-father", "table-blessing"]
         ),
         RuleTemplate(
-            id: "akathist", title: "An akathist",
-            summary: "A hymn of praise, most often to the Theotokos or a saint.",
-            recurrence: .weekly(days: [.saturday]), category: .prayer,
+            id: "akathist", title: akathistRuleTitle,
+            summary: "The Akathist to the Theotokos, on the Fridays of Great Lent when the Church appoints it.",
+            note: "The whole hymn is appointed for Friday of the fifth week. Greek and Antiochian practice also reads one part on each of the first four Fridays. The Fridays follow Pascha, so they are the same civil days on the old calendar and the new.",
+            recurrence: .liturgical(.akathist), category: .prayer, reminders: .silent,
             glossarySlugs: ["akathist", "theotokos"]
         ),
         RuleTemplate(
@@ -192,14 +194,9 @@ extension RuleLibrary {
             glossarySlugs: ["almsgiving", "great-lent"]
         ),
         RuleTemplate(
-            id: "spiritual-reading", title: "Spiritual reading",
-            summary: "A set time with the Fathers or a life of a saint.",
-            recurrence: .daily, category: .life, reminders: RuleReminders(leads: []),
-            glossarySlugs: ["spiritual-reading", "synaxarion"]
-        ),
-        RuleTemplate(
-            id: "prayer-for-the-departed", title: "Prayer for the departed",
+            id: "prayer-for-the-departed", title: departedRuleTitle,
             summary: "Remembering your dead by name.",
+            note: "Said daily, by name. The Church also remembers the departed at the Liturgy, and on the Saturdays of Souls.",
             recurrence: .daily, category: .life, reminders: .silent,
             traditions: [.russian, .serbian, .bulgarian],
             glossarySlugs: ["panikhida", "radonitsa", "saturday-of-souls"]

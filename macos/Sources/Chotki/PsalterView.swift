@@ -37,7 +37,9 @@ struct PsalterView: View {
                 if let manualOpen {
                     Text("Chosen for Reading").font(.system(size: 13)).foregroundStyle(Theme.muted)
                         .padding(.top, 8)
-                    KathismaRow(number: manualOpen, open: $manualOpen)
+                    KathismaRow(number: manualOpen, open: $manualOpen, readOn: model.selectedDate) {
+                        model.finishPsalter()
+                    }
                     Divider().padding(.vertical, 8)
                 }
                 if appointed.isEmpty {
@@ -55,7 +57,9 @@ struct PsalterView: View {
                             .foregroundStyle(Theme.gold)
                             .padding(.top, 4)
                         ForEach(entry.kathismata, id: \.self) { number in
-                            KathismaRow(number: number, open: $open)
+                            KathismaRow(number: number, open: $open, readOn: model.selectedDate) {
+                                model.finishPsalter()
+                            }
                         }
                     }
                 }
@@ -74,6 +78,8 @@ struct PsalterView: View {
 private struct KathismaRow: View {
     let number: Int
     @Binding var open: Int?
+    let readOn: CalendarDate
+    let onFinished: () -> Void
 
     private var isOpen: Bool { open == number }
 
@@ -118,6 +124,11 @@ private struct KathismaRow: View {
                     }
                     .padding(.bottom, 8)
                 }
+                // After the last verse, not after the list of names. A scroll
+                // that only passes the headings has not read the kathisma.
+                ReadingEnd(identity: "psalter-\(readOn.iso)-\(number)") {
+                    onFinished()
+                }.frame(height: 1)
             }
         }
         .padding(.vertical, 2)

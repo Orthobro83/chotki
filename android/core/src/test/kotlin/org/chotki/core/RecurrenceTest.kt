@@ -176,6 +176,7 @@ class RecurrenceFormTest {
         Recurrence.Liturgical(LiturgicalTrigger.Season(FastingSeason.NATIVITY_FAST)),
         Recurrence.Liturgical(LiturgicalTrigger.Season(FastingSeason.APOSTLES_FAST)),
         Recurrence.Liturgical(LiturgicalTrigger.Season(FastingSeason.DORMITION_FAST)),
+        Recurrence.Liturgical(LiturgicalTrigger.Akathist),
     )
 
     @Test

@@ -231,6 +231,22 @@
     ]
   },
   {
+    "id" : "table-blessing",
+    "isForRope" : false,
+    "paragraphs" : [
+      "Glory to the Father, and to the Son, and to the Holy Spirit, both now and ever, and unto ages of ages. Amen.",
+      "Lord, have mercy. Lord, have mercy. Lord, have mercy.",
+      "Christ our God, bless this meat and drink to Thy servants."
+    ],
+    "rubric" : "After the Lord's Prayer. Glory, then Lord, have mercy, three times.",
+    "source" : "Dixon, Saying Grace, 1903; the doxology as in Hapgood, Service Book, 1906",
+    "sourceURL" : "https://archive.org/details/SayingGraceHistoricallyConsidered",
+    "title" : "The blessing of the table",
+    "traditions" : [
+
+    ]
+  },
+  {
     "id" : "ephrem",
     "isForRope" : false,
     "paragraphs" : [

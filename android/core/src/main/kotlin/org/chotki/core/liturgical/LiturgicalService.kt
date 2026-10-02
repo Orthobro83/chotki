@@ -1,5 +1,6 @@
 package org.chotki.core.liturgical
 
+import org.chotki.core.Akathist
 import org.chotki.core.CalendarDate
 import org.chotki.core.FastingSeason
 import org.chotki.core.Jurisdiction
@@ -161,4 +162,9 @@ class LiturgicalService(
     override fun isGreatFeast(date: CalendarDate): Boolean = cachedDay(date)?.isGreatFeast ?: false
     override fun season(date: CalendarDate): FastingSeason? = cachedDay(date)?.season
     override fun fastFreeReason(date: CalendarDate): String? = cachedDay(date)?.fastFreeReason
+
+    override fun akathistWeek(date: CalendarDate): Int? {
+        val distance = cachedDay(date)?.paschaDistance ?: return null
+        return Akathist.week(distance, jurisdiction.tradition)
+    }
 }

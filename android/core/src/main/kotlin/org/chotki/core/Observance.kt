@@ -54,17 +54,22 @@ data class ObservanceSettings(
         /** What the interface calls the thing that must be observed. */
         fun name(trigger: LiturgicalTrigger): String = when (trigger) {
             is LiturgicalTrigger.GreatFeast -> "feasts"
+            LiturgicalTrigger.Akathist -> "the Akathist"
             else -> "fasting"
         }
     }
 
     fun settingFor(trigger: LiturgicalTrigger): Observance = when (trigger) {
         is LiturgicalTrigger.GreatFeast -> feasts
+        // Taking the hymn on is the decision. It must not wait until fasting
+        // is set to Observed, or the Fridays it is appointed for never appear.
+        LiturgicalTrigger.Akathist -> Observance.OBSERVED
         else -> fasting
     }
 
     fun observing(trigger: LiturgicalTrigger): ObservanceSettings = when (trigger) {
         is LiturgicalTrigger.GreatFeast -> copy(feasts = Observance.OBSERVED)
+        LiturgicalTrigger.Akathist -> this
         else -> copy(fasting = Observance.OBSERVED)
     }
 }

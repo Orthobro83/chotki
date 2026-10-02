@@ -106,6 +106,9 @@ struct Shell: View {
             }
         }
         .tint(Chotki.gold)
+        .onChange(of: place) { _, new in
+            if new == .reading { model.noteReadingTabSelected() }
+        }
     }
 
     private func binding(for place: Place) -> Binding<NavigationPath> {

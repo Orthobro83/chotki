@@ -37,6 +37,10 @@ public enum LiturgicalTrigger: Sendable, Hashable, Codable {
     case greatFeast
     /// Every day within a named fasting season.
     case season(FastingSeason)
+    /// The Fridays of the Akathist in Great Lent. Which of them depends on
+    /// tradition, and it does not wait on the fasting observance: the hymn is
+    /// appointed whether or not a fast is being kept.
+    case akathist
 }
 
 public enum FastingSeason: String, Sendable, Hashable, Codable {

@@ -242,10 +242,9 @@ private val SECTIONS = listOf(
     Section("prayer", "Prayer"),
     Section("reading", "Reading"),
     Section("fasting", "Fasting"),
-    // Not in Ryan's list of five, and it holds four real rules — reflection,
-    // almsgiving, spiritual reading, prayer for the departed. Placed above
-    // Custom on his instruction rather than folded into Prayer, which none of
-    // them quite are.
+    // Not in Ryan's list of five. It holds reflection, almsgiving, and the
+    // prayer for the departed. Placed above Custom rather than folded into
+    // Prayer, which none of them quite are.
     Section("life", "Life"),
 )
 
@@ -396,14 +395,14 @@ private fun TemplateRow(
 /**
  * How often, in words, for the rules whose answer is not "every day".
  *
- * The akathist is weekly on Saturdays, and taking it on from a Wednesday looked
- * to Ryan like a rule that had not appeared at all. Nothing was wrong; the
- * library simply never said when to expect it.
+ * A rule whose day is not today used to look, from the library, like a rule
+ * that had not been taken on at all. The library says when to expect it.
  */
 private fun RuleTemplateJson.RecurrenceJson.plainly(): String? = when (kind) {
     "weekly" -> days.takeIf { it.isNotEmpty() }
         ?.joinToString(", ") { it.replaceFirstChar { c -> c.uppercase() } + "s" }
     "monthly" -> "Monthly"
     "once" -> "Once"
+    "liturgical" -> if (trigger == "akathist") "Fridays of the Akathist in Great Lent" else null
     else -> null
 }

@@ -737,4 +737,11 @@ final class AppModel: ObservableObject {
             .filter { ReadingOrder.band(ofTitle: $0.rule.title) == band }
             .forEach(markKept)
     }
+
+    /// A kathisma scrolled to its last verse. Opening the list of names is not that.
+    func finishPsalter() {
+        entries(on: selectedDate)
+            .filter { $0.rule.reference == .psalter }
+            .forEach(markKept)
+    }
 }

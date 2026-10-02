@@ -8,7 +8,7 @@ import ChotkiCore
 /// anyone what they must do, and never gives dietary instruction.
 struct ReadingView: View {
     @Bindable var model: Model
-    @State private var saintLifeExpanded = true
+    @State private var expanded: Set<Int> = []
 
     private var day: LiturgicalDay? { model.liturgicalDay(model.selectedDate) }
 
@@ -50,6 +50,19 @@ struct ReadingView: View {
                 await model.refreshCalendar(around: model.selectedDate)
             }
         }
+        .onAppear { applyFocus() }
+        .onChange(of: model.readingRequest) { _, _ in applyFocus() }
+        .onChange(of: model.selectedDate) { _, _ in applyFocus() }
+    }
+
+    private func applyFocus() {
+        expanded = if let band = model.readingFocus { [band] } else { [] }
+    }
+
+    private func toggle(_ band: Int) {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            if expanded.contains(band) { expanded.remove(band) } else { expanded.insert(band) }
+        }
     }
 
     @ViewBuilder
@@ -76,46 +89,55 @@ struct ReadingView: View {
             }
         }
 
-        ForEach(Array(day.readings.enumerated()), id: \.offset) { _, reading in
-            Divider().overlay(Chotki.line)
-            Text(reading.display)
-                .font(.footnote).foregroundStyle(Chotki.gold)
-            // Scripture is left unlinked on purpose: linking every term inside
-            // a whole chapter turns a passage into a field of references.
-            Text(reading.text)
-                .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        let held = Set(model.entries(on: model.selectedDate).compactMap { ReadingOrder.band(ofTitle: $0.rule.title) })
+        ForEach(ReadingOrder.orderedBands(held: held), id: \.self) { band in
+            let readings = day.readings.filter { ReadingOrder.band(source: $0.source) == band }
+            if !readings.isEmpty {
+                disclosure(ReadingOrder.sectionTitle(band: band, sources: readings.map(\.source)), band: band) {
+                    ForEach(Array(readings.enumerated()), id: \.offset) { _, reading in
+                        Text("\(reading.source) · \(reading.display)")
+                            .font(.footnote).foregroundStyle(Chotki.gold)
+                        // Scripture is left unlinked on purpose: linking every
+                        // term inside a whole chapter turns a passage into a
+                        // field of references.
+                        Text(reading.text)
+                            .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
         }
 
-        Divider().overlay(Chotki.line)
-        Button {
-            withAnimation(.easeInOut(duration: 0.25)) { saintLifeExpanded.toggle() }
-        } label: {
-            HStack {
-                Text("Life of the Day’s Saint").font(.headline)
-                Spacer()
-                Image(systemName: saintLifeExpanded ? "chevron.up" : "chevron.down")
-            }.foregroundStyle(Chotki.gold)
-        }.buttonStyle(.plain)
-        if saintLifeExpanded {
-        if let life = SaintLives.reading(on: day.observedDate) {
-            Text(life.title).font(.system(size: 18, weight: .semibold)).foregroundStyle(Chotki.parchment)
-            ForEach(Array(life.paragraphs.enumerated()), id: \.offset) { _, paragraph in
-                Text(paragraph).font(.system(size: 16)).foregroundStyle(Chotki.parchment)
-                    .lineSpacing(4).fixedSize(horizontal: false, vertical: true)
-            }
-            if let url = URL(string: life.sourceURL) {
-                Link(life.source, destination: url).font(.system(size: 11)).foregroundStyle(Chotki.faint)
-            }
-        } else {
-            if !day.saints.isEmpty {
-                Text(day.saints.joined(separator: " · ")).font(.footnote).foregroundStyle(Chotki.muted)
-            }
-            Text("A public-domain English life is not yet available for this day.")
-                .font(.footnote).foregroundStyle(Chotki.faint)
+        disclosure(ReadingOrder.sectionTitle(band: ReadingOrder.saintLifeBand), band: ReadingOrder.saintLifeBand) {
+            lifeBody(day)
         }
+
+        if model.settings.jurisdiction.tradition.isSlavic || held.contains(ReadingOrder.departedBand) {
+            disclosure(ReadingOrder.sectionTitle(band: ReadingOrder.departedBand), band: ReadingOrder.departedBand) {
+                appointed(DepartedCommemoration.rubric, DepartedCommemoration.paragraphs, DepartedCommemoration.source)
+            }
+        }
+
+        if let week = Akathist.week(
+            paschaDistance: day.paschaDistance,
+            tradition: model.settings.jurisdiction.tradition
+        ) {
+            disclosure(ReadingOrder.sectionTitle(band: ReadingOrder.akathistBand), band: ReadingOrder.akathistBand) {
+                appointed(
+                    Akathist.heading(week: week),
+                    Akathist.paragraphs(week: week),
+                    Akathist.source,
+                    note: Akathist.fallbackNote(for: model.settings.jurisdiction.tradition),
+                    linked: true
+                )
+                ReadingEnd(identity: "\(model.selectedDate.iso)-akathist") {
+                    model.finishReading(band: ReadingOrder.akathistBand)
+                }
+                .frame(height: 1)
+                .accessibilityHidden(true)
+            }
         }
 
         if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
@@ -138,6 +160,107 @@ struct ReadingView: View {
             Text(model.settings.jurisdiction.reckoning.displayName)
         }
         .font(.system(size: 11)).foregroundStyle(Chotki.faint)
+    }
+
+    private func appointed(
+        _ heading: String, _ paragraphs: [String], _ source: String,
+        note: String? = nil, linked: Bool = false
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(heading).font(.footnote).foregroundStyle(Chotki.muted)
+            if let note {
+                TermText(model: model, text: note, size: 13, colour: Chotki.muted)
+            }
+            if linked {
+                PrayerProse(model: model, paragraphs: paragraphs, size: 16, spacing: 4)
+            } else {
+                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(paragraph)
+                        .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            Text(source).font(.system(size: 11)).foregroundStyle(Chotki.faint)
+        }
+    }
+
+    private func disclosure<Content: View>(_ title: String, band: Int, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider().overlay(Chotki.line)
+            Button { toggle(band) } label: {
+                HStack {
+                    Text(title).font(.headline)
+                    Spacer()
+                    Image(systemName: expanded.contains(band) ? "chevron.up" : "chevron.down")
+                }.foregroundStyle(Chotki.gold)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(expanded.contains(band) ? "Collapse \(title)" : "Expand \(title)")
+            if expanded.contains(band) { content() }
+        }
+    }
+
+    @ViewBuilder
+    private func lifeBody(_ day: LiturgicalDay) -> some View {
+        if let life = SaintLives.reading(on: day.observedDate) {
+            Text(life.dates).font(.system(size: 18, weight: .semibold)).foregroundStyle(Chotki.parchment)
+            if let preface = life.preface {
+                Text(preface).font(.system(size: 17, weight: .semibold)).foregroundStyle(Chotki.parchment)
+            }
+            ForEach(Array(life.sections.enumerated()), id: \.offset) { _, section in
+                Text(section.heading).font(.system(size: 17, weight: .semibold)).foregroundStyle(Chotki.parchment)
+                ForEach(Array(section.blocks.enumerated()), id: \.offset) { _, block in
+                    blockText(block)
+                }
+            }
+            if let url = URL(string: life.sourceURL) {
+                Link(life.source, destination: url).font(.system(size: 11)).foregroundStyle(Chotki.faint)
+            }
+            Text(life.licenseNote).font(.system(size: 11)).foregroundStyle(Chotki.faint)
+            if let url = URL(string: life.licenseURL) {
+                Link(life.license, destination: url).font(.system(size: 11)).foregroundStyle(Chotki.faint)
+            }
+        } else {
+            if !day.saints.isEmpty {
+                Text(day.saints.joined(separator: " · ")).font(.footnote).foregroundStyle(Chotki.muted)
+            }
+            Text("No life is stored for this day.")
+                .font(.footnote).foregroundStyle(Chotki.faint)
+        }
+    }
+
+    @ViewBuilder
+    private func blockText(_ block: SaintLife.Block) -> some View {
+        switch block.kind {
+        case "heading":
+            Text(block.text ?? "")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Chotki.parchment)
+                .fixedSize(horizontal: false, vertical: true)
+        case "lines":
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(Array((block.rows ?? []).enumerated()), id: \.offset) { _, row in
+                    prose(row)
+                }
+            }
+        default:
+            prose(block.spans ?? [])
+        }
+    }
+
+    private func prose(_ spans: [SaintLife.Span]) -> some View {
+        spans.reduce(Text("")) { line, span in
+            var piece = Text(span.text).font(.system(size: 16))
+            if span.italic { piece = piece.italic() }
+            if span.bold { piece = piece.bold() }
+            return line + piece
+        }
+        .foregroundStyle(Chotki.parchment)
+        .lineSpacing(4)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Nothing stored for the day, and a way to ask again.
@@ -231,6 +354,13 @@ struct PsalterView: View {
                                 .padding(.vertical, 4)
                                 .listRowBackground(Chotki.ground)
                             }
+                            ReadingEnd(identity: "psalter-\(model.selectedDate.iso)-\(number)") {
+                                model.finishPsalter()
+                            }
+                            .frame(height: 1)
+                            .accessibilityHidden(true)
+                            .listRowBackground(Chotki.ground)
+                            .listRowSeparator(.hidden)
                         } label: {
                             HStack {
                                 Text("Kathisma \(number)").foregroundStyle(Chotki.parchment)

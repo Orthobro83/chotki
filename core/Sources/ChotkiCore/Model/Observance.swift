@@ -48,6 +48,7 @@ public struct ObservanceSettings: Sendable, Hashable, Codable {
         switch trigger {
         case .fastDay, .season: return "fasting"
         case .greatFeast: return "feasts"
+        case .akathist: return "the Akathist"
         }
     }
 
@@ -55,6 +56,7 @@ public struct ObservanceSettings: Sendable, Hashable, Codable {
         switch trigger {
         case .fastDay, .season: fasting = .observed
         case .greatFeast: feasts = .observed
+        case .akathist: break
         }
     }
 
@@ -62,6 +64,9 @@ public struct ObservanceSettings: Sendable, Hashable, Codable {
         switch trigger {
         case .fastDay, .season: return fasting
         case .greatFeast: return feasts
+        // Taking the hymn on is the decision. It must not wait until fasting
+        // is set to Observed, or the Fridays it is appointed for never appear.
+        case .akathist: return .observed
         }
     }
 }

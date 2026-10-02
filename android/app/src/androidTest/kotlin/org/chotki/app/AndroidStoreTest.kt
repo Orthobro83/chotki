@@ -146,9 +146,9 @@ class AndroidStoreTest {
     // is invisible until someone opens the glossary.
     @Test
     fun theBundledContentLoadsFromTheApk() {
-        assertEquals(133, Content.glossary.size)
-        assertEquals(19, Content.prayers.size)
-        assertEquals(24, Content.ruleLibrary.size)
+        assertEquals(159, Content.glossary.size)
+        assertEquals(20, Content.prayers.size)
+        assertEquals(23, Content.ruleLibrary.size)
         assertNotNull(Content.prayers.first { it.id == "jesus-prayer" })
     }
 }

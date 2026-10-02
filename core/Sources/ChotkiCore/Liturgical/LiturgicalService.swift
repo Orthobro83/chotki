@@ -140,4 +140,9 @@ public final class LiturgicalService: LiturgicalDayProvider, @unchecked Sendable
     public func fastFreeReason(_ date: CalendarDate) -> String? {
         cachedDay(for: date)?.fastFreeReason
     }
+
+    public func akathistWeek(_ date: CalendarDate) -> Int? {
+        guard let distance = cachedDay(for: date)?.paschaDistance else { return nil }
+        return Akathist.week(paschaDistance: distance, tradition: jurisdiction.tradition)
+    }
 }

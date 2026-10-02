@@ -201,6 +201,19 @@ extension PrayerBook {
             isForRope: true
         ),
 
+        Prayer(
+            id: "table-blessing",
+            title: "The blessing of the table",
+            rubric: "After the Lord's Prayer. Glory, then Lord, have mercy, three times.",
+            paragraphs: [
+                "Glory to the Father, and to the Son, and to the Holy Spirit, both now and ever, and unto ages of ages. Amen.",
+                "Lord, have mercy. Lord, have mercy. Lord, have mercy.",
+                "Christ our God, bless this meat and drink to Thy servants."
+            ],
+            source: "Dixon, Saying Grace, 1903; the doxology as in Hapgood, Service Book, 1906",
+            sourceURL: "https://archive.org/details/SayingGraceHistoricallyConsidered"
+        ),
+
         // MARK: seasonal and occasional
 
         Prayer(

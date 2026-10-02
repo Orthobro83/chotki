@@ -11,11 +11,18 @@ public protocol LiturgicalDayProvider: Sendable {
     /// Why a fast that would otherwise fall on this day is not kept, if it is
     /// not. The Church lifts the weekly fast in several stretches of the year.
     func fastFreeReason(_ date: CalendarDate) -> String?
+    /// Which Friday of the Akathist this is, if it is one: 1...4 a single
+    /// stasis, 5 the whole hymn. Nil on every other day, and when the day is
+    /// not in the cache.
+    func akathistWeek(_ date: CalendarDate) -> Int?
 }
 
 public extension LiturgicalDayProvider {
     /// Providers that know nothing about dispensations simply have none.
     func fastFreeReason(_ date: CalendarDate) -> String? { nil }
+    /// Declared on the protocol, not only here: an extension method is not
+    /// called through `any LiturgicalDayProvider`.
+    func akathistWeek(_ date: CalendarDate) -> Int? { nil }
 }
 
 /// Answers "no" to everything. Used where a rule has no liturgical component,

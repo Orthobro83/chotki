@@ -47,7 +47,8 @@
     "aliases" : [
       "Most-Holy Theotokos",
       "Birth-giver of God",
-      "God-bearer"
+      "God-bearer",
+      "Mother of God"
     ],
     "category" : "calendar",
     "full" : "The word is Greek: *Theos*, God, and *tokos*, birth-giver.\n\nIt was affirmed at the Council of Ephesus in 431, and the argument was about Christ rather than about Mary. To say she gave birth only to a man would divide Christ into two persons. Calling her Theotokos insists that the one she bore is a single person, fully God and fully man.\n\nYou will hear it constantly in the services. It is not a claim that Mary is the origin of the divine nature — it is a statement about who her son is.",
@@ -553,7 +554,7 @@
 
     ],
     "category" : "services",
-    "full" : "The name means \"not sitting\" — it is sung standing throughout. The best known is the Akathist to the Theotokos, sung during Great Lent, but there are akathists to many saints and feasts.",
+    "full" : "The name means \"not sitting\" — it is sung standing throughout. The one appointed in the rule is the Akathist to the Theotokos: the whole hymn on Friday of the fifth week of Great Lent, and, in Greek and Antiochian practice, one part on each of the first four Fridays as well. There are akathists to many saints and feasts besides.",
     "pronunciation" : "uh-KAH-thist",
     "related" : [
       "theotokos",
@@ -2466,6 +2467,372 @@
       "psalter",
       "septuagint"
     ],
+    "traditions": []
+  },
+  {
+    "aliases": [
+      "unwedded"
+    ],
+    "category": "faith",
+    "full": "The refrain of the Akathist. It means she gave birth and remained a virgin. The Church's word for this is ever-virgin.\n\nJoseph was her betrothed. \"Unwedded\" is not a claim that she had no husband. It is about how she conceived.",
+    "related": [
+      "theotokos",
+      "annunciation",
+      "akathist"
+    ],
+    "short": "A title of Mary: a mother, and still a virgin.",
+    "slug": "bride-unwedded",
+    "term": "Bride unwedded",
+    "traditions": []
+  },
+  {
+    "aliases": [
+      "incarnate",
+      "Incarnating"
+    ],
+    "category": "faith",
+    "full": "The Son of God became man without ceasing to be God. \"Incarnate\" means in the flesh. The hymn's \"Incarnating\" is the same word.\n\nIt is the event the Nativity celebrates, and the reason Mary is called Mother of God: the one she bore is God in the flesh.",
+    "pronunciation": "in-kar-NAY-shun",
+    "related": [
+      "theotokos",
+      "nativity",
+      "annunciation"
+    ],
+    "short": "God the Son taking human nature, and being born.",
+    "slug": "incarnation",
+    "term": "Incarnation",
+    "traditions": []
+  },
+  {
+    "aliases": [
+      "Holy Spirit"
+    ],
+    "category": "faith",
+    "full": "Older English says Ghost where newer English says Spirit. It is the same person, not a ghost in the later sense of someone who has died.\n\nIn this hymn the Holy Ghost is the one by whom Christ was conceived.",
+    "related": [
+      "holy-trinity",
+      "comforter",
+      "annunciation"
+    ],
+    "short": "The Holy Spirit, the third person of the Trinity.",
+    "slug": "holy-ghost",
+    "term": "Holy Ghost",
+    "traditions": []
+  },
+  {
+    "aliases": [
+      "oblations"
+    ],
+    "category": "prayer",
+    "full": "An oblation is a gift set apart for God. In the Temple it was a sacrifice. In the Church it is, above all, the bread and wine of the Liturgy, and what is offered with them.\n\nThe hymn calls Mary an oblation for the whole world: the one through whom Christ, the offering, was given.",
+    "pronunciation": "ob-LAY-shun",
+    "related": [
+      "prosphora",
+      "divine-liturgy",
+      "theotokos"
+    ],
+    "short": "Something offered to God.",
+    "slug": "oblation",
+    "term": "Oblation",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "prayer",
+    "full": "To intercede is to stand before God for another person. The Church asks the saints, and above all the Mother of God, to intercede.\n\nThe hymn's \"incense of intercession\" is that prayer, spoken of as incense rising.",
+    "pronunciation": "in-ter-SESH-un",
+    "related": [
+      "theotokos",
+      "akathist"
+    ],
+    "short": "Asking God on someone else's behalf.",
+    "slug": "intercession",
+    "term": "Intercession",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "Paradise is the garden where Adam and Eve were placed, and the name Christ used for where the repentant thief would be with him that day.\n\nThe hymn says Mary opens its gates: through her Son the way back is opened. It is not a loose word for heaven in general, though the two are often spoken of together.",
+    "related": [
+      "pascha",
+      "hades"
+    ],
+    "short": "The garden of God, and the place Christ promised the thief.",
+    "slug": "paradise",
+    "term": "Paradise",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "The Resurrection is Christ rising, body and all, on the third day. Pascha is the feast of it. The same word is used for the rising promised to everyone.\n\nA \"type\" of the Resurrection is an earlier image of that rising, not the rising itself.",
+    "related": [
+      "pascha"
+    ],
+    "short": "Christ's rising from the dead.",
+    "slug": "resurrection",
+    "term": "Resurrection",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "scripture",
+    "full": "When Israel was in the wilderness, bread appeared on the ground each morning. They called it manna. Christ later called himself the true bread from heaven.\n\nThe hymn sets Mary in that line: the one through whom that bread came into the world.",
+    "pronunciation": "MAN-uh",
+    "related": [
+      "tabernacle"
+    ],
+    "short": "The bread God gave Israel in the desert.",
+    "slug": "manna",
+    "term": "Manna",
+    "traditions": []
+  },
+  {
+    "aliases": [
+      "Wise Men"
+    ],
+    "category": "scripture",
+    "full": "The Magi were scholars of the East who followed a star to Bethlehem and brought gold, frankincense and myrrh. The hymn also calls them the sons of the Chaldees and, once they had left Herod, the King's messengers.\n\n\"Wise Men\" is the same people.",
+    "pronunciation": "MAY-jye",
+    "related": [
+      "nativity",
+      "chaldees"
+    ],
+    "short": "The wise men from the East who came to the child Christ.",
+    "slug": "magi",
+    "term": "Magi",
+    "traditions": []
+  },
+  {
+    "aliases": [
+      "Chaldeans"
+    ],
+    "category": "scripture",
+    "full": "Chaldea was in the south of what is now Iraq, around Babylon. The hymn calls the Magi the sons of the Chaldees: the same men, named by their country. They are not a second group.",
+    "pronunciation": "KAL-deez",
+    "related": [
+      "magi",
+      "nativity"
+    ],
+    "short": "The people of the country the Magi came from.",
+    "slug": "chaldees",
+    "term": "Chaldees",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "scripture",
+    "full": "In the Temple a laver was the great basin the priests washed in. The Church uses the word for baptism, the washing that cleanses the conscience.\n\nThe hymn calls Mary a laver in that sense: through the child she bore, that washing came.",
+    "pronunciation": "LAY-ver",
+    "related": [
+      "font",
+      "holy-mysteries"
+    ],
+    "short": "A basin for washing, and a name for baptism.",
+    "slug": "laver",
+    "term": "Laver",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "things",
+    "full": "The font holds the water of baptism. The hymn says Mary traced, from her own life, the image of that font: her bearing God in the flesh is set beside the washing that joins a person to Christ.",
+    "related": [
+      "laver",
+      "holy-mysteries"
+    ],
+    "short": "The basin baptism is done in.",
+    "slug": "font",
+    "term": "Font",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "To circumscribe something is to draw a boundary around it. God is uncircumscribed: no place holds him.\n\nThe hymn says the Uncircumscribed Word was wholly with those on earth and still not absent from heaven. Being born did not move him from one place to another. It was a descent, not a change of address.",
+    "pronunciation": "un-SUR-kum-skrybd",
+    "related": [
+      "incarnation",
+      "holy-trinity"
+    ],
+    "short": "Not enclosed by any place or limit.",
+    "slug": "uncircumscribed",
+    "term": "Uncircumscribed",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "Angels are persons without flesh. The hymn says the angel cried to Mary with a bodiless voice: a real voice, and not one made by a mouth.\n\nIt is the ordinary way the Church speaks of the angels.",
+    "related": [
+      "guardian-angel"
+    ],
+    "short": "Without a body. Said of the angels.",
+    "slug": "bodiless",
+    "term": "Bodiless",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "prayer",
+    "full": "A salutation is a greeting. In this hymn it is the one Mary gave Elizabeth, whose unborn child leapt when he heard it.\n\nThe Greek name of these Friday services, the Salutations, is the same word: the \"Hail\" repeated through the hymn.",
+    "related": [
+      "annunciation",
+      "theotokos",
+      "akathist"
+    ],
+    "short": "A greeting. Here, the one Mary brought to Elizabeth.",
+    "slug": "salutation",
+    "term": "Salutation",
+    "traditions": []
+  },
+  {
+    "aliases": [
+      "Quire"
+    ],
+    "category": "prayer",
+    "full": "\"Quires of Angels\" means choirs of angels, companies of them singing. It does not mean gatherings of paper. The spelling is the one the translation kept.",
+    "pronunciation": "KWIREZ",
+    "related": [
+      "alleluia"
+    ],
+    "short": "An old spelling of choirs.",
+    "slug": "quires",
+    "term": "Quires",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "Supernal means what comes from above, as against what is earthly. The Supernal Light in the hymn is the light of God, which Mary is said to kindle for those in darkness.",
+    "pronunciation": "soo-PUR-nul",
+    "related": [
+      "transfiguration"
+    ],
+    "short": "From above; belonging to heaven.",
+    "slug": "supernal",
+    "term": "Supernal",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "Corruption here is not mainly bad behaviour. It is decay, the way a body breaks down, and the ruin that entered human life. Incorruption is the opposite: what does not decay.\n\nThe hymn calls Mary the flower of it, because the child she bore passed through death and did not stay dead.",
+    "related": [
+      "resurrection",
+      "pascha"
+    ],
+    "short": "Freedom from decay, and from the ruin of death.",
+    "slug": "incorruption",
+    "term": "Incorruption",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "scripture",
+    "full": "Two arks appear in Scripture. Noah's ark was the ship. The Ark of the Covenant was the chest, covered in gold, that held the manna and the tablets and stood in the Tabernacle.\n\nThe hymn means the second. It calls Mary an ark because God came to dwell in her, as his presence had dwelt over that chest.",
+    "related": [
+      "tabernacle",
+      "manna",
+      "theotokos"
+    ],
+    "short": "The gold-covered chest of the holy things, and a title of Mary.",
+    "slug": "ark",
+    "term": "Ark",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "saints",
+    "full": "Gabriel is the angel sent to Mary. His message is the Annunciation, and the hymn opens with him crying \"Hail\" to her.\n\nHe is an angel, not a saint who was once a man.",
+    "pronunciation": "GAY-bree-ul",
+    "related": [
+      "annunciation",
+      "theotokos"
+    ],
+    "short": "The angel who told Mary she would bear Christ.",
+    "slug": "gabriel",
+    "term": "Gabriel",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "Ineffable means what cannot be spoken adequately. The hymn uses it of God's counsel and of Christ's wisdom: not hidden for the sake of secrecy, but more than words can hold.",
+    "pronunciation": "in-EFF-uh-bul",
+    "related": [
+      "holy-trinity"
+    ],
+    "short": "Too great to be put into words.",
+    "slug": "ineffable",
+    "term": "Ineffable",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "The opening of the Akathist calls her the Champion Leader. The Greek is a military title: the commander who fights in front. The city speaking is Constantinople, giving thanks for a deliverance.\n\nThe title stayed in the hymn after that occasion had passed.",
+    "related": [
+      "theotokos",
+      "akathist"
+    ],
+    "short": "A title of Mary as the one who defends her city.",
+    "slug": "champion-leader",
+    "term": "Champion Leader",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "The hymn's \"stainless conception\" is how Christ was conceived: by the Holy Spirit, of a virgin, without sin. The maiden says it is hard to believe, and she is speaking of his conception, not of her own.\n\nIt is not the later Western teaching that Mary herself was conceived without stain. The Orthodox Church does not teach that.",
+    "related": [
+      "incarnation",
+      "annunciation",
+      "theotokos"
+    ],
+    "short": "Christ's conception, of a virgin and without sin.",
+    "slug": "stainless-conception",
+    "term": "Stainless conception",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "A type is a person or an event that pictures, ahead of time, something God will do. The hymn says Mary flashes forth the type of the Resurrection: in her, an image of Christ's rising is already visible.\n\nThe Resurrection itself is his rising on the third day. Pascha is the feast of it.",
+    "related": [
+      "resurrection",
+      "pascha"
+    ],
+    "short": "An earlier image of Christ's rising from the dead.",
+    "slug": "type-of-the-resurrection",
+    "term": "Type of the Resurrection",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "To redeem is to pay what it costs to set someone free. The Church calls Christ the Redeemer because his death is that cost, and the captivity was death and sin.\n\nThe hymn says Mary engendered him, the Redeemer of captives.",
+    "related": [
+      "pascha",
+      "incarnation"
+    ],
+    "short": "Christ, as the one who sets his people free.",
+    "slug": "redeemer",
+    "term": "Redeemer",
+    "traditions": []
+  },
+  {
+    "aliases": [],
+    "category": "faith",
+    "full": "A mystery, in the hymn, is something beyond what the mind can take in — above all that Mary bore a child and remained a virgin. It is not a puzzle meant to be solved.\n\nThe same word names the sacraments. Those are the Holy Mysteries: baptism, communion and the rest, where what is done outwardly carries what God does.",
+    "related": [
+      "incarnation",
+      "holy-mysteries"
+    ],
+    "short": "Something hidden, now made known. Also a name for a sacrament.",
+    "slug": "mystery",
+    "term": "Mystery",
     "traditions": []
   }
 ]

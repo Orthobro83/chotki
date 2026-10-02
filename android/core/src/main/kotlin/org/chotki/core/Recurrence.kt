@@ -51,6 +51,14 @@ sealed interface LiturgicalTrigger {
     @Serializable
     @SerialName("season")
     data class Season(val season: FastingSeason) : LiturgicalTrigger
+
+    /**
+     * The Fridays of the Akathist in Great Lent. Which of them depends on
+     * tradition, and it does not wait on the fasting observance.
+     */
+    @Serializable
+    @SerialName("akathist")
+    data object Akathist : LiturgicalTrigger
 }
 
 @Serializable

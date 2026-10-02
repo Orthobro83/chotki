@@ -18,7 +18,8 @@ struct RecurrenceFormTests {
         .liturgical(.season(.greatLent)),
         .liturgical(.season(.nativityFast)),
         .liturgical(.season(.apostlesFast)),
-        .liturgical(.season(.dormitionFast))
+        .liturgical(.season(.dormitionFast)),
+        .liturgical(.akathist)
     ]
 
     @Test("every recurrence survives a load and save unchanged", arguments: shapes)

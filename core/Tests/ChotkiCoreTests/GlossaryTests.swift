@@ -205,7 +205,10 @@ struct PrayerScanTests {
             let words = prayer.paragraphs.joined(separator: " ")
                 .split(whereSeparator: { !$0.isLetter }).count
             let links = glossary.scanOnce(prayer.paragraphs).flatMap(\.self).count
-            #expect(links * 8 <= max(words, 8), "\(prayer.id): \(links) links in \(words) words")
+            // A one-line doxology can name the Holy Spirit, the Trinity and
+            // "Thee" in twenty words. That is three terms, not a page of
+            // links. Longer prayers keep the same eight words to a link.
+            #expect(links * 8 <= max(words, 24), "\(prayer.id): \(links) links in \(words) words")
         }
     }
 }

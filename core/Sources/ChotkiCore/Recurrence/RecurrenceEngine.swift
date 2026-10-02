@@ -110,6 +110,7 @@ public struct RecurrenceEngine: Sendable {
             case .fastDay: return liturgical.isFastDay(date)
             case .greatFeast: return liturgical.isGreatFeast(date)
             case .season(let wanted): return liturgical.season(date) == wanted
+            case .akathist: return liturgical.akathistWeek(date) != nil
             }
         }
     }

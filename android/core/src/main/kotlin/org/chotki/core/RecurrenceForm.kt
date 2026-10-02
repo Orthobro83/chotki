@@ -26,6 +26,7 @@ data class RecurrenceForm(
         FAST_DAYS("Fast days"),
         SEASON("Through a fasting season"),
         GREAT_FEASTS("Great feasts"),
+        AKATHIST("The Fridays of the Akathist"),
     }
 
     companion object {
@@ -43,6 +44,7 @@ data class RecurrenceForm(
                 LiturgicalTrigger.GreatFeast -> RecurrenceForm(kind = Kind.GREAT_FEASTS)
                 is LiturgicalTrigger.Season ->
                     RecurrenceForm(kind = Kind.SEASON, season = trigger.season)
+                LiturgicalTrigger.Akathist -> RecurrenceForm(kind = Kind.AKATHIST)
             }
         }
     }
@@ -59,5 +61,6 @@ data class RecurrenceForm(
         Kind.FAST_DAYS -> Recurrence.Liturgical(LiturgicalTrigger.FastDay)
         Kind.SEASON -> Recurrence.Liturgical(LiturgicalTrigger.Season(season))
         Kind.GREAT_FEASTS -> Recurrence.Liturgical(LiturgicalTrigger.GreatFeast)
+        Kind.AKATHIST -> Recurrence.Liturgical(LiturgicalTrigger.Akathist)
     }
 }

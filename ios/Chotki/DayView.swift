@@ -190,7 +190,10 @@ private struct EntryRow: View {
                  label: "Read the prayers for \(entry.rule.title)")
                 .zoomSource(id: entry.rule.id, in: transition)
         case .reading:
-            Button { goToPlace(.reading) } label: {
+            Button {
+                model.openReading(band: ReadingOrder.band(ofTitle: entry.rule.title))
+                goToPlace(.reading)
+            } label: {
                 Image(systemName: "text.alignleft")
                     .font(.system(size: 15))
                     .foregroundStyle(Chotki.goldDim)
@@ -240,7 +243,10 @@ private struct EntryRow: View {
                 Button("Read the prayers") { pushRoute(.prayers(ruleID: entry.rule.id)) }
                 Divider()
             case .reading:
-                Button("Read the day\u{2019}s readings") { goToPlace(.reading) }
+                Button("Read the day\u{2019}s readings") {
+                    model.openReading(band: ReadingOrder.band(ofTitle: entry.rule.title))
+                    goToPlace(.reading)
+                }
                 Divider()
             case .psalter:
                 Button("Read today\u{2019}s kathisma") { pushRoute(.psalter) }

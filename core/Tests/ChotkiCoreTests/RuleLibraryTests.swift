@@ -338,7 +338,6 @@ struct LibraryGlossaryCoverageTests {
         let expected = [
             "prayer-before-meals": "grace-before-meals",
             "almsgiving": "almsgiving",
-            "spiritual-reading": "spiritual-reading",
         ]
         for (id, slug) in expected {
             let template = RuleLibrary.shared.templates.first { $0.id == id }

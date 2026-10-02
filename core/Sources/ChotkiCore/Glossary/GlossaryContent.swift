@@ -9,7 +9,7 @@ import Foundation
 // preparation for communion should come from a priest rather than an app.
 extension Glossary {
 
-    public static let bundled: [GlossaryEntry] = general + prayerWords + russianPractice + readingWords
+    public static let bundled: [GlossaryEntry] = general + prayerWords + russianPractice + readingWords + akathistWords
 
     static let general: [GlossaryEntry] = [
 
@@ -51,7 +51,7 @@ extension Glossary {
         ),
 
         GlossaryEntry(
-            slug: "theotokos", term: "Theotokos", aliases: ["Most-Holy Theotokos", "Birth-giver of God", "God-bearer"],
+            slug: "theotokos", term: "Theotokos", aliases: ["Most-Holy Theotokos", "Birth-giver of God", "God-bearer", "Mother of God"],
             pronunciation: "thee-oh-TOH-kos",
             short: "A title of the Virgin Mary meaning \"the one who gives birth to God\".",
             full: """
@@ -405,9 +405,10 @@ extension Glossary {
             slug: "akathist", term: "Akathist", pronunciation: "uh-KAH-thist",
             short: "A long hymn of praise, sung standing.",
             full: """
-            The name means "not sitting" — it is sung standing throughout. The best known is the \
-            Akathist to the Theotokos, sung during Great Lent, but there are akathists to many \
-            saints and feasts.
+            The name means "not sitting" — it is sung standing throughout. The one appointed in \
+            the rule is the Akathist to the Theotokos: the whole hymn on Friday of the fifth week \
+            of Great Lent, and, in Greek and Antiochian practice, one part on each of the first \
+            four Fridays as well. There are akathists to many saints and feasts besides.
             """,
             category: .services, related: ["theotokos", "great-lent"]
         ),

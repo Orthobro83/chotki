@@ -3,7 +3,9 @@ import ChotkiCore
 
 struct ReadingViewContent: View {
     @ObservedObject var model: AppModel
-    @State private var saintLifeExpanded = true
+    /// Empty unless a reading rule asked for its section. The tab itself
+    /// opens with every section closed.
+    @State private var expanded: Set<Int> = []
 
     var body: some View {
         if let day = model.liturgical.cachedDay(for: model.selectedDate) {
@@ -51,71 +53,53 @@ struct ReadingViewContent: View {
             ForEach(ReadingOrder.orderedBands(held: held), id: \.self) { band in
                 let readings = day.readings.filter { ReadingOrder.band(source: $0.source) == band }
                 if !readings.isEmpty {
-                    VStack(alignment: .leading, spacing: 20) {
-                        ForEach(Array(readings.enumerated()), id: \.offset) { _, reading in
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("\(reading.source) · \(reading.display)").font(.system(size: 13)).foregroundStyle(Theme.muted)
-                                Text(reading.text).font(Theme.reading(18)).foregroundStyle(Theme.parchmentDim)
-                                    .lineSpacing(5).fixedSize(horizontal: false, vertical: true)
+                    section(ReadingOrder.sectionTitle(band: band, sources: readings.map(\.source)), band: band) {
+                        VStack(alignment: .leading, spacing: 20) {
+                            ForEach(Array(readings.enumerated()), id: \.offset) { _, reading in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("\(reading.source) · \(reading.display)").font(.system(size: 13)).foregroundStyle(Theme.muted)
+                                    Text(reading.text).font(Theme.reading(18)).foregroundStyle(Theme.parchmentDim)
+                                        .lineSpacing(5).fixedSize(horizontal: false, vertical: true)
+                                }
                             }
+                            ReadingEnd(identity: "\(model.selectedDate.iso)-\(band)") { model.finishReading(band: band) }.frame(height: 1)
                         }
-                        ReadingEnd(identity: "\(model.selectedDate.iso)-\(band)") { model.finishReading(band: band) }.frame(height: 1)
-                    }.padding(.vertical, 20).id(band)
+                    }
                 }
             }
 
-            Rectangle().fill(Theme.line).frame(height: 1)
-            VStack(alignment: .leading, spacing: 12) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.25)) { saintLifeExpanded.toggle() }
-                } label: {
-                    HStack(spacing: 10) {
-                        Text("Life of the Day’s Saint").font(Theme.reading(22))
-                        Spacer()
-                        Image(systemName: saintLifeExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 12, weight: .semibold))
-                    }.foregroundStyle(Theme.parchment)
-                }.buttonStyle(.plain)
-                    .accessibilityLabel(saintLifeExpanded ? "Collapse the saint’s life" : "Expand the saint’s life")
-                    .overlay {
-                        NativeClickRegion {
-                            withAnimation(.easeInOut(duration: 0.25)) { saintLifeExpanded.toggle() }
-                        }
-                    }
-                if saintLifeExpanded {
-                if let life = SaintLives.reading(on: day.observedDate) {
-                    Text(life.title)
-                        .font(Theme.reading(19))
-                        .foregroundStyle(Theme.gold)
-                    ForEach(Array(life.paragraphs.enumerated()), id: \.offset) { _, paragraph in
-                        Text(paragraph)
-                            .font(Theme.reading(18))
-                            .foregroundStyle(Theme.parchmentDim)
-                            .lineSpacing(5)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if let url = URL(string: life.sourceURL) {
-                        Link(life.source, destination: url)
-                            .font(.system(size: 12))
-                            .foregroundStyle(Theme.muted)
-                    }
-                    ReadingEnd(identity: "\(model.selectedDate.iso)-saint-life") {
-                        model.finishReading(band: ReadingOrder.saintLifeBand)
-                    }.frame(height: 1)
-                } else {
-                    if !day.saints.isEmpty {
-                        Text(day.saints.joined(separator: " · "))
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.muted)
-                    }
-                    Text("A public-domain English life is not yet available for this day.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.faint)
-                }
+            section(ReadingOrder.sectionTitle(band: ReadingOrder.saintLifeBand), band: ReadingOrder.saintLifeBand) {
+                lifeBody(day)
+            }
+
+            if model.settings.jurisdiction.tradition.isSlavic || held.contains(ReadingOrder.departedBand) {
+                section(ReadingOrder.sectionTitle(band: ReadingOrder.departedBand), band: ReadingOrder.departedBand) {
+                    appointed(
+                        heading: DepartedCommemoration.rubric,
+                        paragraphs: DepartedCommemoration.paragraphs,
+                        source: DepartedCommemoration.source,
+                        sourceURL: DepartedCommemoration.sourceURL,
+                        band: ReadingOrder.departedBand
+                    )
                 }
             }
-            .padding(.vertical, 20)
-            .id(ReadingOrder.saintLifeBand)
+
+            if let week = Akathist.week(
+                paschaDistance: day.paschaDistance,
+                tradition: model.settings.jurisdiction.tradition
+            ) {
+                section(ReadingOrder.sectionTitle(band: ReadingOrder.akathistBand), band: ReadingOrder.akathistBand) {
+                    appointed(
+                        heading: Akathist.heading(week: week),
+                        paragraphs: Akathist.paragraphs(week: week),
+                        source: Akathist.source,
+                        sourceURL: Akathist.sourceURL,
+                        band: ReadingOrder.akathistBand,
+                        note: Akathist.fallbackNote(for: model.settings.jurisdiction.tradition),
+                        linked: true
+                    )
+                }
+            }
 
             if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
                 Rectangle().fill(Theme.line).frame(height: 1)
@@ -148,9 +132,151 @@ struct ReadingViewContent: View {
             .padding(.top, 8)
         }
         .padding(.horizontal, 24).padding(.vertical, 16)
-        .onChange(of: model.readingRequest) { _ in
-            if model.readingFocus == ReadingOrder.saintLifeBand { saintLifeExpanded = true }
+        .onAppear { applyFocus() }
+        .onChange(of: model.readingRequest) { _ in applyFocus() }
+        .onChange(of: model.selectedDate) { _ in applyFocus() }
+    }
+
+    private func applyFocus() {
+        expanded = if let band = model.readingFocus { [band] } else { [] }
+    }
+
+    private func toggle(_ band: Int) {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            if expanded.contains(band) { expanded.remove(band) } else { expanded.insert(band) }
         }
+    }
+
+    /// A reading rule's section. Closed until it is the one that was asked for.
+    private func section<Content: View>(_ title: String, band: Int, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Rectangle().fill(Theme.line).frame(height: 1)
+            Button { toggle(band) } label: {
+                HStack(spacing: 10) {
+                    Text(title).font(Theme.reading(22))
+                    Spacer()
+                    Image(systemName: expanded.contains(band) ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                }.foregroundStyle(Theme.parchment)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(expanded.contains(band) ? "Collapse \(title)" : "Expand \(title)")
+            .overlay { NativeClickRegion { toggle(band) } }
+            if expanded.contains(band) { content() }
+        }
+        .padding(.vertical, 8)
+        .id(band)
+    }
+
+    /// A text the app holds, opened and closed like the day's readings.
+    private func appointed(
+        heading: String, paragraphs: [String], source: String, sourceURL: String, band: Int,
+        note: String? = nil, linked: Bool = false
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(heading)
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.muted)
+            if let note {
+                TermText(model: model, text: note, size: 13, colour: Theme.muted)
+            }
+            if linked {
+                PrayerProse(model: model, paragraphs: paragraphs, size: 18, spacing: 5)
+            } else {
+                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(paragraph)
+                        .font(Theme.reading(18))
+                        .foregroundStyle(Theme.parchmentDim)
+                        .lineSpacing(5)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if let url = URL(string: sourceURL) {
+                Link(source, destination: url)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.faint)
+            }
+            ReadingEnd(identity: "\(model.selectedDate.iso)-\(band)") {
+                model.finishReading(band: band)
+            }.frame(height: 1)
+        }
+    }
+
+    @ViewBuilder
+    private func lifeBody(_ day: LiturgicalDay) -> some View {
+        if let life = SaintLives.reading(on: day.observedDate) {
+            // The page's own date line, old calendar and new calendar.
+            Text(life.dates)
+                .font(Theme.reading(19))
+                .foregroundStyle(Theme.gold)
+            if let preface = life.preface {
+                Text(preface)
+                    .font(Theme.reading(18))
+                    .foregroundStyle(Theme.parchment)
+            }
+            ForEach(Array(life.sections.enumerated()), id: \.offset) { _, section in
+                Text(section.heading)
+                    .font(Theme.reading(18))
+                    .foregroundStyle(Theme.parchment)
+                ForEach(Array(section.blocks.enumerated()), id: \.offset) { _, block in
+                    blockText(block)
+                }
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                if let url = URL(string: life.sourceURL) {
+                    Link(life.source, destination: url)
+                }
+                Text(life.licenseNote)
+                if let url = URL(string: life.licenseURL) {
+                    Link(life.license, destination: url)
+                }
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(Theme.faint)
+            ReadingEnd(identity: "\(model.selectedDate.iso)-saint-life") {
+                model.finishReading(band: ReadingOrder.saintLifeBand)
+            }.frame(height: 1)
+        } else {
+            if !day.saints.isEmpty {
+                Text(day.saints.joined(separator: " · "))
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.muted)
+            }
+            Text("No life is stored for this day.")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.faint)
+        }
+    }
+
+    @ViewBuilder
+    private func blockText(_ block: SaintLife.Block) -> some View {
+        switch block.kind {
+        case "heading":
+            Text(block.text ?? "")
+                .font(Theme.reading(17))
+                .foregroundStyle(Theme.parchmentDim)
+                .fixedSize(horizontal: false, vertical: true)
+        case "lines":
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(Array((block.rows ?? []).enumerated()), id: \.offset) { _, row in
+                    prose(row)
+                }
+            }
+        default:
+            prose(block.spans ?? [])
+        }
+    }
+
+    private func prose(_ spans: [SaintLife.Span]) -> some View {
+        spans.reduce(Text("")) { line, span in
+            var piece = Text(span.text).font(Theme.reading(18))
+            if span.italic { piece = piece.italic() }
+            if span.bold { piece = piece.bold() }
+            return line + piece
+        }
+        .foregroundStyle(Theme.parchmentDim)
+        .lineSpacing(5)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var waiting: some View {

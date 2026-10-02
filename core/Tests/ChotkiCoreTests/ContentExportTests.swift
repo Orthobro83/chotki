@@ -58,6 +58,7 @@ struct ContentExportTests {
             case .greatFeast: return ["kind": "liturgical", "trigger": "greatFeast"]
             case .season(let season):
                 return ["kind": "liturgical", "trigger": "season", "season": season.rawValue]
+            case .akathist: return ["kind": "liturgical", "trigger": "akathist"]
             }
         }
     }
@@ -171,7 +172,28 @@ struct ContentExportTests {
             ("prayer-sequences", sequences()), ("rule-library", library()),
             ("patristic-readings", readings()), ("prayer-sources", sources()),
             ("jurisdictions", jurisdictions()), ("practice-profiles", practiceProfiles()),
-            ("welcome", welcome()), ("reflections", reflections())
+            ("welcome", welcome()), ("reflections", reflections()),
+            ("appointed-readings", appointed())
+        ]
+    }
+
+    /// The Akathist and the prayer for the departed. Authored in Swift, so the
+    /// Android reading tab does not carry a second transcription.
+    private func appointed() -> [String: Any] {
+        [
+            "departed": [
+                "rubric": DepartedCommemoration.rubric,
+                "paragraphs": DepartedCommemoration.paragraphs,
+                "source": DepartedCommemoration.source,
+                "sourceURL": DepartedCommemoration.sourceURL,
+            ],
+            "akathist": [
+                "kontakion": Akathist.kontakion,
+                "again": Akathist.again,
+                "stanzas": Akathist.stanzas,
+                "source": Akathist.source,
+                "sourceURL": Akathist.sourceURL,
+            ],
         ]
     }
 
@@ -302,6 +324,19 @@ struct ContentExportTests {
 
         #expect(swift == kotlin, "the two Psalters have drifted — rerun core/Tools/psalter-from-brenton.py")
         #expect(swift.count > 300_000, "the Psalter looks truncated")
+    }
+
+    /// The prologue is fetched, not retyped. The tool writes both copies.
+    @Test("both copies of the prologue are the same file")
+    func prologueCopiesMatch() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let swift = try Data(contentsOf: root.appendingPathComponent(
+            "core/Sources/ChotkiCore/Resources/saint-lives.json"))
+        let kotlin = try Data(contentsOf: root.appendingPathComponent(
+            "android/core/src/main/resources/content/saint-lives.json"))
+        #expect(swift == kotlin, "the two prologues have drifted — rerun core/Tools/ochrid-prologue.py")
     }
 }
 

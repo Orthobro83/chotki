@@ -67,6 +67,28 @@ final class Model {
     var selectedDate: CalendarDate
     var visibleMonth: CalendarDate
 
+    /// The reading section a rule asked to open. Nil when the Reading tab
+    /// itself was opened, which leaves every section closed.
+    var readingFocus: Int?
+    var readingRequest = 0
+    private var readingFromRule = false
+
+    func openReading(band: Int?) {
+        readingFocus = band
+        readingFromRule = true
+        readingRequest += 1
+    }
+
+    /// A tap on the Reading tab, as distinct from a rule that just asked for it.
+    func noteReadingTabSelected() {
+        if readingFromRule {
+            readingFromRule = false
+            return
+        }
+        readingFocus = nil
+        readingRequest += 1
+    }
+
     /// The day this model last believed was today.
     ///
     /// Not a "follow today" flag: comparing the selection against this is what
@@ -185,6 +207,25 @@ final class Model {
         } catch {
             trouble = "That did not save. \(error.localizedDescription)"
         }
+    }
+
+    /// Scrolling a reading to its end must not clear a mark, or overwrite a day stood down.
+    func markKept(_ entry: DayEntry) {
+        guard !entry.isKept, !entry.isDispensed, !entry.isStoodDown else { return }
+        toggleKept(entry)
+    }
+
+    func finishReading(band: Int) {
+        entries(on: selectedDate)
+            .filter { ReadingOrder.band(ofTitle: $0.rule.title) == band }
+            .forEach(markKept)
+    }
+
+    /// A kathisma scrolled to its last verse. Opening the list of names is not that.
+    func finishPsalter() {
+        entries(on: selectedDate)
+            .filter { $0.rule.reference == .psalter }
+            .forEach(markKept)
     }
 
     /// Moves the view on when the day has changed under it.

@@ -28,7 +28,19 @@ class ReadingOrderTest {
         assertEquals(3, ReadingOrder.band("Matins Gospel"))
         assertEquals(0, ReadingOrder.band("Gospel"))
         assertEquals(0, ReadingOrder.bandOfTitle("The day's Gospel"))
+        assertEquals(4, ReadingOrder.bandOfTitle("The life of the day's saint"))
         assertNull(ReadingOrder.bandOfTitle("Morning prayers"))
+    }
+
+    @Test
+    fun `a section header sits after the heading and any open sections before it`() {
+        val scripture = listOf(0 to 2, 1 to 1)
+        assertEquals(1, ReadingOrder.headerIndex(0, scripture, emptySet()))
+        assertEquals(2, ReadingOrder.headerIndex(1, scripture, emptySet()))
+        assertEquals(3, ReadingOrder.headerIndex(ReadingOrder.SAINT_LIFE_BAND, scripture, emptySet()))
+        // Gospel open: its header, two readings, and the end marker, then the Epistle.
+        assertEquals(5, ReadingOrder.headerIndex(1, scripture, setOf(0)))
+        assertEquals(-1, ReadingOrder.headerIndex(2, scripture, emptySet()))
     }
 }
 
