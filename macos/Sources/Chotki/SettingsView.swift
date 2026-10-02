@@ -8,12 +8,26 @@ struct SettingsViewContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            section("Your church")
+            section("You")
+            Text("My Name").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.horizontal, 14)
+            TextField("First name or Baptismal name", text: Binding(get: { model.settings.displayName }, set: { value in model.update { $0.displayName = value } }))
+                .textFieldStyle(.roundedBorder).padding(.horizontal, 14).padding(.bottom, 10)
+            Text("My Spiritual Father's Name").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.horizontal, 14)
+            TextField("Name", text: Binding(get: { model.settings.spiritualFatherName }, set: { value in model.update { $0.spiritualFatherName = value } }))
+                .textFieldStyle(.roundedBorder).padding(.horizontal, 14)
+            Button("Clear") { model.clearSpiritualFatherName() }
+                .buttonStyle(.plain)
+                .font(.system(size: 12))
+                .foregroundStyle(model.settings.spiritualFatherName.isEmpty ? Theme.faint : Theme.gold)
+                .disabled(model.settings.spiritualFatherName.isEmpty)
+                .padding(.horizontal, 14).padding(.top, 5)
+                .accessibilityLabel("Clear Spiritual Father's Name")
+            section("Your Church")
             jurisdictionPicker
             reckoningPicker
             practiceNotes
 
-            section("The calendar")
+            section("The Calendar")
             observanceRow(
                 "Fasting",
                 value: model.settings.observances.fasting,
@@ -41,7 +55,7 @@ struct SettingsViewContent: View {
             )
             leadPicker
 
-            section("Prayer rope")
+            section("Prayer Rope")
             toggleRow(
                 "Chime when a knot is complete",
                 help: nil,
@@ -55,20 +69,20 @@ struct SettingsViewContent: View {
                 set: { new in model.update { $0.tickEachKnot = new } }
             )
 
-            section("Your record")
+            section("Your Record")
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 10) {
                     Button("Export a backup…") { exportBackup() }
                         .buttonStyle(.plain)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(Theme.gold)
                     Button("Restore from a backup…") { importBackup() }
                         .buttonStyle(.plain)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(Theme.gold)
                 }
                 Text("A copy is also written automatically each day, in Application Support › Chotki › backups. Restoring merges into what is already here; nothing is removed.")
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -93,6 +107,10 @@ struct SettingsViewContent: View {
                 isOn: model.settings.showConsistencyNumber,
                 set: { new in model.update { $0.showConsistencyNumber = new } }
             )
+            if let version = Bundle.main.object(forInfoDictionaryKey: "ChotkiDevelopmentVersion") as? String {
+                Text("Version \(version)").font(.system(size: 12)).foregroundStyle(Theme.faint)
+                    .padding(.horizontal, 14).padding(.top, 14)
+            }
         }
         .padding(.bottom, 14)
     
@@ -128,7 +146,7 @@ struct SettingsViewContent: View {
 
     private func section(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 11))
+            .font(.system(size: 13))
             .foregroundStyle(Theme.muted)
             .padding(.horizontal, 14).padding(.top, 14).padding(.bottom, 4)
     }
@@ -146,7 +164,7 @@ struct SettingsViewContent: View {
             }
         }
         .labelsHidden()
-        .font(.system(size: 12))
+        .font(.system(size: 14))
         .padding(.horizontal, 14)
     }
 
@@ -168,7 +186,7 @@ struct SettingsViewContent: View {
             }
         }
         .labelsHidden()
-        .font(.system(size: 12))
+        .font(.system(size: 14))
         .padding(.horizontal, 14).padding(.top, 6)
     }
 
@@ -181,7 +199,7 @@ struct SettingsViewContent: View {
     private var clockStylePicker: some View {
         HStack {
             Text("Clock")
-                .font(.system(size: 12))
+                .font(.system(size: 14))
                 .foregroundStyle(Theme.parchment)
             Spacer()
             Picker("", selection: Binding(
@@ -193,7 +211,7 @@ struct SettingsViewContent: View {
                 }
             }
             .labelsHidden()
-            .font(.system(size: 12))
+            .font(.system(size: 14))
             .frame(width: 170)
         }
         .padding(.horizontal, 14).padding(.vertical, 4)
@@ -206,13 +224,13 @@ struct SettingsViewContent: View {
                 // Stated, never corrected. Someone who has set this has a reason
                 // the app does not know.
                 Text("\(usual.name) usually keeps the \(usual.reckoning.displayName).")
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.goldDim)
                     .fixedSize(horizontal: false, vertical: true)
             }
             ForEach(model.settings.jurisdiction.practice.notes, id: \.self) { note in
                 Text(note)
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -233,7 +251,7 @@ struct SettingsViewContent: View {
     ) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 12))
+                .font(.system(size: 14))
                 .foregroundStyle(Theme.parchment)
             Spacer()
             Picker("", selection: Binding(get: { value }, set: set)) {
@@ -244,7 +262,7 @@ struct SettingsViewContent: View {
             .labelsHidden()
             .pickerStyle(.menu)
             .frame(width: 116)
-            .font(.system(size: 11))
+            .font(.system(size: 13))
         }
         .padding(.horizontal, 14).padding(.vertical, 3)
     }
@@ -252,7 +270,7 @@ struct SettingsViewContent: View {
     private var leadPicker: some View {
         HStack {
             Text("Warn me")
-                .font(.system(size: 12))
+                .font(.system(size: 14))
                 .foregroundStyle(
                     model.settings.reminders.notificationsEnabled ? Theme.parchment : Theme.faint
                 )
@@ -268,7 +286,7 @@ struct SettingsViewContent: View {
             .labelsHidden()
             .pickerStyle(.menu)
             .frame(width: 150)
-            .font(.system(size: 11))
+            .font(.system(size: 13))
             .disabled(!model.settings.reminders.notificationsEnabled)
         }
         .padding(.horizontal, 14).padding(.vertical, 3)
@@ -280,7 +298,7 @@ struct SettingsViewContent: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Text(title)
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundStyle(Theme.parchment)
                 Spacer()
                 Toggle("", isOn: Binding(get: { isOn }, set: set))
@@ -290,7 +308,7 @@ struct SettingsViewContent: View {
             }
             if let help {
                 Text(help)
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -305,8 +323,9 @@ struct SettingsView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ScrollView { SettingsViewContent(model: model) }
+        ScrollView { SettingsViewContent(model: model).frame(maxWidth: 720, alignment: .leading).frame(maxWidth: .infinity, alignment: .leading).chotkiScrollContent() }
             .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
+            .softVerticalScrollEdges()
     }
 }

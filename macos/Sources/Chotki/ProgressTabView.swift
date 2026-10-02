@@ -16,7 +16,7 @@ struct ProgressTabViewContent: View {
 
         VStack(alignment: .leading, spacing: 0) {
             Text("Your progress up to \(Format.longDate(model.progressThrough))")
-                .font(.system(size: 11))
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.muted)
                 .padding(.bottom, 8)
 
@@ -32,7 +32,7 @@ struct ProgressTabViewContent: View {
 
                 Button { model.openDetachedReport?() } label: {
                     Label("Open in a window", systemImage: "macwindow")
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(Theme.gold)
                 }
                 .buttonStyle(.plain)
@@ -48,7 +48,7 @@ struct ProgressTabViewContent: View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(report.summary, id: \.self) { line in
                 Text(line)
-                    .font(Theme.reading(13))
+                    .font(Theme.reading(17))
                     .foregroundStyle(Theme.parchment)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -66,7 +66,7 @@ struct ProgressTabViewContent: View {
                     .font(.system(size: 26))
                     .foregroundStyle(Theme.gold)
                 Text("Kept, over the 30 days to then")
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundStyle(Theme.muted)
             }
         }
@@ -77,25 +77,25 @@ struct ProgressTabViewContent: View {
 
     private func perRule(_ report: ProgressReport) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("By rule")
-                .font(.system(size: 11))
+            Text("By Rule")
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.muted)
                 .padding(.top, 10).padding(.bottom, 5)
 
             ForEach(report.perRule.filter(\.hasAnythingDue)) { score in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(score.title)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(Theme.parchmentDim)
                     Spacer(minLength: 6)
                     if score.streak > 1 {
                         // Stated as a fact, never as something at risk.
                         Text("\(score.streak) in a row")
-                            .font(.system(size: 11))
+                            .font(.system(size: 13))
                             .foregroundStyle(Theme.goldDim)
                     }
                     Text(kept(score))
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.muted)
                         .monospacedDigit()
                 }
@@ -114,8 +114,39 @@ struct ProgressTabView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ScrollView { ProgressTabViewContent(model: model) }
-            .frame(maxHeight: .infinity)
-            .scrollContentBackgroundHidden()
+        VStack(spacing: 0) {
+            ScrollView { ProgressTabViewContent(model: model).frame(maxWidth: 800).frame(maxWidth: .infinity, alignment: .leading).padding(12).chotkiScrollContent() }
+                .frame(maxHeight: .infinity).scrollContentBackgroundHidden().softVerticalScrollEdges()
+            if let url = Bundle.module.url(forResource: "progress", withExtension: "jpg", subdirectory: "Resources"),
+               let image = NSImage(contentsOf: url) {
+                GeometryReader { proxy in
+                    let scale = max(proxy.size.width / image.size.width, proxy.size.height / image.size.height)
+                    let width = image.size.width * scale
+                    let height = image.size.height * scale
+                    ZStack(alignment: .bottom) {
+                        Image(nsImage: image).resizable()
+                            .frame(width: width, height: height)
+                            .position(x: proxy.size.width / 2, y: height / 2)
+                        LinearGradient(colors: [.clear, .black.opacity(0.92)], startPoint: .top, endPoint: .bottom)
+                        VStack(alignment: .leading, spacing: 7) {
+                            HStack(alignment: .top, spacing: 3) {
+                                Text("“").font(Theme.reading(49)).offset(y: -11)
+                                    .accessibilityHidden(true)
+                                Text("Those who have really determined to serve Christ, with the help of spiritual fathers and their own self-knowledge, will strive before all else to choose a place, a way of life, a habitation, and exercises suitable for them.”")
+                                    .font(Theme.reading(16)).italic()
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Text("— Saint John Climacus · The Ladder of Divine Ascent")
+                                .font(.system(size: 12)).padding(.leading, 40)
+                            Text("Icon of St. Anthony the Great, St. Paul of Thebes, St. Sabbas the Sanctified, and St. John Climacus.")
+                                .font(.system(size: 10)).multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity).padding(.top, 4)
+                        }.foregroundStyle(Theme.parchment)
+                            .padding(.horizontal, 34).padding(.bottom, 18)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    }
+                }.frame(height: 300).clipped()
+            }
+        }
     }
 }

@@ -65,6 +65,7 @@ struct ReportWindowView: View {
             .padding(28)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .softVerticalScrollEdges()
         .background(Theme.ground)
     }
 }

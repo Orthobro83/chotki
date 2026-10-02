@@ -13,6 +13,7 @@ import ChotkiCore
 /// drift apart.
 struct OnboardingView: View {
     @ObservedObject var model: AppModel
+    @State private var name = ""
 
     var body: some View {
         ScrollView {
@@ -30,14 +31,20 @@ struct OnboardingView: View {
                     Paragraph(paragraph)
                 }
 
+                Text("What Should We Call You?").font(Theme.reading(25)).foregroundStyle(Theme.parchment)
+                TextField("First name or Baptismal name", text: $name)
+                    .textFieldStyle(.roundedBorder).font(Theme.reading(17))
+                    .accessibilityLabel("Your Name")
                 Button {
-                    model.update { $0.hasCompletedFirstRun = true }
+                    model.update { $0.hasCompletedFirstRun = true; $0.displayName = name.trimmingCharacters(in: .whitespacesAndNewlines) }
                     model.notice = nil
                 } label: {
                     Text(Welcome.beginLabel)
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.gold)
-                        .padding(.horizontal, 22).padding(.vertical, 6)
+                        .frame(maxWidth: 560)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 22).padding(.vertical, 6)
                         .overlay(RoundedRectangle(cornerRadius: 5).stroke(Theme.goldDim))
                 }
                 .buttonStyle(.plain)
@@ -46,7 +53,7 @@ struct OnboardingView: View {
             }
             .padding(.horizontal, 22)
             .padding(.vertical, 20)
-        }
+        }.softVerticalScrollEdges()
     }
 }
 
@@ -80,7 +87,7 @@ private struct Paragraph: View {
                 Rectangle().fill(Theme.line).frame(width: 2)
             }
             Text(text)
-                .font(Theme.reading(paragraph.isAside ? 11.5 : 12.5))
+                .font(Theme.reading(paragraph.isAside ? 13 : 16))
                 .foregroundStyle(paragraph.isAside ? Theme.faint : Theme.parchmentDim)
                 .lineSpacing(2.5)
                 .fixedSize(horizontal: false, vertical: true)

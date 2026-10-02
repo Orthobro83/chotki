@@ -18,14 +18,10 @@ enum Screen: Hashable {
     case prayerRope
     case prayers(UUID)
     case psalter
-    /// Window only. The popover sends the reader to the window for it — at 400
-    /// points there is no room for seven questions and a journal.
-    ///
-    /// `weekday` is the day to open on: the way through from Tuesday's rule
-    /// should land on Tuesday's question rather than at the top of a seven-day
-    /// scroll. nil opens at the top, which is what the sidebar wants.
-    case reflections(weekday: Weekday? = nil)
+
 }
+
+enum NavigationSurface { case window, companion }
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -39,11 +35,6 @@ final class AppModel: ObservableObject {
     /// Rules of his own, offered in the library to take up again. Archived ones
     /// included — those are exactly the ones worth offering.
     @Published private(set) var customEntries: [Rule] = []
-    /// The seven questions and every answer to them. Loaded whole: seven rows
-    /// and a journal are small, and the section needs all of it at once to
-    /// count what each weekday holds.
-    @Published private(set) var reflections: [Reflection] = []
-    @Published private(set) var reflectionEntries: [ReflectionEntry] = []
     @Published var selectedDate: CalendarDate
     @Published var visibleMonth: CalendarDate
 
@@ -54,6 +45,7 @@ final class AppModel: ObservableObject {
     /// back onto today resumes following with nothing to keep in step.
     private var lastKnownToday: CalendarDate
     @Published var screen: Screen = .main
+    @Published var navigationSurface: NavigationSurface = .window
     @Published var tab: Tab = .rule
     /// Where the Terms screen goes back to.
     ///
@@ -96,7 +88,11 @@ final class AppModel: ObservableObject {
     private let storage: SettingsStorage
     private let notifier: any Notifier
     private let launchAtLogin: any LaunchAtLogin
+    let isReviewSample: Bool
     private var driver: ReminderDriver?
+    private let loadsCalendar: Bool
+    private var loadingMonths: Set<CalendarDate> = []
+    @Published private(set) var attentionUntil: [DueDestination: Date] = [:]
 
     var today: CalendarDate { CalendarDate(Date(), in: .current) }
 
@@ -121,15 +117,22 @@ final class AppModel: ObservableObject {
         launchAtLogin: any LaunchAtLogin,
         storage: SettingsStorage = SettingsStorage(),
         startsReminders: Bool = true,
-        writesBackups: Bool = true
+        writesBackups: Bool = true,
+        loadsCalendar: Bool = true,
+        isReviewSample: Bool = false
     ) {
         self.store = store
         self.notifier = notifier
         self.launchAtLogin = launchAtLogin
+        self.isReviewSample = isReviewSample
         self.storage = storage
+        self.loadsCalendar = loadsCalendar
         // Settings live in the store. Anything left in the old preferences
         // location is carried across once and then ignored.
-        let loaded = (try? store.loadSettings()) ?? storage.migratedSettings() ?? .default
+        var loaded = (try? store.loadSettings()) ?? storage.migratedSettings() ?? .default
+        if loaded.hasCompletedFirstRun && loaded.firstRunOn == nil {
+            loaded.firstRunOn = CalendarDate(Date(), in: .current)
+        }
         try? store.saveSettings(loaded)
         self.settings = loaded
         self.liturgical = LiturgicalService(store: store, jurisdiction: loaded.jurisdiction)
@@ -165,22 +168,17 @@ final class AppModel: ObservableObject {
     }
 
     private var scheduler: Scheduler {
-        Scheduler(engine: engine, policy: settings.reminders, timeZone: .current)
+        Scheduler(engine: engine, policy: settings.reminders, timeZone: .current, includesDueAlert: true)
     }
 
     // MARK: loading
 
     func reload() {
         do {
-            rules = try store.rules(includeArchived: false)
+            rules = try store.rules(includeArchived: false).filter { $0.reference != .reflections }
             activations = try store.activations(ruleID: nil)
             occurrences = try store.occurrences(ruleID: nil, from: nil, through: nil)
-            customEntries = CustomLibrary.entries(from: try store.rules(includeArchived: true))
-            // Idempotent, and it fills a gap rather than overwriting, so a
-            // question he has rewritten survives every launch.
-            try store.seedReflections()
-            reflections = try store.reflections()
-            reflectionEntries = try store.reflectionEntries(weekday: nil, from: nil, through: nil)
+            customEntries = CustomLibrary.entries(from: try store.rules(includeArchived: true)).filter { $0.reference != .reflections }
             loadError = nil
         } catch {
             loadError = "Could not read your rules. \(error)"
@@ -202,7 +200,7 @@ final class AppModel: ObservableObject {
         guard !repaired.isEmpty else { return }
         do {
             for rule in repaired { try store.save(rule) }
-            rules = try store.rules(includeArchived: false)
+            rules = try store.rules(includeArchived: false).filter { $0.reference != .reflections }
         } catch {
             // Not worth an error in front of him: the rules are all still
             // there, they are only missing their link to the words.
@@ -225,6 +223,7 @@ final class AppModel: ObservableObject {
         guard practice.shouldMarkFirstRunComplete else { return }
         var updated = settings
         updated.hasCompletedFirstRun = true
+        updated.firstRunOn = updated.firstRunOn ?? today
         settings = updated
         persist(updated)
     }
@@ -270,7 +269,33 @@ final class AppModel: ObservableObject {
 
     func refreshLiturgical() async {
         try? liturgical.loadSnapshot(around: today)
+        guard loadsCalendar else { return }
         _ = await liturgical.refresh(from: today.adding(days: -1), days: 16)
+        objectWillChange.send()
+    }
+
+    func loadCalendarMonth() async {
+        let first = CalendarDate(year: visibleMonth.year, month: visibleMonth.month, day: 1)!
+        try? liturgical.loadSnapshot(around: first, window: first.lastDayOfMonth + 7)
+        guard loadsCalendar else { return }
+        guard loadingMonths.insert(first).inserted else { return }
+        defer { loadingMonths.remove(first) }
+        let start = first.adding(days: -7)
+        let count = first.lastDayOfMonth + 14
+        for offset in stride(from: 0, to: count, by: 7) {
+            guard !Task.isCancelled else { return }
+            _ = await liturgical.refresh(from: start.adding(days: offset), days: min(7, count - offset))
+            objectWillChange.send()
+            if liturgical.isOffline { return }
+        }
+    }
+
+    func loadCalendarWeek() async {
+        guard loadsCalendar else { return }
+        // The launch refresh already keeps the current fortnight ready.
+        guard abs(today.days(until: selectedDate)) > 7 else { return }
+        try? liturgical.loadSnapshot(around: selectedDate, window: 7)
+        _ = await liturgical.refresh(from: selectedDate.adding(days: -7), days: 15)
         objectWillChange.send()
     }
 
@@ -525,10 +550,34 @@ final class AppModel: ObservableObject {
 
     // MARK: settings
 
+    /// Freeze the name at the first edit, including when someone clears the
+    /// field by typing rather than using the Clear button. Later keystrokes
+    /// cannot accidentally record a partial name on an older rule.
+    private func preserveFatherAttribution(_ former: String) throws {
+        for var rule in try store.rules(includeArchived: true) where rule.givenByPriest == true {
+            let recorded = rule.source?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard recorded.isEmpty || recorded == "the library" else { continue }
+            rule.source = former
+            try store.save(rule)
+        }
+    }
+
+    func clearSpiritualFatherName() { update { $0.spiritualFatherName = "" } }
+
     func update(_ change: (inout AppSettings) -> Void) {
         let settingsBeforeChange = settings
         var updated = settings
         change(&updated)
+        let formerFather = settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nextFather = updated.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !formerFather.isEmpty && formerFather != nextFather {
+            do { try preserveFatherAttribution(formerFather) }
+            catch {
+                loadError = "Could not preserve the names on your rules. \(error)"
+                return
+            }
+        }
+        if updated.hasCompletedFirstRun && updated.firstRunOn == nil { updated.firstRunOn = today }
         let jurisdictionChanged = updated.jurisdiction != settings.jurisdiction
         let reckoningChanged = updated.jurisdiction.reckoning != settings.jurisdiction.reckoning
         if reckoningChanged { updated.reckoningChangedOn = today }
@@ -569,12 +618,46 @@ final class AppModel: ObservableObject {
         // The day is checked on the same tick that drives the reminders, so a
         // Mac left running over midnight moves on without a second timer.
         driver.onTick = { [weak self] in self?.advanceDayIfNeeded() }
+        driver.onShow = { [weak self] notification in self?.attend(to: notification) }
         self.driver = driver
         driver.start()
     }
 
     private func rearmReminders() {
         driver?.refresh()
+    }
+
+    func attend(to notification: PlannedNotification, now: Date = Date()) {
+        guard let rule = rules.first(where: { $0.id == notification.ruleID }),
+              let destination = DueAttention.destination(for: notification, rule: rule) else { return }
+        attentionUntil[destination] = now.addingTimeInterval(DueAttention.duration)
+    }
+
+    /// A deliberate review-only action: show both halves of a due alert using
+    /// fictional practice. It never changes a record or starts the scheduler.
+    func previewDueAlert() {
+        guard isReviewSample,
+              let rule = rules.first(where: { $0.reference == .prayers && $0.timeOfDay != nil }),
+              let time = rule.timeOfDay,
+              let due = today.dueInstant(at: time, in: .current) else { return }
+        let request = NotificationRequest(
+            id: "chotki.review.\(UUID().uuidString)", title: "\(rule.title) — review sample",
+            body: "A fictional task has come due.", actions: []
+        )
+        attend(to: PlannedNotification(
+            id: request.id, ruleID: rule.id, date: today, fireAt: due, request: request
+        ))
+        Task {
+            do {
+                guard try await notifier.requestAuthorization() else {
+                    notice = "Notifications are off for Chotki Review in macOS settings."
+                    return
+                }
+                try await notifier.show(request)
+            } catch {
+                notice = "Could not show the review notification: \(error)"
+            }
+        }
     }
 
     /// Acting on a notification's buttons.
@@ -608,173 +691,50 @@ final class AppModel: ObservableObject {
         }
     }
 
-    // MARK: reflections
-
-    /// Which weekday the Reflections section should scroll to when it appears,
-    /// and nil once it has.
-    ///
-    /// A one-shot rather than a persistent selection: the section is scrolled
-    /// once on arrival and then belongs to whoever is reading it. Left set, a
-    /// later redraw would yank the view back to a day nobody asked for.
-    @Published var reflectionsOpenAt: Weekday?
-
-    /// Opens the section on a given weekday.
-    /// Opens the rope already counting the prayer a rule names.
-    ///
-    /// "Ready to begin immediately" is the whole point, so the prayer is chosen
-    /// before the screen appears rather than left to the chooser at the top of
-    /// it. `choose` is a no-op when the prayer is already selected, which is
-    /// what keeps a count going when someone steps away and comes back.
+    /// Choose before navigating so returning to the same prayer preserves its count.
     func openRope(counting prayerID: String) {
         prayers.choose(prayerID)
         screen = .prayerRope
     }
 
-    func openReflections(on weekday: Weekday?) {
-        reflectionsOpenAt = weekday
-        screen = .reflections(weekday: weekday)
+    var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"
+        let name = settings.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return "Good \(part)" + (name.isEmpty ? "" : ", \(name)")
     }
 
-    /// The question for a weekday as it currently stands.
-    func reflection(for weekday: Weekday) -> Reflection {
-        reflections.first { $0.weekday == weekday } ?? .bundled(for: weekday)
+    @Published var editorDraft: Rule?
+    @Published var readingFocus: Int?
+    @Published var readingRequest = UUID()
+    @Published var calendarExpanded = false
+
+    func prepare(_ template: RuleTemplate) {
+        editorDraft = template.makeRule(source: "the library")
+        screen = .editor(nil)
     }
 
-    /// One weekday's answers, newest first, scoped to a period.
-    func reflectionSeries(
-        for weekday: Weekday, in period: ReflectionPeriod = .all
-    ) -> ReflectionSeries {
-        ReflectionJournal.series(reflectionEntries, on: weekday, in: period)
+    func openReading(band: Int? = nil) {
+        readingFocus = band
+        readingRequest = UUID()
+        tab = .reading
+        screen = .main
     }
 
-    /// Whether today already carries an answer. An answer locks once saved, so
-    /// this is what stops a second being offered for the same day.
-    func hasAnsweredToday(_ weekday: Weekday) -> Bool {
-        ReflectionJournal.hasEntry(reflectionEntries, on: dateOfCurrentWeek(weekday))
-    }
-
-    /// The date this weekday fell on in the week containing today.
-    ///
-    /// A reflection is answered on its own weekday, so writing on Sunday's card
-    /// files the answer under this week's Sunday — not under today, which may
-    /// be a Wednesday.
-    func dateOfCurrentWeek(_ weekday: Weekday) -> CalendarDate {
-        let today = CalendarDate(Date(), in: .current)
-        return today.adding(days: weekday.rawValue - today.weekday.rawValue)
-    }
-
-    /// Writes an answer. Locks immediately: there is no path back through here.
-    func saveReflection(_ weekday: Weekday, text: String) {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        let date = dateOfCurrentWeek(weekday)
-        let entry = ReflectionEntry(
-            answering: reflection(for: weekday), on: date, text: trimmed)
-
-        // Persist and display are separate concerns. The entry is already in
-        // memory and is valid; swallowing the redraw would make a successful
-        // write look like a dead button, which is how this went wrong on the
-        // web. Show it either way and say so if the write failed.
-        reflectionEntries.removeAll { $0.weekday == weekday && $0.date == date }
-        reflectionEntries.append(entry)
-        do {
-            try store.save(entry)
-        } catch {
-            notice = "That was written down here but could not be saved to your record."
-        }
-        markReflectionKept(on: date)
-    }
-
-    /// Answering the day's question is keeping the Reflection rule.
-    ///
-    /// Asking someone to write their answer and then tick a box saying they
-    /// wrote it is asking them to do the same thing twice. The write is the
-    /// evidence, so saving one marks the day.
-    ///
-    /// Only the rule that actually leads to Reflections, only on the day the
-    /// answer belongs to, and never on a day already marked: this adds a
-    /// completion, it never removes one, and it will not overwrite a day
-    /// marked kept late with a plain completion.
-    private func markReflectionKept(on date: CalendarDate) {
-        guard let entry = entries(on: date).first(where: { $0.rule.reference == .reflections }),
-              !entry.isKept, !entry.isDispensed
-        else { return }
+    func markKept(_ entry: DayEntry) {
+        guard !entry.isKept, !entry.isDispensed, !entry.isStoodDown else { return }
         toggleKept(entry)
     }
 
-    /// Rewrites a question from today onward. Answers already written keep the
-    /// question they were written against — see `ReflectionQuestion`.
-    func rewriteReflection(_ weekday: Weekday, to question: ReflectionQuestion) {
-        let updated = reflection(for: weekday).rewritten(question)
-        reflections.removeAll { $0.weekday == weekday }
-        reflections.append(updated)
-        reflections.sort { $0.weekday.rawValue < $1.weekday.rawValue }
-        do {
-            try store.save(updated)
-        } catch {
-            notice = "The question was changed here but could not be saved to your record."
-        }
+    func finishPrayer(_ selection: String, counted: Bool) {
+        entries(on: selectedDate)
+            .filter { ReadingCompletion.matches($0.rule, prayer: selection, counted: counted) }
+            .forEach(markKept)
     }
 
-    /// Returns a weekday's question to the wording it shipped with.
-    func restoreBundledReflection(_ weekday: Weekday) {
-        rewriteReflection(weekday, to: Reflection.bundled(for: weekday).question)
-    }
-
-    /// The library rule that puts Reflections on the rule.
-    var reflectionTemplate: RuleTemplate? {
-        RuleLibrary.shared.templates.first { $0.id == "reflection" }
-    }
-
-    /// Whether it is already there.
-    ///
-    /// Matched on title, because a template taken from the library **copies**
-    /// itself and keeps no link back — deliberately, so a rule of one's own and
-    /// a rule from the library are the same kind of thing afterwards. A renamed
-    /// copy stops counting, and that is right: it is his rule then, not this
-    /// one. The same rule that decides whether the row offers a way through to
-    /// the section — see `RuleReference`.
-    var hasReflectionsOnRule: Bool {
-        rules.contains { $0.title == reflectionRuleTitle }
-    }
-
-    /// Puts Reflections on the rule: one rule, recurring every day.
-    ///
-    /// Not seven. Which question is being asked is the section's business, and
-    /// seven entries in the day list — each a different title — said more about
-    /// the machinery than about the practice.
-    func addReflectionsToRule() {
-        guard !hasReflectionsOnRule, let template = reflectionTemplate else { return }
-        take(on: template)
-    }
-
-    func exportReflectionsJSON() throws -> Data {
-        try store.exportReflectionsJSON()
-    }
-
-    /// Merges a journal file in. Never discards what is already held.
-    @discardableResult
-    func importReflectionsJSON(_ data: Data) -> ReflectionImportResult? {
-        do {
-            let result = try store.importReflectionsJSON(data)
-            reflectionEntries = try store.reflectionEntries(weekday: nil, from: nil, through: nil)
-            reflections = try store.reflections()
-            notice = summary(of: result)
-            return result
-        } catch is ReflectionImportError {
-            notice = "That file could not be read as a journal. Nothing was changed."
-            return nil
-        } catch {
-            notice = "That journal could not be read in. Nothing was changed."
-            return nil
-        }
-    }
-
-    private func summary(of result: ReflectionImportResult) -> String {
-        var parts: [String] = []
-        parts.append(result.addedCount == 1 ? "1 answer added" : "\(result.addedCount) answers added")
-        if result.alreadyPresent > 0 { parts.append("\(result.alreadyPresent) already here") }
-        if result.collided > 0 { parts.append("\(result.collided) skipped, that day was taken") }
-        return parts.joined(separator: ", ") + "."
+    func finishReading(band: Int) {
+        entries(on: selectedDate)
+            .filter { ReadingOrder.band(ofTitle: $0.rule.title) == band }
+            .forEach(markKept)
     }
 }

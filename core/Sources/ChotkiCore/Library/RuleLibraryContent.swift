@@ -65,7 +65,7 @@ extension RuleLibrary {
             id: "psalter-kathisma", title: "A kathisma of the Psalter",
             summary: "One of the twenty sections the Psalms are divided into.",
             recurrence: .daily, category: .prayer,
-            glossarySlugs: ["psalter", "prayer-rule"]
+            glossarySlugs: ["psalter", "kathisma", "prayer-rule"]
         ),
 
         // MARK: fasting

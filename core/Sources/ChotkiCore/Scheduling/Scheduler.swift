@@ -11,15 +11,18 @@ public struct Scheduler: Sendable {
     private let engine: RecurrenceEngine
     private let policy: ReminderPolicy
     private let timeZone: TimeZone
+    private let includesDueAlert: Bool
 
     public init(
         engine: RecurrenceEngine = RecurrenceEngine(),
         policy: ReminderPolicy = .default,
-        timeZone: TimeZone = .current
+        timeZone: TimeZone = .current,
+        includesDueAlert: Bool = false
     ) {
         self.engine = engine
         self.policy = policy
         self.timeZone = timeZone
+        self.includesDueAlert = includesDueAlert
     }
 
     /// Statuses that end a day's reminders. Completing is the obvious one;
@@ -98,7 +101,8 @@ public struct Scheduler: Sendable {
         guard let dueAt = date.dueInstant(at: time, in: timeZone) else { return [] }
 
         let configured = rule.effectiveReminders.leads
-        let leads = configured.isEmpty ? [policy.defaultLead] : configured
+        var leads = configured.isEmpty ? [policy.defaultLead] : configured
+        if includesDueAlert && !leads.contains(.atTheTime) { leads.append(.atTheTime) }
         let key = PlannedNotification.occurrenceKey(ruleID: rule.id, date: date)
 
         return leads.sorted().compactMap { lead -> PlannedNotification? in

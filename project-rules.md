@@ -1,0 +1,47 @@
+# Chotki Project Rules
+
+- 2026-09-30: Store all future Chotki-specific notes, decisions, and rules learned from mistakes in this project's `project-rules.md`.
+- Follow the shared ground rules in `../house-rules.md` alongside these project rules.
+- 2026-09-30: Overhaul macOS to match the current Android redesign, preserving existing macOS capabilities across both the main window and menu-bar popover.
+- 2026-09-30: The redesign mockup is `/Volumes/2TB/grok-vault/chotki-alpha/mockups/elegant.html`; supplementary images are in this project's `imagery/` folder.
+- 2026-09-30: Use current Android source as the behavioral reference; older repository documentation contains stale status and tooling descriptions.
+- 2026-09-30: Remove Reflections entirely from the macOS app.
+- 2026-09-30: Retain the menu-bar companion; animate navigation highlights and pulse due-task sections in parchment for five seconds alongside macOS notifications.
+- 2026-09-30: Use Android's existing 42-image daily rotation; new library imagery requires user approval and should be high-quality, public-domain, Orthodox, beautiful, and peaceful, toward 365 images.
+- 2026-09-30: Use properly cased headings, a collapsible grouped sidebar, spacious desktop padding, light navigation transitions, and scrollbars visible during scrolling.
+- 2026-09-30: Image panes use slow, subtle pans toward central subjects, especially faces; Progress imagery stays still.
+- 2026-09-30: Development versions follow `0.x.x-build`; bump to `1.0.0-beta` only when the overhaul is complete.
+- 2026-09-30: Image-library additions must be art or photographs, not museum artifacts; prefer real public-domain imagery.
+- 2026-09-30: Use generative AI only if insufficient suitable public-domain imagery can be found for the 365-image target; generated images may depict church interiors or other church visuals without people, including candles lit in the standard fashion, but must never depict generated icons.
+- 2026-09-30: Preview and interaction checks must use synthetic practice and committed public calendar fixtures. They must never open or copy the live Chotki database, even for its calendar cache.
+- 2026-09-30: The existing 42-image Android rotation is retained for this port. New or replacement images for the 365-image library require approval and must follow the art-and-photography rule above.
+- 2026-09-30: When a feature is intentionally retired on macOS, shared cross-platform checks must state which platforms still offer it and separately verify that old Mac records remain safe.
+- 2026-09-30: Offscreen AppKit renders verify appearance, not clicks: a window outside the displays did not become key or deliver synthetic mouse events. Keep interaction verification separate and report it explicitly.
+- 2026-09-30: Do not use Launch Services to start a review bundle with preview environment variables. In this session it left an app process running without preview output, so the live-store isolation was uncertain. Execute the preview binary directly with its isolated render flag, as in the proven offscreen harness.
+- 2026-09-30: For hands-on testing, open the separately signed `Chotki Review.app` with its own `ChotkiReviewSample` bundle flag and in-memory fixture. Do not launch the ordinary release app as a test against the live record.
+- 2026-09-30: On macOS, the Home Add placard and “Add a New Rule” must open Library; horizontal card and week strips must accept an ordinary mouse wheel with scrollbars hidden.
+- 2026-09-30: The week expansion chevron sits directly beneath the selected day, with no “Today” label; the month view shows only its current month, with smooth previous/next slides.
+- 2026-09-30: Every vertically scrolling macOS page should fade text at its entry and exit edges instead of clipping it against a hard line.
+- 2026-09-30: Progress artwork must preserve its top and show its quotation and caption, while remaining stationary.
+- 2026-09-30: Settings name fields align with page content, and a Clear button sits below the spiritual-father field; when a name is stored, the editor’s “Who suggested it?” menu offers that name or “Someone else...”, whose text field uses “Suggested by” as its placeholder.
+- 2026-09-30: Replace that suggester menu with a text field plus a spiritual-father checkbox when a name is stored; checking the box hides the field and records the current name on the rule itself.
+- 2026-09-30: Clearing the current spiritual father's name must preserve each existing custom rule's recorded attribution and restore the plain “Who suggested it?” field for future editing until another name is entered.
+- 2026-09-30: Home placard completion circles toggle the selected day's status independently; a truncated placard expands smoothly on body click and collapses on its next click.
+- 2026-09-30: Daily image pans should run about 15% faster and hold their end position for the rest of the day. The original top-edge endpoint was superseded by the subject-focused decision below.
+- 2026-09-30: Progress art captions are centered, begin “Icon of”, and sit below a quote with wider side padding, an oversized opening glyph, and an em dash before its attribution.
+- 2026-09-30: Center the compact week scroller, including its arrows, within the Home content frame.
+- 2026-09-30: When shared core adds a rule destination, audit every platform's route switch and provide a usable path there; the macOS overhaul uncovered a missing iOS rope destination during simulator compilation.
+- 2026-09-30: Preserve the full former spiritual-father name on older marked rules at the first Settings edit, whether the user presses Clear or types over the field; later keystrokes must not turn it into a partial name.
+- 2026-09-30: The entire dotted Add placard is a Library button, not just its label; check all uses of that placard pattern when adjusting its hit area.
+- 2026-09-30: Daily image pans now settle with the subject in view, even when that means the image's top edge does not meet the pane. Curate focal positions for every image in the current 42-image rotation; this later decision supersedes the former top-edge endpoint.
+- 2026-09-30: Every daily image should show a subtle pan, including images whose focal point is already centered. Reduce the current pan speed by 50% and shorten the travel; preserve the curated subject as the resting point for the day.
+- 2026-09-30: Begin the 365-image expansion after the pan correction. Search for high-quality public-domain Orthodox art and photographs, prepare focal previews for candidates, and obtain approval before adding any to the app's image rotation.
+- 2026-10-01: A Home rule card opens its destination on the first click; provide a separate expand control when its description overflows so expansion cannot swallow navigation. Morning and evening prayer cards select their sequence in Prayers; the Jesus Prayer opens there with the rope.
+- 2026-10-01: A card's macOS right-click menu must expose the Android long-press actions. Long card titles shrink to fit rather than ending in an ellipsis.
+- 2026-10-01: Saint-life prose must have verified public-domain rights before it is bundled. Orthocal's saint stories are included there by permission, and OCA reserves copyright, so public API access alone does not make either text public domain.
+- 2026-10-01: A direct call to a card's navigation method does not prove the installed card receives mouse events. Verify the actual AppKit event surface and context-menu construction, then ask for hands-on review when automation cannot inspect the live app.
+- 2026-10-01: Translate St. Dimitry of Rostov's public-domain Russian saint lives into natural English without changing the sequence or theological meaning; label abridged translations honestly and retain a source link per reading.
+- 2026-10-01: Provide one complete featured saint life for each day of the church calendar; make the saint-life section collapsible in Reading. Abridgments do not satisfy the finished feature.
+- 2026-10-01: Verify Home card actions with physical coordinates in a full app window. Accessibility activation and isolated card tests did not reveal an enclosing SwiftUI scroll view swallowing physical mouse events.
+- 2026-10-01: Apply the scroll-document mouse fix to every affected control in the same surface. The saint-life disclosure and dotted Add placard also accepted accessibility activation while ignoring an ordinary physical click.
+- 2026-10-01: Daily saint lives need 366 month/day entries to cover February 29 in leap years. The 365-image goal is a separate rotation target.

@@ -1,0 +1,83 @@
+{
+  "civilDate": {
+    "year": 2026,
+    "month": 8,
+    "day": 19
+  },
+  "reckoning": "julian",
+  "observedDate": {
+    "year": 2026,
+    "month": 8,
+    "day": 6
+  },
+  "tone": 2,
+  "title": "Wednesday of the 12th week after Pentecost",
+  "summaryTitle": "Transfiguration of Our Lord",
+  "saints": [],
+  "feasts": [
+    "Transfiguration of Our Lord"
+  ],
+  "fastLevel": 4,
+  "fastLevelDescription": "Dormition Fast",
+  "fastException": 4,
+  "fastExceptionDescription": "Fish, Wine and Oil are Allowed",
+  "abstentions": [
+    "meat",
+    "dairy",
+    "eggs"
+  ],
+  "feastLevel": 8,
+  "feastLevelDescription": "Major feast Lord",
+  "readings": [
+    {
+      "source": "Vespers",
+      "display": "Exodus 24.12-18",
+      "shortDisplay": "Exod 24.12-18",
+      "text": "12 And the LORD said unto Moses, Come up to me into the mount, and be there: and I will give thee tables of stone, and a law, and commandments which I have written; that thou mayest teach them.\n13 And Moses rose up, and his minister Joshua: and Moses went up into the mount of God.\n14 And he said unto the elders, Tarry ye here for us, until we come again unto you: and, behold, Aaron and Hur are with you: if any man have any matters to do, let him come unto them.\n15 And Moses went up into the mount, and a cloud covered the mount.\n16 And the glory of the LORD abode upon mount Sinai, and the cloud covered it six days: and the seventh day he called unto Moses out of the midst of the cloud.\n17 And the sight of the glory of the LORD was like devouring fire on the top of the mount in the eyes of the children of Israel.\n18 And Moses went into the midst of the cloud, and gat him up into the mount: and Moses was in the mount forty days and forty nights."
+    },
+    {
+      "source": "Vespers",
+      "display": "Composite 15 - Exodus 33.11-23; 34.4-6, 8",
+      "shortDisplay": "Exod 33.11-23; 34.4-6, 8",
+      "text": "1 The Lord spoke to Moses face to face, as one speaks to one’s friend. Then he would return to the camp; but the young servant, Jesus, son of Navi, did not leave the tent. Moses said to the Lord, ‘See, you say to me, “Bring up this people”; but you have not shown me whom you will send with me. Yet you have said to me, “I know you above all others, and you have also found favour in my sight.” Now if I have found favour in your sight, show yourself to me, so that I may see you and find favour in your sight, that I may know that this great nation is your people.‘ And the Lord said to him, ‘I myself will go before you, and I will give you rest.’ And he said to him, ‘If you will not go with us yourself, do not carry me up from here. For how shall it be truly known that I have found favour in your sight, I and your people, unless you go with us? In this way, we shall be glorified, I and your people, more than all the nations.’ The Lord said to Moses, ‘For you I will do this word that you have spoken; for you have found favour in my sight, and I know you above all others.’ Moses said, ‘Show me your own glory.’ And he said, ‘I will pass by you in my glory, and will proclaim before you my name, “The Lord”; and I will be have mercy on those on whom I will have mercy, and will have pity on those on whom I will have pity.’ And he said, ‘You cannot see my face; for no human shall see my face and live.’ And the Lord said, ‘See, there is a place by me; stand on the rock. And while my glory passes by I will put you in a cleft of the rock, and I will cover you with my hand until I have passed by; then I will take away my hand, and you shall see my back; but my face shall not be seen by you.’ So Moses rose early in the morning and went up on Mount Sina, as the Lord had commanded him. The Lord descended in the cloud and stood with him there, and proclaimed the name, ‘The Lord. The Lord passed before his face, and proclaimed, ‘The Lord, the Lord, God compassionate and merciful, slow to anger, and full of mercy and true’.  And Moses quickly bowed to the earth, and worshipped the Lord."
+    },
+    {
+      "source": "Vespers",
+      "display": "Composite 23 - 3 [1] Kings 19.3-9, 11-13, 15, 16",
+      "shortDisplay": "3 Kgs 19.3-9, 11-13, 15, 16",
+      "text": "1 And Elias heard and was afraid; he arose and fled for his life, and came to Beersheba, in the land of Juda; he left his servant there. But he himself went a day’s journey into the wilderness, and came and sat down under a solitary broom tree. Then he lay down under the broom tree and fell asleep. Suddenly someone touched him and said to him, ‘Arise and eat and drink, for you have a long journey.’ Elias looked, and there at his head was a cake of flour and a jar of water. He arose, ate and drank, and slept again. The angel of the Lord came a second time, touched him, and said, ‘Arise and eat and drink, for you have a long journey.’ He arose, and ate and drank; then he went in the strength of that food forty days and forty nights to mount Horeb. There he entered a cave, and spent the night there. Then the word of the Lord came to him, saying, ‘Go forth, and stand upon the mount before the Lord. And behold, the Lord will pass by.’ And a great and strong wind rent the mountains, and broke in pieces the rocks before the Lord, but the Lord was not in the wind; and after the wind an earthquake, but the Lord was not in the earthquake; and after the earthquake a fire, but the Lord was not in the fire; and after the fire the sound of a gentle breeze. And when Elias heard it, he wrapped his face in his mantle and went out and stood by the cave. Then the Lord said to him, ‘Go, return to your way and you will come to the desert way of Damascus; and you shall anoint Elissaios son of Shaphat as prophet in your place.’"
+    },
+    {
+      "source": "Matins Gospel",
+      "display": "Luke 9.28-36",
+      "shortDisplay": "Luke 9.28-36",
+      "text": "28 And it came to pass about an eight days after these sayings, he took Peter and John and James, and went up into a mountain to pray.\n29 And as he prayed, the fashion of his countenance was altered, and his raiment was white and glistering.\n30 And, behold, there talked with him two men, which were Moses and Elias:\n31 Who appeared in glory, and spake of his decease which he should accomplish at Jerusalem.\n32 But Peter and they that were with him were heavy with sleep: and when they were awake, they saw his glory, and the two men that stood with him.\n33 And it came to pass, as they departed from him, Peter said unto Jesus, Master, it is good for us to be here: and let us make three tabernacles; one for thee, and one for Moses, and one for Elias: not knowing what he said.\n34 While he thus spake, there came a cloud, and overshadowed them: and they feared as they entered into the cloud.\n35 And there came a voice out of the cloud, saying, This is my beloved Son: hear him.\n36 And when the voice was past, Jesus was found alone. And they kept it close, and told no man in those days any of those things which they had seen."
+    },
+    {
+      "source": "Epistle",
+      "display": "2 Peter 1.10-19",
+      "shortDisplay": "2 Pet 1.10-19",
+      "text": "10 Wherefore the rather, brethren, give diligence to make your calling and election sure: for if ye do these things, ye shall never fall:\n11 For so an entrance shall be ministered unto you abundantly into the everlasting kingdom of our Lord and Saviour Jesus Christ.\n12 Wherefore I will not be negligent to put you always in remembrance of these things, though ye know them, and be established in the present truth.\n13 Yea, I think it meet, as long as I am in this tabernacle, to stir you up by putting you in remembrance;\n14 Knowing that shortly I must put off this my tabernacle, even as our Lord Jesus Christ hath shewed me.\n15 Moreover I will endeavour that ye may be able after my decease to have these things always in remembrance.\n16 For we have not followed cunningly devised fables, when we made known unto you the power and coming of our Lord Jesus Christ, but were eyewitnesses of his majesty.\n17 For he received from God the Father honour and glory, when there came such a voice to him from the excellent glory, This is my beloved Son, in whom I am well pleased.\n18 And this voice which came from heaven we heard, when we were with him in the holy mount.\n19 We have also a more sure word of prophecy; whereunto ye do well that ye take heed, as unto a light that shineth in a dark place, until the day dawn, and the day star arise in your hearts:"
+    },
+    {
+      "source": "Epistle",
+      "display": "2 Corinthians 6.11-16",
+      "shortDisplay": "2 Cor 6.11-16",
+      "text": "11 O ye Corinthians, our mouth is open unto you, our heart is enlarged.\n12 Ye are not straitened in us, but ye are straitened in your own bowels.\n13 Now for a recompence in the same, (I speak as unto my children,) be ye also enlarged.\n14 Be ye not unequally yoked together with unbelievers: for what fellowship hath righteousness with unrighteousness? and what communion hath light with darkness?\n15 And what concord hath Christ with Belial? or what part hath he that believeth with an infidel?\n16 And what agreement hath the temple of God with idols? for ye are the temple of the living God; as God hath said, I will dwell in them, and walk in them; and I will be their God, and they shall be my people."
+    },
+    {
+      "source": "Gospel",
+      "display": "Matthew 17.1-9",
+      "shortDisplay": "Matt 17.1-9",
+      "text": "1 And after six days Jesus taketh Peter, James, and John his brother, and bringeth them up into an high mountain apart,\n2 And was transfigured before them: and his face did shine as the sun, and his raiment was white as the light.\n3 And, behold, there appeared unto them Moses and Elias talking with him.\n4 Then answered Peter, and said unto Jesus, Lord, it is good for us to be here: if thou wilt, let us make here three tabernacles; one for thee, and one for Moses, and one for Elias.\n5 While he yet spake, behold, a bright cloud overshadowed them: and behold a voice out of the cloud, which said, This is my beloved Son, in whom I am well pleased; hear ye him.\n6 And when the disciples heard it, they fell on their face, and were sore afraid.\n7 And Jesus came and touched them, and said, Arise, and be not afraid.\n8 And when they had lifted up their eyes, they saw no man, save Jesus only.\n9 And as they came down from the mountain, Jesus charged them, saying, Tell the vision to no man, until the Son of man be risen again from the dead."
+    },
+    {
+      "source": "Gospel",
+      "display": "Mark 1.23-28",
+      "shortDisplay": "Mark 1.23-28",
+      "text": "23 And there was in their synagogue a man with an unclean spirit; and he cried out,\n24 Saying, Let us alone; what have we to do with thee, thou Jesus of Nazareth? art thou come to destroy us? I know thee who thou art, the Holy One of God.\n25 And Jesus rebuked him, saying, Hold thy peace, and come out of him.\n26 And when the unclean spirit had torn him, and cried with a loud voice, he came out of him.\n27 And they were all amazed, insomuch that they questioned among themselves, saying, What thing is this? what new doctrine is this? for with authority commandeth he even the unclean spirits, and they do obey him.\n28 And immediately his fame spread abroad throughout all the region round about Galilee."
+    }
+  ],
+  "paschaDistance": 129,
+  "fetchedAt": 800000000
+}

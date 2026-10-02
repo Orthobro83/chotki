@@ -4,8 +4,8 @@ import ChotkiCore
 
 /// Renders the interface to PNG files without opening a window.
 ///
-/// A development affordance for checking layout: it works on a throwaway copy
-/// of the database so nothing real is touched, and it never reads the screen.
+/// A development affordance for checking layout: it uses an in-memory fictional
+/// practice store, so nothing real is touched, and it never reads the screen.
 @MainActor
 enum RenderMode {
 
@@ -13,14 +13,17 @@ enum RenderMode {
         do {
             let store = try seededStore()
             let model = AppModel(
-                store: store, notifier: NullNotifier(), launchAtLogin: NullLaunchAtLogin()
+                store: store, notifier: NullNotifier(), launchAtLogin: NullLaunchAtLogin(),
+                storage: .none(), startsReminders: false, writesBackups: false, loadsCalendar: false
             )
 
             // Content views directly: ImageRenderer does not draw ScrollView
             // contents, so the scroll chrome is bypassed.
             // Populate the liturgical cache synchronously so shading is
             // representative; the app does this asynchronously at launch.
-            try? model.liturgical.loadSnapshot(around: model.today)
+            model.selectedDate = CalendarDate(year: 2026, month: 8, day: 19)!
+            model.visibleMonth = model.selectedDate
+            try? model.liturgical.loadSnapshot(around: model.selectedDate)
 
             render(
                 ZStack {
@@ -64,59 +67,20 @@ enum RenderMode {
         NSApp.terminate(nil)
     }
 
-    /// A copy of the real database, so the liturgical cache is realistic, plus a
-    /// few rules to show. The original is never opened at all — see
-    /// `readOnlyCopy(of:)`, and why that had to be written.
-    /// A throwaway store holding sample rules and nothing personal.
-    ///
-    /// Only the liturgical cache is taken from the real database — the calendar
-    /// is the same for everyone. Rules, activations and occurrences are made up
-    /// here, so a screenshot can never carry someone's actual practice into a
-    /// public README.
-    private static func seededStore() throws -> any Store {
-        let temp = FileManager.default.temporaryDirectory
-            .appendingPathComponent("chotki-render-\(UUID().uuidString).sqlite")
-        let store = try SQLiteStore(path: temp.path)
-        let today = CalendarDate(Date(), in: .current)
-
-        if ProcessInfo.processInfo.environment["CHOTKI_RENDER_LIVE"] == "1" {
-            // Inspecting real state: copy the whole database, including the WAL,
-            // which holds anything not yet checkpointed.
-            if let real = try? StoreLocation.databasePath(),
-               FileManager.default.fileExists(atPath: real) {
-                let copy = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("chotki-live-\(UUID().uuidString).sqlite")
-                for suffix in ["", "-wal", "-shm"] {
-                    try? FileManager.default.copyItem(
-                        atPath: real + suffix, toPath: copy.path + suffix
-                    )
-                }
-                return try SQLiteStore(path: copy.path)
-            }
-            return store
+    /// Fictional practice and a committed public calendar fixture. No personal paths are read.
+    static func seededStore() throws -> any Store {
+        let store = try SQLiteStore(path: ":memory:")
+        let today = CalendarDate(year: 2026, month: 8, day: 19)!
+        let recordToday = CalendarDate(Date(), in: .current)
+        if let url = Bundle.module.url(forResource: "calendar", withExtension: "json", subdirectory: "Resources/Preview") {
+            try store.saveLiturgicalDay(JSONDecoder().decode(LiturgicalDay.self, from: Data(contentsOf: url)))
         }
-
-        // Carry across the calendar only.
-        if let real = try? StoreLocation.databasePath(),
-           FileManager.default.fileExists(atPath: real),
-           let source = try? readOnlyCopy(of: real) {
-            let settings = (try? source.loadSettings()) ?? .default
-            for reckoning in Reckoning.allCases {
-                let days = (try? source.liturgicalDays(
-                    reckoning: reckoning,
-                    from: today.adding(days: -40), through: today.adding(days: 40)
-                )) ?? []
-                for day in days { try store.saveLiturgicalDay(day) }
-            }
-            var clean = AppSettings.default
-            clean.jurisdiction = settings.jurisdiction
-            clean.observances = ObservanceSettings(fasting: .observed, feasts: .shown)
-            // The welcome is a real screen and needs rendering like any other,
-            // so it can be asked for. Every other render wants it out of the way.
-            clean.hasCompletedFirstRun =
-                ProcessInfo.processInfo.environment["CHOTKI_RENDER_FIRSTRUN"] != "1"
-            try store.saveSettings(clean)
-        }
+        var clean = AppSettings.default
+        clean.displayName = "Anna"
+        clean.observances = ObservanceSettings(fasting: .observed, feasts: .shown)
+        clean.hasCompletedFirstRun = ProcessInfo.processInfo.environment["CHOTKI_RENDER_FIRSTRUN"] != "1"
+        clean.showOldStyleDates = true
+        try store.saveSettings(clean)
 
         // Someone who already keeps rules is not on their first run, and the
         // app marks it complete for them — so the welcome can only be drawn
@@ -130,8 +94,9 @@ enum RenderMode {
             ("Morning prayers", TimeOfDay(hour: 6, minute: 30), .daily, .prayer),
             ("The Wednesday and Friday fast", nil,
              .weekly(days: [.wednesday, .friday]), .fasting),
-            ("Read the day's Gospel", TimeOfDay(hour: 12, minute: 0), .daily, .reading),
-            ("Jesus prayer — 50 knots", nil, .daily, .prayer),
+            ("The day's Gospel", TimeOfDay(hour: 12, minute: 0), .daily, .reading),
+            ("The life of the day's saint", nil, .daily, .reading),
+            ("The Jesus Prayer", nil, .daily, .prayer),
             ("Evening prayers", TimeOfDay(hour: 21, minute: 30), .daily, .prayer)
         ]
 
@@ -143,14 +108,15 @@ enum RenderMode {
                 timeOfDay: time, category: category.rawValue
             )
             try store.save(rule)
-            try store.save(Activation(ruleID: rule.id, from: today.adding(days: -40)))
+            try store.save(Activation(ruleID: rule.id, from: min(today, recordToday).adding(days: -40)))
 
-            for offset in 0...40 {
-                let date = today.adding(days: -offset)
+            for anchor in [recordToday, today] {
+              for offset in 0...40 {
+                let date = anchor.adding(days: -offset)
                 // Evening prayers slip on Fridays; one stretch of the prayer
                 // rope stood down; everything else held.
                 if title == "Evening prayers" && date.weekday == .friday { continue }
-                if title == "Jesus prayer — 50 knots" && (12...15).contains(offset) {
+                if title == "The Jesus Prayer" && (12...15).contains(offset) {
                     try store.save(Occurrence(ruleID: rule.id, date: date, status: .skipped))
                     continue
                 }
@@ -158,65 +124,11 @@ enum RenderMode {
                 if offset == 0 && title != "Morning prayers" { continue }
                 let status: OccurrenceStatus = offset % 13 == 0 ? .completedLate : .completed
                 try store.save(Occurrence(ruleID: rule.id, date: date, status: status))
+              }
             }
         }
 
-        // Made-up answers, so the journal and its overlay have something to
-        // draw. Invented here like every other sample: a reflection is the most
-        // personal thing this app holds, and a screenshot must never be able to
-        // carry a real one.
-        try store.seedReflections()
-        // On the rule, so the day list shows it with its way through to the
-        // section and its pencil, which is the thing to look at.
-        if let template = RuleLibrary.shared.templates.first(where: { $0.id == "reflection" }) {
-            let rule = template.makeRule(source: "the library")
-            try store.save(rule)
-            try store.save(Activation(ruleID: rule.id, from: today.adding(days: -40)))
-        }
-        let invented: [(Weekday, Int, String)] = [
-            (.sunday, 7, "It came up first thing, before I had said anything at all. Sat with it rather than moving on."),
-            (.sunday, 14, "Less this week. Or I noticed it less, which is not the same thing."),
-            (.sunday, 42, "Three weeks of writing nothing, and then this. The resistance was to the writing itself."),
-            (.monday, 8, "Quieter than it has been. Kept the phone in the other room and the silence was not empty."),
-            (.wednesday, 10, "Put off the call again. Third day."),
-            (.wednesday, 45, "The same call. Noted then too, and did nothing about it."),
-            (.friday, 12, "Late, and the cost was the hour I did not give."),
-            (.saturday, 11, "Vigil. Confession after.")
-        ]
-        for (weekday, back, text) in invented {
-            let date = today.adding(days: -back)
-            // Land it on the weekday it belongs to, whatever today happens to be.
-            let landed = date.adding(days: weekday.rawValue - date.weekday.rawValue)
-            try store.save(ReflectionEntry(
-                answering: Reflection.bundled(for: weekday), on: landed, text: text))
-        }
         return store
-    }
-
-    /// A throwaway copy of the real database, opened instead of the original.
-    ///
-    /// **`SQLiteStore(path:)` migrates on open.** So reading the liturgical
-    /// cache straight out of the live file wrote to it — every render run
-    /// silently applied whatever migrations the working copy had that the
-    /// installed app did not. It was caught when schema 7 turned up in Ryan's
-    /// record before the build carrying it had ever been installed. Nothing was
-    /// lost, because a migration only adds; the next one that rewrites a column
-    /// would not have been so forgiving.
-    ///
-    /// The comment above this function used to say the original is never opened
-    /// for writing. It says it again now, and this time it is true.
-    ///
-    /// `-wal` and `-shm` come too: without them a file-level copy silently
-    /// loses whatever has not been checkpointed, which here is most of it.
-    private static func readOnlyCopy(of path: String) throws -> SQLiteStore {
-        let copy = FileManager.default.temporaryDirectory
-            .appendingPathComponent("chotki-cache-\(UUID().uuidString).sqlite")
-        for suffix in ["", "-wal", "-shm"] {
-            try? FileManager.default.copyItem(
-                atPath: path + suffix, toPath: copy.path + suffix
-            )
-        }
-        return try SQLiteStore(path: copy.path)
     }
 
     /// Renders the real window, through AppKit rather than ImageRenderer.
@@ -235,12 +147,15 @@ enum RenderMode {
         do {
             let store = try seededStore()
             let model = AppModel(
-                store: store, notifier: NullNotifier(), launchAtLogin: NullLaunchAtLogin()
+                store: store, notifier: NullNotifier(), launchAtLogin: NullLaunchAtLogin(),
+                storage: .none(), startsReminders: false, writesBackups: false, loadsCalendar: false
             )
-            try? model.liturgical.loadSnapshot(around: model.today)
+            model.selectedDate = CalendarDate(year: 2026, month: 8, day: 19)!
+            model.visibleMonth = model.selectedDate
+            try? model.liturgical.loadSnapshot(around: model.selectedDate)
 
-            let size = NSSize(width: 940, height: 660)
-            let host = NSHostingView(rootView: MainWindowView(model: model))
+            let size = NSSize(width: 1100, height: 860)
+            let host = MainWindowController.hostingView(model: model)
             host.frame = NSRect(origin: .zero, size: size)
 
             let window = NSWindow(
@@ -256,134 +171,86 @@ enum RenderMode {
                 draw(host, name, prefix: prefix, arrange)
             }
 
-            shot("window-rule") { }
-            shot("window-library-drawer") { model.libraryOnRule = true }
-            shot("window-library-scrolled") { scrollDown(host, by: 420) }
-            // Far enough to reach Custom, which sits at the foot of the library.
-            shot("window-library-bottom") { scrollDown(host, by: 4000) }
-
-            // Narrow enough that the calendar and the day cannot sit side by
-            // side. This is the shape the window was squashed into before it
-            // learned to rearrange. Taken here because the sidebar's selection
-            // is @State: once it leaves Rule, nothing outside the view can send
-            // it back.
-            func resize(to width: CGFloat) {
-                host.frame = NSRect(x: 0, y: 0, width: width, height: 660)
-                window.setContentSize(NSSize(width: width, height: 660))
+            shot("window-home") { }
+            if ProcessInfo.processInfo.environment["CHOTKI_RENDER_SETTLED_IMAGE"] == "1" {
+                // The render flag selects the same resting crop immediately,
+                // avoiding a minute-long render while leaving daily timing
+                // and the live record untouched.
+                inOwnWindow(
+                    SayingCard(model: model).frame(width: 850, height: 270),
+                    size: NSSize(width: 850, height: 270), "window-image-settled", prefix: prefix
+                )
             }
+            inOwnWindow(MainWindowView(model: model, initiallyCollapsed: true),
+                        size: size, "window-collapsed", prefix: prefix)
+            shot("window-month") { model.calendarExpanded = true }
             shot("window-narrow") {
-                model.libraryOnRule = false
-                scrollDown(host, by: 0)
-                resize(to: 665)
+                model.calendarExpanded = false
+                window.setContentSize(NSSize(width: 620, height: 660))
             }
-            shot("window-narrow-library") { model.libraryOnRule = true }
-            shot("window-narrow-scrolled") { scrollDown(host, by: 420) }
-            shot("window-min-width") {
-                model.libraryOnRule = false
-                resize(to: 620)
-            }
-            resize(to: 940)
+            window.setContentSize(size)
+            shot("window-library") { model.screen = .library }
+            shot("window-library-bottom") { scrollDown(host, by: 4000) }
             shot("window-prayers") {
-                model.libraryOnRule = false
                 model.prayers = PrayerScreen(selection: "morning")
                 model.screen = .prayerRope
             }
-            // A drawn menu button shows only its selected title, so the chooser's
-            // contents were the one thing a screenshot could not confirm. Ask the
-            // control itself, while the prayers screen is still up.
             describeMenus(in: host)
-
-            shot("window-terms-back") { model.openGlossary("publican") }
-            shot("window-terms-list") { model.openGlossary(nil) }
+            shot("window-glossary") { model.openGlossary("publican") }
+            shot("window-reading") { model.openReading(band: 0) }
+            shot("window-progress") { model.tab = .progress }
             shot("window-settings") { model.screen = .settings }
             describeMenus(in: host)
-            // The calendar set away from what the chosen jurisdiction keeps.
-            shot("window-settings-other-calendar") {
-                model.update { $0.jurisdiction.reckoning = .revisedJulian }
-            }
-            shot("window-settings-twelve-hour") {
-                model.update { $0.clockStyle = .twelveHour }
-            }
 
-
-            // Reflections, which the sidebar can reach but `model.screen`
-            // cannot — so it gets a window of its own, opened straight onto it.
-            resize(to: 940)
-            // `.main` routes to `.stay`, so the fresh window keeps the section
-            // it was opened on. Leaving the previous shot's screen in place
-            // makes `onReceive` reroute it the instant it subscribes — which is
-            // how the first attempt at this drew Settings and called it
-            // Reflections.
+            // Use a correctly sized second window for the companion. Reusing
+            // the desktop window left a 400-point popover centered in a black
+            // 1100-point image, which hid layout faults rather than exposing them.
+            window.contentView = nil
+            window.orderOut(nil)
+            model.navigationSurface = .companion
             model.screen = .main
-            let journal = NSHostingView(
-                rootView: MainWindowView(model: model, initialSection: .reflections))
-            journal.frame = NSRect(x: 0, y: 0, width: 940, height: 660)
-            window.contentView = journal
-            window.setContentSize(journal.frame.size)
-
-            draw(journal, "window-reflections", prefix: prefix) { }
-            draw(journal, "window-reflections-scrolled", prefix: prefix) {
-                scrollDown(journal, by: 900)
-            }
-            // The foot of the section: what closes the week, and the file bar.
-            draw(journal, "window-reflections-bottom", prefix: prefix) {
-                scrollDown(journal, by: 6000)
-            }
-
-            // Both of these are raised by @State inside the view, so nothing
-            // outside can open them. They get windows of their own rather than
-            // borrowing this one: reusing it left the hosting view unconstrained
-            // and it drew the whole section at its natural height — a strip
-            // 12,810 pixels tall, which is not a screenshot of anything.
-            inOwnWindow(
-                ReflectionsView(model: model, initialReading: .sunday),
-                size: NSSize(width: 780, height: 560),
-                "window-reflections-reading", prefix: prefix)
-
-            // Opened from a Friday rule, which should land on Friday rather
-            // than at the top. A ScrollViewReader scroll may simply not appear
-            // in a drawn view — if this shot shows Sunday, that is not evidence
-            // the scroll is broken, only that the harness could not see it.
-            model.reflectionsOpenAt = .friday
-            inOwnWindow(
-                ReflectionsView(model: model),
-                size: NSSize(width: 780, height: 560),
-                "window-reflections-opened-on-friday", prefix: prefix)
-            model.reflectionsOpenAt = nil
-
-            // The explainer behind the help mark. It animates down, which a
-            // still cannot show — but whether the text is there, wraps, and
-            // carries its link is exactly what a still is for.
-            inOwnWindow(
-                ReflectionsView(model: model, initialExplaining: true),
-                size: NSSize(width: 780, height: 560),
-                "window-reflections-explainer", prefix: prefix)
-
-            window.contentView = host
-            window.setContentSize(NSSize(width: 940, height: 660))
-
-            // The popover is the surface most people use, and until now none of
-            // it could be drawn: every screen in it is inside a ScrollView.
-            model.screen = .main
-            model.libraryOnRule = false
+            model.tab = .rule
             let popover = NSHostingView(rootView: RootView(model: model))
-            popover.frame = NSRect(
-                x: 0, y: 0, width: Theme.popoverWidth, height: Theme.popoverHeight
+            popover.sizingOptions = []
+            popover.frame = NSRect(x: 0, y: 0, width: Theme.popoverWidth, height: Theme.popoverHeight)
+            let companion = NSWindow(
+                contentRect: popover.frame,
+                styleMask: [.titled, .fullSizeContentView],
+                backing: .buffered, defer: false
             )
-            window.contentView = popover
-            window.setContentSize(popover.frame.size)
-
-            draw(popover, "popover-rule", prefix: prefix) { }
-            draw(popover, "popover-library-drawer", prefix: prefix) { model.libraryOnRule = true }
-            draw(popover, "popover-library-scrolled", prefix: prefix) {
-                scrollDown(popover, by: 420)
-            }
+            companion.contentView = popover
+            companion.setFrameOrigin(NSPoint(x: -30_000, y: -30_000))
+            companion.orderFrontRegardless()
+            draw(popover, "popover-home", prefix: prefix) { }
+            draw(popover, "popover-library", prefix: prefix) { model.screen = .library }
             draw(popover, "popover-prayers", prefix: prefix) {
-                model.libraryOnRule = false
                 model.prayers = PrayerScreen(selection: "jesus-prayer", count: 12)
                 model.screen = .prayerRope
             }
-            draw(popover, "popover-terms-back", prefix: prefix) { model.openGlossary("amen") }
+            draw(popover, "popover-glossary", prefix: prefix) { model.openGlossary("amen") }
+            companion.orderOut(nil)
+
+            if let entry = model.entries(on: model.selectedDate).first {
+                inOwnWindow(
+                    EntryRow(model: model, entry: entry, expandedID: .constant(entry.rule.id))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity).background(Theme.ground),
+                    size: NSSize(width: 360, height: 400), "window-card-expanded", prefix: prefix
+                )
+            }
+            if let template = RuleLibrary.shared.templates.first(where: { $0.id == "lives-of-saints" }) {
+                let entry = DayEntry(rule: template.makeRule(source: "the library"),
+                                     date: model.selectedDate, occurrence: nil, dispensation: nil)
+                inOwnWindow(
+                    EntryRow(model: model, entry: entry)
+                        .frame(width: 132, height: 232).background(Theme.ground),
+                    size: NSSize(width: 132, height: 232), "window-saint-card", prefix: prefix
+                )
+            }
+            model.update { $0.spiritualFatherName = "Father Seraphim" }
+            inOwnWindow(
+                RuleEditorView(model: model, ruleID: nil, dismiss: {}),
+                size: NSSize(width: 520, height: 620), "window-editor-father", prefix: prefix
+            )
 
             FileHandle.standardOutput.write(Data("rendered\n".utf8))
         } catch {
@@ -503,7 +370,7 @@ enum RenderMode {
 }
 
 /// Stand-ins so rendering never schedules or registers anything.
-private struct NullNotifier: Notifier {
+struct NullNotifier: Notifier {
     var supportsActions: Bool { false }
     func requestAuthorization() async throws -> Bool { false }
     func show(_ request: NotificationRequest) async throws {}
@@ -511,7 +378,7 @@ private struct NullNotifier: Notifier {
     var actionEvents: AsyncStream<NotificationActionEvent> { AsyncStream { $0.finish() } }
 }
 
-private struct NullLaunchAtLogin: LaunchAtLogin {
+struct NullLaunchAtLogin: LaunchAtLogin {
     var isEnabled: Bool { false }
     func setEnabled(_ enabled: Bool) throws {}
 }

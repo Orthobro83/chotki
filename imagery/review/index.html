@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chotki · Image Library Review</title>
+  <style>
+    :root { color-scheme: dark; --ground:#141519; --panel:#1c1d22; --panel2:#25262b; --line:#3c3933; --ink:#e8e1d3; --muted:#aaa496; --gold:#d2a613; --parchment:#eae0cc; --red:#cf897c; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 96% 0%, #29271f 0, transparent 36%),var(--ground); color:var(--ink); font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button, a { -webkit-tap-highlight-color:transparent; }
+    button { cursor:pointer; font:inherit; }
+    button:focus-visible, a:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+    a { color:var(--gold); text-underline-offset:3px; }
+    .wrap { max-width:1510px; margin:auto; padding:40px clamp(18px,4vw,64px) 90px; }
+    header { display:flex; align-items:start; justify-content:space-between; gap:24px; padding-bottom:28px; border-bottom:1px solid var(--line); }
+    .eyebrow { color:var(--gold); font-size:12px; font-weight:650; letter-spacing:.1em; text-transform:uppercase; }
+    h1 { font:normal clamp(31px,3.4vw,48px)/1.1 Georgia,serif; margin:9px 0 12px; }
+    .intro { max-width:770px; color:var(--muted); font-size:15px; margin:0; }
+    .counts { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; min-width:210px; }
+    .count { background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 14px; color:var(--muted); }
+    .count strong { display:block; color:var(--ink); font:normal 25px Georgia,serif; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center; padding:22px 0; }
+    .filters { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+    .tabs, .actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .search { width:225px; max-width:100%; background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:9px; padding:9px 12px; font:inherit; }
+    .search:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+    .tab, .action, .reject, .restore, .icon-button { background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:9px; padding:9px 13px; }
+    .tab[aria-pressed="true"] { background:var(--parchment); color:#26231d; border-color:var(--parchment); }
+    .action:hover, .tab:not([aria-pressed="true"]):hover, .icon-button:hover { border-color:var(--gold); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:18px; }
+    .card { overflow:hidden; border:1px solid #393733; border-radius:17px; background:var(--panel); transition:border-color .2s,transform .2s,opacity .2s; }
+    .card:hover { border-color:#8b7331; transform:translateY(-2px); }
+    .card.is-rejected { opacity:.56; }
+    .photo-button { display:block; position:relative; border:0; padding:0; width:100%; background:#0d0e10; text-align:left; }
+    .photo-button img { display:block; width:100%; aspect-ratio:850/270; object-fit:cover; }
+    .photo-button:after { content:"View full photo and crop ↗"; position:absolute; right:10px; bottom:9px; color:white; background:#131313bf; border-radius:6px; padding:5px 8px; font-size:11px; opacity:0; transition:opacity .15s; }
+    .photo-button:hover:after, .photo-button:focus-visible:after { opacity:1; }
+    .card-body { padding:17px 18px 18px; }
+    .card-top { display:flex; justify-content:space-between; align-items:start; gap:10px; }
+    .number { color:var(--gold); font-size:12px; letter-spacing:.06em; }
+    .badge { color:var(--muted); font-size:11px; white-space:nowrap; border:1px solid var(--line); border-radius:100px; padding:3px 8px; }
+    .is-rejected .badge { color:var(--red); border-color:#84544c; }
+    .is-approved .badge { color:var(--gold); border-color:#8b7331; }
+    h2 { font:normal 21px/1.25 Georgia,serif; margin:7px 0 7px; }
+    .meta { color:var(--muted); min-height:43px; font-size:12px; }
+    .card-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:13px; border-top:1px solid var(--line); }
+    .reject { border-color:#895146; color:#f0b0a3; }
+    .reject:hover { background:#61312e; }
+    .restore { border-color:#8b7331; color:var(--gold); }
+    .restore:hover { background:#38311e; }
+    .source { font-size:12px; }
+    .empty { display:none; color:var(--muted); border:1px dashed var(--line); border-radius:15px; padding:35px; text-align:center; }
+    .note { color:var(--muted); border-top:1px solid var(--line); margin-top:40px; padding-top:18px; font-size:12px; }
+    .hidden-input { display:none; }
+    dialog { color:var(--ink); border:1px solid #686049; background:#1a1b1f; border-radius:18px; padding:0; width:min(1040px,calc(100vw - 32px)); max-height:calc(100vh - 32px); box-shadow:0 22px 80px #000b; }
+    dialog::backdrop { background:#08090bd9; }
+    .dialog-head { display:flex; align-items:start; justify-content:space-between; gap:12px; padding:22px 25px 15px; }
+    .dialog-head h2 { font-size:29px; margin:3px 0; }
+    .dialog-scroll { padding:0 25px 25px; max-height:calc(100vh - 160px); overflow:auto; }
+    .dialog-grid { display:grid; grid-template-columns:1.05fr .95fr; gap:16px; }
+    .image-pane { background:#101114; border:1px solid var(--line); border-radius:11px; overflow:hidden; }
+    .image-pane img { display:block; width:100%; height:390px; object-fit:contain; }
+    .image-pane.crop-pane img { height:auto; aspect-ratio:850/270; object-fit:cover; margin:76px 0; }
+    .image-label { color:var(--muted); font-size:12px; padding:8px 12px; border-top:1px solid var(--line); }
+    .detail { color:var(--muted); margin:15px 0; }
+    .dialog-foot { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid var(--line); padding-top:17px; }
+    #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--parchment); color:#24211d; border-radius:10px; padding:10px 15px; opacity:0; pointer-events:none; transition:opacity .2s; box-shadow:0 8px 30px #0008; z-index:5; }
+    #toast.show { opacity:1; }
+    @media (max-width:800px) { header { display:block; } .counts { justify-content:flex-start; margin-top:22px; } .dialog-grid { grid-template-columns:1fr; } .image-pane img { height:290px; } .image-pane.crop-pane img { margin:8px 0; } }
+    @media (prefers-reduced-motion:reduce) { *,*:before,*:after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <div class="eyebrow">Chotki · Image Library</div>
+        <h1>Candidate review</h1>
+        <p class="intro">Your final selections are locked in: 323 approved photographs complete the 365-image rotation with the original 42. The five newest additions appear first. Open a card to compare its photograph with its proposed resting crop.</p>
+      </div>
+      <div class="counts" aria-live="polite">
+        <div class="count"><strong id="total-count">0</strong> candidates</div>
+        <div class="count"><strong id="approved-count">0</strong> approved</div>
+        <div class="count"><strong id="remaining-count">0</strong> to review</div>
+        <div class="count"><strong id="rejected-count">0</strong> rejected</div>
+      </div>
+    </header>
+    <div class="toolbar">
+      <div class="filters">
+        <div class="tabs" role="group" aria-label="Filter candidates">
+          <button class="tab" data-filter="all" aria-pressed="true">All</button>
+          <button class="tab" data-filter="remaining" aria-pressed="false">To Review</button>
+          <button class="tab" data-filter="approved" aria-pressed="false">Approved</button>
+          <button class="tab" data-filter="rejected" aria-pressed="false">Rejected</button>
+        </div>
+        <input class="search" id="candidate-search" type="search" placeholder="Search images or places" aria-label="Search candidates">
+      </div>
+      <div class="actions">
+        <button class="action" id="copy-summary">Copy decision summary</button>
+        <button class="action" id="download-decisions">Download decisions</button>
+        <button class="action" id="load-decisions">Load decisions</button>
+        <input class="hidden-input" id="decision-file" type="file" accept="application/json,.json">
+      </div>
+    </div>
+    <div class="grid" id="gallery" aria-live="polite"></div>
+    <p class="empty" id="empty">There are no candidates in this view.</p>
+    <p class="note">These are downsized review previews from the linked source pages. Every file record was checked for CC0 or author-released public-domain terms; the wide crops show proposed focal points. New candidates require your approval before they join Chotki. Export your decisions and share the file or copied summary with Codex.</p>
+  </main>
+
+  <dialog id="detail-dialog" aria-labelledby="detail-title">
+    <div class="dialog-head">
+      <div><div class="eyebrow" id="detail-number"></div><h2 id="detail-title"></h2></div>
+      <button class="icon-button" id="close-detail" aria-label="Close image details">Close ×</button>
+    </div>
+    <div class="dialog-scroll">
+      <div class="dialog-grid">
+        <div class="image-pane"><img id="detail-preview" alt=""><div class="image-label">Source photograph · downsized preview</div></div>
+        <div class="image-pane crop-pane"><img id="detail-crop" alt=""><div class="image-label">Proposed resting crop · Home card shape</div></div>
+      </div>
+      <p class="detail" id="detail-meta"></p>
+      <div class="dialog-foot"><a id="detail-source" target="_blank" rel="noopener noreferrer">View original and rights on Wikimedia Commons ↗</a><button class="reject" id="detail-decision"></button></div>
+    </div>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="candidate-data.js"></script>
+  <script src="approved-data.js"></script>
+  <script>
+    (() => {
+      'use strict';
+      const items = window.CHOTKI_CANDIDATES || [];
+      const known = new Set(items.map(item => item.id));
+      const approved = new Set((window.CHOTKI_APPROVAL?.approved || []).filter(id => known.has(id)));
+      const storageKey = 'chotki-image-review-v1';
+      const rejected = new Set((window.CHOTKI_APPROVAL?.rejectedAtApproval || []).filter(id => known.has(id) && !approved.has(id)));
+      const gallery = document.getElementById('gallery');
+      const dialog = document.getElementById('detail-dialog');
+      const decisionButton = document.getElementById('detail-decision');
+      const toastElement = document.getElementById('toast');
+      let filter = 'all';
+      let query = '';
+      let selected = null;
+      let toastTimer;
+
+      function toast(message) {
+        toastElement.textContent = message;
+        toastElement.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastElement.classList.remove('show'), 3000);
+      }
+      function save() {
+        try { localStorage.setItem(storageKey, JSON.stringify([...rejected])); }
+        catch (_) { toast('Local saving is unavailable here. Download decisions before closing.'); }
+      }
+      function loadLocal() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+          if (Array.isArray(saved)) saved.forEach(id => { if (known.has(id) && !approved.has(id)) rejected.add(id); });
+        } catch (_) { /* An exported decision file can restore this page. */ }
+      }
+      function decisionFile() {
+        return {
+          format: 'chotki-image-review-v2',
+          exportedAt: new Date().toISOString(),
+          note: 'Approved images are locked in; pending images still require approval.',
+          approved: items.filter(item => approved.has(item.id)).map(item => item.id),
+          rejected: items.filter(item => rejected.has(item.id)).map(item => item.id),
+          pending: items.filter(item => !approved.has(item.id) && !rejected.has(item.id)).map(item => item.id)
+        };
+      }
+      function text(element, value) { element.textContent = value; return element; }
+      function node(tag, className, value) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (value !== undefined) element.textContent = value;
+        return element;
+      }
+      function toggle(item) {
+        if (approved.has(item.id)) return;
+        if (rejected.has(item.id)) rejected.delete(item.id); else rejected.add(item.id);
+        save(); render();
+        if (selected?.id === item.id) updateDialogDecision();
+      }
+      function updateDialogDecision() {
+        if (!selected) return;
+        decisionButton.hidden = approved.has(selected.id);
+        if (approved.has(selected.id)) return;
+        const isRejected = rejected.has(selected.id);
+        decisionButton.textContent = isRejected ? 'Restore candidate' : 'Reject candidate';
+        decisionButton.className = isRejected ? 'restore' : 'reject';
+      }
+      function openDetail(item, number) {
+        selected = item;
+        text(document.getElementById('detail-number'), `Candidate ${number} of ${items.length}`);
+        text(document.getElementById('detail-title'), item.label);
+        const preview = document.getElementById('detail-preview');
+        preview.src = item.preview; preview.alt = `Full photograph: ${item.label}`;
+        const crop = document.getElementById('detail-crop');
+        crop.src = item.crop; crop.alt = `Proposed wide crop: ${item.label}`;
+        text(document.getElementById('detail-meta'), `${item.creator} · ${item.license} · ${item.width.toLocaleString()} × ${item.height.toLocaleString()} pixels · focal point ${item.focusX.toFixed(2)}, ${item.focusY.toFixed(2)} (from top-left)`);
+        document.getElementById('detail-source').href = item.source;
+        updateDialogDecision();
+        dialog.showModal();
+      }
+      function makeCard(item, index) {
+        const card = node('article', 'card' + (rejected.has(item.id) ? ' is-rejected' : approved.has(item.id) ? ' is-approved' : ''));
+        const photo = node('button', 'photo-button');
+        photo.type = 'button'; photo.setAttribute('aria-label', `View ${item.label}`);
+        const img = document.createElement('img'); img.src = item.crop; img.alt = `Proposed card crop of ${item.label}`; img.loading = 'lazy';
+        photo.append(img); photo.addEventListener('click', () => openDetail(item, index + 1));
+        const body = node('div', 'card-body');
+        const top = node('div', 'card-top');
+        top.append(node('span', 'number', `${item.reviewBatch === '2026-10-01-g' ? 'NEW · ' : ''}CANDIDATE ${String(index + 1).padStart(2, '0')}`), node('span', 'badge', approved.has(item.id) ? 'Approved' : rejected.has(item.id) ? 'Rejected' : 'Under consideration'));
+        const heading = node('h2', '', item.label);
+        const meta = node('div', 'meta', `${item.creator} · ${item.license}\n${item.width.toLocaleString()} × ${item.height.toLocaleString()} pixels`);
+        meta.style.whiteSpace = 'pre-line';
+        const actions = node('div', 'card-actions');
+        const source = node('a', 'source', 'Source & rights ↗'); source.href = item.source; source.target = '_blank'; source.rel = 'noopener noreferrer';
+        actions.append(source);
+        if (!approved.has(item.id)) {
+          const decision = node('button', rejected.has(item.id) ? 'restore' : 'reject', rejected.has(item.id) ? 'Restore' : 'Reject');
+          decision.type = 'button'; decision.setAttribute('aria-label', `${rejected.has(item.id) ? 'Restore' : 'Reject'} ${item.label}`);
+          decision.addEventListener('click', () => toggle(item));
+          actions.append(decision);
+        }
+        body.append(top, heading, meta, actions); card.append(photo, body);
+        return card;
+      }
+      function render() {
+        const display = [...items].sort((a, b) => Number(b.reviewBatch === '2026-10-01-g') - Number(a.reviewBatch === '2026-10-01-g'));
+        gallery.replaceChildren(...display.flatMap(item => {
+          if (filter === 'remaining' && (rejected.has(item.id) || approved.has(item.id))) return [];
+          if (filter === 'approved' && !approved.has(item.id)) return [];
+          if (filter === 'rejected' && !rejected.has(item.id)) return [];
+          if (query && !`${item.label} ${item.creator} ${item.sourceTitle || ''}`.toLocaleLowerCase().includes(query)) return [];
+          return [makeCard(item, items.indexOf(item))];
+        }));
+        text(document.getElementById('total-count'), items.length);
+        text(document.getElementById('approved-count'), approved.size);
+        text(document.getElementById('remaining-count'), items.length - rejected.size - approved.size);
+        text(document.getElementById('rejected-count'), rejected.size);
+        document.getElementById('empty').style.display = gallery.childElementCount ? 'none' : 'block';
+        document.querySelectorAll('[data-filter]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === filter)));
+      }
+      document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { filter = button.dataset.filter; render(); }));
+      document.getElementById('candidate-search').addEventListener('input', event => { query = event.target.value.trim().toLocaleLowerCase(); render(); });
+      document.getElementById('close-detail').addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+      dialog.addEventListener('close', () => { selected = null; });
+      decisionButton.addEventListener('click', () => { if (selected) toggle(selected); });
+      document.getElementById('download-decisions').addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(decisionFile(), null, 2) + '\n'], {type:'application/json'});
+        const url = URL.createObjectURL(blob); const link = document.createElement('a');
+        link.href = url; link.download = 'chotki-image-decisions.json'; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        toast('Decision file downloaded.');
+      });
+      document.getElementById('copy-summary').addEventListener('click', async () => {
+        const chosen = items.filter(item => rejected.has(item.id));
+        const pending = items.length - approved.size - rejected.size;
+        const summary = `${approved.size} approved and locked in. Reject: ${chosen.map(item => `${items.indexOf(item) + 1} (${item.id})`).join(', ') || 'none'}. ${pending} candidates pending review.`;
+        try { await navigator.clipboard.writeText(summary); toast('Decision summary copied.'); }
+        catch (_) {
+          const area = document.createElement('textarea'); area.value = summary; document.body.append(area); area.select();
+          const copied = document.execCommand('copy'); area.remove();
+          toast(copied ? 'Decision summary copied.' : 'Clipboard unavailable; download decisions instead.');
+        }
+      });
+      document.getElementById('load-decisions').addEventListener('click', () => document.getElementById('decision-file').click());
+      document.getElementById('decision-file').addEventListener('change', async event => {
+        const file = event.target.files[0]; if (!file) return;
+        try {
+          const data = JSON.parse(await file.text());
+          if (!['chotki-image-review-v1', 'chotki-image-review-v2'].includes(data.format) || !Array.isArray(data.rejected) || data.rejected.some(id => !known.has(id))) throw new Error('Invalid or unfamiliar decision file');
+          rejected.clear(); data.rejected.forEach(id => { if (!approved.has(id)) rejected.add(id); }); save(); render(); toast('Decisions loaded.');
+        } catch (error) { toast(error.message || 'Could not load decisions.'); }
+        event.target.value = '';
+      });
+      loadLocal(); render();
+    })();
+  </script>
+</body>
+</html>

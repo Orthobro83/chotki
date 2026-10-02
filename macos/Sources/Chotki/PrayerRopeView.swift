@@ -28,7 +28,7 @@ struct PrayerRopeView: View {
                     .padding(.horizontal, 22).padding(.bottom, 16)
                 countButton
                 Text("Click, or press space.")
-                    .font(.system(size: 11))
+                    .font(.system(size: 15))
                     .foregroundStyle(Theme.faint)
                     .padding(.top, 7).padding(.bottom, 14)
             }
@@ -37,10 +37,15 @@ struct PrayerRopeView: View {
                 Rectangle().fill(Theme.lineSoft).frame(height: 1)
                 ScrollView {
                     RopeWords(model: model, selection: selection)
-                        .padding(.horizontal, 22).padding(.vertical, 14)
+                        .frame(maxWidth: 760).frame(maxWidth: .infinity).padding(.horizontal, 24).padding(.vertical, 18)
+                    ReadingEnd(identity: "\(selection)-\(model.selectedDate.iso)") {
+                        model.finishPrayer(selection, counted: false)
+                    }.frame(height: 1)
+                    Color.clear.frame(height: 24).chotkiScrollContent()
                 }
                 .scrollContentBackgroundHidden()
                 .frame(maxHeight: .infinity)
+                .softVerticalScrollEdges()
             } else {
                 Spacer(minLength: 0)
             }
@@ -54,12 +59,12 @@ struct PrayerRopeView: View {
     private var counter: some View {
         VStack(spacing: 4) {
             Text("\(screen.count)")
-                .font(.system(size: 54, weight: .light))
+                .font(.system(size: 64, weight: .light))
                 .foregroundStyle(Theme.gold)
                 .monospacedDigit()
                 .contentTransition(.numericText())
             Text(screen.isComplete ? "the knot is complete" : "of \(screen.target)")
-                .font(.system(size: 12))
+                .font(.system(size: 14))
                 .foregroundStyle(screen.isComplete ? Theme.goldDim : Theme.muted)
         }
         .frame(maxWidth: .infinity)
@@ -69,7 +74,7 @@ struct PrayerRopeView: View {
     private var countButton: some View {
         Button { advance() } label: {
             Text("Count")
-                .font(.system(size: 13))
+                .font(.system(size: 15))
                 .foregroundStyle(Theme.ground)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -107,7 +112,7 @@ struct PrayerRopeView: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            .font(.system(size: 11))
+            .font(.system(size: 15))
             .frame(maxWidth: 250)
         }
         .frame(maxWidth: .infinity)
@@ -126,7 +131,7 @@ struct PrayerRopeView: View {
                 ForEach(PrayerScreen.targets, id: \.self) { value in
                     Button { model.prayers.aim(at: value) } label: {
                         Text("\(value)")
-                            .font(.system(size: 11))
+                            .font(.system(size: 15))
                             .foregroundStyle(screen.target == value ? Theme.ground : Theme.muted)
                             .frame(width: 42, height: 22)
                             .background {
@@ -138,7 +143,7 @@ struct PrayerRopeView: View {
                 }
                 Button { model.prayers.startAgain() } label: {
                     Text("Start again")
-                        .font(.system(size: 11))
+                        .font(.system(size: 15))
                         .foregroundStyle(Theme.muted)
                 }
                 .buttonStyle(.plain)
@@ -148,13 +153,13 @@ struct PrayerRopeView: View {
 
             Button { model.prayers.showRope(!showsRope) } label: {
                 Text(showsRope ? "Hide rope" : "Show rope")
-                    .font(.system(size: 11))
+                    .font(.system(size: 15))
                     .foregroundStyle(Theme.gold)
             }
             .buttonStyle(.plain)
             .help("The rope follows the prayer unless you say otherwise")
         }
-        .padding(.horizontal, 22).padding(.vertical, 14)
+        .frame(maxWidth: 760).frame(maxWidth: .infinity).padding(.horizontal, 24).padding(.vertical, 18)
     }
 
     /// One dot per knot, filling as it goes.
@@ -177,6 +182,7 @@ struct PrayerRopeView: View {
         // The chime marks completion; the tick only confirms a press landed.
         // Never both at once — with your eyes closed they would run together.
         if completed {
+            if let selection = screen.selection { model.finishPrayer(selection, counted: true) }
             if model.settings.chimeOnCompletion { sound.playBell() }
         } else if model.settings.tickEachKnot {
             sound.playTick()
@@ -208,11 +214,11 @@ struct RopeWords: View {
                 ForEach(Array(prayers.enumerated()), id: \.element.id) { index, prayer in
                     VStack(alignment: .leading, spacing: 5) {
                         Text(prayer.title)
-                            .font(.system(size: 11))
+                            .font(.system(size: 15))
                             .foregroundStyle(Theme.gold)
                         PrayerProse(
                             model: model, paragraphs: prayer.paragraphs,
-                            size: 14, spacing: 4, matches: found[index]
+                            size: 18, spacing: 6, matches: found[index]
                         )
                     }
                 }
@@ -225,7 +231,7 @@ struct RopeWords: View {
             VStack(spacing: 4) {
                 PrayerProse(
                     model: model, paragraphs: prayer.paragraphs,
-                    size: 15, spacing: 4, centred: true
+                    size: 20, spacing: 6, centred: true
                 )
                 PrayerAttribution(prayer: prayer)
             }

@@ -71,6 +71,9 @@ object Content {
     val patristicReadings: List<PatristicReadingJson> by lazy {
         json.decodeFromString(load("patristic-readings"))
     }
+    val saintLives: List<SaintLifeJson> by lazy {
+        json.decodeFromString(load("saint-lives"))
+    }
     val prayerSources: List<PrayerSourceJson> by lazy {
         json.decodeFromString(load("prayer-sources"))
     }
@@ -81,6 +84,16 @@ object Content {
         json.decodeFromString(load("practice-profiles"))
     }
 }
+
+@Serializable
+data class SaintLifeJson(
+    val month: Int,
+    val day: Int,
+    val title: String,
+    val paragraphs: List<String>,
+    val source: String,
+    val sourceURL: String,
+)
 
 @Serializable
 data class JurisdictionJson(val name: String, val reckoning: String, val tradition: String)

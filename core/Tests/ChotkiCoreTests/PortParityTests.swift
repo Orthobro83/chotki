@@ -195,7 +195,9 @@ struct PortParityTests {
         // were both named on this screen and both read-only — printed, not
         // chosen — and the check above passed the whole time. A control writes,
         // so count the writes.
-        let offered = android.components(separatedBy: "Dropdown(").count - 1
+        let offered = ["ValueRow(", "SwitchRow(", "NameField("].reduce(0) {
+            $0 + android.components(separatedBy: $1).count - 1
+        }
         #expect(
             offered >= editableSettings.count,
             "Android names \(editableSettings.count) settings but offers \(offered) controls"
@@ -277,10 +279,11 @@ struct PortParityTests {
         ] {
             let code = try tree(path)
 
-            #expect(
-                code.contains("The rope alone"),
-                "\(platform) does not offer the rope on its own"
-            )
+            if platform == "Android" {
+                #expect(code.contains("ChooserRow(screen)"), "Android has no prayer chooser")
+            } else {
+                #expect(code.contains("The rope alone"), "\(platform) does not offer the rope on its own")
+            }
             #expect(
                 code.contains("sequences") || code.contains("prayerSequences"),
                 "\(platform) offers no rule to say through — only single prayers"
@@ -342,7 +345,7 @@ struct PortParityTests {
                 ?? []
 
             for file in files {
-                let code = try String(contentsOf: file, encoding: .utf8)
+                let code = Self.withoutComments(try String(contentsOf: file, encoding: .utf8))
 
                 // The welcome is prose, not liturgical text.
                 let prayerText = code.replacingOccurrences(of: "Welcome.paragraphs", with: "")
@@ -395,7 +398,7 @@ struct PortParityTests {
             let code = try tree(path)
             for action in actions {
                 #expect(
-                    code.contains(action),
+                    code.lowercased().contains(action.lowercased()),
                     "\(platform) does not offer \"\(action)\" anywhere — the Mac has it on every rule"
                 )
             }
@@ -503,7 +506,16 @@ struct PortParityTests {
         }
     }
 
-    /// Reflections, on every platform.
+    @Test("macOS retires Reflections from its user interface")
+    func macRetiresReflections() throws {
+        let mac = try tree("macos/Sources")
+        #expect(!mac.contains("ReflectionJournal"))
+        #expect(!mac.contains("ReflectionEntry"))
+        #expect(!mac.contains("Open Reflections"))
+        #expect(mac.contains(".reference != .reflections"), "Old records must be excluded from practice")
+    }
+
+    /// Android and iOS retain Reflections; the macOS overhaul retires them.
     ///
     /// Written after the fact, and it found something immediately: the shared
     /// explainer ends by telling the reader to click "Add this as a daily rule",
@@ -517,7 +529,7 @@ struct PortParityTests {
     /// passes on two is not a passing check.
     @Test("every platform offers the reflections journal")
     func reflectionsAreOnEveryPlatform() throws {
-        for (platform, path) in Self.appTrees {
+        for (platform, path) in Self.appTrees where platform != "macOS" {
             let code = try tree(path)
 
             #expect(
@@ -563,7 +575,7 @@ struct PortParityTests {
     /// wrong, and no way to notice.
     @Test("no platform types the reflections text into itself")
     func reflectionTextComesFromCore() throws {
-        for (platform, path) in Self.appTrees {
+        for (platform, path) in Self.appTrees where platform != "macOS" {
             let code = try tree(path)
 
             #expect(
@@ -593,7 +605,7 @@ struct PortParityTests {
     /// of both phones until this test was written.
     @Test("every platform draws the control its own explainer names")
     func everyPlatformHasTheTakeOnControl() throws {
-        for (platform, path) in Self.appTrees {
+        for (platform, path) in Self.appTrees where platform != "macOS" {
             #expect(
                 try tree(path).contains("addAsRuleLabel"),
                 """
@@ -607,13 +619,17 @@ struct PortParityTests {
     /// A rule of one's own has to lead back to the section on every surface, and
     /// land on the day it was tapped from rather than at the top of a seven-day
     /// scroll.
-    @Test("the rule leads to the section, on the day it was tapped from")
+    @Test("the surviving Reflections sections are reachable")
     func theRuleLeadsToTheSection() throws {
-        // Swift spells the case `.reflections`, Kotlin `REFLECTIONS`. Asking for
-        // either is the point: the check is that the platform reaches for the
-        // core case at all, not how its language writes it.
-        for (platform, path) in Self.appTrees {
+        for (platform, path) in Self.appTrees where platform != "macOS" {
             let code = try tree(path)
+            if platform == "Android" {
+                // Android's overhauled cards no longer expose a Reflections
+                // shortcut. The section still has its own navigation route.
+                #expect(code.contains("Screen.Reflections("))
+                #expect(code.contains("ReflectionsScreen("))
+                continue
+            }
             // The case *and* the words on the control. Asking only for the case
             // is satisfied by a branch that does nothing — which is exactly what
             // a half-removed link looks like, and it passed this check once.

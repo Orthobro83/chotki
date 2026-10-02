@@ -25,7 +25,7 @@ private func makeModel() throws -> AppModel {
         launchAtLogin: NoLaunchAtLogin(),
         storage: .none(),
         startsReminders: false,
-        writesBackups: false
+        writesBackups: false, loadsCalendar: false
     )
 }
 
@@ -370,7 +370,7 @@ struct ObservanceReconciliationTests {
 
         let model = AppModel(
             store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
-            storage: .none(), startsReminders: false, writesBackups: false
+            storage: .none(), startsReminders: false, writesBackups: false, loadsCalendar: false
         )
 
         #expect(model.settings.observances.fasting == .observed,
@@ -390,7 +390,7 @@ struct ObservanceReconciliationTests {
 
         let model = AppModel(
             store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
-            storage: .none(), startsReminders: false, writesBackups: false
+            storage: .none(), startsReminders: false, writesBackups: false, loadsCalendar: false
         )
         #expect(model.settings.observances.fasting == .shown,
                 "nothing is stranded, so nothing needs changing")
@@ -401,7 +401,7 @@ struct ObservanceReconciliationTests {
         let store = InMemoryStore()
         let model = AppModel(
             store: store, notifier: SilentNotifier(), launchAtLogin: NoLaunchAtLogin(),
-            storage: .none(), startsReminders: false, writesBackups: false
+            storage: .none(), startsReminders: false, writesBackups: false, loadsCalendar: false
         )
         model.update { $0.showOldStyleDates = true }
         #expect(try store.loadSettings()?.showOldStyleDates == true)
@@ -949,60 +949,5 @@ struct DayAdvanceTests {
         model.advanceDayIfNeeded(now: opened)
         model.advanceDayIfNeeded(now: opened)
         #expect(model.selectedDate == opened)
-    }
-}
-
-
-/// Ryan: "If this rule is navigated to from the Rule list, and the user
-/// completes a text entry for that day's rule, this should automatically mark
-/// the Rule complete for that day, as soon as they press Save."
-@MainActor
-@Suite("Answering the day's question keeps the rule")
-struct ReflectionKeepsTheRuleTests {
-
-    private func modelWithReflection() throws -> AppModel {
-        let model = try makeModel()
-        let template = try #require(
-            RuleLibrary.shared.templates.first { $0.title == reflectionRuleTitle })
-        model.take(on: template)
-        return model
-    }
-
-    @Test("saving an answer marks the day")
-    func savingMarksTheDay() throws {
-        let model = try modelWithReflection()
-        let today = model.today
-        let before = try #require(
-            model.entries(on: today).first { $0.rule.reference == .reflections })
-        #expect(!before.isKept, "nothing has been written yet")
-
-        model.saveReflection(today.weekday, text: "Something true.")
-
-        let after = try #require(
-            model.entries(on: today).first { $0.rule.reference == .reflections })
-        #expect(after.isKept, "the writing is the evidence; it should not need a tick as well")
-    }
-
-    /// The half that stops this becoming a nuisance. An empty answer is not an
-    /// answer, and nothing should be recorded for it.
-    @Test("an empty answer marks nothing")
-    func emptyMarksNothing() throws {
-        let model = try modelWithReflection()
-        model.saveReflection(model.today.weekday, text: "   ")
-        let entry = try #require(
-            model.entries(on: model.today).first { $0.rule.reference == .reflections })
-        #expect(!entry.isKept)
-    }
-
-    /// It adds a completion and never removes one, so writing a second answer
-    /// on a day already marked must not untick it.
-    @Test("writing again does not undo the mark")
-    func writingAgainKeepsIt() throws {
-        let model = try modelWithReflection()
-        model.saveReflection(model.today.weekday, text: "First.")
-        model.saveReflection(model.today.weekday, text: "Second.")
-        let entry = try #require(
-            model.entries(on: model.today).first { $0.rule.reference == .reflections })
-        #expect(entry.isKept, "a second answer is still an answer")
     }
 }

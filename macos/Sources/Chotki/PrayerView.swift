@@ -151,12 +151,10 @@ struct PrayerView: View {
     var body: some View {
         // The ornament sits over the words rather than around them, so the
         // text keeps its full width and nothing reflows at a large type size.
-        // The fade goes between the two: a line arriving at the top of the
-        // page comes out from behind the border rather than across it.
         ZStack {
             ScrollView { PrayerViewContent(model: model, ruleID: ruleID) }
                 .scrollContentBackgroundHidden()
-            EdgeFade()
+                .softVerticalScrollEdges()
             VenerationBorder()
         }
         .frame(maxHeight: .infinity)

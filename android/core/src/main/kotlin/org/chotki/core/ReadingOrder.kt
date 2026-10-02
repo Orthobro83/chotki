@@ -8,6 +8,7 @@ package org.chotki.core
  * included, so a Matins Gospel is not filed with the day's Gospel.
  */
 object ReadingOrder {
+    const val SAINT_LIFE_BAND = 4
     fun band(source: String): Int {
         val text = source.lowercase()
         if ("matins" in text) return 3
@@ -21,6 +22,7 @@ object ReadingOrder {
     fun bandOfTitle(title: String): Int? {
         val text = title.lowercase()
         return when {
+            "life of the day" in text && "saint" in text -> SAINT_LIFE_BAND
             "epistle" in text -> 1
             "vespers" in text -> 2
             "matins" in text -> 3

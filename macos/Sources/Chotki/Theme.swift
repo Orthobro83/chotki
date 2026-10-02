@@ -13,11 +13,11 @@ enum Theme {
     static let lineSoft = Color(red: 0.137, green: 0.145, blue: 0.173)
 
     static let gold = Color(red: 0.788, green: 0.635, blue: 0.153)
-    static let goldDim = Color(red: 0.541, green: 0.447, blue: 0.125)
+    static let goldDim = Color(red: 0.66, green: 0.54, blue: 0.20)
     static let parchment = Color(red: 0.910, green: 0.875, blue: 0.804)
     static let parchmentDim = Color(red: 0.847, green: 0.812, blue: 0.741)
-    static let muted = Color(red: 0.541, green: 0.522, blue: 0.471)
-    static let faint = Color(red: 0.353, green: 0.337, blue: 0.298)
+    static let muted = Color(red: 0.64, green: 0.62, blue: 0.56)
+    static let faint = Color(red: 0.51, green: 0.49, blue: 0.44)
 
     /// Fasting seasons. Never used to mark something as missed.
     static let violet = Color(red: 0.604, green: 0.561, blue: 0.769)
@@ -55,7 +55,7 @@ enum Theme {
     static let readingFace: String? = serifChain.first { NSFont(name: $0, size: 12) != nil }
 
     /// The face for anything meant to be read: prayers, psalms, readings,
-    /// glossary entries, reflections, the progress prose.
+    /// glossary entries, and the progress prose.
     ///
     /// Chrome keeps the system sans — the sidebar, the month grid's numerals,
     /// times, buttons and settings. Figures in a dense grid want to be tight

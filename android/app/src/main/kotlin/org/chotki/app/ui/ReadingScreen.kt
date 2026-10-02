@@ -1,6 +1,7 @@
 package org.chotki.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,8 @@ import org.chotki.core.ReadingOrder
 import org.chotki.core.Reckoning
 import org.chotki.core.content.Glossary
 import org.chotki.core.content.PatristicReadings
+import org.chotki.core.content.Content
+import org.chotki.core.content.SaintLifeJson
 import kotlinx.coroutines.flow.first
 
 /**
@@ -100,13 +103,21 @@ private fun Readings(
         .toSet()
     val ordered = ReadingOrder.sorted(day.readings, { it.source }) { ReadingOrder.band(it.source) in held }
     val chunks = ordered.groupBy { ReadingOrder.band(it.source) }
+    val saintLife = Content.saintLives.firstOrNull {
+        it.month == day.observedDate.month && it.day == day.observedDate.day
+    }
+    var saintExpanded by remember(day.observedDate) { mutableStateOf(true) }
+    LaunchedEffect(focusNonce, focusBand) {
+        if (focusBand == ReadingOrder.SAINT_LIFE_BAND) saintExpanded = true
+    }
+    val availableBands = chunks.keys + if (saintLife != null) setOf(ReadingOrder.SAINT_LIFE_BAND) else emptySet()
     val list = rememberLazyListState()
     var scrolled by remember { mutableStateOf(false) }
     var following by remember { mutableStateOf(false) }
     val marked = remember { mutableStateListOf<Int>() }
-    LaunchedEffect(focusNonce, focusBand, chunks.keys.toList()) {
+    LaunchedEffect(focusNonce, focusBand, availableBands.toList()) {
         val band = focusBand ?: return@LaunchedEffect
-        if (band !in chunks) return@LaunchedEffect
+        if (band !in availableBands) return@LaunchedEffect
         var index = 1
         for ((key, readings) in chunks) {
             if (key == band) break
@@ -132,7 +143,7 @@ private fun Readings(
         snapshotFlow { list.layoutInfo.visibleItemsInfo.map { it.key } }
             .collect { keys ->
                 if (!scrolled) return@collect
-                for (band in chunks.keys) {
+                for (band in availableBands) {
                     if ("end-$band" in keys && band !in marked) {
                         marked.add(band)
                         state.entries(state.selectedDate)
@@ -155,8 +166,37 @@ private fun Readings(
             }
             item(key = "end-$band") { Spacer(Modifier.size(1.dp)) }
         }
+        item(key = "saint-life") { SaintLifeBlock(day, saintLife, saintExpanded) { saintExpanded = !saintExpanded } }
+        if (saintLife != null && saintExpanded) {
+            item(key = "end-${ReadingOrder.SAINT_LIFE_BAND}") { Spacer(Modifier.size(1.dp)) }
+        }
         item { Fathers(state, day) }
         item { Spacer(Modifier.size(32.dp)) }
+    }
+}
+
+@Composable
+private fun SaintLifeBlock(day: LiturgicalDay, life: SaintLifeJson?, expanded: Boolean, toggle: () -> Unit) {
+    Rule()
+    Column(Modifier.padding(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().clickable(onClick = toggle), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Life of the Day’s Saint", color = Chotki.gold, fontFamily = Chotki.reading, fontSize = 19.sp)
+            Text(if (expanded) "⌃" else "⌄", color = Chotki.gold, fontSize = 19.sp)
+        }
+        if (expanded && life == null) {
+            if (day.saints.isNotEmpty()) {
+                Text(day.saints.joinToString(" · "), color = Chotki.muted, fontSize = 13.sp)
+            }
+            Text("A public-domain English life is not yet available for this day.",
+                color = Chotki.faint, fontSize = 13.sp)
+        } else if (expanded && life != null) {
+            Text(life.title, color = Chotki.parchment, fontFamily = Chotki.reading, fontSize = 18.sp)
+            life.paragraphs.forEach { paragraph ->
+                Text(paragraph, color = Chotki.parchment, fontFamily = Chotki.reading,
+                    fontSize = 17.sp, lineHeight = 17.sp * 1.45f)
+            }
+            Text(life.source, color = Chotki.faint, fontSize = 12.sp)
+        }
     }
 }
 

@@ -172,33 +172,3 @@ struct VenerationBorder: View {
 /// gone by the time it is clear of the band, drawn under the ornament and over
 /// the text. Nothing is clipped and nothing reflows: the text keeps the full
 /// height of the page and simply dissolves before it reaches the frame.
-struct EdgeFade: View {
-    var ground: Color = Theme.ground
-    var depth: CGFloat = 40
-
-    var body: some View {
-        VStack(spacing: 0) {
-            LinearGradient(
-                stops: [
-                    .init(color: ground, location: 0),
-                    .init(color: ground, location: 0.55),
-                    .init(color: ground.opacity(0), location: 1),
-                ],
-                startPoint: .top, endPoint: .bottom)
-                .frame(height: depth)
-
-            Spacer(minLength: 0)
-
-            LinearGradient(
-                stops: [
-                    .init(color: ground.opacity(0), location: 0),
-                    .init(color: ground, location: 0.45),
-                    .init(color: ground, location: 1),
-                ],
-                startPoint: .top, endPoint: .bottom)
-                .frame(height: depth)
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}

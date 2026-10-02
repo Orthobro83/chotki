@@ -9,14 +9,17 @@ import ChotkiCore
 struct LibraryViewContent: View {
     @ObservedObject var model: AppModel
 
+    @State private var caution = false
+    @State private var hideCaution = false
+
     private var library: RuleLibrary {
         RuleLibrary.shared.scoped(to: model.settings.jurisdiction.tradition)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Take on what you are ready for. Two or three is a good beginning.")
-                .font(.system(size: 11))
+            Text("Select a prayer, reading, or discipline to add to your routine.")
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.faint)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 4)
@@ -25,11 +28,11 @@ struct LibraryViewContent: View {
                 // Capitalised as they are defined in core. Text that came from
                 // the calendar is never re-cased either way.
                 Text(category.displayName)
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.gold)
                     .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 3)
 
-                ForEach(templates) { template in
+                ForEach(templates.filter { $0.id != "reflection" }) { template in
                     TemplateRow(model: model, template: template, taken: isTaken(template))
                 }
             }
@@ -37,15 +40,34 @@ struct LibraryViewContent: View {
             if !model.customEntries.isEmpty { custom }
 
             Rectangle().fill(Theme.line).frame(height: 1).padding(.top, 12)
-            Button { model.screen = .editor(nil) } label: {
+            Button {
+                model.editorDraft = nil
+                if model.settings.customCautionDismissed { model.screen = .editor(nil) } else { caution = true }
+            } label: {
                 Label("Write your own rule", systemImage: "plus")
-                    .font(.system(size: 12))
+                    .font(.system(size: 15))
                     .foregroundStyle(Theme.gold)
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 14).padding(.vertical, 10)
         }
-    
+        .sheet(isPresented: $caution) {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Writing Your Own Rule").font(Theme.reading(23))
+                Text("This section is for personalized routines aimed at improving your overall physical, mental, and spiritual health. It is not intended to enable you to manufacture your own Orthodoxy. We strongly recommend that where appropriate, custom rules be discussed with your priest or spiritual father. If that is not possible, keep these custom rules simple and attainable (e.g., jogging, swimming, sobriety).")
+                    .font(.system(size: 14)).fixedSize(horizontal: false, vertical: true)
+                Toggle("Don't Show Again", isOn: $hideCaution)
+                HStack {
+                    Button("Cancel") { caution = false }
+                    Spacer()
+                    Button("I Understand") {
+                        if hideCaution { model.update { $0.customCautionDismissed = true } }
+                        caution = false
+                        model.screen = .editor(nil)
+                    }.buttonStyle(GoldButtonStyle())
+                }
+            }.foregroundStyle(Theme.parchment).padding(24).frame(width: 440).background(Theme.ground)
+        }
     }
 
     /// His own rules, kept so they can be taken up again without being written
@@ -53,14 +75,14 @@ struct LibraryViewContent: View {
     private var custom: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Custom")
-                .font(.system(size: 11))
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.gold)
                 .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 3)
 
             // Descriptive, not instructing: it says what is usually so, and
             // leaves the decision where it belongs.
             Text("Custom routines are usually taken on the advice of your priest or spiritual father.")
-                .font(.system(size: 11))
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.faint)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14).padding(.bottom, 4)
@@ -92,17 +114,22 @@ struct CustomRow: View {
         HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(rule.title)
-                    .font(.system(size: 12))
+                    .font(.system(size: 15))
                     .foregroundStyle(isOnTheRule ? Theme.muted : Theme.parchment)
                 Text(rule.timeOfDay.map { Format.time($0, model.settings.clockStyle) } ?? "All day")
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.faint)
                 if let note = rule.note, !note.isEmpty {
                     Text(note)
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.faint.opacity(0.85))
                         .italic()
                         .fixedSize(horizontal: false, vertical: true)
+                }
+                if let attribution = rule.suggestedByLabel(currentFather: model.settings.spiritualFatherName) {
+                    Text(attribution)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.goldDim)
                 }
             }
 
@@ -110,12 +137,12 @@ struct CustomRow: View {
 
             if isOnTheRule {
                 Text("On your rule")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.goldDim)
             } else {
                 Button { model.takeUp(rule) } label: {
                     Text("Take on")
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.gold)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.goldDim))
@@ -130,7 +157,7 @@ struct CustomRow: View {
             .foregroundStyle(hovering ? Theme.muted : Theme.faint)
             .help("Remove from the library. The rule and everything it has kept stay as they are.")
         }
-        .padding(.horizontal, 14).padding(.vertical, 6)
+        .padding(.horizontal, 18).padding(.vertical, 12)
         .background(hovering ? Theme.panel : .clear)
         .onHover { hovering = $0 }
     }
@@ -146,23 +173,23 @@ struct TemplateRow: View {
         HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(template.title)
-                    .font(.system(size: 12))
+                    .font(.system(size: 15))
                     .foregroundStyle(taken ? Theme.muted : Theme.parchment)
                 Text(template.summary)
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
                 if let trigger = template.requiredTrigger,
                    !model.settings.observances.setting(for: trigger).drivesRules,
                    !taken {
                     Text("Taking this on will start observing \(ObservanceSettings.name(for: trigger)).")
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.goldDim)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if let note = template.note {
                     Text(note)
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.faint.opacity(0.85))
                         .italic()
                         .fixedSize(horizontal: false, vertical: true)
@@ -172,7 +199,7 @@ struct TemplateRow: View {
                         ForEach(template.glossarySlugs.prefix(3), id: \.self) { slug in
                             Button { model.openGlossary(slug) } label: {
                                 Text(slug.replacingOccurrences(of: "-", with: " "))
-                                    .font(.system(size: 10))
+                                    .font(.system(size: 12))
                                     .foregroundStyle(Theme.goldDim)
                             }
                             .buttonStyle(.plain)
@@ -186,12 +213,12 @@ struct TemplateRow: View {
 
             if taken {
                 Text("On your rule")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.goldDim)
             } else {
-                Button { model.take(on: template) } label: {
+                Button { model.prepare(template) } label: {
                     Text("Take on")
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.gold)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.goldDim))
@@ -199,7 +226,7 @@ struct TemplateRow: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 14).padding(.vertical, 6)
+        .padding(.horizontal, 18).padding(.vertical, 12)
         .background(hovering ? Theme.panel : .clear)
         .onHover { hovering = $0 }
     }
@@ -224,7 +251,7 @@ struct InlineLibrary: View {
 
             HStack(spacing: 10) {
                 Text("Library")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Theme.parchment)
                 Spacer()
                 Button {
@@ -232,7 +259,7 @@ struct InlineLibrary: View {
                     model.screen = .library
                 } label: {
                     Text("Open in full")
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.gold)
                 }
                 .buttonStyle(.plain)
@@ -258,8 +285,9 @@ struct LibraryView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ScrollView { LibraryViewContent(model: model) }
+        ScrollView { LibraryViewContent(model: model).frame(maxWidth: 780, alignment: .leading).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 8).chotkiScrollContent() }
             .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
+            .softVerticalScrollEdges()
     }
 }

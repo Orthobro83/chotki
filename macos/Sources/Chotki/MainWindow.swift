@@ -2,65 +2,49 @@ import SwiftUI
 import AppKit
 import ChotkiCore
 
-/// What the sidebar offers. The popover's three tabs plus the things that are
-/// cramped at 400 points.
 enum MainSection: String, CaseIterable, Hashable {
-    case rule = "Rule"
-    case reading = "Reading"
-    case prayers = "Prayers"
-    case progress = "Progress"
-    case reflections = "Reflections"
-    case library = "Library"
-    case glossary = "Glossary"
-    case settings = "Settings"
-
+    case rule = "Home", prayers = "Prayers", reading = "Reading", progress = "Progress"
+    case library = "Library", glossary = "Glossary", settings = "Settings"
     var symbol: String {
         switch self {
         case .rule: return "calendar"
+        case .prayers: return "circle.hexagonpath"
         case .reading: return "book"
         case .progress: return "chart.line.uptrend.xyaxis"
-        case .reflections: return "square.and.pencil"
         case .library: return "square.grid.2x2"
-        case .prayers: return "hands.sparkles"
         case .glossary: return "text.book.closed"
         case .settings: return "gearshape"
         }
     }
+    static let groups: [(String, [MainSection])] = [
+        ("The Day", [.rule]), ("To Read", [.prayers, .reading]),
+        ("The Record", [.progress, .library]), ("Reference", [.glossary, .settings])
+    ]
+    var dueDestination: DueDestination? {
+        switch self {
+        case .rule: return .home
+        case .prayers: return .prayers
+        case .reading: return .reading
+        default: return nil
+        }
+    }
 }
 
-/// The full window. Same model, same content, given room — the month grid and
-/// the day's rules sit side by side instead of stacked in a column.
-/// Where a navigation request from shared content lands in the window.
-///
-/// Extracted from the view so it can be tested: shared content navigates by
-/// setting `model.screen`, which is the popover's mechanism, and a screen the
-/// window forgets to handle is a control that silently does nothing there while
-/// working perfectly in the popover.
 enum WindowRoute: Equatable {
-    case section(MainSection)
-    case editor(UUID?)
-    case prayers(UUID)
-    case glossary(String?)
-    /// Already where it needs to be.
-    case stay
-
+    case section(MainSection), editor(UUID?), prayers(UUID), glossary(String?), stay
     static func route(for screen: Screen) -> WindowRoute {
         switch screen {
         case .main: return .stay
         case .library: return .section(.library)
         case .settings: return .section(.settings)
         case .glossary(let slug): return .glossary(slug)
-        case .editor(let ruleID): return .editor(ruleID)
-        case .prayerRope: return .section(.prayers)
-        case .prayers(let ruleID): return .prayers(ruleID)
-        // The Psalter lives under Prayers in the window, as the rope does.
-        case .psalter: return .section(.prayers)
-        case .reflections: return .section(.reflections)  // the weekday is read by the view
+        case .editor(let id): return .editor(id)
+        case .prayers(let id): return .prayers(id)
+        case .prayerRope, .psalter: return .section(.prayers)
         }
     }
 }
 
-/// A rule being edited in the window, as a sheet.
 private struct EditorTarget: Identifiable {
     let ruleID: UUID?
     var id: String { ruleID?.uuidString ?? "new" }
@@ -69,197 +53,153 @@ private struct EditorTarget: Identifiable {
 struct MainWindowView: View {
     @ObservedObject var model: AppModel
     @State private var section: MainSection
-
-    /// `initialSection` exists for the render harness.
-    ///
-    /// The sidebar's selection is `@State`, so nothing outside this view can
-    /// move it — which is why the harness has to build its shots in one
-    /// careful order and can never go back. A section it cannot reach at all
-    /// is a section that gets signed off unseen, which has happened here
-    /// before. This lets it open a window already on the screen it wants.
-    init(model: AppModel, initialSection: MainSection = .rule) {
-        self.model = model
-        _section = State(initialValue: initialSection)
-    }
-
-    /// Where the sidebar was before the current section, so Terms can go back to
-    /// it. Cleared when it is used, otherwise pressing back on Terms would
-    /// return to Terms.
+    @State private var collapsed = false
     @State private var previousSection: MainSection?
     @State private var editing: EditorTarget?
-    @State private var reading: EditorTarget?
+    @State private var prayerRuleID: UUID?
     @State private var pendingSlug: String?
+    @State private var psalter = false
+    @Namespace private var selection
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(model: AppModel, initialSection: MainSection = .rule, initiallyCollapsed: Bool = false) {
+        self.model = model
+        _section = State(initialValue: initialSection)
+        _collapsed = State(initialValue: initiallyCollapsed)
+    }
+    private var motion: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.28) }
 
     var body: some View {
-        NavigationSplitView {
-            List(MainSection.allCases, id: \.self, selection: sidebarSelection) { item in
-                Label(item.rawValue, systemImage: item.symbol)
-                    .font(.system(size: 13))
-                    .tag(item)
-            }
-            .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 168, ideal: 180, max: 220)
-        } detail: {
-            detail
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(Theme.ground)
-        }
-        .navigationTitle(section.rawValue)
-        // Buttons inside shared content navigate by setting `model.screen`,
-        // which is the popover's mechanism. The window has a sidebar instead,
-        // so it translates those requests rather than ignoring them — without
-        // this, Add, Library, Terms, Settings and the edit pencil are all dead
-        // in the window while working perfectly in the popover.
-        .onReceive(model.$screen) { screen in
-            switch WindowRoute.route(for: screen) {
-            case .stay:
-                return
-            case .section(let target):
-                go(to: target)
-            case .glossary(let slug):
-                pendingSlug = slug
-                go(to: .glossary)
-            case .editor(let ruleID):
-                editing = EditorTarget(ruleID: ruleID)
-            case .prayers(let ruleID):
-                reading = EditorTarget(ruleID: ruleID)
-            }
-            model.screen = .main
-        }
-        .sheet(item: $reading) { target in
-            VStack(spacing: 0) {
-                Header(title: "Prayers") { reading = nil }
-                if let ruleID = target.ruleID {
-                    PrayerView(model: model, ruleID: ruleID)
+        HStack(spacing: 0) {
+            sidebar
+            Rectangle().fill(Theme.lineSoft).frame(width: 1)
+            VStack(alignment: .leading, spacing: 0) {
+                if model.settings.hasCompletedFirstRun {
+                    HStack {
+                        Text(section == .rule ? model.greeting : section.rawValue)
+                            .font(Theme.reading(28)).foregroundStyle(Theme.parchment)
+                        Spacer()
+                        if model.isReviewSample {
+                            Button { model.previewDueAlert() } label: { Image(systemName: "bell.badge") }
+                                .buttonStyle(.plain).foregroundStyle(Theme.gold)
+                                .help("Preview Due Alert")
+                                .accessibilityLabel("Preview Due Alert")
+                        }
+                        if section == .rule {
+                            Button { go(to: .library) } label: { Image(systemName: "plus") }
+                                .buttonStyle(.plain).foregroundStyle(Theme.gold).help("Open the Library")
+                        }
+                    }.padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 18)
+                    detail.id(section)
+                        .transition(.asymmetric(insertion: .opacity.combined(with: .offset(x: 10)), removal: .opacity))
+                } else {
+                    OnboardingView(model: model)
                 }
+                NoticeLine(model: model)
+            }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .glossaryDetour(model: model, backTitle: "Back to \(section.rawValue)", enabled: model.navigationSurface == .window)
+        }
+        .background(ChotkiBackdrop()).preferredColorScheme(.dark)
+        .overlay { if model.settings.shouldAskForSpiritualFather(on: model.today) { FatherPrompt(model: model) } }
+        .animation(motion, value: section).animation(motion, value: collapsed)
+        .onReceive(model.$tab.dropFirst()) { tab in
+            guard model.navigationSurface == .window else { return }
+            // Tab changes are navigation requests from shared content.
+            if let target = MainSection(rawValue: tab.rawValue) { go(to: target) }
+        }
+        .onReceive(model.$screen) { screen in
+            guard model.navigationSurface == .window else { return }
+            switch WindowRoute.route(for: screen) {
+            case .stay: return
+            case .section(let target):
+                psalter = screen == .psalter
+                if target == .prayers { prayerRuleID = nil }
+                go(to: target)
+            case .glossary: return
+            case .editor(let id): editing = EditorTarget(ruleID: id)
+            case .prayers(let id): prayerRuleID = id; psalter = false; go(to: .prayers)
             }
-            .frame(width: 460, height: 620)
-            .background(Theme.ground)
         }
         .sheet(item: $editing) { target in
             VStack(spacing: 0) {
-                Header(title: target.ruleID == nil ? "New rule" : "Edit rule") { editing = nil }
-                RuleEditorView(model: model, ruleID: target.ruleID) { editing = nil }
-            }
-            .frame(width: 430, height: 580)
-            .background(Theme.ground)
+                Header(title: target.ruleID == nil ? "New Rule" : "Edit Rule") { editing = nil; model.editorDraft = nil; model.screen = .main }
+                RuleEditorView(model: model, ruleID: target.ruleID) { editing = nil; model.editorDraft = nil; model.screen = .main }
+            }.frame(width: 520, height: 680).background(ChotkiBackdrop()).preferredColorScheme(.dark)
         }
     }
 
-    /// Records where the reader was before moving, so a detour can be undone.
-    private var sidebarSelection: Binding<MainSection> {
-        Binding(get: { section }, set: { go(to: $0) })
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button { collapsed.toggle() } label: {
+                Image(systemName: "sidebar.left").font(.system(size: 16)).frame(width: 30, height: 32)
+            }.buttonStyle(.plain).foregroundStyle(Theme.muted)
+                .help(collapsed ? "Expand Sidebar" : "Collapse Sidebar")
+                .accessibilityLabel(collapsed ? "Expand Sidebar" : "Collapse Sidebar")
+                .keyboardShortcut("s", modifiers: [.command, .control])
+            ForEach(MainSection.groups, id: \.0) { heading, items in
+                if !collapsed {
+                    Text(heading).font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.muted)
+                        .padding(.leading, 10).padding(.top, 16).padding(.bottom, 3)
+                } else { Spacer().frame(height: 12) }
+                ForEach(items, id: \.self) { item in
+                    Button { psalter = false; prayerRuleID = nil; model.screen = .main; go(to: item) } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: item.symbol).frame(width: 18)
+                            if !collapsed { Text(item.rawValue); Spacer(minLength: 0) }
+                        }.font(.system(size: 13)).padding(.horizontal, 10).frame(height: 36)
+                            .foregroundStyle(section == item ? Theme.parchment : Theme.muted)
+                            .background {
+                                if section == item {
+                                    RoundedRectangle(cornerRadius: 8).fill(Theme.panel)
+                                        .matchedGeometryEffect(id: "sidebar-selection", in: selection)
+                                }
+                            }
+                            .duePulse(until: item.dueDestination.flatMap { model.attentionUntil[$0] })
+                    }.buttonStyle(.plain).help(item.rawValue).accessibilityLabel(item.rawValue)
+                        .accessibilityAddTraits(section == item ? .isSelected : [])
+                }
+            }
+            Spacer(minLength: 0)
+        }.padding(10).frame(width: collapsed ? 58 : 188)
+            .frame(maxHeight: .infinity).background(Theme.ground.opacity(0.24))
     }
 
     private func go(to target: MainSection) {
-        guard target != section else { return }
+        guard section != target else { return }
         previousSection = section
         section = target
     }
 
     @ViewBuilder private var detail: some View {
         switch section {
-        case .rule: ruleSection
-        case .reading: scrolling { ReadingViewContent(model: model) }
-        case .progress: scrolling { ProgressTabViewContent(model: model) }
-        // Its own ScrollView rather than `scrolling`, because the overlay has
-        // to sit over the whole pane instead of inside the scrolled content.
-        case .reflections: ReflectionsView(model: model)
-        case .library: scrolling { LibraryViewContent(model: model) }
-        case .prayers: PrayerRopeView(model: model)
+        case .rule: RuleTabView(model: model, onOpenLibrary: { go(to: .library) })
+        case .prayers:
+            if psalter {
+                VStack(spacing: 0) {
+                    Header(title: "The Psalter") { psalter = false }
+                    PsalterView(model: model)
+                }
+            } else if let prayerRuleID {
+                VStack(spacing: 0) {
+                    Header(title: "Prayers") { self.prayerRuleID = nil; model.screen = .main }
+                    PrayerView(model: model, ruleID: prayerRuleID)
+                }
+            } else { PrayerRopeView(model: model) }
+        case .reading: ReadingView(model: model)
+        case .progress: ProgressTabView(model: model)
+        case .library: LibraryView(model: model)
+        case .settings: SettingsView(model: model)
         case .glossary:
             VStack(spacing: 0) {
-                // A term is nearly always opened from somewhere — a word in a
-                // prayer, the day's fasting note — and the way back matters more
-                // here than on a section the reader chose deliberately.
                 if let previousSection {
-                    SectionBackRow(title: previousSection.rawValue) {
-                        let target = previousSection
+                    Header(title: "Back to \(previousSection.rawValue)") {
+                        section = previousSection
                         self.previousSection = nil
-                        section = target
                     }
                 }
-                // Re-created when a different term is requested, so the glossary
-                // seeds itself on the new slug.
-                GlossaryView(model: model, initialSlug: pendingSlug)
-                    .id(pendingSlug ?? "all")
-            }
-        case .settings: scrolling { SettingsViewContent(model: model) }
-        }
-    }
-
-    /// Side by side needs room for both: the calendar will not shrink below its
-    /// grid, so everything taken off the window comes out of the day, and past a
-    /// point the rule titles wrap one letter to a line.
-    private static let sideBySideWidth: CGFloat = 660
-
-    /// Calendar beside the day when there is room for both, above it when there
-    /// is not — which is how the popover shows it at 400 points.
-    private var ruleSection: some View {
-        GeometryReader { proxy in
-            if proxy.size.width < Self.sideBySideWidth {
-                // Stacked, the calendar is pinned along with the day: the window
-                // has the height for both, and losing the calendar is the thing
-                // the layout was rearranged to avoid.
-                RuleTabView(model: model, pinsCalendar: true)
-            } else {
-                sideBySideRule
+                GlossaryView(model: model, initialSlug: pendingSlug).id(pendingSlug ?? "all")
             }
         }
-    }
-
-    private var sideBySideRule: some View {
-        HStack(alignment: .top, spacing: 0) {
-            ScrollView {
-                MonthGridView(model: model)
-                    .frame(width: 340)
-            }
-            .frame(width: 340)
-            .scrollContentBackgroundHidden()
-
-            Rectangle().fill(Theme.line).frame(width: 1)
-
-            ZStack {
-                // The window has far more empty panel than the popover, so the
-                // marks matter more here — and this is the surface that opens
-                // by default.
-                RuleBackdrop(crossHeight: 150, markSize: 34)
-
-                ScrollView {
-                    DayAndLibrary(model: model, inset: 6, masksAbove: true)
-                }
-                .scrollContentBackgroundHidden()
-            }
-        }
-    }
-
-    private func scrolling<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        ScrollView {
-            content()
-                .frame(maxWidth: 620, alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .scrollContentBackgroundHidden()
-    }
-}
-
-/// Back to the section the reader came from, shown above the glossary.
-private struct SectionBackRow: View {
-    let title: String
-    let back: () -> Void
-
-    var body: some View {
-        HStack(spacing: 0) {
-            Button(action: back) {
-                Label("Back to \(title)", systemImage: "chevron.left")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Theme.muted)
-            }
-            .buttonStyle(.plain)
-            Spacer()
-        }
-        .padding(.horizontal, 14).padding(.vertical, 8)
-        .overlay(alignment: .bottom) { Rectangle().fill(Theme.lineSoft).frame(height: 1) }
     }
 }
 
@@ -267,24 +207,27 @@ private struct SectionBackRow: View {
 @MainActor
 final class MainWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
+    private weak var model: AppModel?
 
     func show(model: AppModel) {
+        self.model = model
+        model.navigationSurface = .window
         if let window {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 940, height: 660),
+            contentRect: NSRect(x: 0, y: 0, width: 1100, height: 860),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false
         )
-        window.title = "Chotki"
+        window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Chotki"
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
         // The stacked layout needs about what the popover needs, plus the
         // sidebar. Below this it is squashed however it is arranged.
-        window.minSize = NSSize(width: 620, height: 480)
+        window.minSize = NSSize(width: 620, height: 540)
         window.center()
         window.delegate = self
         window.contentView = MainWindowController.hostingView(model: model)
@@ -303,9 +246,8 @@ final class MainWindowController: NSObject, NSWindowDelegate {
     /// that invalidates the layout while a tall section is open makes the
     /// window jump.
     ///
-    /// That is exactly what opening the Reflections explainer did: one help
-    /// mark, and the window stretched to the full height of the screen. Clearing
-    /// the options fixes it for every section rather than for that one.
+    /// A tall explanation once stretched the window to the full height of the
+    /// screen. Clearing the sizing options fixes that for every section.
     static func hostingView(model: AppModel) -> NSHostingView<MainWindowView> {
         let host = NSHostingView(rootView: MainWindowView(model: model))
         host.sizingOptions = []
@@ -313,4 +255,8 @@ final class MainWindowController: NSObject, NSWindowDelegate {
     }
 
     var isOpen: Bool { window?.isVisible ?? false }
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        model?.navigationSurface = .window
+    }
 }

@@ -21,20 +21,24 @@ struct GlossaryView: View {
         VStack(spacing: 0) {
             TextField("Search terms", text: $query)
                 .textFieldStyle(.plain)
-                .font(.system(size: 12))
-                .padding(.horizontal, 14).padding(.vertical, 8)
+                .font(.system(size: 14))
+                .padding(.horizontal, 24).padding(.vertical, 12)
                 .foregroundStyle(Theme.parchment)
             Rectangle().fill(Theme.lineSoft).frame(height: 1)
 
             ScrollView {
-                if let slug = openSlug, let entry = glossary.entry(slug: slug) {
-                    detail(entry)
-                } else {
-                    list
-                }
+                Group {
+                    if let slug = openSlug, let entry = glossary.entry(slug: slug) {
+                        detail(entry)
+                    } else {
+                        list
+                    }
+                }.frame(maxWidth: 800, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading).chotkiScrollContent()
             }
             .frame(maxHeight: .infinity)
             .scrollContentBackgroundHidden()
+            .softVerticalScrollEdges()
         }
         .onAppear {
             guard !hasSeeded else { return }
@@ -54,22 +58,22 @@ struct GlossaryView: View {
                 let matching = entries.filter { visible.contains($0.slug) }
                 if !matching.isEmpty {
                     Text(category.displayName)
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.gold)
-                        .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 2)
+                        .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 5)
                     ForEach(matching) { entry in
                         Button { openSlug = entry.slug } label: {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(entry.term)
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 15))
                                     .foregroundStyle(Theme.parchment)
                                 Text(entry.short)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(Theme.faint)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Theme.muted)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14).padding(.vertical, 5)
+                            .padding(.horizontal, 24).padding(.vertical, 8)
                         }
                         .buttonStyle(.plain)
                     }
@@ -83,38 +87,38 @@ struct GlossaryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Button { openSlug = nil } label: {
                 Label("All terms", systemImage: "chevron.left")
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(Theme.muted)
             }
             .buttonStyle(.plain)
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(entry.term)
-                    .font(Theme.reading(18))
+                    .font(Theme.reading(24))
                     .foregroundStyle(Theme.gold)
                 if let pronunciation = entry.pronunciation {
                     Text(pronunciation)
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundStyle(Theme.faint)
                 }
             }
 
             Text(entry.full)
-                .font(Theme.reading(12))
+                .font(Theme.reading(15))
                 .foregroundStyle(Theme.parchmentDim)
-                .lineSpacing(3)
+                .lineSpacing(5)
                 .fixedSize(horizontal: false, vertical: true)
 
             let related = glossary.related(to: entry)
             if !related.isEmpty {
                 Rectangle().fill(Theme.lineSoft).frame(height: 1).padding(.vertical, 2)
                 Text("See also")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
                 ForEach(related) { other in
                     Button { openSlug = other.slug } label: {
                         Text(other.term)
-                            .font(.system(size: 11))
+                            .font(.system(size: 13))
                             .foregroundStyle(Theme.goldDim)
                     }
                     .buttonStyle(.plain)
@@ -122,6 +126,6 @@ struct GlossaryView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14).padding(.vertical, 10)
+        .padding(.horizontal, 24).padding(.vertical, 18)
     }
 }

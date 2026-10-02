@@ -2,13 +2,24 @@ import SwiftUI
 import ChotkiCore
 
 enum Tab: String, CaseIterable {
-    case rule = "Rule"
+    case rule = "Home"
+    case prayers = "Prayers"
     case reading = "Reading"
     case progress = "Progress"
+    var dueDestination: DueDestination? {
+        switch self {
+        case .rule: return .home
+        case .prayers: return .prayers
+        case .reading: return .reading
+        case .progress: return nil
+        }
+    }
 }
 
 struct RootView: View {
     @ObservedObject var model: AppModel
+    @Namespace private var selection
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,14 +27,30 @@ struct RootView: View {
                 OnboardingView(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
             } else {
-            switch model.screen {
+            switch underlyingScreen {
             case .main:
+                HStack {
+                    Text(model.tab == .rule ? model.greeting : model.tab.rawValue).font(Theme.reading(20))
+                    Spacer()
+                    if model.isReviewSample {
+                        Button { model.previewDueAlert() } label: { Image(systemName: "bell.badge") }
+                            .help("Preview Due Alert")
+                            .accessibilityLabel("Preview Due Alert")
+                    }
+                    Button { model.openMainWindow?() } label: { Image(systemName: "macwindow") }
+                        .help("Open Full Window")
+                    Menu {
+                        Button("Library") { model.screen = .library }
+                        Button("Glossary") { model.openGlossary(nil) }
+                        Button("Settings") { model.screen = .settings }
+                    } label: { Image(systemName: "ellipsis.circle") }.menuStyle(.borderlessButton).frame(width: 20)
+                }.buttonStyle(.plain).foregroundStyle(Theme.parchment).padding(14)
                 tabBar
                 Divider().overlay(Theme.line)
                 content
                     .frame(maxHeight: .infinity, alignment: .top)
             case .library:
-                Header(title: "Rule library") { model.screen = .main }
+                Header(title: "Rule Library") { model.screen = .main }
                 LibraryView(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
             case .settings:
@@ -35,8 +62,8 @@ struct RootView: View {
                 GlossaryView(model: model, initialSlug: slug)
                     .frame(maxHeight: .infinity, alignment: .top)
             case .editor(let ruleID):
-                Header(title: ruleID == nil ? "New rule" : "Edit rule") { model.screen = .main }
-                RuleEditorView(model: model, ruleID: ruleID) { model.screen = .main }
+                Header(title: ruleID == nil ? "New Rule" : "Edit Rule") { model.editorDraft = nil; model.screen = .main }
+                RuleEditorView(model: model, ruleID: ruleID) { model.editorDraft = nil; model.screen = .main }
                     .frame(maxHeight: .infinity, alignment: .top)
             case .prayers(let ruleID):
                 Header(title: "Prayers") { model.screen = .main }
@@ -50,15 +77,7 @@ struct RootView: View {
                 Header(title: "Prayers") { model.screen = .main }
                 PrayerRopeView(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
-            case .reflections:
-                // The section is window-only, so the popover offers the way
-                // there rather than a cramped copy of it. Doing nothing here
-                // would leave the row's button dead in the popover while it
-                // worked in the window, which is a mistake this app has already
-                // made twice.
-                Header(title: "Reflections") { model.screen = .main }
-                ReflectionsElsewhere(model: model)
-                    .frame(maxHeight: .infinity, alignment: .top)
+
             }
             }
 
@@ -89,24 +108,34 @@ struct RootView: View {
             }
         }
         .frame(width: Theme.popoverWidth, height: Theme.popoverHeight)
-        .background(Theme.ground)
+        .background(ChotkiBackdrop())
+        .preferredColorScheme(.dark)
+        .glossaryDetour(model: model, backTitle: "Back to \(model.tab.rawValue)", enabled: model.navigationSurface == .companion)
+        .overlay { if model.settings.shouldAskForSpiritualFather(on: model.today) { FatherPrompt(model: model) } }
+    }
+
+    private var underlyingScreen: Screen {
+        if case .glossary = model.screen { return model.glossaryReturn }
+        return model.screen
     }
 
     private var tabBar: some View {
         HStack(spacing: 0) {
             ForEach(Tab.allCases, id: \.self) { candidate in
                 Button {
-                    model.tab = candidate
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.28)) { model.tab = candidate }
                 } label: {
                     Text(candidate.rawValue)
                         .font(.system(size: 12))
                         .foregroundStyle(model.tab == candidate ? Theme.parchment : Theme.muted)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
+                        .duePulse(until: candidate.dueDestination.flatMap { model.attentionUntil[$0] })
                         .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .fill(model.tab == candidate ? Theme.gold : .clear)
-                                .frame(height: 2)
+                            if model.tab == candidate {
+                                Capsule().fill(Theme.gold).frame(height: 2)
+                                    .matchedGeometryEffect(id: "tab-selection", in: selection)
+                            }
                         }
                 }
                 .buttonStyle(.plain)
@@ -116,7 +145,8 @@ struct RootView: View {
 
     @ViewBuilder private var content: some View {
         switch model.tab {
-        case .rule: RuleTabView(model: model)
+        case .rule: RuleTabView(model: model, compact: true)
+        case .prayers: PrayerRopeView(model: model)
         case .reading: ReadingView(model: model)
         case .progress: ProgressTabView(model: model)
         }
@@ -144,5 +174,3 @@ struct Header: View {
         .overlay(alignment: .bottom) { Rectangle().fill(Theme.line).frame(height: 1) }
     }
 }
-
-

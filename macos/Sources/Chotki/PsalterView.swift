@@ -10,6 +10,7 @@ import ChotkiCore
 struct PsalterView: View {
     @ObservedObject var model: AppModel
     @State private var open: Int?
+    @State private var manualOpen: Int?
 
     private var season: Kathisma.Season {
         guard let day = model.liturgical.cachedDay(for: model.selectedDate) else {
@@ -25,6 +26,20 @@ struct PsalterView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
+                Menu {
+                    ForEach(1...20, id: \.self) { number in
+                        Button("Kathisma \(number)") { manualOpen = number }
+                    }
+                } label: {
+                    Label("Browse All Kathismata", systemImage: "books.vertical")
+                        .font(.system(size: 14)).foregroundStyle(Theme.gold)
+                }.menuStyle(.borderlessButton).frame(width: 190)
+                if let manualOpen {
+                    Text("Chosen for Reading").font(.system(size: 13)).foregroundStyle(Theme.muted)
+                        .padding(.top, 8)
+                    KathismaRow(number: manualOpen, open: $manualOpen)
+                    Divider().padding(.vertical, 8)
+                }
                 if appointed.isEmpty {
                     Text("No kathisma is appointed today.")
                         .foregroundStyle(Theme.muted)
@@ -50,9 +65,9 @@ struct PsalterView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.faint)
             }
-            .padding(16)
+            .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
-        }
+        }.softVerticalScrollEdges()
     }
 }
 

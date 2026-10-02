@@ -11,7 +11,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Chotki",
-            dependencies: [.product(name: "ChotkiCore", package: "ChotkiCore")]
+            dependencies: [.product(name: "ChotkiCore", package: "ChotkiCore")],
+            resources: [.copy("Resources")]
         ),
         // The interface layer holds real behaviour — what is due today, what
         // taking a rule on does — and that behaviour needs testing as much as

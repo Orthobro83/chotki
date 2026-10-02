@@ -172,6 +172,19 @@ private struct EntryRow: View {
     @ViewBuilder
     private var reference: some View {
         switch entry.rule.reference {
+        case .rope:
+            Button {
+                model.prayers.choose(entry.rule.ropePrayerID)
+                pushRoute(.rope)
+            } label: {
+                Image(systemName: "circle.hexagongrid")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Chotki.goldDim)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Pray \(entry.rule.title) on the rope")
         case .prayers:
             link(to: .prayers(ruleID: entry.rule.id),
                  label: "Read the prayers for \(entry.rule.title)")
@@ -217,6 +230,12 @@ private struct EntryRow: View {
             Text("Lifted by the Church today")
         } else {
             switch entry.rule.reference {
+            case .rope:
+                Button("Pray on the rope") {
+                    model.prayers.choose(entry.rule.ropePrayerID)
+                    pushRoute(.rope)
+                }
+                Divider()
             case .prayers:
                 Button("Read the prayers") { pushRoute(.prayers(ruleID: entry.rule.id)) }
                 Divider()

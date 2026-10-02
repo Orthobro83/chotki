@@ -1,0 +1,26 @@
+# Image Library Candidates
+
+Updated: 2026-10-01. The user’s final [decision file](chotki-image-decisions.json) approves 323 of the 328 reviewed candidates and rejects five. Together with Android’s original 42 images, the Mac app now has a **365-image daily rotation**. The approval list and decision-file checksum are recorded in [approved.json](review/approved.json). The five final additions appear first in the [interactive gallery](review/index.html), with every approved image labeled and locked.
+
+The Mac bundle contains 75 Commons standard-size copies (up to 1920 pixels wide) and 248 locally reviewed copies (up to 960 pixels wide). Each source photograph is at least 1,200 pixels on its shorter side, and its Commons page, creator, image-level CC0/public-domain label, original dimensions, hand-chosen focal point, and current bundled size are preserved in [approved-sources.json](../macos/Sources/Chotki/Resources/sayings/approved-sources.json). Commons throttled the paced larger-copy transfer; [upgrade_approved.py](review/upgrade_approved.py) can resume after the limit clears. No new image requires another aesthetic approval; the user has approved all 323.
+
+| # | First-batch image and source | Photographer | Original size | Focal point | Subject in resting crop |
+|---:|---|---|---:|---:|---|
+| 1 | [Greek Orthodox church interior, Shrewsbury](https://commons.wikimedia.org/wiki/File:ChurchInterior.jpg) | Farquhar82 | 2,816 × 1,880 | 0.50, 0.64 | Iconostasis and icons |
+| 2 | [Candles in a Russian Orthodox parish, Bielefeld](https://commons.wikimedia.org/wiki/File:%D0%93%D0%BE%D1%80%D1%8F%D1%89%D0%B8%D0%B5_%D1%81%D0%B2%D0%B5%D1%87%D0%B8_%D0%B2_%D0%BF%D1%80%D0%B0%D0%B2%D0%BE%D1%81%D0%BB%D0%B0%D0%B2%D0%BD%D0%BE%D0%BC_%D0%BF%D1%80%D0%B8%D1%85%D0%BE%D0%B4%D0%B5_20_%D0%B4%D0%B5%D0%BA_2014.JPG) | Spacekid | 4,752 × 3,168 | 0.53, 0.34 | Lit candles and cross |
+| 3 | [Orthodox church, Sigri, Lesbos](https://commons.wikimedia.org/wiki/File:Orthodox_Church,_Sigri,_Lesbos,_Greece.jpg) | Bj.schoenmakers | 2,816 × 2,112 | 0.68, 0.42 | Stone chapel and dome |
+| 4 | [Russian Orthodox church interior, Aachen](https://commons.wikimedia.org/wiki/File:Aachen_Russian_Orthodox_Church,_interior.jpg) | Gerda Arendt | 4,000 × 3,000 | 0.51, 0.49 | Nave and iconostasis |
+| 5 | [Russian Orthodox chapel interior, Darmstadt](https://commons.wikimedia.org/wiki/File:Darmstadt_Russisch-Orthodoxe_Kapelle_Innen.JPG) | Zairon | 2,048 × 1,536 | 0.50, 0.63 | Theotokos image under chandelier |
+| 6 | [Russian Orthodox chapel, Darmstadt](https://commons.wikimedia.org/wiki/File:Darmstadt_Russisch-Orthodoxe_Kapelle_Front_6.JPG) | Zairon | 1,536 × 2,048 | 0.51, 0.18 | Golden dome and cross |
+| 7 | [Russian Orthodox church façade, Biarritz](https://commons.wikimedia.org/wiki/File:Biarritz_-_%C3%89glise_orthodoxe_russe_-_Fa%C3%A7ade.jpg) | Romainbehar | 4,128 × 3,096 | 0.53, 0.26 | Dome and church façade |
+| 8 | [Stained glass in Russian Orthodox church, Biarritz](https://commons.wikimedia.org/wiki/File:Biarritz_-_%C3%89glise_orthodoxe_russe_-_Int%C3%A9rieur_-_Vitrail.jpg) | Romainbehar | 3,096 × 4,128 | 0.50, 0.49 | Peaceful colored window detail |
+| 9 | [Transfiguration church interior, Lublin](https://commons.wikimedia.org/wiki/File:Interior_of_the_Transfiguration_Orthodox_Church_in_Lublin_01.jpg) | Artinpl | 4,128 × 3,096 | 0.50, 0.62 | Full gilded iconostasis |
+| 10 | [Transfiguration sanctuary, Lublin](https://commons.wikimedia.org/wiki/File:Interior_of_the_Transfiguration_Orthodox_Church_in_Lublin_02.jpg) | Artinpl | 3,096 × 4,128 | 0.50, 0.53 | Sanctuary doors and icons |
+| 11 | [Archangel Michael monastery belfry, Panormitis](https://commons.wikimedia.org/wiki/File:Belfry_Panormitis_monastery.jpg) | Jebulon | 2,090 × 3,396 | 0.50, 0.31 | Belfry and bell against blue sky |
+| 12 | [Mar Saba monastery landscape](https://commons.wikimedia.org/wiki/File:%281461%29_Marsaba_Klosteret.jpg) | Kaasmail | 2,048 × 1,536 | 0.58, 0.52 | Orthodox desert monastery |
+
+All 323 approved images are now bundled in the Mac rotation. Subject-centering was visually checked in an 850 × 270 point crop; final review of the quote overlay and image motion remains part of Mac interaction review.
+
+The following eleven licensed results were screened out after looking at their crops: Biarritz dome (visible deterioration and wires), entrance (dim, no strong focal subject), south side (flat façade), south interior window (worn walls), Saint Nicolaos in Malta (street wires and severe perspective), Saint Irene in Toronto (cars and signs), Spokane Kazan church (cars and wires), London Dormition cathedral (cars and overcast light), two Lublin exteriors (plain façades and a parked car), and a near-duplicate Panormitis belfry. These are not queued for app addition.
+
+Future searches should diversify beyond church façades into natural-light interiors, candlelit worship spaces without identifiable people, monastery architecture, and rights-cleared Orthodox art. Photos of museum artifacts are excluded. Real public-domain/CC0 sources remain preferred over generated images. If generative work becomes necessary, generate church visuals without people or icons and request approval before any addition.

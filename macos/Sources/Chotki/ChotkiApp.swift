@@ -61,12 +61,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let notifier = MacNotifier()
-        Task { _ = try? await notifier.requestAuthorization() }
+        // A review launch carries its own fictional, in-memory record. This is
+        // selected by an argument before StoreLocation or any live service is
+        // constructed, so a reviewer can safely exercise the actual controls.
+        let reviewSample = CommandLine.arguments.contains("--review-sample") ||
+            (Bundle.main.object(forInfoDictionaryKey: "ChotkiReviewSample") as? Bool == true)
+        let notifier: any Notifier = MacNotifier()
+        if !reviewSample { Task { _ = try? await notifier.requestAuthorization() } }
 
         let store: any Store
         do {
-            store = try SQLiteStore(path: try StoreLocation.databasePath())
+            store = try reviewSample ? RenderMode.seededStore() : SQLiteStore(path: StoreLocation.databasePath())
         } catch {
             // Without a store there is nothing to show. Say so plainly rather
             // than launching into a broken window.
@@ -74,7 +79,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let model = AppModel(store: store, notifier: notifier, launchAtLogin: MacLaunchAtLogin())
+        let model = AppModel(
+            store: store, notifier: notifier,
+            launchAtLogin: reviewSample ? NullLaunchAtLogin() : MacLaunchAtLogin(),
+            storage: reviewSample ? .none() : SettingsStorage(),
+            startsReminders: !reviewSample, writesBackups: !reviewSample,
+            loadsCalendar: !reviewSample, isReviewSample: reviewSample
+        )
+        if reviewSample {
+            model.selectedDate = CalendarDate(year: 2026, month: 8, day: 19)!
+            model.visibleMonth = model.selectedDate
+            try? model.liturgical.loadSnapshot(around: model.selectedDate)
+            model.notice = "Review sample — fictional practice. Nothing here changes your Chotki record."
+        }
         self.model = model
         model.openDetachedReport = { [weak self, weak model] in
             guard let self, let model else { return }
@@ -100,6 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         model.openMainWindow = { [weak self, weak model] in
             guard let self, let model else { return }
+            self.popover?.performClose(nil)
             self.mainWindow.show(model: model)
         }
         if model.settings.showInDock {
@@ -171,11 +189,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let popover, let button = statusItem?.button else { return }
         if popover.isShown {
             popover.performClose(nil)
+            if mainWindow.isOpen { model?.navigationSurface = .window }
         } else {
             // A notice belongs to the moment it was raised. Without this,
             // "Backup written to…" sat there for the rest of the session.
             model?.notice = nil
             model?.reload()
+            model?.navigationSurface = .companion
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             // An accessory app's popover does not become key on its own, so text
             // fields silently swallow every keystroke — clicks work, typing does

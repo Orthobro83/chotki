@@ -28,6 +28,7 @@ final class ReminderDriver {
     /// driver still knows nothing about what that is — it raises the tick and
     /// the model decides what a tick means.
     var onTick: (() -> Void)?
+    var onShow: ((PlannedNotification) -> Void)?
 
     init(
         notifier: any Notifier,
@@ -78,6 +79,7 @@ final class ReminderDriver {
             Task { await notifier.cancel(ids: ids) }
         }
         for notification in decision.show {
+            onShow?(notification)
             let request = notification.request
             Task { try? await notifier.show(request) }
         }

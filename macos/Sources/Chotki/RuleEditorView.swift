@@ -20,6 +20,8 @@ struct RuleEditorView: View {
     @State private var remindersOn = true
     @State private var leads: Set<ReminderLead> = [.tenMinutes]
     @State private var loaded = false
+    @State private var givenByPriest = false
+    @State private var priestAttribution = ""
 
 
     private var existing: Rule? {
@@ -32,7 +34,7 @@ struct RuleEditorView: View {
                 field("What is it?") {
                     TextField("Morning prayers", text: $title)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(Theme.parchment)
                 }
 
@@ -40,7 +42,7 @@ struct RuleEditorView: View {
                     Picker("", selection: $form.kind) {
                         ForEach(RecurrenceForm.Kind.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }
-                    .labelsHidden().pickerStyle(.menu).font(.system(size: 11))
+                    .labelsHidden().pickerStyle(.menu).font(.system(size: 13))
                 }
 
                 if form.kind == .weekly { weekdayPicker }
@@ -54,38 +56,63 @@ struct RuleEditorView: View {
                 field("A note, if it helps") {
                     TextField("Start with the Trisagion", text: $note)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(Theme.parchment)
                 }
 
-                field("Who suggested it?") {
-                    TextField("my godfather", text: $source)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.parchment)
-                }
+                suggesterField
                 Text("Months from now this is how you will remember where a rule came from.")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
 
                 Rectangle().fill(Theme.line).frame(height: 1).padding(.top, 4)
                 actions
             }
-            .padding(.horizontal, 14).padding(.vertical, 12)
+            .padding(.horizontal, 24).padding(.vertical, 20)
         }
         .frame(maxHeight: .infinity)
         .scrollContentBackgroundHidden()
+        .softVerticalScrollEdges()
         .onAppear(perform: load)
     }
 
     // MARK: pieces
+
+    private var suggesterField: some View {
+        let father = model.settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return VStack(alignment: .leading, spacing: 4) {
+            Text("Who suggested it?").font(.system(size: 13)).foregroundStyle(Theme.muted)
+            if father.isEmpty || !givenByPriest {
+                suggestedByInput
+            }
+            if !father.isEmpty {
+                Toggle("Given to me by \(givenByPriest ? (priestAttribution.isEmpty ? father : priestAttribution) : father)", isOn: Binding(
+                    get: { givenByPriest },
+                    set: { selected in
+                        givenByPriest = selected
+                        if selected { priestAttribution = father }
+                    }
+                ))
+                .foregroundStyle(Theme.parchment).toggleStyle(.checkbox)
+            }
+        }
+    }
+
+    private var suggestedByInput: some View {
+        TextField("Suggested by", text: $source)
+            .textFieldStyle(.plain)
+            .font(.system(size: 14))
+            .foregroundStyle(Theme.parchment)
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(Theme.panel, in: RoundedRectangle(cornerRadius: 5))
+    }
 
     private func field<Content: View>(
         _ label: String, @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
-                .font(.system(size: 11))
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.muted)
             content()
                 .padding(.horizontal, 8).padding(.vertical, 5)
@@ -105,7 +132,7 @@ struct RuleEditorView: View {
                     }
                 } label: {
                     Text(shortName(day))
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .frame(width: 30, height: 22)
                         .foregroundStyle(form.weekdays.contains(day) ? Theme.ground : Theme.muted)
                         .background {
@@ -121,7 +148,7 @@ struct RuleEditorView: View {
     private var seasonPicker: some View {
         HStack {
             Text("Which season")
-                .font(.system(size: 11))
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.muted)
             Picker("", selection: $form.season) {
                 Text("Great Lent").tag(FastingSeason.greatLent)
@@ -129,27 +156,27 @@ struct RuleEditorView: View {
                 Text("Apostles' Fast").tag(FastingSeason.apostlesFast)
                 Text("Dormition Fast").tag(FastingSeason.dormitionFast)
             }
-            .labelsHidden().frame(width: 150).font(.system(size: 11))
+            .labelsHidden().frame(width: 150).font(.system(size: 13))
         }
     }
 
     private var onceRow: some View {
         Text(form.onceDate.map { "On \($0.iso)." } ?? "On the selected day.")
-            .font(.system(size: 11))
+            .font(.system(size: 13))
             .foregroundStyle(Theme.faint)
     }
 
     private var monthDayPicker: some View {
         HStack {
             Text("On day")
-                .font(.system(size: 11))
+                .font(.system(size: 13))
                 .foregroundStyle(Theme.muted)
             Picker("", selection: $form.monthDay) {
                 ForEach(1...31, id: \.self) { Text("\($0)").tag($0) }
             }
-            .labelsHidden().frame(width: 70).font(.system(size: 11))
+            .labelsHidden().frame(width: 70).font(.system(size: 13))
             Text("— a short month uses its last day")
-                .font(.system(size: 10))
+                .font(.system(size: 12))
                 .foregroundStyle(Theme.faint)
         }
     }
@@ -158,7 +185,7 @@ struct RuleEditorView: View {
         VStack(alignment: .leading, spacing: 4) {
             Toggle(isOn: $hasTime) {
                 Text("At a set time")
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundStyle(Theme.parchment)
             }
             .toggleStyle(.switch).controlSize(.mini)
@@ -175,13 +202,13 @@ struct RuleEditorView: View {
                     }.labelsHidden().frame(width: model.settings.clockStyle == .twelveHour ? 76 : 60)
                     Text(":").foregroundStyle(Theme.muted)
                     Picker("", selection: $minute) {
-                        ForEach([0, 15, 30, 45], id: \.self) { Text(String(format: "%02d", $0)).tag($0) }
+                        ForEach(Array(0...59), id: \.self) { Text(String(format: "%02d", $0)).tag($0) }
                     }.labelsHidden().frame(width: 60)
                 }
-                .font(.system(size: 11))
+                .font(.system(size: 13))
             } else {
                 Text("It runs all day, and reminders are spread across the waking hours.")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -192,7 +219,7 @@ struct RuleEditorView: View {
         VStack(alignment: .leading, spacing: 4) {
             Toggle(isOn: $remindersOn) {
                 Text("Remind me")
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundStyle(Theme.parchment)
             }
             .toggleStyle(.switch).controlSize(.mini)
@@ -200,12 +227,12 @@ struct RuleEditorView: View {
             if remindersOn && hasTime {
                 FlowLeads(selected: $leads)
                 Text("More than one is fine — an hour before to get ready, ten minutes before to go.")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             } else if !remindersOn {
                 Text("Silencing a rule does not change whether it is due, or how it is counted.")
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -216,7 +243,7 @@ struct RuleEditorView: View {
         HStack {
             Button("Save") { save() }
                 .buttonStyle(.plain)
-                .font(.system(size: 12))
+                .font(.system(size: 14))
                 .foregroundStyle(title.trimmingCharacters(in: .whitespaces).isEmpty ? Theme.faint : Theme.gold)
                 .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
 
@@ -225,10 +252,10 @@ struct RuleEditorView: View {
             if let rule = existing {
                 if model.isPaused(rule) {
                     Button("Resume") { model.resume(rule); dismiss() }
-                        .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Theme.muted)
+                        .buttonStyle(.plain).font(.system(size: 14)).foregroundStyle(Theme.muted)
                 } else {
                     Button("Pause") { model.standDown(rule); dismiss() }
-                        .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Theme.muted)
+                        .buttonStyle(.plain).font(.system(size: 14)).foregroundStyle(Theme.muted)
                 }
                 Menu("Remove") {
                     Button("Just this day") { model.delete(rule, scope: .thisDay); dismiss() }
@@ -237,7 +264,7 @@ struct RuleEditorView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 84)
-                .font(.system(size: 12))
+                .font(.system(size: 14))
             }
         }
     }
@@ -247,10 +274,15 @@ struct RuleEditorView: View {
     private func load() {
         guard !loaded else { return }
         loaded = true
-        guard let rule = existing else { return }
+        guard let rule = existing ?? model.editorDraft else { return }
+        givenByPriest = rule.givenByPriest == true
         title = rule.title
         note = rule.note ?? ""
         source = rule.source ?? ""
+        let father = model.settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if givenByPriest {
+            priestAttribution = source.isEmpty || source == "the library" ? father : source
+        }
         form = RecurrenceForm(rule.recurrence)
         if let time = rule.timeOfDay {
             hasTime = true; hour = time.hour; minute = time.minute
@@ -265,10 +297,14 @@ struct RuleEditorView: View {
 
         let recurrence = form.recurrence(fallback: model.selectedDate)
 
-        var rule = existing ?? Rule(title: trimmed, recurrence: recurrence)
+        var rule = existing ?? model.editorDraft ?? Rule(title: trimmed, recurrence: recurrence)
+        let father = model.settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let retainsOldAttribution = father.isEmpty && givenByPriest && source == priestAttribution
+        rule.givenByPriest = !father.isEmpty ? givenByPriest : retainsOldAttribution
         rule.title = trimmed
         rule.note = note.isEmpty ? nil : note
-        rule.source = source.isEmpty ? nil : source
+        let selectedSource = givenByPriest && !father.isEmpty ? priestAttribution : source
+        rule.source = selectedSource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : selectedSource
         rule.recurrence = recurrence
         rule.timeOfDay = hasTime ? TimeOfDay(hour: hour, minute: minute) : nil
         rule.reminders = RuleReminders(
@@ -297,7 +333,7 @@ struct FlowLeads: View {
                             if selected.contains(lead) { selected.remove(lead) } else { selected.insert(lead) }
                         } label: {
                             Text(short(lead))
-                                .font(.system(size: 10))
+                                .font(.system(size: 12))
                                 .padding(.horizontal, 7).padding(.vertical, 3)
                                 .foregroundStyle(selected.contains(lead) ? Theme.ground : Theme.muted)
                                 .background {

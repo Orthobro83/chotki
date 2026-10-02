@@ -8,6 +8,7 @@ import ChotkiCore
 /// anyone what they must do, and never gives dietary instruction.
 struct ReadingView: View {
     @Bindable var model: Model
+    @State private var saintLifeExpanded = true
 
     private var day: LiturgicalDay? { model.liturgicalDay(model.selectedDate) }
 
@@ -86,6 +87,35 @@ struct ReadingView: View {
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+
+        Divider().overlay(Chotki.line)
+        Button {
+            withAnimation(.easeInOut(duration: 0.25)) { saintLifeExpanded.toggle() }
+        } label: {
+            HStack {
+                Text("Life of the Day’s Saint").font(.headline)
+                Spacer()
+                Image(systemName: saintLifeExpanded ? "chevron.up" : "chevron.down")
+            }.foregroundStyle(Chotki.gold)
+        }.buttonStyle(.plain)
+        if saintLifeExpanded {
+        if let life = SaintLives.reading(on: day.observedDate) {
+            Text(life.title).font(.system(size: 18, weight: .semibold)).foregroundStyle(Chotki.parchment)
+            ForEach(Array(life.paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                Text(paragraph).font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                    .lineSpacing(4).fixedSize(horizontal: false, vertical: true)
+            }
+            if let url = URL(string: life.sourceURL) {
+                Link(life.source, destination: url).font(.system(size: 11)).foregroundStyle(Chotki.faint)
+            }
+        } else {
+            if !day.saints.isEmpty {
+                Text(day.saints.joined(separator: " · ")).font(.footnote).foregroundStyle(Chotki.muted)
+            }
+            Text("A public-domain English life is not yet available for this day.")
+                .font(.footnote).foregroundStyle(Chotki.faint)
+        }
         }
 
         if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {

@@ -5,6 +5,23 @@ import Foundation
 /// Lives in core so the settings a person has chosen move with their data
 /// rather than being tied to one platform's preferences system.
 public struct AppSettings: Sendable, Hashable, Codable {
+    public var displayName: String = ""
+    public var spiritualFatherName: String = ""
+    public var firstRunOn: CalendarDate? = nil
+    public var spiritualFatherDeferredOn: CalendarDate? = nil
+    public var customCautionDismissed: Bool = false
+
+    public var givenByPriestPhrase: String? {
+        let name = spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? nil : "Given to me by \(name)"
+    }
+
+    public func shouldAskForSpiritualFather(on today: CalendarDate) -> Bool {
+        guard hasCompletedFirstRun, givenByPriestPhrase == nil,
+              let anchor = spiritualFatherDeferredOn ?? firstRunOn else { return false }
+        return today >= anchor.adding(days: 30)
+    }
+
     public var jurisdiction: Jurisdiction
     public var observances: ObservanceSettings
     public var reminders: ReminderPolicy
@@ -39,7 +56,7 @@ public struct AppSettings: Sendable, Hashable, Codable {
         jurisdiction: Jurisdiction = .default,
         observances: ObservanceSettings = .default,
         reminders: ReminderPolicy = .default,
-        showOldStyleDates: Bool = false,
+        showOldStyleDates: Bool = true,
         showConsistencyNumber: Bool = true,
         launchAtLogin: Bool = false,
         showInDock: Bool = true,
@@ -76,6 +93,11 @@ public struct AppSettings: Sendable, Hashable, Codable {
         func value<T: Decodable>(_ key: CodingKeys, _ default: T) throws -> T {
             try container.decodeIfPresent(T.self, forKey: key) ?? `default`
         }
+        displayName = try value(.displayName, "")
+        spiritualFatherName = try value(.spiritualFatherName, "")
+        firstRunOn = try container.decodeIfPresent(CalendarDate.self, forKey: .firstRunOn)
+        spiritualFatherDeferredOn = try container.decodeIfPresent(CalendarDate.self, forKey: .spiritualFatherDeferredOn)
+        customCautionDismissed = try value(.customCautionDismissed, false)
         jurisdiction = try value(.jurisdiction, fallback.jurisdiction)
         observances = try value(.observances, fallback.observances)
         reminders = try value(.reminders, fallback.reminders)
