@@ -475,7 +475,20 @@ final class Model {
     }
 
     var isTaken: (RuleTemplate) -> Bool {
-        { [rules] template in rules.contains { $0.title == template.title } }
+        { template in
+            self.rules.contains {
+                $0.title.compare(template.title, options: .caseInsensitive) == .orderedSame
+                    && self.isOnTheRule($0)
+            }
+        }
+    }
+
+    /// A library rule that is still stored but not in force. Taking it on
+    /// again continues that rule instead of writing a second one.
+    func restingCopy(of template: RuleTemplate) -> Rule? {
+        rules.first {
+            $0.title.compare(template.title, options: .caseInsensitive) == .orderedSame && isPaused($0)
+        }
     }
 
     // MARK: rules of his own

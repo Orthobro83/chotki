@@ -70,37 +70,17 @@ struct MainWindowView: View {
     private var motion: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.28) }
 
     var body: some View {
-        HStack(spacing: 0) {
-            sidebar
-            Rectangle().fill(Theme.lineSoft).frame(width: 1)
-            VStack(alignment: .leading, spacing: 0) {
-                if model.settings.hasCompletedFirstRun {
-                    HStack {
-                        Text(section == .rule ? model.greeting : section.rawValue)
-                            .font(Theme.reading(28)).foregroundStyle(Theme.parchment)
-                        Spacer()
-                        if model.isReviewSample {
-                            Button { model.previewDueAlert() } label: { Image(systemName: "bell.badge") }
-                                .buttonStyle(.plain).foregroundStyle(Theme.gold)
-                                .help("Preview Due Alert")
-                                .accessibilityLabel("Preview Due Alert")
-                        }
-                        if section == .rule {
-                            Button { go(to: .library) } label: { Image(systemName: "plus") }
-                                .buttonStyle(.plain).foregroundStyle(Theme.gold).help("Open the Library")
-                        }
-                    }.padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 18)
-                    detail.id(section)
-                        .transition(.asymmetric(insertion: .opacity.combined(with: .offset(x: 10)), removal: .opacity))
-                } else {
-                    OnboardingView(model: model)
-                }
-                NoticeLine(model: model)
-            }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .glossaryDetour(model: model, backTitle: "Back to \(section.rawValue)", enabled: model.navigationSurface == .window)
+        Group {
+            if model.settings.hasCompletedFirstRun {
+                installed
+            } else {
+                FirstRunView(model: model)
+            }
         }
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
         .background(ChotkiBackdrop()).preferredColorScheme(.dark)
         .overlay { if model.settings.shouldAskForSpiritualFather(on: model.today) { FatherPrompt(model: model) } }
+        .overlay { ColdOpenCurtain(model: model) }
         .animation(motion, value: section).animation(motion, value: collapsed)
         .onReceive(model.$tab.dropFirst()) { tab in
             guard model.navigationSurface == .window else { return }
@@ -125,6 +105,40 @@ struct MainWindowView: View {
                 Header(title: target.ruleID == nil ? "New Rule" : "Edit Rule") { editing = nil; model.editorDraft = nil; model.screen = .main }
                 RuleEditorView(model: model, ruleID: target.ruleID) { editing = nil; model.editorDraft = nil; model.screen = .main }
             }.frame(width: 520, height: 680).background(ChotkiBackdrop()).preferredColorScheme(.dark)
+        }
+    }
+
+    private var installed: some View {
+        HStack(spacing: 0) {
+            // Higher priority, and a fixed width, so a wide day never takes
+            // the sidebar's space and slides it out of the window.
+            sidebar.layoutPriority(1)
+            Rectangle().fill(Theme.lineSoft).frame(width: 1).layoutPriority(1)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text(section == .rule ? model.greeting : section.rawValue)
+                        .font(Theme.reading(28)).foregroundStyle(Theme.parchment)
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    if model.isReviewSample {
+                        Button { model.previewDueAlert() } label: { Image(systemName: "bell.badge") }
+                            .buttonStyle(.plain).foregroundStyle(Theme.gold)
+                            .help("Preview Due Alert")
+                            .accessibilityLabel("Preview Due Alert")
+                    }
+                    if section == .rule {
+                        Button { go(to: .library) } label: { Image(systemName: "plus") }
+                            .buttonStyle(.plain).foregroundStyle(Theme.gold).help("Open the Library")
+                    }
+                }.padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 18)
+                detail.id(section)
+                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+                    .transition(.asymmetric(insertion: .opacity.combined(with: .offset(x: 10)), removal: .opacity))
+                NoticeLine(model: model)
+            }
+            .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .clipped()
+            .glossaryDetour(model: model, backTitle: "Back to \(section.rawValue)", enabled: model.navigationSurface == .window)
         }
     }
 
@@ -170,7 +184,8 @@ struct MainWindowView: View {
             }
             Spacer(minLength: 0)
         }.padding(10).frame(width: collapsed ? 58 : 188)
-            .frame(maxHeight: .infinity).background(Theme.ground.opacity(0.24))
+            .fixedSize(horizontal: true, vertical: false)
+            .frame(maxHeight: .infinity, alignment: .top).background(Theme.ground.opacity(0.24))
     }
 
     private func go(to target: MainSection) {
@@ -234,12 +249,10 @@ final class MainWindowController: NSObject, NSWindowDelegate {
         window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Chotki"
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
-        // The stacked layout needs about what the popover needs, plus the
-        // sidebar. Below this it is squashed however it is arranged.
-        window.minSize = NSSize(width: 620, height: 540)
         window.center()
         window.delegate = self
         window.contentView = MainWindowController.hostingView(model: model)
+        applyMinimumSize(to: window)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
@@ -258,14 +271,80 @@ final class MainWindowController: NSObject, NSWindowDelegate {
     /// A tall explanation once stretched the window to the full height of the
     /// screen. Clearing the sizing options fixes that for every section.
     static func hostingView(model: AppModel) -> NSHostingView<MainWindowView> {
-        let host = NSHostingView(rootView: MainWindowView(model: model))
+        let host = WindowHostingView(rootView: MainWindowView(model: model))
         host.sizingOptions = []
+        host.clipsToBounds = true
         return host
     }
 
+    /// Content size, not the frame. The expanded sidebar is 188 points, and
+    /// the week beside it needs the rest of 620 to stay whole. Below 540
+    /// points of content the day is a title and a sliver.
+    static let minimumContentSize = NSSize(width: 620, height: 540)
+
     var isOpen: Bool { window?.isVisible ?? false }
+
+    func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+        let minimum = sender.frameRect(forContentRect: NSRect(origin: .zero, size: Self.minimumContentSize)).size
+        return NSSize(width: max(frameSize.width, minimum.width), height: max(frameSize.height, minimum.height))
+    }
+
+    func windowDidResize(_ notification: Notification) {
+        guard let window else { return }
+        applyMinimumSize(to: window)
+        let minimum = window.frameRect(forContentRect: NSRect(origin: .zero, size: Self.minimumContentSize)).size
+        var frame = window.frame
+        let width = max(frame.width, minimum.width)
+        let height = max(frame.height, minimum.height)
+        guard abs(width - frame.width) > 0.5 || abs(height - frame.height) > 0.5 else { return }
+        frame.size = NSSize(width: width, height: height)
+        window.setFrame(frame, display: true)
+    }
 
     func windowDidBecomeKey(_ notification: Notification) {
         model?.navigationSurface = .window
+    }
+
+    private func applyMinimumSize(to window: NSWindow) {
+        window.contentMinSize = Self.minimumContentSize
+        window.minSize = window.frameRect(forContentRect: NSRect(origin: .zero, size: Self.minimumContentSize)).size
+    }
+}
+
+/// Hosts the main window without letting SwiftUI decide how big it is.
+///
+/// The hosting view wants constraint layout and reports the SwiftUI ideal
+/// size. That size is the home row, the week, and a picture scaled to pan —
+/// wider than the window. With no autoresizing mask the view keeps that
+/// width, and dragging the window smaller leaves the extra off the leading
+/// edge, sidebar included. No intrinsic size, and the ordinary width-and-height
+/// mask, make the view the window's size instead.
+final class WindowHostingView<Content: View>: NSHostingView<Content> {
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: NSView.noIntrinsicMetric, height: NSView.noIntrinsicMetric)
+    }
+
+    override class var requiresConstraintBasedLayout: Bool { false }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        followTheWindow()
+    }
+
+    override func layout() {
+        followTheWindow()
+        super.layout()
+        followTheWindow()
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        followTheWindow()
+    }
+
+    private func followTheWindow() {
+        translatesAutoresizingMaskIntoConstraints = true
+        autoresizingMask = [.width, .height]
+        clipsToBounds = true
     }
 }

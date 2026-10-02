@@ -276,7 +276,9 @@ struct AbsenceCacheTests {
 
         #expect(service.cachedDay(for: date) == nil)
 
-        try store.saveLiturgicalDay(sampleDay(date, reckoning: .julian))
+        // The unnamed default is the OCA, on the revised Julian reckoning.
+        // A day stored under another reckoning is not this service's day.
+        try store.saveLiturgicalDay(sampleDay(date, reckoning: service.jurisdiction.reckoning))
         try service.loadSnapshot(around: date)
 
         #expect(service.cachedDay(for: date) != nil, "the record must become visible")

@@ -98,6 +98,16 @@ struct ModelTests {
         model.take(morningPrayers)
         #expect(model.isTaken(morningPrayers))
     }
+
+    @Test("a rule that has been paused is not still marked on the rule")
+    func pausedIsNotTaken() throws {
+        let model = try model()
+        model.take(morningPrayers)
+        let rule = try #require(model.rules.first)
+        model.pause(rule)
+        #expect(!model.isTaken(morningPrayers))
+        #expect(model.restingCopy(of: morningPrayers)?.id == rule.id)
+    }
 }
 
 /// The shape of the navigation, as a decision rather than an accident.

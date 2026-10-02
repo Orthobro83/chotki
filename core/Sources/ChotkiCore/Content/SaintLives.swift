@@ -81,7 +81,7 @@ extension SaintLife.Span: Codable {
 
 public enum SaintLives {
     private static let readings: [SaintLife] = {
-        guard let url = Bundle.module.url(forResource: "saint-lives", withExtension: "json", subdirectory: "Resources"),
+        guard let url = BundledFile.url("saint-lives", extension: "json"),
               let data = try? Data(contentsOf: url),
               let lives = try? JSONDecoder().decode([SaintLife].self, from: data)
         else { return [] }

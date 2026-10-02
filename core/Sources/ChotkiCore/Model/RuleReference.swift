@@ -47,6 +47,29 @@ public let akathistRuleTitle = "An akathist"
 public let departedRuleTitle = "Prayer for the departed"
 
 public extension Rule {
+    /// The named sequence this rule is said as, when it is one.
+    ///
+    /// An exact list wins. The editor never offers a way to rewrite that list,
+    /// so a rule that still carries the sequence's own title, and whose stored
+    /// prayers are all part of it, opens the sequence as it stands now — an
+    /// older copy of the list would otherwise show a different morning or
+    /// evening rule from the one the other platforms open. A list that contains
+    /// something else was chosen, and is left alone.
+    var sequenceID: String? {
+        if let ids = prayerIDs,
+           let exact = PrayerSequence.all.first(where: { $0.prayerIDs == ids }) {
+            return exact.id
+        }
+        guard let sequence = PrayerSequence.all.first(where: {
+            $0.title.compare(title, options: .caseInsensitive) == .orderedSame
+        }) else { return nil }
+        if let stored = prayerIDs {
+            // An empty list was set, not merely never filled in.
+            guard !stored.isEmpty, stored.allSatisfy(sequence.prayerIDs.contains) else { return nil }
+        }
+        return sequence.id
+    }
+
     /// The prayer the rope should already be counting when this rule is opened.
     ///
     /// A rule whose whole text is a single counted prayer is not read through:

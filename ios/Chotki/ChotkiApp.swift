@@ -52,6 +52,10 @@ struct Shell: View {
     @State var model: Model
     @State private var place: Place = .rule
     @State private var paths: [Place: NavigationPath] = [:]
+    /// The first time this view is created in the process. Later creations —
+    /// not a return from the background, which keeps this state — read the
+    /// flag already spent.
+    @State private var showOpening = ColdOpen.pending
     @Namespace private var transition
     @Environment(\.scenePhase) private var scenePhase
 
@@ -63,6 +67,13 @@ struct Shell: View {
                 places
             }
         }
+        .overlay {
+            if showOpening {
+                OpeningMark { showOpening = false }
+                    .ignoresSafeArea()
+            }
+        }
+        .onAppear { ColdOpen.pending = false }
         // Coming back to the foreground is the moment a phone finds out what
         // day it is. The app is rarely quit, so without this the view can sit
         // on a stale day for as long as the process happens to live.

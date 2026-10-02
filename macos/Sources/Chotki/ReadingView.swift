@@ -11,7 +11,16 @@ struct ReadingViewContent: View {
         if let day = model.liturgical.cachedDay(for: model.selectedDate) {
             content(day)
         } else {
-            waiting
+            VStack(alignment: .leading, spacing: 0) {
+                // The hymn does not wait on the fetched day. The rest of the
+                // reading does, and says so underneath.
+                if let week = model.liturgical.akathistWeek(model.selectedDate) {
+                    akathistSection(week)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
+                }
+                waiting
+            }
         }
     }
 
@@ -84,21 +93,8 @@ struct ReadingViewContent: View {
                 }
             }
 
-            if let week = Akathist.week(
-                paschaDistance: day.paschaDistance,
-                tradition: model.settings.jurisdiction.tradition
-            ) {
-                section(ReadingOrder.sectionTitle(band: ReadingOrder.akathistBand), band: ReadingOrder.akathistBand) {
-                    appointed(
-                        heading: Akathist.heading(week: week),
-                        paragraphs: Akathist.paragraphs(week: week),
-                        source: Akathist.source,
-                        sourceURL: Akathist.sourceURL,
-                        band: ReadingOrder.akathistBand,
-                        note: Akathist.fallbackNote(for: model.settings.jurisdiction.tradition),
-                        linked: true
-                    )
-                }
+            if let week = model.liturgical.akathistWeek(model.selectedDate) {
+                akathistSection(week)
             }
 
             if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
@@ -144,6 +140,20 @@ struct ReadingViewContent: View {
     private func toggle(_ band: Int) {
         withAnimation(.easeInOut(duration: 0.25)) {
             if expanded.contains(band) { expanded.remove(band) } else { expanded.insert(band) }
+        }
+    }
+
+    private func akathistSection(_ week: Int) -> some View {
+        section(ReadingOrder.sectionTitle(band: ReadingOrder.akathistBand), band: ReadingOrder.akathistBand) {
+            appointed(
+                heading: Akathist.heading(week: week),
+                paragraphs: Akathist.paragraphs(week: week),
+                source: Akathist.source,
+                sourceURL: Akathist.sourceURL,
+                band: ReadingOrder.akathistBand,
+                note: Akathist.fallbackNote(for: model.settings.jurisdiction.tradition),
+                linked: true
+            )
         }
     }
 

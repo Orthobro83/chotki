@@ -3,6 +3,20 @@ package org.chotki.core
 import kotlinx.serialization.Serializable
 
 /**
+ * Whether a person has named a church.
+ *
+ * Written on every new save. A missing key, or a JSON null, on an older record
+ * is not this: it means the stored jurisdiction is the church they already chose.
+ * [declared] with no name means they said they have no church yet, and the app
+ * follows the OCA without showing that name.
+ */
+@Serializable
+data class Affiliation(
+    val declared: Boolean = true,
+    val name: String? = null,
+)
+
+/**
  * Everything the user can change, in one serialisable value.
  *
  * Lives in core so the settings someone has chosen move with their data rather
@@ -81,6 +95,12 @@ data class AppSettings(
      * father's name does not bring the caution back.
      */
     val customCautionDismissed: Boolean = false,
+    /**
+     * Null only on a record saved before this existed, or on a re-save of one.
+     * A new record uses [Affiliation] with [Affiliation.declared] and no name.
+     * The property default stays null so a missing key is not read as "no church".
+     */
+    val affiliation: Affiliation? = null,
 ) {
     /**
      * How a rule says it was given, once a name is stored.
@@ -105,7 +125,45 @@ data class AppSettings(
         return today >= anchor.plusDays(30)
     }
 
+    /**
+     * The church to show. Null when they have said they have none.
+     *
+     * An older record with a jurisdiction and no affiliation still shows that
+     * church. The OCA name used for the unnamed default is not shown.
+     */
+    val namedChurch: String?
+        get() {
+            val affiliation = affiliation ?: return jurisdiction.name
+            val trimmed = affiliation.name?.trim().orEmpty()
+            if (affiliation.declared && trimmed.isEmpty()) return null
+            return trimmed.ifEmpty { jurisdiction.name }
+        }
+
+    /**
+     * Name a church, or pass null or blank to say there is none.
+     *
+     * None follows the OCA and shows no church. A known name replaces the
+     * jurisdiction with the one the app ships for that church.
+     */
+    fun chooseChurch(named: String?): AppSettings {
+        val trimmed = named?.trim().orEmpty()
+        if (trimmed.isEmpty()) {
+            return copy(
+                affiliation = Affiliation(declared = true, name = null),
+                jurisdiction = Jurisdiction.DEFAULT,
+            )
+        }
+        val chosen = Jurisdiction.KNOWN.firstOrNull { it.name == trimmed } ?: return this
+        return copy(
+            affiliation = Affiliation(name = chosen.name, declared = true),
+            jurisdiction = chosen,
+        )
+    }
+
     companion object {
-        val DEFAULT = AppSettings()
+        /** A new record: no church named, OCA practice, and that fact written down. */
+        val DEFAULT = AppSettings(
+            affiliation = Affiliation(declared = true, name = null),
+        )
     }
 }

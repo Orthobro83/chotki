@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
+import org.chotki.app.BuildConfig
 import org.chotki.core.ClockStyle
 import org.chotki.core.Jurisdiction
 import org.chotki.core.Observance
@@ -130,14 +131,30 @@ fun SettingsScreen(
             Group("Your church")
             Panel {
                 Box {
-                    ValueRow("Jurisdiction", state.settings.jurisdiction.name) { churchOpen = true }
+                    ValueRow(
+                        "Church",
+                        state.settings.namedChurch ?: org.chotki.core.content.Welcome.noChurchAffiliation,
+                    ) { churchOpen = true }
                     DropdownMenu(expanded = churchOpen, onDismissRequest = { churchOpen = false }) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    org.chotki.core.content.Welcome.noChurchAffiliation,
+                                    color = Chotki.parchment,
+                                    fontSize = 14.sp,
+                                )
+                            },
+                            onClick = {
+                                churchOpen = false
+                                state.updateSettings { it.chooseChurch(null) }
+                            },
+                        )
                         Jurisdiction.KNOWN.forEach { church ->
                             DropdownMenuItem(
                                 text = { Text(church.name, color = Chotki.parchment, fontSize = 14.sp) },
                                 onClick = {
                                     churchOpen = false
-                                    state.updateSettings { it.copy(jurisdiction = church) }
+                                    state.updateSettings { it.chooseChurch(church.name) }
                                 },
                             )
                         }
@@ -237,6 +254,13 @@ fun SettingsScreen(
                     state.setClockStyle(next)
                 }
             }
+
+            Text(
+                "Version ${BuildConfig.VERSION_NAME}",
+                color = Chotki.faint,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 14.dp, top = 14.dp, bottom = 14.dp),
+            )
         }
     }
 }

@@ -44,7 +44,10 @@ struct SayingCard: View {
                     Text(saying.text).font(Theme.reading(compact ? 15 : 18)).fixedSize(horizontal: false, vertical: true)
                     Text("\(saying.author) · \(saying.source)").font(.system(size: 12))
                 }.foregroundStyle(Theme.parchment).shadow(color: .black, radius: 4).padding(18)
-            }.frame(height: compact ? 235 : 270).clipShape(RoundedRectangle(cornerRadius: 20))
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: compact ? 235 : 270)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
                 .accessibilityElement(children: .combine)
         }
     }
@@ -58,9 +61,8 @@ struct SayingCard: View {
     private static let startKey = "chotki.sayingPan.startedAt"
 
     static func start(date: CalendarDate, name: String, persist: Bool) -> Date {
-        // A motion revision starts a fresh once-per-day pan instead of
-        // inheriting a settled position from the previous animation style.
-        let identity = "pan2-\(date.iso)-\(name)"
+        // pan3 is the doubled pace. A day already settled on pan2 plays once more.
+        let identity = "pan3-\(date.iso)-\(name)"
         if let existing = sessionStarts[identity] { return existing }
         let defaults = UserDefaults.standard
         if persist, defaults.string(forKey: imageKey) == identity,
@@ -89,7 +91,11 @@ struct DriftingArtwork: View {
     /// Twice the earlier pace: 2 × 36s, 15% faster, then halved. `SayingPan.kt` uses the same figure.
     private let duration: TimeInterval = 2 * 36 / 1.15 / 2
     var body: some View {
-        GeometryReader { proxy in
+        // An overlay, not the layout: the scaled picture is wider than the
+        // card so it can travel, and as a child it would make the card — and
+        // then the window — that wide.
+        Color.clear.overlay {
+            GeometryReader { proxy in
             let scale = max(proxy.size.width / image.size.width, proxy.size.height / image.size.height) * 1.08
             let width = image.size.width * scale
             let height = image.size.height * scale
@@ -119,6 +125,8 @@ struct DriftingArtwork: View {
                         withAnimation(.easeInOut(duration: duration * (1 - progress))) { progress = 1 }
                     }
                 }
-        }.clipped().accessibilityHidden(true)
+            }.clipped()
+        }
+        .accessibilityHidden(true)
     }
 }

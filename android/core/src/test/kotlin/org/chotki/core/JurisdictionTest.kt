@@ -104,7 +104,7 @@ class JurisdictionTest {
 
     @Test
     fun `changing only the calendar is recorded as a difference`() {
-        val rocor = Jurisdiction.DEFAULT
+        val rocor = Jurisdiction.KNOWN.first { it.name.contains("Outside Russia") }
         assertEquals(Reckoning.JULIAN, rocor.reckoning)
 
         val moved = rocor.copy(reckoning = Reckoning.REVISED_JULIAN)
@@ -114,8 +114,23 @@ class JurisdictionTest {
 
     @Test
     fun `setting it back stops it being a difference`() {
-        val there = Jurisdiction.DEFAULT.copy(reckoning = Reckoning.REVISED_JULIAN)
+        val rocor = Jurisdiction.KNOWN.first { it.name.contains("Outside Russia") }
+        val there = rocor.copy(reckoning = Reckoning.REVISED_JULIAN)
         assertTrue(!there.copy(reckoning = Reckoning.JULIAN).reckoningDiffersFromJurisdiction)
+    }
+
+    @Test
+    fun `a person who has named no church follows the OCA and shows none`() {
+        assertEquals("Orthodox Church in America", Jurisdiction.DEFAULT.name)
+        assertEquals(Reckoning.REVISED_JULIAN, Jurisdiction.DEFAULT.reckoning)
+        assertEquals(Tradition.RUSSIAN, Jurisdiction.DEFAULT.tradition)
+        assertNull(AppSettings.DEFAULT.namedChurch)
+        val georgian = Jurisdiction.KNOWN.first { it.name == "Georgian Orthodox Church" }
+        val chosen = AppSettings.DEFAULT.chooseChurch(georgian.name)
+        assertEquals(georgian.name, chosen.namedChurch)
+        assertEquals(Reckoning.JULIAN, chosen.jurisdiction.reckoning)
+        assertNull(chosen.chooseChurch(null).namedChurch)
+        assertEquals(Reckoning.REVISED_JULIAN, chosen.chooseChurch(null).jurisdiction.reckoning)
     }
 
     // Someone may name their own parish rather than pick from the list.

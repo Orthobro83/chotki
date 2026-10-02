@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.chotki.app.platform.AndroidDb
 import org.chotki.app.ui.ChotkiTheme
+import org.chotki.app.ui.ColdOpen
 import org.chotki.app.ui.Shell
 import org.chotki.core.store.SqliteStore
 import org.junit.Assert.assertEquals
@@ -92,6 +93,37 @@ class WelcomeTest {
         compose.setContent { ChotkiTheme { Shell(state) } }
 
         compose.onNodeWithContentDescription("The welcome").assertDoesNotExist()
+    }
+
+    /**
+     * A quit is a new process. The welcome does not come back with it, and a
+     * second composition in the same process is a return, not another quit.
+     */
+    @Test fun aColdOpenPlaysTheMarkEvenAfterTheWelcome() {
+        ColdOpen.pending = true
+        val state = freshState()
+        state.updateSettings { it.copy(hasCompletedFirstRun = true) }
+        compose.mainClock.autoAdvance = false
+        compose.setContent { ChotkiTheme { Shell(state) } }
+        compose.waitForIdle()
+
+        val opening = compose.onAllNodesWithContentDescription("The opening")
+            .fetchSemanticsNodes().isNotEmpty()
+        if (opening) {
+            compose.onNodeWithContentDescription("The welcome").assertDoesNotExist()
+            compose.onNodeWithContentDescription("Go to Settings").assertDoesNotExist()
+            compose.mainClock.advanceTimeBy(4_000)
+        }
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+
+        compose.onNodeWithContentDescription("The welcome").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Go to Settings").assertIsDisplayed()
+
+        compose.setContent { ChotkiTheme { Shell(state) } }
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("The opening").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Go to Settings").assertIsDisplayed()
     }
 
     /** The words are the ones in core, not a copy typed in here. */

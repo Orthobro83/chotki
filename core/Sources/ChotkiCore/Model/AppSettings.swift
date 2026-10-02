@@ -1,5 +1,21 @@
 import Foundation
 
+/// Whether a person has named a church.
+///
+/// Written on every new save. A missing key on an older record is not this:
+/// it means the stored jurisdiction is the church they already chose.
+/// `declared` with no name means they said they have no church yet, and the
+/// app follows the OCA without showing that name.
+public struct Affiliation: Sendable, Hashable, Codable {
+    public var name: String?
+    public var declared: Bool
+
+    public init(name: String? = nil, declared: Bool = true) {
+        self.name = name
+        self.declared = declared
+    }
+}
+
 /// Everything the user can change, in one Codable value.
 ///
 /// Lives in core so the settings a person has chosen move with their data
@@ -23,6 +39,8 @@ public struct AppSettings: Sendable, Hashable, Codable {
     }
 
     public var jurisdiction: Jurisdiction
+    /// Nil only on a record saved before this existed. See `namedChurch`.
+    public var affiliation: Affiliation?
     public var observances: ObservanceSettings
     public var reminders: ReminderPolicy
     /// Show the Julian date alongside the civil one — useful on the Old
@@ -64,9 +82,11 @@ public struct AppSettings: Sendable, Hashable, Codable {
         tickEachKnot: Bool = true,
         hasCompletedFirstRun: Bool = false,
         clockStyle: ClockStyle = .twentyFourHour,
-        reckoningChangedOn: CalendarDate? = nil
+        reckoningChangedOn: CalendarDate? = nil,
+        affiliation: Affiliation? = Affiliation(declared: true)
     ) {
         self.jurisdiction = jurisdiction
+        self.affiliation = affiliation
         self.observances = observances
         self.reminders = reminders
         self.showOldStyleDates = showOldStyleDates
@@ -78,6 +98,14 @@ public struct AppSettings: Sendable, Hashable, Codable {
         self.hasCompletedFirstRun = hasCompletedFirstRun
         self.clockStyle = clockStyle
         self.reckoningChangedOn = reckoningChangedOn
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case displayName, spiritualFatherName, firstRunOn, spiritualFatherDeferredOn
+        case customCautionDismissed, jurisdiction, affiliation, observances, reminders
+        case showOldStyleDates, showConsistencyNumber, launchAtLogin, showInDock
+        case chimeOnCompletion, tickEachKnot, hasCompletedFirstRun, clockStyle
+        case reckoningChangedOn
     }
 
     /// Every key optional, every absence a default.
@@ -99,6 +127,17 @@ public struct AppSettings: Sendable, Hashable, Codable {
         spiritualFatherDeferredOn = try container.decodeIfPresent(CalendarDate.self, forKey: .spiritualFatherDeferredOn)
         customCautionDismissed = try value(.customCautionDismissed, false)
         jurisdiction = try value(.jurisdiction, fallback.jurisdiction)
+        // A stored church with no affiliation key is that church. A record
+        // that names neither is a new one: no church, following the OCA.
+        // An explicit null is the same as a missing key beside a church,
+        // because a save of an older record writes null rather than omitting it.
+        if container.contains(.affiliation) {
+            affiliation = try container.decodeIfPresent(Affiliation.self, forKey: .affiliation)
+        } else if container.contains(.jurisdiction) {
+            affiliation = nil
+        } else {
+            affiliation = Affiliation(declared: true)
+        }
         observances = try value(.observances, fallback.observances)
         reminders = try value(.reminders, fallback.reminders)
         showOldStyleDates = try value(.showOldStyleDates, fallback.showOldStyleDates)
@@ -112,6 +151,65 @@ public struct AppSettings: Sendable, Hashable, Codable {
         reckoningChangedOn = try container.decodeIfPresent(
             CalendarDate.self, forKey: .reckoningChangedOn
         )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(spiritualFatherName, forKey: .spiritualFatherName)
+        try container.encodeIfPresent(firstRunOn, forKey: .firstRunOn)
+        try container.encodeIfPresent(spiritualFatherDeferredOn, forKey: .spiritualFatherDeferredOn)
+        try container.encode(customCautionDismissed, forKey: .customCautionDismissed)
+        try container.encode(jurisdiction, forKey: .jurisdiction)
+        try container.encodeIfPresent(affiliation, forKey: .affiliation)
+        try container.encode(observances, forKey: .observances)
+        try container.encode(reminders, forKey: .reminders)
+        try container.encode(showOldStyleDates, forKey: .showOldStyleDates)
+        try container.encode(showConsistencyNumber, forKey: .showConsistencyNumber)
+        try container.encode(launchAtLogin, forKey: .launchAtLogin)
+        try container.encode(showInDock, forKey: .showInDock)
+        try container.encode(chimeOnCompletion, forKey: .chimeOnCompletion)
+        try container.encode(tickEachKnot, forKey: .tickEachKnot)
+        try container.encode(hasCompletedFirstRun, forKey: .hasCompletedFirstRun)
+        try container.encode(clockStyle, forKey: .clockStyle)
+        try container.encodeIfPresent(reckoningChangedOn, forKey: .reckoningChangedOn)
+    }
+
+    /// The church to show. Nil when they have said they have none.
+    ///
+    /// An older record with a jurisdiction and no affiliation still shows
+    /// that church. The OCA name used for the unnamed default is not shown.
+    public var namedChurch: String? {
+        guard let affiliation else { return jurisdiction.name }
+        let trimmed = affiliation.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if affiliation.declared && trimmed.isEmpty { return nil }
+        return trimmed.isEmpty ? jurisdiction.name : trimmed
+    }
+
+    /// Name a church, or pass nil or blank to say there is none.
+    ///
+    /// None follows the OCA and shows no church. A known name replaces the
+    /// jurisdiction with the one the app ships for that church.
+    public mutating func chooseChurch(named name: String?) {
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if trimmed.isEmpty {
+            affiliation = Affiliation(declared: true)
+            jurisdiction = .default
+            return
+        }
+        guard let chosen = Jurisdiction.known.first(where: { $0.name == trimmed }) else { return }
+        affiliation = Affiliation(name: chosen.name, declared: true)
+        jurisdiction = chosen
+    }
+
+    /// The "usually keeps" sentence, or nil when no church was named.
+    /// Naming the OCA here would show an affiliation they did not choose.
+    public var calendarDifferenceNote: String? {
+        guard namedChurch != nil,
+              jurisdiction.reckoningDiffersFromJurisdiction,
+              let usual = jurisdiction.asShipped
+        else { return nil }
+        return "\(usual.name) usually keeps the \(usual.reckoning.displayName)."
     }
 
     public static let `default` = AppSettings()

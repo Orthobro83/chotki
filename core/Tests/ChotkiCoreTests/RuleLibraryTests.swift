@@ -118,7 +118,9 @@ struct AppSettingsTests {
     @Test("defaults are the cautious ones")
     func defaults() {
         let settings = AppSettings.default
-        #expect(settings.jurisdiction.reckoning == .julian)
+        #expect(settings.namedChurch == nil)
+        #expect(settings.jurisdiction.reckoning == .revisedJulian)
+        #expect(settings.jurisdiction.tradition == .russian)
         #expect(settings.observances.fasting == .shown, "shown, not observed")
         #expect(settings.observances.feasts == .shown)
         #expect(settings.reminders.notificationsEnabled)

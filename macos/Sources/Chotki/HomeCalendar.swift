@@ -28,42 +28,49 @@ struct HomeCalendar: View {
                 }.frame(maxWidth: .infinity).frame(height: 214).clipped()
                 expansionButton.frame(maxWidth: .infinity)
             } else {
-                HStack(spacing: 5) {
-                    arrow(-1)
-                    ScrollViewReader { proxy in
-                        ScrollView(.horizontal) {
-                            LazyHStack(spacing: 6) {
-                                ForEach(-730...730, id: \.self) { offset in
-                                    let date = (rangeCenter ?? model.selectedDate).adding(days: offset)
-                                    VStack(spacing: 0) {
-                                        CalendarChip(model: model, date: date, week: true, compact: compact)
-                                        if date == model.selectedDate { expansionButton }
-                                        else { Color.clear.frame(height: 18) }
-                                    }.id(date)
+                GeometryReader { geo in
+                    let cap: CGFloat = compact ? 318 : 330
+                    let weekWidth = min(cap, max(0, geo.size.width - 46))
+                    HStack(spacing: 5) {
+                        arrow(-1)
+                        ScrollViewReader { proxy in
+                            ScrollView(.horizontal) {
+                                LazyHStack(spacing: 6) {
+                                    ForEach(-730...730, id: \.self) { offset in
+                                        let date = (rangeCenter ?? model.selectedDate).adding(days: offset)
+                                        VStack(spacing: 0) {
+                                            CalendarChip(model: model, date: date, week: true, compact: compact)
+                                            if date == model.selectedDate { expansionButton }
+                                            else { Color.clear.frame(height: 18) }
+                                        }.id(date)
+                                    }
+                                }.padding(.vertical, 3).chotkiScrollContent().horizontalWheelScroll()
+                            }.scrollIndicators(.hidden).frame(width: weekWidth, height: 80)
+                                .onAppear {
+                                    rangeCenter = model.selectedDate
+                                    proxy.scrollTo(model.selectedDate, anchor: .center)
                                 }
-                            }.padding(.vertical, 3).chotkiScrollContent().horizontalWheelScroll()
-                        }.scrollIndicators(.hidden).frame(width: compact ? 318 : 330, height: 80)
-                            .onAppear {
-                                rangeCenter = model.selectedDate
-                                proxy.scrollTo(model.selectedDate, anchor: .center)
-                            }
-                            .onChange(of: model.selectedDate) { date in
-                                if abs((rangeCenter ?? date).days(until: date)) > 500 { rangeCenter = date }
-                                DispatchQueue.main.async {
-                                    withAnimation(motion) { proxy.scrollTo(date, anchor: .center) }
-                                }
-                            }
-                            .onChange(of: anchor) { date in
-                                if let date {
+                                .onChange(of: model.selectedDate) { date in
                                     if abs((rangeCenter ?? date).days(until: date)) > 500 { rangeCenter = date }
                                     DispatchQueue.main.async {
                                         withAnimation(motion) { proxy.scrollTo(date, anchor: .center) }
                                     }
                                 }
-                            }
+                                .onChange(of: anchor) { date in
+                                    if let date {
+                                        if abs((rangeCenter ?? date).days(until: date)) > 500 { rangeCenter = date }
+                                        DispatchQueue.main.async {
+                                            withAnimation(motion) { proxy.scrollTo(date, anchor: .center) }
+                                        }
+                                    }
+                                }
+                        }
+                        arrow(1)
                     }
-                    arrow(1)
-                }.frame(maxWidth: .infinity, alignment: .center)
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+                }
+                .frame(height: 80)
+                .frame(maxWidth: .infinity)
             }
         }.padding(.horizontal, compact ? 16 : 24).padding(.bottom, 10)
             .frame(maxWidth: .infinity, alignment: .leading)

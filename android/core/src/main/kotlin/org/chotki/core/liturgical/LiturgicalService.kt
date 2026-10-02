@@ -2,6 +2,7 @@ package org.chotki.core.liturgical
 
 import org.chotki.core.Akathist
 import org.chotki.core.CalendarDate
+import org.chotki.core.Pascha
 import org.chotki.core.FastingSeason
 import org.chotki.core.Jurisdiction
 import org.chotki.core.LiturgicalDay
@@ -164,7 +165,8 @@ class LiturgicalService(
     override fun fastFreeReason(date: CalendarDate): String? = cachedDay(date)?.fastFreeReason
 
     override fun akathistWeek(date: CalendarDate): Int? {
-        val distance = cachedDay(date)?.paschaDistance ?: return null
-        return Akathist.week(distance, jurisdiction.tradition)
+        // Not the cached day. A Friday a year ahead has not been fetched, and
+        // the hymn is appointed from Pascha whether or not orthocal has answered.
+        return Akathist.week(Pascha.distance(date), jurisdiction.tradition)
     }
 }

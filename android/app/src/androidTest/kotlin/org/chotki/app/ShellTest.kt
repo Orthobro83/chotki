@@ -48,9 +48,9 @@ class ShellTest {
         it.updateSettings { settings -> settings.copy(hasCompletedFirstRun = true) }
     }
 
-    private fun show() {
-        val state = state()
-        compose.setContent { ChotkiTheme { Shell(state) } }
+    private fun show(app: AppState = state()) {
+        compose.setContent { ChotkiTheme { Shell(app) } }
+        compose.settlePastOpening()
     }
 
     @Test
@@ -83,7 +83,7 @@ class ShellTest {
     fun anEarlierDayCanBeSelected() {
         val state = state()
         state.take("morning-prayers")
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        show(state)
 
         compose.onNodeWithContentDescription("Add a new rule").assertIsDisplayed()
         val today = state.today
@@ -97,7 +97,7 @@ class ShellTest {
     @Test
     fun theMonthCanBeTurned() {
         val state = state()
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        show(state)
         val before = state.visibleMonth.month
 
         compose.onNodeWithContentDescription("Show the whole month").performClick()

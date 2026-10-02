@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -54,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import org.chotki.app.AppState
+import org.chotki.core.Jurisdiction
 import org.chotki.core.content.Welcome
 import org.chotki.core.content.WelcomeParagraphJson
 
@@ -70,6 +73,8 @@ import org.chotki.core.content.WelcomeParagraphJson
 @Composable
 fun WelcomeScreen(state: AppState, modifier: Modifier = Modifier) {
     var name by remember { mutableStateOf(state.settings.displayName) }
+    var church by remember { mutableStateOf(state.settings.namedChurch ?: "") }
+    var churchOpen by remember { mutableStateOf(false) }
     // The whole stack sits in the middle. When the text is taller than the
     // phone it still scrolls, rather than pinning Continue to the bottom.
     BoxWithConstraints(
@@ -133,6 +138,45 @@ fun WelcomeScreen(state: AppState, modifier: Modifier = Modifier) {
                     .padding(top = 12.dp)
                     .semantics { contentDescription = "What should we call you?" },
             )
+            Text(
+                Welcome.churchPrompt,
+                color = Chotki.parchment,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Medium,
+                fontSize = 22.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
+            )
+            Box(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                Text(
+                    if (church.isEmpty()) Welcome.noChurchAffiliation else church,
+                    color = Chotki.parchment,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { churchOpen = true }
+                        .semantics { contentDescription = Welcome.churchPrompt },
+                )
+                DropdownMenu(expanded = churchOpen, onDismissRequest = { churchOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(Welcome.noChurchAffiliation, color = Chotki.parchment) },
+                        onClick = {
+                            church = ""
+                            churchOpen = false
+                        },
+                    )
+                    Jurisdiction.KNOWN.forEach { known ->
+                        DropdownMenuItem(
+                            text = { Text(known.name, color = Chotki.parchment) },
+                            onClick = {
+                                church = known.name
+                                churchOpen = false
+                            },
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.size(18.dp))
             Text(
                 Welcome.beginLabel,
@@ -144,12 +188,13 @@ fun WelcomeScreen(state: AppState, modifier: Modifier = Modifier) {
                     .background(Chotki.gold, RoundedCornerShape(14.dp))
                     .clickable {
                         val trimmed = name.trim()
+                        val picked = church
                         state.updateSettings {
                             it.copy(
                                 hasCompletedFirstRun = true,
                                 displayName = trimmed,
                                 firstRunOn = it.firstRunOn ?: state.today,
-                            )
+                            ).chooseChurch(picked.ifEmpty { null })
                         }
                     }
                     .padding(vertical = 14.dp)

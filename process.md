@@ -1,7 +1,7 @@
 # Chotki macOS Overhaul Process
 
 Updated: 2026-10-02.
-Status: `0.2.0-build.11` packaged; saint-life translation and final hands-on review remain before beta.
+Status: 1.0 beta, build 29. Android and the universal Mac build are the release. The rope and the cross play only when the process was not running. The iOS visual overhaul has not started.
 
 ## Approach and Progress
 
@@ -9,7 +9,7 @@ Android's current implementation defines the behavior; the supplied desktop scre
 Decisions made during screenshot review supersede conflicting details in the original phase outline.
 I will update each phase below to Pending, In Progress, or Complete, recording the build version, verification results, and remaining issues.
 A phase is complete only when its behavior and accessible controls have been checked, alongside its appearance.
-Development versions follow `0.x.x-build`; the completed overhaul becomes `1.0.0-beta`.
+Development versions followed `0.x.x-build` until 2026-10-02, when the release name became 1.0 beta. The build number only goes up.
 
 ## Phase 1 — Inventory and Baseline
 
@@ -126,7 +126,7 @@ Status: In Progress. Seven of 366 featured dates have complete English translati
 
 ## Current Evidence and Open Details
 
-- `0.2.0-build.11` is the current development version; `1.0.0-beta` remains reserved for the completed overhaul.
+- 1.0 beta, build 29 is the current release, on Android and on the universal Mac build. The earlier reservation of `1.0.0-beta` is lifted. The rope and the cross play on a cold start only; see `ios/PORT.md` for the iOS overhaul and the Windows port.
 - The fictional-data `Chotki Review.app` uses a distinct bundle identity and in-memory practice store. It does not open the live Chotki record; all physical UI checks here used this review app.
 - In the Review window, ordinary clicks were observed to open Morning Prayers, the Jesus Prayer with rope, the day's Gospel, the saint-life Reading section, the Add placard, and “Add a New Rule.” The completion circle changed the selected day's state; the saint-life disclosure collapsed by click. A right-click started the native card menu, and selecting its Expand Card action by keyboard expanded the card.
 - Mac: 76/76 tests pass. Shared core: 456/456 tests pass. Android core tests and debug assembly pass. The iOS Simulator build passed in the preceding verification and was not rerun for build.11.
@@ -175,6 +175,7 @@ Status: In Progress. Seven of 366 featured dates have complete English translati
 - 2026-10-01: `0.2.0-build.10` packages as signed arm64/x86_64 release plus a separately signed fictional Review app. Both ZIP archives pass integrity checks. Both `/Applications` copies were updated to build.10 after backing up build.8 and build.9 under `macos/dist/installed-backups/`; the installed Review app physically opened Morning Prayers from a card after installation. The normal app's live record was not opened for testing.
 - 2026-10-01: The translation track now also includes the complete September 19 life of the Martyr Zosimas in source, for the next Old Calendar day; it is not yet in build.10. The Russian collection has a February 29 life of John Cassian, so full daily coverage requires 366 dates, separate from the 365-image rotation.
 - 2026-10-02: `0.2.0-build.11` includes seven complete featured-life translations in source and both Mac bundles; 359 church dates remain. The shared core passes 456 tests, macOS passes 76 tests, and Android core tests and debug assembly pass. Both signed universal Mac bundles package successfully with arm64 and x86_64 slices; both ZIP archives pass integrity checks, and the release bundle contains all 365 approved daily images. This is a development build, not the beta milestone.
+- 2026-10-02: The release name is 1.0 beta, build 29. The opening mark plays when the app is started from a process that was not running, on Android, Mac, and the current iOS build, and not when an already-running app is brought forward. The iOS visual overhaul is still not started.
 
 ## Feature Parity Checklist
 

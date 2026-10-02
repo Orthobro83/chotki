@@ -216,14 +216,18 @@ struct RopeWords: View {
                         Text(prayer.title)
                             .font(.system(size: 15))
                             .foregroundStyle(Theme.gold)
+                        if let rubric = prayer.rubric {
+                            Text(rubric)
+                                .font(.system(size: 12)).italic()
+                                .foregroundStyle(Theme.faint)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                         PrayerProse(
                             model: model, paragraphs: prayer.paragraphs,
                             size: 18, spacing: 6, matches: found[index]
                         )
+                        PrayerAttribution(prayer: prayer)
                     }
-                }
-                if let first = prayers.first {
-                    PrayerAttribution(prayer: first)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

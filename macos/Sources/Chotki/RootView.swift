@@ -24,8 +24,7 @@ struct RootView: View {
     var body: some View {
         VStack(spacing: 0) {
             if !model.settings.hasCompletedFirstRun {
-                OnboardingView(model: model)
-                    .frame(maxHeight: .infinity, alignment: .top)
+                FirstRunView(model: model)
             } else {
             switch underlyingScreen {
             case .main:
@@ -112,6 +111,10 @@ struct RootView: View {
         .preferredColorScheme(.dark)
         .glossaryDetour(model: model, backTitle: "Back to \(model.tab.rawValue)", enabled: model.navigationSurface == .companion)
         .overlay { if model.settings.shouldAskForSpiritualFather(on: model.today) { FatherPrompt(model: model) } }
+        // The popover is the only thing on screen when the Dock icon is off.
+        // The curtain waits until this window is actually visible, so a hidden
+        // popover cannot spend the one cold open.
+        .overlay { ColdOpenCurtain(model: model) }
     }
 
     private var underlyingScreen: Screen {

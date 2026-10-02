@@ -42,6 +42,10 @@ public enum Welcome {
 
     public static let beginLabel = "Continue"
 
+    public static let churchPrompt = "Do you have an existing church affiliation?"
+
+    public static let noChurchAffiliation = "I don't have a church affiliation yet."
+
     public static let independence = "Chotki is an independent project. It is not affiliated with or sanctioned by any church authority. It is not a spiritual father and is not meant to stand in for one."
 
     public static let paragraphs: [WelcomeParagraph] = [

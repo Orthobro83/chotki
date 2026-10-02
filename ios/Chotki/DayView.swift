@@ -186,9 +186,25 @@ private struct EntryRow: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Pray \(entry.rule.title) on the rope")
         case .prayers:
-            link(to: .prayers(ruleID: entry.rule.id),
-                 label: "Read the prayers for \(entry.rule.title)")
+            if let sequence = entry.rule.sequenceID {
+                Button {
+                    model.prayers.choose(sequence)
+                    pushRoute(.rope)
+                } label: {
+                    Image(systemName: "text.alignleft")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Chotki.goldDim)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Read the prayers for \(entry.rule.title)")
                 .zoomSource(id: entry.rule.id, in: transition)
+            } else {
+                link(to: .prayers(ruleID: entry.rule.id),
+                     label: "Read the prayers for \(entry.rule.title)")
+                    .zoomSource(id: entry.rule.id, in: transition)
+            }
         case .reading:
             Button {
                 model.openReading(band: ReadingOrder.band(ofTitle: entry.rule.title))
@@ -240,7 +256,14 @@ private struct EntryRow: View {
                 }
                 Divider()
             case .prayers:
-                Button("Read the prayers") { pushRoute(.prayers(ruleID: entry.rule.id)) }
+                Button("Read the prayers") {
+                    if let sequence = entry.rule.sequenceID {
+                        model.prayers.choose(sequence)
+                        pushRoute(.rope)
+                    } else {
+                        pushRoute(.prayers(ruleID: entry.rule.id))
+                    }
+                }
                 Divider()
             case .reading:
                 Button("Read the day\u{2019}s readings") {

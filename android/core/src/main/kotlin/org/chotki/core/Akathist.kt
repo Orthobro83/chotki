@@ -9,7 +9,7 @@ import org.chotki.core.content.Content
  * Fridays, and the whole hymn on the fifth. Russian, Serbian and Bulgarian
  * practice reads the whole hymn on the fifth Friday only. Romanian and
  * Georgian practice is not the one given here; those churches are shown the
- * Russian Orthodox Church Outside Russia's appointment, the same fifth Friday.
+ * Orthodox Church in America's appointment, the same fifth Friday.
  * The Fridays follow Pascha, so the old calendar and the new share them.
  *
  * 1..4 is that stasis. 5 is the whole hymn. Null when it is not appointed.
@@ -37,7 +37,7 @@ object Akathist {
     }
 
     /**
-     * Said once the section is opened, and only when ROCOR's appointment is
+     * Said once the section is opened, and only when the OCA's appointment is
      * standing in for a church whose own is not given here.
      */
     fun fallbackNote(tradition: Tradition): String? = when (tradition) {
@@ -48,7 +48,7 @@ object Akathist {
     }
 
     private fun fallbackNote(church: String): String =
-        "The $church's own appointment is not the one given here. This is how the Russian Orthodox Church Outside Russia keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
+        "The $church's own appointment is not the one given here. This is how the Orthodox Church in America keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
 
     fun heading(week: Int): String = when (week) {
         1 -> "The first part, appointed for this Friday."

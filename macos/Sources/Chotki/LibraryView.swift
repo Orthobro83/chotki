@@ -94,7 +94,7 @@ struct LibraryViewContent: View {
     }
 
     private func isTaken(_ template: RuleTemplate) -> Bool {
-        model.rules.contains { $0.title == template.title }
+        model.isTaken(template)
     }
 }
 

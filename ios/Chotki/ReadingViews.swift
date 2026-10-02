@@ -18,6 +18,9 @@ struct ReadingView: View {
                 if let day {
                     stored(day)
                 } else {
+                    if let week = model.liturgical.akathistWeek(model.selectedDate) {
+                        akathistSection(week)
+                    }
                     missing
                 }
             }
@@ -120,24 +123,8 @@ struct ReadingView: View {
             }
         }
 
-        if let week = Akathist.week(
-            paschaDistance: day.paschaDistance,
-            tradition: model.settings.jurisdiction.tradition
-        ) {
-            disclosure(ReadingOrder.sectionTitle(band: ReadingOrder.akathistBand), band: ReadingOrder.akathistBand) {
-                appointed(
-                    Akathist.heading(week: week),
-                    Akathist.paragraphs(week: week),
-                    Akathist.source,
-                    note: Akathist.fallbackNote(for: model.settings.jurisdiction.tradition),
-                    linked: true
-                )
-                ReadingEnd(identity: "\(model.selectedDate.iso)-akathist") {
-                    model.finishReading(band: ReadingOrder.akathistBand)
-                }
-                .frame(height: 1)
-                .accessibilityHidden(true)
-            }
+        if let week = model.liturgical.akathistWeek(model.selectedDate) {
+            akathistSection(week)
         }
 
         if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
@@ -261,6 +248,23 @@ struct ReadingView: View {
         .lineSpacing(4)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func akathistSection(_ week: Int) -> some View {
+        disclosure(ReadingOrder.sectionTitle(band: ReadingOrder.akathistBand), band: ReadingOrder.akathistBand) {
+            appointed(
+                Akathist.heading(week: week),
+                Akathist.paragraphs(week: week),
+                Akathist.source,
+                note: Akathist.fallbackNote(for: model.settings.jurisdiction.tradition),
+                linked: true
+            )
+            ReadingEnd(identity: "\(model.selectedDate.iso)-akathist") {
+                model.finishReading(band: ReadingOrder.akathistBand)
+            }
+            .frame(height: 1)
+            .accessibilityHidden(true)
+        }
     }
 
     /// Nothing stored for the day, and a way to ask again.

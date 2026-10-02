@@ -142,7 +142,8 @@ public final class LiturgicalService: LiturgicalDayProvider, @unchecked Sendable
     }
 
     public func akathistWeek(_ date: CalendarDate) -> Int? {
-        guard let distance = cachedDay(for: date)?.paschaDistance else { return nil }
-        return Akathist.week(paschaDistance: distance, tradition: jurisdiction.tradition)
+        // Not the cached day. A Friday a year ahead has not been fetched, and
+        // the hymn is appointed from Pascha whether or not orthocal has answered.
+        Akathist.week(paschaDistance: Pascha.distance(on: date), tradition: jurisdiction.tradition)
     }
 }

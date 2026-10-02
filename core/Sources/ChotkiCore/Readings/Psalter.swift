@@ -35,7 +35,7 @@ public enum Psalter {
     }
 
     private static let document: Document = {
-        guard let url = Bundle.module.url(forResource: "psalter", withExtension: "json"),
+        guard let url = BundledFile.url("psalter", extension: "json"),
               let data = try? Data(contentsOf: url),
               let decoded = try? JSONDecoder().decode(Document.self, from: data)
         else {

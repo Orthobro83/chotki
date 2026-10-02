@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.core.Akathist
 import org.chotki.core.LiturgicalDay
+import org.chotki.core.Pascha
 import org.chotki.core.Reading
 import org.chotki.core.ReadingOrder
 import org.chotki.core.Reckoning
@@ -76,12 +79,15 @@ fun ReadingScreen(
     val day = state.liturgicalDay(state.selectedDate)
     Column(modifier.fillMaxSize()) {
         if (day == null) {
-            // Nothing here scrolls, so a top fade would only let the wash
-            // through the message.
-            Waiting(
-                state,
-                Modifier.weight(1f).edgeFade(topBand = 0f).padding(horizontal = 16.dp, vertical = 12.dp),
-            )
+            // The hymn does not wait on the fetched day. The rest of the
+            // reading does, and says so underneath.
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                AkathistAhead(state)
+                Waiting(
+                    state,
+                    Modifier.edgeFade(topBand = 0f).padding(horizontal = 16.dp, vertical = 12.dp),
+                )
+            }
         } else {
             Readings(
                 state,
@@ -116,7 +122,10 @@ private fun Readings(
     val saintLife = Content.saintLife(day.observedDate.month, day.observedDate.day)
     val showDeparted = state.settings.jurisdiction.tradition.isSlavic ||
         ReadingOrder.DEPARTED_BAND in held
-    val akathistWeek = Akathist.week(day.paschaDistance, state.settings.jurisdiction.tradition)
+    val akathistWeek = Akathist.week(
+        Pascha.distance(state.selectedDate),
+        state.settings.jurisdiction.tradition,
+    )
     val trailing = buildList {
         add(ReadingOrder.SAINT_LIFE_BAND)
         if (showDeparted) add(ReadingOrder.DEPARTED_BAND)
@@ -520,6 +529,40 @@ private fun Fathers(state: AppState, day: LiturgicalDay) {
             fontFamily = Chotki.reading,
             fontSize = 13.sp,
         )
+    }
+}
+
+@Composable
+private fun AkathistAhead(state: AppState) {
+    val week = Akathist.week(
+        Pascha.distance(state.selectedDate),
+        state.settings.jurisdiction.tradition,
+    ) ?: return
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Text(
+            Akathist.heading(week),
+            color = Chotki.muted,
+            fontFamily = Chotki.reading,
+            fontSize = 13.sp,
+        )
+        Akathist.fallbackNote(state.settings.jurisdiction.tradition)?.let { note ->
+            Text(
+                note,
+                color = Chotki.muted,
+                fontFamily = Chotki.reading,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+        for (paragraph in Akathist.paragraphs(week)) {
+            Text(
+                paragraph,
+                color = Chotki.parchmentDim,
+                fontFamily = Chotki.reading,
+                fontSize = 17.sp,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
     }
 }
 

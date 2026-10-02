@@ -28,10 +28,10 @@ android {
         // essentially every device in use. The test device runs 13.
         minSdk = 26
         targetSdk = 37
-        // A local LAN build so it installs over the published beta 23.
-        // It is not a GitHub release.
-        versionCode = 28
-        versionName = "1.0-beta.28-local"
+        // 1.0 beta, build 29. versionCode must stay above every apk already
+        // handed out, including the local build 28.
+        versionCode = 29
+        versionName = "1.0 beta, build 29"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -269,9 +269,9 @@ struct RopeWords: View {
                             model: model, paragraphs: prayer.paragraphs,
                             size: 16, matches: found[index]
                         )
+                        PrayerAttribution(prayer: prayer)
                     }
                 }
-                if let first = prayers.first { PrayerAttribution(prayer: first) }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } else if let prayer = PrayerBook.shared.prayer(id: selection) {

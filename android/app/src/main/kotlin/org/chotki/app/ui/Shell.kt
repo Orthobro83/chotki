@@ -24,6 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -145,6 +147,9 @@ private fun BackLink(onBack: () -> Unit) {
 @Composable
 fun Shell(state: AppState) {
     var journey by remember { mutableStateOf(Journey()) }
+    // Read once. Clearing [ColdOpen.pending] must not take the mark down
+    // mid-draw; a later composition in this same process starts with it false.
+    var showOpening by remember { mutableStateOf(ColdOpen.pending) }
     // A reading card names the section it opens. The bar does not.
     var readingBand by remember { mutableStateOf<Int?>(null) }
     var readingNonce by remember { mutableIntStateOf(0) }
@@ -181,16 +186,21 @@ fun Shell(state: AppState) {
     // Without this it fell through to Android's default at every depth: three
     // fields into the editor, back closed Chotki.
     BackHandler(enabled = journey.canGoBack) { journey = journey.back() }
+    LaunchedEffect(state.selectedDate) { state.ensureChurchDay(state.selectedDate) }
 
-    // The mark, then the welcome. Nothing else can be reached until Continue.
-    if (!state.settings.hasCompletedFirstRun) {
-        var opened by remember { mutableStateOf(false) }
+    // The rope and the cross, then whatever was underneath. The welcome is
+    // still only the first time. A return from the background is neither.
+    if (showOpening) {
+        SideEffect { ColdOpen.pending = false }
         ChotkiBackdrop {
-            if (!opened) {
-                OpeningMark { opened = true }
-            } else {
-                WelcomeScreen(state, Modifier.fillMaxSize())
-            }
+            OpeningMark { showOpening = false }
+        }
+        return
+    }
+
+    if (!state.settings.hasCompletedFirstRun) {
+        ChotkiBackdrop {
+            WelcomeScreen(state, Modifier.fillMaxSize())
         }
         return
     }

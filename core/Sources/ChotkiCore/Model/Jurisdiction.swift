@@ -76,8 +76,13 @@ public struct Jurisdiction: Sendable, Hashable, Codable {
         practice.confession != PracticeProfile.customary(for: tradition).confession
     }
 
+    /// What is followed when no church has been named.
+    ///
+    /// The Orthodox Church in America: New Calendar, Russian tradition. The
+    /// name is not shown as the person's church. A person who names a church
+    /// replaces this with that church.
     public static let `default` = Jurisdiction(
-        name: "Russian Orthodox Church Outside Russia", reckoning: .julian, tradition: .russian
+        name: "Orthodox Church in America", reckoning: .revisedJulian, tradition: .russian
     )
 
     /// Offered in settings. Reckoning and practice can still be set directly:

@@ -14,20 +14,20 @@ You can add items of your own, whether or not they are Church canon, so that a r
 
 ## Status
 
-**1.0 beta, build 23.** Android is the current release. It runs, and it is in daily use by its author.
+**1.0 beta, build 29.** Android and macOS are the current release. Android is in daily use by its author.
 
 What that means in practice:
 
-- **Android is 1.0 beta, build 23**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 0.1.14-rc1.
-- **macOS is available**, macOS 13 or later, Apple Silicon and Intel. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
+- **Android is 1.0 beta, build 29**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 1.0 beta, build 23, and the local build 28.
+- **macOS is 1.0 beta, build 29**, macOS 13 or later, Apple Silicon and Intel, in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - iOS is in development and a Linux version is planned.
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 
-### 1.0 beta, build 23
+### 1.0 beta, build 29
 
-The Android interface follows the redesign.
+The Android interface follows the redesign. macOS is the same build.
 
-- The mark plays once, before a welcome that asks what to call you. Settings keeps that name, and a spiritual father's name, and either can be changed later.
+- The rope and the cross play whenever the app is opened from a quit state — a force-stop, or a phone that was restarted. Returning to an app that is still in memory does not play them. The welcome asks what to call you, and it is shown only once. Settings keeps that name, and a spiritual father's name, and either can be changed later.
 - The day opens on one week. A grip beneath it opens the month, and reading the rules does not fold it shut. A great feast is gold, a Sunday is ochre, and a fast is violet. The selected day is outlined, not filled.
 - Home shows what the calendar marks for a fast when a fasting rule is due, or when fasting is set to observed. It describes the day. It does not tell anyone what to eat.
 - Prayers is a menu. A counted prayer keeps the rope. A prayer that is read does not. Reaching the count, or the last line, marks that rule. The circle on the day can be checked and unchecked at will.
@@ -135,7 +135,7 @@ You do **not** need developer mode, USB debugging, or Android Studio. Those are
 for building the app, not for running it, and turning them on is what upsets
 banking apps — installing an apk does not.
 
-1. Download `Chotki-1.0-beta.23.apk` onto the phone from the
+1. Download `Chotki-1.0-beta.29.apk` onto the phone from the
    [releases page](../../releases).
 2. Open it — from the notification, or from Files › Downloads.
 3. Android will say it cannot install apps from this source. Tap **Settings**

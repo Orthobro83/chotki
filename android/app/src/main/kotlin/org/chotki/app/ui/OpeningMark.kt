@@ -27,15 +27,32 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * The mark, once, before the welcome.
+ * The rope and the cross, once per process.
+ *
+ * A quit, a force-stop, or a reboot starts a new process and plays this.
+ * Returning from the background does not, and neither does rotation. The
+ * welcome underneath is a separate question, and it is still asked only once.
  *
  * Eleven knots come in from the lower one on the left, around to the lower one
  * on the right. The cross then appears between them. The whole mark eases from
- * 85% to full size over 1.8 seconds, holds, and leaves.
+ * 85% to full size over 1.8 seconds, holds, and leaves. The same clock as the
+ * Mac opening.
  *
  * The proportions are [knot centres and the cross box] from the shared geometry:
  * twelve knots, the bottom one omitted, loop radius 0.30, centre 0.5 / 0.36.
  */
+
+/**
+ * One opening per process.
+ *
+ * A static, not saved state: the process dying is the quit, and a new process
+ * starts with this true again. Rotation and a return from the background keep
+ * the process, so they keep it false. Instrumented tests reset it, because
+ * they share one process.
+ */
+internal object ColdOpen {
+    var pending = true
+}
 @Composable
 fun OpeningMark(onFinished: () -> Unit) {
     val context = LocalContext.current

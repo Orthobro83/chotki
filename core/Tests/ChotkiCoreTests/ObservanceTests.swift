@@ -354,6 +354,19 @@ struct SettingsForwardCompatibilityTests {
         #expect(settings.clockStyle == .twentyFourHour, "and what was not gets a default")
         #expect(settings.observances == ObservanceSettings.default)
         #expect(settings.jurisdiction == Jurisdiction.default)
+        #expect(settings.namedChurch == nil, "a record that named no church does not display one")
+    }
+
+    @Test("a stored church without an affiliation key is still that church")
+    func legacyChurchIsKept() throws {
+        var legacy = AppSettings(affiliation: nil)
+        legacy.jurisdiction = try #require(Jurisdiction.known.first { $0.name == "Georgian Orthodox Church" })
+        let data = try JSONEncoder().encode(legacy)
+        let settings = try JSONDecoder().decode(AppSettings.self, from: data)
+        #expect(settings.namedChurch == "Georgian Orthodox Church")
+        #expect(settings.jurisdiction.reckoning == .julian)
+        #expect(settings.jurisdiction.tradition == .georgian)
+        #expect(settings.affiliation == nil)
     }
 
     @Test("an empty record is every default rather than an error")

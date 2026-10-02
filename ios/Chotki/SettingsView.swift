@@ -12,13 +12,12 @@ struct SettingsView_: View {
         Form {
             Section("Your church") {
                 Picker("Church", selection: Binding(
-                    get: { model.settings.jurisdiction.name },
+                    get: { model.settings.namedChurch ?? "" },
                     set: { name in
-                        guard let chosen = Jurisdiction.known.first(where: { $0.name == name })
-                        else { return }
-                        model.update { $0.jurisdiction = chosen }
+                        model.update { $0.chooseChurch(named: name.isEmpty ? nil : name) }
                     }
                 )) {
+                    Text(Welcome.noChurchAffiliation).tag("")
                     ForEach(Jurisdiction.known, id: \.name) { Text($0.name).tag($0.name) }
                 }
 

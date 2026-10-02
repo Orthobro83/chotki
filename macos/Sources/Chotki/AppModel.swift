@@ -82,6 +82,11 @@ final class AppModel: ObservableObject {
     /// Called when the Dock setting changes, so the delegate can switch the
     /// activation policy. The model still knows nothing about windows.
     var onDockPresenceChanged: ((Bool) -> Void)?
+    /// The rope and the cross. The app delegate sets this on a real launch,
+    /// which is a new process. Tests and the offscreen render leave it off,
+    /// and coming back to a process that is already running does not set it
+    /// again. The welcome is a different flag and is still asked only once.
+    @Published var coldOpen = false
 
     let store: any Store
     let liturgical: LiturgicalService
@@ -402,6 +407,27 @@ final class AppModel: ObservableObject {
         !rule.isArchived && !practice.isPaused(rule)
     }
 
+    /// Whether a library template is in force right now.
+    ///
+    /// A rule that was ended keeps its row, because the days it kept are still
+    /// true. Matching on the title alone left the library saying "On your rule"
+    /// and hiding Take on, so the home row — which only shows what is due —
+    /// had no evening prayers and no way to put them back.
+    func isTaken(_ template: RuleTemplate) -> Bool {
+        rules.contains {
+            $0.title.compare(template.title, options: .caseInsensitive) == .orderedSame
+                && isOnTheRule($0)
+        }
+    }
+
+    /// The stored copy of a library rule that is no longer in force.
+    private func restingCopy(of template: RuleTemplate) -> Rule? {
+        rules.first {
+            $0.title.compare(template.title, options: .caseInsensitive) == .orderedSame
+                && isPaused($0)
+        }
+    }
+
     /// Puts a rule of his own back on the rule, from today.
     ///
     /// The same rule, not a copy: its history follows it, and the gap shows as
@@ -710,6 +736,16 @@ final class AppModel: ObservableObject {
     @Published var calendarExpanded = false
 
     func prepare(_ template: RuleTemplate) {
+        // The same rule, not a second copy. Its history follows it back onto
+        // the day. A rule that was never stored still opens the editor first,
+        // because how often and when are part of taking something on.
+        if let resting = restingCopy(of: template) {
+            resume(resting)
+            notice = "\(resting.title) is back on your rule. What you kept of it before is still counted."
+            tab = .rule
+            screen = .main
+            return
+        }
         editorDraft = template.makeRule(source: "the library")
         screen = .editor(nil)
     }

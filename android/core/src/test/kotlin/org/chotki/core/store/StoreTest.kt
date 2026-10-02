@@ -1,7 +1,14 @@
 package org.chotki.core.store
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import org.chotki.core.Activation
+import org.chotki.core.AppSettings
 import org.chotki.core.CalendarDate
+import org.chotki.core.Jurisdiction
+import org.chotki.core.Reckoning
+import org.chotki.core.Tradition
 import org.chotki.core.EditPlanner
 import org.chotki.core.EditScope
 import org.chotki.core.Occurrence
@@ -321,12 +328,37 @@ class SettingsStoreTest {
             org.chotki.core.Jurisdiction.DEFAULT, loaded.jurisdiction,
             "and what was not gets a default",
         )
+        assertNull(loaded.namedChurch, "a record that named no church does not display one")
         assertNull(loaded.reckoningChangedOn)
         assertEquals("", loaded.displayName, "a record from before names has none")
         assertEquals("", loaded.spiritualFatherName)
         assertNull(loaded.givenByPriestPhrase())
         assertEquals(true, loaded.showOldStyleDates, "old-style dates start on")
         assertEquals(true, loaded.showConsistencyNumber)
+    }
+
+    @Test
+    fun `a stored church without an affiliation key is still that church`() {
+        val georgian = Jurisdiction.KNOWN.first { it.name == "Georgian Orthodox Church" }
+        val legacy = AppSettings(
+            jurisdiction = georgian,
+            affiliation = null,
+            hasCompletedFirstRun = true,
+        )
+        val json = Json { encodeDefaults = true }
+        val encoded = json.encodeToString(AppSettings.serializer(), legacy)
+        val obj = json.parseToJsonElement(encoded).jsonObject.toMutableMap()
+        obj.remove("affiliation")
+        db.update(
+            "INSERT INTO app_settings (id, payload) VALUES (1, ?);",
+            listOf(JsonObject(obj).toString()),
+        )
+        val loaded = store.loadSettings()
+        assertNotNull(loaded)
+        assertEquals("Georgian Orthodox Church", loaded.namedChurch)
+        assertEquals(Reckoning.JULIAN, loaded.jurisdiction.reckoning)
+        assertEquals(Tradition.GEORGIAN, loaded.jurisdiction.tradition)
+        assertNull(loaded.affiliation)
     }
 
     @Test

@@ -8,12 +8,20 @@ struct RuleTabView: View {
     var compact = false
     var onOpenLibrary: (() -> Void)? = nil
     var body: some View {
-        VStack(spacing: 0) {
-            HomeCalendar(model: model, compact: compact)
-            ScrollView {
-                DayPanel(model: model, compact: compact, onOpenLibrary: onOpenLibrary).chotkiScrollContent()
-            }.scrollContentBackgroundHidden().softVerticalScrollEdges()
+        // The width has to come from the space the window actually gave this
+        // column. Measuring the column after the cards have laid themselves
+        // out reports that wider size back, and the page grows to match.
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                HomeCalendar(model: model, compact: compact)
+                ScrollView {
+                    DayPanel(model: model, compact: compact, onOpenLibrary: onOpenLibrary, viewportWidth: proxy.size.width)
+                        .chotkiScrollContent()
+                }.scrollContentBackgroundHidden().softVerticalScrollEdges()
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -21,7 +29,13 @@ struct RuleTabViewContent: View {
     @ObservedObject var model: AppModel
     var pinsCalendar = false
     var body: some View {
-        VStack(spacing: 0) { HomeCalendar(model: model, compact: true); DayPanel(model: model, compact: true) }
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                HomeCalendar(model: model, compact: true)
+                DayPanel(model: model, compact: true, viewportWidth: proxy.size.width)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
+        }
     }
 }
 
@@ -36,6 +50,7 @@ struct DayPanel: View {
     @ObservedObject var model: AppModel
     var compact = false
     var onOpenLibrary: (() -> Void)? = nil
+    var viewportWidth: CGFloat = 0
     @State private var expandedRuleID: UUID?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var inset: CGFloat { compact ? 16 : 24 }
@@ -102,6 +117,8 @@ struct DayPanel: View {
                                 .overlay { NativeClickRegion(action: openLibrary) }
                         }.padding(.vertical, 4).chotkiScrollContent().horizontalWheelScroll()
                     }.scrollIndicators(.hidden)
+                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                        .frame(width: viewportWidth > inset * 2 ? viewportWidth - inset * 2 : nil)
                         .onChange(of: expandedRuleID) { id in
                             guard let id else { return }
                             DispatchQueue.main.async {
@@ -316,9 +333,7 @@ struct EntryRow: View {
     private func openDestination() {
         if entry.rule.isFastingRule { flipped.toggle(); return }
         if let id = entry.rule.ropePrayerID { model.openRope(counting: id); return }
-        if let sequence = PrayerBook.shared.sequences.first(where: { $0.prayerIDs == entry.rule.prayerIDs }) {
-            model.openRope(counting: sequence.id); return
-        }
+        if let id = entry.rule.sequenceID { model.openRope(counting: id); return }
         switch entry.rule.reference {
         case .reading: model.openReading(band: ReadingOrder.band(ofTitle: entry.rule.title))
         case .psalter: model.screen = .psalter

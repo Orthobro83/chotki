@@ -1,7 +1,9 @@
 package org.chotki.core.store
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import org.chotki.core.Activation
+import org.chotki.core.Affiliation
 import org.chotki.core.CalendarDate
 import org.chotki.core.AppSettings
 import org.chotki.core.EditPlan
@@ -269,7 +271,16 @@ class SqliteStore(private val db: Db) : Store {
 
     override fun loadSettings(): AppSettings? =
         db.query("SELECT payload FROM app_settings WHERE id = 1;") { row ->
-            json.decodeFromString(AppSettings.serializer(), row.string(0)!!)
+            val raw = row.string(0)!!
+            val decoded = json.decodeFromString(AppSettings.serializer(), raw)
+            val keys = (json.parseToJsonElement(raw) as? JsonObject)?.keys ?: emptySet()
+            // Neither key: an empty record. The missing affiliation would
+            // otherwise show the OCA's name, which this person did not choose.
+            if ("affiliation" !in keys && "jurisdiction" !in keys) {
+                decoded.copy(affiliation = Affiliation(declared = true, name = null))
+            } else {
+                decoded
+            }
         }.firstOrNull()
 
     override fun saveSettings(settings: AppSettings) {

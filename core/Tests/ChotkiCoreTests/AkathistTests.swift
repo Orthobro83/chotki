@@ -1,6 +1,28 @@
 import Testing
 @testable import ChotkiCore
 
+@Suite("Pascha, without asking the network")
+struct PaschaTests {
+    private func on(_ year: Int, _ month: Int, _ day: Int) -> CalendarDate {
+        CalendarDate(year: year, month: month, day: day)!
+    }
+
+    @Test("the civil date and the distance match the church calendar")
+    func distances() {
+        #expect(Pascha.civil(year: 2026) == on(2026, 4, 12))
+        #expect(Pascha.civil(year: 2027) == on(2027, 5, 2))
+        #expect(Pascha.distance(on: on(2026, 4, 12)) == 0)
+        #expect(Pascha.distance(on: on(2026, 4, 13)) == 1)
+        #expect(Pascha.distance(on: on(2026, 12, 31)) == 263)
+        #expect(Pascha.distance(on: on(2027, 1, 1)) == 264)
+        #expect(Pascha.distance(on: on(2027, 2, 10)) == 304)
+        #expect(Pascha.distance(on: on(2027, 2, 13)) == 307)
+        #expect(Pascha.distance(on: on(2027, 2, 14)) == -77)
+        #expect(Pascha.distance(on: on(2027, 4, 16)) == -16)
+        #expect(Pascha.distance(on: on(2027, 5, 2)) == 0)
+    }
+}
+
 @Suite("The Akathist follows the Fridays of Great Lent")
 struct AkathistTests {
 
@@ -28,9 +50,9 @@ struct AkathistTests {
         #expect(Akathist.week(paschaDistance: -9, tradition: .greek) == nil)
     }
 
-    @Test("a church without its own appointment is shown ROCOR's, and says so")
-    func rocorFallback() {
-        let note = "This is how the Russian Orthodox Church Outside Russia keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
+    @Test("a church without its own appointment is shown the OCA's, and says so")
+    func ocaFallback() {
+        let note = "This is how the Orthodox Church in America keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
         #expect(Akathist.fallbackNote(for: .romanian)?.contains(note) == true)
         #expect(Akathist.fallbackNote(for: .romanian)?.contains("Romanian Orthodox Church") == true)
         #expect(Akathist.fallbackNote(for: .georgian)?.contains("Georgian Orthodox Church") == true)
@@ -40,6 +62,17 @@ struct AkathistTests {
         }
         #expect(Akathist.week(paschaDistance: -16, tradition: .romanian) == 5)
         #expect(Akathist.week(paschaDistance: -44, tradition: .georgian) == nil)
+    }
+
+    @Test("Friday 16 April 2027 is the Georgian fifth week, with nothing fetched")
+    func georgianFridayDoesNotWaitOnTheCache() throws {
+        let georgian = try #require(Jurisdiction.known.first { $0.name == "Georgian Orthodox Church" })
+        let service = LiturgicalService(store: InMemoryStore(), jurisdiction: georgian)
+        let friday = try #require(CalendarDate(year: 2027, month: 4, day: 16))
+        #expect(service.cachedDay(for: friday) == nil)
+        #expect(Pascha.distance(on: friday) == -16)
+        #expect(service.akathistWeek(friday) == 5)
+        #expect(Akathist.fallbackNote(for: .georgian)?.contains("Orthodox Church in America") == true)
     }
 
     @Test("the hymn's unfamiliar words are in the glossary, and link")

@@ -234,6 +234,8 @@ struct ContentExportTests {
         [
             "title": Welcome.title,
             "beginLabel": Welcome.beginLabel,
+            "churchPrompt": Welcome.churchPrompt,
+            "noChurchAffiliation": Welcome.noChurchAffiliation,
             "independence": Welcome.independence,
             "paragraphs": Welcome.paragraphs.map { paragraph in
                 [

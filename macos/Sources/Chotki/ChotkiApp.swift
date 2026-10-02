@@ -93,6 +93,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model.notice = "Review sample — fictional practice. Nothing here changes your Chotki record."
         }
         self.model = model
+        // A launch is a process that was not running. Sleep, and a window
+        // merely brought forward, are not launches and do not come through here.
+        model.coldOpen = true
         model.openDetachedReport = { [weak self, weak model] in
             guard let self, let model else { return }
             self.reportWindow.show(model: model)

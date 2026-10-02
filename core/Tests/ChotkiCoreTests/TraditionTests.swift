@@ -16,10 +16,13 @@ struct JurisdictionTests {
         }
     }
 
-    @Test("the default is ROCOR on the Old Calendar")
+    @Test("a person who has named no church follows the OCA")
     func defaults() {
-        #expect(Jurisdiction.default.reckoning == .julian)
+        #expect(Jurisdiction.default.name == "Orthodox Church in America")
+        #expect(Jurisdiction.default.reckoning == .revisedJulian)
         #expect(Jurisdiction.default.tradition == .russian)
+        #expect(AppSettings.default.namedChurch == nil)
+        #expect(AppSettings.default.jurisdiction.reckoning == .revisedJulian)
     }
 
     // The two axes are genuinely independent, which is the reason they are
@@ -148,8 +151,8 @@ struct ReckoningOverrideTests {
     }
 
     @Test("changing only the calendar is recorded as a difference")
-    func changed() {
-        var rocor = Jurisdiction.default
+    func changed() throws {
+        var rocor = try #require(Jurisdiction.known.first { $0.name.contains("Outside Russia") })
         #expect(rocor.reckoning == .julian)
         rocor.reckoning = .revisedJulian
         #expect(rocor.reckoningDiffersFromJurisdiction)
@@ -157,8 +160,8 @@ struct ReckoningOverrideTests {
     }
 
     @Test("setting it back stops it being a difference")
-    func changedBack() {
-        var jurisdiction = Jurisdiction.default
+    func changedBack() throws {
+        var jurisdiction = try #require(Jurisdiction.known.first { $0.name.contains("Outside Russia") })
         jurisdiction.reckoning = .revisedJulian
         jurisdiction.reckoning = .julian
         #expect(!jurisdiction.reckoningDiffersFromJurisdiction)

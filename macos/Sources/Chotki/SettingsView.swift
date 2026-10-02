@@ -153,12 +153,12 @@ struct SettingsViewContent: View {
 
     private var jurisdictionPicker: some View {
         Picker("", selection: Binding(
-            get: { model.settings.jurisdiction.name },
+            get: { model.settings.namedChurch ?? "" },
             set: { name in
-                guard let chosen = Jurisdiction.known.first(where: { $0.name == name }) else { return }
-                model.update { $0.jurisdiction = chosen }
+                model.update { $0.chooseChurch(named: name.isEmpty ? nil : name) }
             }
         )) {
+            Text(Welcome.noChurchAffiliation).tag("")
             ForEach(Jurisdiction.known, id: \.name) { jurisdiction in
                 Text(jurisdiction.name).tag(jurisdiction.name)
             }
@@ -219,11 +219,11 @@ struct SettingsViewContent: View {
 
     private var practiceNotes: some View {
         VStack(alignment: .leading, spacing: 4) {
-            if model.settings.jurisdiction.reckoningDiffersFromJurisdiction,
-               let usual = model.settings.jurisdiction.asShipped {
+            if let note = model.settings.calendarDifferenceNote {
                 // Stated, never corrected. Someone who has set this has a reason
-                // the app does not know.
-                Text("\(usual.name) usually keeps the \(usual.reckoning.displayName).")
+                // the app does not know. Omitted when no church was named, so
+                // the sentence cannot introduce one.
+                Text(note)
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.goldDim)
                     .fixedSize(horizontal: false, vertical: true)

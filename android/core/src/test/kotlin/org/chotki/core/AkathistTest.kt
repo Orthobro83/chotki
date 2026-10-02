@@ -8,6 +8,24 @@ import kotlin.test.assertTrue
 
 class AkathistTest {
     @Test
+    fun `Pascha's distance matches the church calendar, including 16 April 2027`() {
+        assertEquals(CalendarDate.of(2026, 4, 12), Pascha.civil(2026))
+        assertEquals(CalendarDate.of(2027, 5, 2), Pascha.civil(2027))
+        assertEquals(0, Pascha.distance(d(2026, 4, 12)))
+        assertEquals(1, Pascha.distance(d(2026, 4, 13)))
+        assertEquals(263, Pascha.distance(d(2026, 12, 31)))
+        assertEquals(264, Pascha.distance(d(2027, 1, 1)))
+        assertEquals(304, Pascha.distance(d(2027, 2, 10)))
+        assertEquals(307, Pascha.distance(d(2027, 2, 13)))
+        assertEquals(-77, Pascha.distance(d(2027, 2, 14)))
+        assertEquals(-16, Pascha.distance(d(2027, 4, 16)))
+        assertEquals(0, Pascha.distance(d(2027, 5, 2)))
+        assertEquals(5, Akathist.week(Pascha.distance(d(2027, 4, 16)), Tradition.GEORGIAN))
+    }
+
+    private fun d(year: Int, month: Int, day: Int) = CalendarDate.of(year, month, day)!!
+
+    @Test
     fun `the fifth Friday is the whole hymn for every tradition`() {
         for (tradition in Tradition.entries) {
             assertEquals(5, Akathist.week(-16, tradition))
@@ -31,8 +49,8 @@ class AkathistTest {
     }
 
     @Test
-    fun `a church without its own appointment is shown ROCOR's and says so`() {
-        val note = "This is how the Russian Orthodox Church Outside Russia keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
+    fun `a church without its own appointment is shown the OCA's and says so`() {
+        val note = "This is how the Orthodox Church in America keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
         val romanian = Akathist.fallbackNote(Tradition.ROMANIAN)
         val georgian = Akathist.fallbackNote(Tradition.GEORGIAN)
         assertTrue(romanian!!.contains(note))

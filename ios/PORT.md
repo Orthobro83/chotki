@@ -84,6 +84,17 @@ a reward. Motion here is for continuity — showing that a thing came from
 somewhere — not for reinforcement. If an animation would feel at home in a
 habit-streak app, it is wrong however well it moves.
 
+## The opening
+
+The rope knots, then the cross, play when a process starts. They do not play
+when the app comes back from the background, and they are not the welcome —
+the welcome is still once. A quit, a force-stop, or a reboot is a new process
+and plays them again. Reduced motion skips the mark.
+
+The current iOS shell already does this. The design overhaul must keep it, and
+so must a Windows port. The clock is 1.8 seconds to draw, 1.5 to hold, and 0.4
+to leave, the same numbers as the Mac `OpeningTiming` and the Android opening.
+
 ## What phase 2 settled
 
 The store opens in the iOS sandbox, the ladder runs, and the record survives a

@@ -1,6 +1,8 @@
 {
   "beginLabel" : "Continue",
+  "churchPrompt" : "Do you have an existing church affiliation?",
   "independence" : "Chotki is an independent project. It is not affiliated with or sanctioned by any church authority. It is not a spiritual father and is not meant to stand in for one.",
+  "noChurchAffiliation" : "I don't have a church affiliation yet.",
   "paragraphs" : [
     {
       "isAside" : false,

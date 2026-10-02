@@ -9,6 +9,7 @@ import ChotkiCore
 /// partly so that cannot happen a third time.
 struct WelcomeView: View {
     @Bindable var model: Model
+    @State private var church = ""
 
     var body: some View {
         ScrollView {
@@ -24,8 +25,24 @@ struct WelcomeView: View {
                     Paragraph(paragraph)
                 }
 
+                Text(Welcome.churchPrompt)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Chotki.parchment)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Picker(Welcome.churchPrompt, selection: $church) {
+                    Text(Welcome.noChurchAffiliation).tag("")
+                    ForEach(Jurisdiction.known, id: \.name) { Text($0.name).tag($0.name) }
+                }
+                .accessibilityLabel(Welcome.churchPrompt)
+
                 Button {
-                    withAnimation(.snappy) { model.beginningIsDone() }
+                    let chosen = church
+                    withAnimation(.snappy) {
+                        model.update {
+                            $0.hasCompletedFirstRun = true
+                            $0.chooseChurch(named: chosen.isEmpty ? nil : chosen)
+                        }
+                    }
                 } label: {
                     Text(Welcome.beginLabel)
                         .font(.system(size: 17))
@@ -78,6 +95,122 @@ private struct Paragraph: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// One opening per process.
+///
+/// A quit or a reboot starts a new process, and this is true again. Returning
+/// from the background keeps the process, so it stays false. Touched on the
+/// main thread only; it is not actor state because the view's first read
+/// happens before the main-actor body.
+enum ColdOpen {
+    nonisolated(unsafe) static var pending = true
+}
+
+/// The rope and the cross, once per process. Not the welcome: that is still
+/// asked only once, underneath this.
+///
+/// The clock matches the Mac `OpeningTiming` and the Android opening: 1.8
+/// seconds to draw, 1.5 to hold, 0.4 to leave. Reduced motion skips it.
+struct OpeningMark: View {
+    var onFinished: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var started: Date?
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: started == nil)) { context in
+            let elapsed = started.map { context.date.timeIntervalSince($0) } ?? 0
+            OpeningMarkDrawing(elapsed: elapsed)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Chotki.ground)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("The opening")
+        .onAppear {
+            if reduceMotion {
+                DispatchQueue.main.async { onFinished() }
+                return
+            }
+            started = Date()
+            DispatchQueue.main.asyncAfter(deadline: .now() + OpeningTiming.total) {
+                onFinished()
+            }
+        }
+    }
+}
+
+/// One frame of the opening. `elapsed` is seconds from the start.
+private struct OpeningMarkDrawing: View {
+    var elapsed: TimeInterval
+
+    var body: some View {
+        let motion = OpeningTiming.frame(at: elapsed)
+        Canvas { context, size in
+            let side = min(size.width, size.height)
+            let left = (size.width - side) / 2
+            let top = (size.height - side) / 2
+            let knot = RopeMarkGeometry.knotRadius * side
+            for (offset, centre) in RopeMarkGeometry.knotCentres.enumerated() {
+                let alpha = OpeningTiming.knotAlpha(ms: motion.milliseconds, index: offset + 1)
+                guard alpha > 0 else { continue }
+                let rect = CGRect(
+                    x: left + centre.x * side - knot,
+                    y: top + centre.y * side - knot,
+                    width: knot * 2, height: knot * 2
+                )
+                context.fill(Path(ellipseIn: rect), with: .color(Chotki.gold.opacity(alpha)))
+            }
+            let crossAlpha = OpeningTiming.crossAlpha(ms: motion.milliseconds)
+            if crossAlpha > 0 {
+                let box = RopeMarkGeometry.crossBox
+                let rect = CGRect(
+                    x: left + box.x * side, y: top + box.y * side,
+                    width: box.width * side, height: box.height * side
+                )
+                context.fill(
+                    OrthodoxCross().path(in: rect),
+                    with: .color(Chotki.gold.opacity(crossAlpha))
+                )
+            }
+        }
+        .frame(width: 220, height: 220)
+        .scaleEffect(motion.scale)
+        .opacity(motion.opacity)
+    }
+}
+
+/// The opening's clock. Keep these numbers equal to the Mac `OpeningTiming`
+/// and the Android opening. Both copies have a test that fails if they drift.
+enum OpeningTiming {
+    static let build: TimeInterval = 1.8
+    static let hold: TimeInterval = 1.5
+    static let fade: TimeInterval = 0.4
+    static var total: TimeInterval { build + hold + fade }
+
+    struct Frame {
+        var milliseconds: Double
+        var scale: CGFloat
+        var opacity: Double
+    }
+
+    static func frame(at elapsed: TimeInterval) -> Frame {
+        let ms = max(0, elapsed) * 1000
+        let buildMs = build * 1000
+        let holdEnd = (build + hold) * 1000
+        let grown = min(1, max(0, ms / buildMs))
+        let opacity = ms < holdEnd ? 1 : max(0, 1 - (ms - holdEnd) / (fade * 1000))
+        return Frame(milliseconds: ms, scale: 0.85 + 0.15 * grown, opacity: opacity)
+    }
+
+    static func knotAlpha(ms: Double, index: Int) -> Double {
+        let knots = Double(RopeMarkGeometry.knots)
+        let start = Double(index - 1) / (knots - 1) * (build * 1000 - 200)
+        return min(1, max(0, (ms - start) / 160))
+    }
+
+    static func crossAlpha(ms: Double) -> Double {
+        min(1, max(0, (ms - (build * 1000 - 160)) / 160))
     }
 }
 

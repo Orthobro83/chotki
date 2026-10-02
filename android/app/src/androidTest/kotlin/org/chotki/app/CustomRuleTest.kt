@@ -49,8 +49,13 @@ class CustomRuleTest {
         it.updateSettings { settings -> settings.copy(hasCompletedFirstRun = true) }
     }
 
-    private fun openLibrary(state: AppState) {
+    private fun show(state: AppState) {
         compose.setContent { ChotkiTheme { Shell(state) } }
+        compose.settlePastOpening()
+    }
+
+    private fun openLibrary(state: AppState) {
+        show(state)
         compose.onNodeWithContentDescription("Open the library").performClick()
         compose.waitForIdle()
     }
@@ -231,7 +236,7 @@ class CustomRuleTest {
     fun aRuleCanBeEditedFromTheDay() {
         val state = state()
         state.take("morning-prayers")
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        show(state)
 
         edit("Morning prayers")
         compose.onNodeWithContentDescription("Rule editor").assertIsDisplayed()
@@ -255,7 +260,7 @@ class CustomRuleTest {
     fun editingKeepsThePrayersTheRuleCarried() {
         val state = state()
         state.take("morning-prayers")
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        show(state)
 
         edit("Morning prayers")
         compose.onNodeWithContentDescription("Save the rule").performScrollTo().performClick()
@@ -269,7 +274,7 @@ class CustomRuleTest {
     fun theRuleOnTheDayLeadsToItsPrayers() {
         val state = state()
         state.take("morning-prayers")
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        show(state)
 
         compose.onNodeWithContentDescription("Morning prayers").performClick()
         compose.waitForIdle()
@@ -282,7 +287,7 @@ class CustomRuleTest {
     fun aRuleWithNoPrayersOffersNoWayToThem() {
         val state = state()
         state.save(org.chotki.core.Rule(title = "Cold plunge", recurrence = Recurrence.Daily))
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        show(state)
 
         compose.onNodeWithContentDescription("Cold plunge").assertIsDisplayed()
         assertEquals(
@@ -306,7 +311,7 @@ class CustomRuleTest {
         state.toggleKept(entry)
         assertEquals(1, state.occurrences.size)
 
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        show(state)
         edit("Morning prayers")
         compose.onNodeWithContentDescription("Remove the rule").performScrollTo().performClick()
         compose.waitForIdle()

@@ -9,8 +9,8 @@ import Foundation
 /// stanzas — on each of the first four Fridays, and the whole hymn on the
 /// fifth. Russian, Serbian and Bulgarian practice reads the whole hymn on the
 /// fifth Friday only. Romanian and Georgian practice is not the one given
-/// here; those churches are shown the Russian Orthodox Church Outside
-/// Russia's appointment, which is that same fifth Friday.
+/// here; those churches are shown the Orthodox Church in America's
+/// appointment, which is that same fifth Friday.
 ///
 /// The wording is the English of *The Akathist Hymn and Little Compline*
 /// (London: Williams & Norgate, 1919), the hymn only: not Little Compline, and
@@ -34,7 +34,8 @@ public enum Akathist {
     }
 
     /// 1...4 is that stasis; 5 is the whole hymn. Nil when it is not appointed.
-    /// A tradition without its own appointment is given the Russian one.
+    /// A tradition without its own appointment is given the OCA's, which is
+    /// the Russian one: the fifth Friday only.
     public static func week(paschaDistance: Int, tradition: Tradition) -> Int? {
         guard let index = lentFridays.firstIndex(of: paschaDistance) else { return nil }
         let week = index + 1
@@ -44,7 +45,7 @@ public enum Akathist {
         return week
     }
 
-    /// Said once the section is opened, and only when ROCOR's appointment is
+    /// Said once the section is opened, and only when the OCA's appointment is
     /// standing in for a church whose own is not given here. Nil otherwise.
     public static func fallbackNote(for tradition: Tradition) -> String? {
         switch tradition {
@@ -55,7 +56,7 @@ public enum Akathist {
     }
 
     private static func fallbackNote(church: String) -> String {
-        "The \(church)'s own appointment is not the one given here. This is how the Russian Orthodox Church Outside Russia keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
+        "The \(church)'s own appointment is not the one given here. This is how the Orthodox Church in America keeps it: the whole hymn, on Friday of the fifth week of Great Lent."
     }
 
     /// What is read on that Friday. The opening kontakion frames each part,

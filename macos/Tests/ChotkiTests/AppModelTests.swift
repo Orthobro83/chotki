@@ -38,6 +38,16 @@ private struct StubCalendar: LiturgicalDayProvider {
     func season(_ date: CalendarDate) -> FastingSeason? { nil }
 }
 
+@Suite("A cold open")
+@MainActor
+struct ColdOpenTests {
+    @Test("only a real launch arms the mark")
+    func staysOffUntilLaunch() throws {
+        let model = try makeModel()
+        #expect(model.coldOpen == false)
+    }
+}
+
 @Suite("Taking rules on")
 @MainActor
 struct TakingRulesOnTests {
@@ -219,6 +229,26 @@ struct PausingTests {
         model.resume(rule)
         #expect(!model.isPaused(rule))
         #expect(!model.entries(on: model.today).isEmpty)
+    }
+
+    @Test("ending evening prayers from today takes it off the home row, and taking it on puts the same rule back")
+    func endedEveningPrayersReturn() throws {
+        let model = try makeModel()
+        let template = try #require(RuleLibrary.shared.template(id: "evening-prayers"))
+        model.take(on: template)
+        let rule = try #require(model.rules.first { $0.title == "Evening prayers" })
+
+        model.delete(rule, scope: .thisAndFuture)
+
+        #expect(!model.entries(on: model.today).contains { $0.rule.title == "Evening prayers" })
+        #expect(!model.isTaken(template), "the library must not keep saying it is on the rule")
+
+        model.prepare(template)
+
+        #expect(model.entries(on: model.today).contains { $0.rule.title == "Evening prayers" })
+        #expect(model.rules.filter { $0.title == "Evening prayers" }.count == 1,
+                "taking it on again continues the same rule")
+        #expect(model.isTaken(template))
     }
 
     @Test("pausing keeps the day it happened on")

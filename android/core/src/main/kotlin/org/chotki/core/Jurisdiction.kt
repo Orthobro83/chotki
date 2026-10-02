@@ -134,8 +134,15 @@ data class Jurisdiction(
             practice: PracticeProfile? = null,
         ) = Jurisdiction(name, reckoning, tradition, practice ?: PracticeProfile.customary(tradition))
 
+        /**
+         * What is followed when no church has been named.
+         *
+         * The Orthodox Church in America: New Calendar, Russian tradition. The
+         * name is not shown as the person's church. A person who names a church
+         * replaces this with that church.
+         */
         val DEFAULT = of(
-            "Russian Orthodox Church Outside Russia", Reckoning.JULIAN, Tradition.RUSSIAN,
+            "Orthodox Church in America", Reckoning.REVISED_JULIAN, Tradition.RUSSIAN,
         )
 
         /**

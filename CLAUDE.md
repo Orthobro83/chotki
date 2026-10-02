@@ -194,8 +194,9 @@ Outstanding, in rough priority:
    arrangement — sidebar, calendar and the day side by side — so this is
    choosing between two existing layouts on width, not drawing a new one.
    Nothing about it is started.
-4. **Confirming the reckoning** with his parish. Julian is the default and ROCOR
-   is Julian, so this is confirmation rather than a blocker.
+4. **Confirming the reckoning** with his parish. A person who has not named a
+   church follows the OCA, on the New Calendar. A named church follows that
+   church. See `church-practice.md`. This is confirmation rather than a blocker.
 5. **A Linux port** — **deferred by Ryan on 26 August 2026**, deliberately. Not
    until beta builds are with a wider set of users and their feedback is coming
    in; it is an afterthought and a light-week job, not a next step. Do not

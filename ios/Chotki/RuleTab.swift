@@ -82,6 +82,10 @@ struct LibrarySheet: View {
                         Spacer(minLength: 8)
                         if model.isTaken(template) {
                             Text("On your rule").font(.caption).foregroundStyle(Chotki.goldDim)
+                        } else if let resting = model.restingCopy(of: template) {
+                            Button("Take on") { model.resume(resting) }
+                                .buttonStyle(.bordered).tint(Chotki.gold)
+                                .accessibilityLabel("Take on \(template.title)")
                         } else {
                             // Into the editor, filled in — not straight onto
                             // the day. How often and when are part of taking

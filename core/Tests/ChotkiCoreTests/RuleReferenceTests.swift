@@ -65,6 +65,33 @@ struct RuleReferenceTests {
         }
     }
 
+    @Test("morning and evening open the sequence even from an older list")
+    func anOlderListStillOpensTheSequence() {
+        let morning = Rule(
+            title: "Morning prayers", recurrence: .daily,
+            prayerIDs: ["opening-prayer", "our-father"]
+        )
+        #expect(morning.sequenceID == "morning")
+
+        let exact = Rule(
+            title: "Something else", recurrence: .daily,
+            prayerIDs: PrayerSequence.evening.prayerIDs
+        )
+        #expect(exact.sequenceID == "evening")
+
+        let chosen = Rule(
+            title: "Evening prayers", recurrence: .daily,
+            prayerIDs: ["jesus-prayer"]
+        )
+        #expect(chosen.sequenceID == nil, "a list that is not the sequence is left alone")
+
+        let cleared = Rule(title: "Evening prayers", recurrence: .daily, prayerIDs: [])
+        #expect(cleared.sequenceID == nil, "an emptied list was set that way")
+
+        let neverSet = Rule(title: "Morning prayers", recurrence: .daily)
+        #expect(neverSet.sequenceID == "morning")
+    }
+
     @Test("the Psalter rule leads to the Psalter")
     func thePsalterRuleLeadsToThePsalter() {
         let rule = library.first { $0.title == psalterRuleTitle }

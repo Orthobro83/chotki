@@ -178,6 +178,22 @@ class AppState(
         liturgical?.absorb(from, through)
     }
 
+    /**
+     * Fetch the church day when the selection has moved away from the
+     * fortnight already kept. The Akathist does not wait on this — its Friday
+     * comes from Pascha — but the fast, the feast and the readings do.
+     */
+    fun ensureChurchDay(around: CalendarDate) {
+        val service = liturgical ?: return
+        val far = kotlin.math.abs(today.daysUntil(around)) > 7
+        val missing = service.cachedDay(around) == null
+        if (!far && !missing) return
+        Thread {
+            runCatching { service.refresh(from = around.plusDays(-7), days = 15) }
+            calendarVersion += 1
+        }
+    }
+
     val isOffline: Boolean get() = liturgical?.isOffline ?: false
 
     fun load() {

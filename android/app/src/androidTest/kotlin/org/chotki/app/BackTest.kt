@@ -45,6 +45,7 @@ class BackTest {
             }
         }
         compose.setContent { ChotkiTheme { Shell(state) } }
+        compose.settlePastOpening()
     }
 
     private fun withState(configure: (AppState) -> Unit) {
@@ -57,6 +58,7 @@ class BackTest {
         }
         configure(state)
         compose.setContent { ChotkiTheme { Shell(state) } }
+        compose.settlePastOpening()
     }
 
     private fun pressBack() {

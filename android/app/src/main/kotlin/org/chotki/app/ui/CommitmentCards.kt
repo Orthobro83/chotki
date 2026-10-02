@@ -165,8 +165,18 @@ private fun openCommitment(
 /** The prayers screen's own id for this rule, when it has one. */
 private fun prayerSelection(rule: Rule): String? {
     rule.ropePrayerId?.let { return it }
-    val ids = rule.prayerIDs ?: return null
-    return Content.prayerSequences.firstOrNull { it.prayerIDs == ids }?.id
+    val ids = rule.prayerIDs
+    if (ids != null) {
+        Content.prayerSequences.firstOrNull { it.prayerIDs == ids }?.let { return it.id }
+    }
+    // The editor never rewrites this list. A rule that still has the
+    // sequence's title, and whose stored prayers are all part of it, opens
+    // the sequence as it stands now rather than an older copy of the list.
+    val sequence = Content.prayerSequences.firstOrNull {
+        it.title.equals(rule.title, ignoreCase = true)
+    } ?: return null
+    if (ids != null && (ids.isEmpty() || ids.any { it !in sequence.prayerIDs })) return null
+    return sequence.id
 }
 
 private fun Rule.cardBlurb(): String {
