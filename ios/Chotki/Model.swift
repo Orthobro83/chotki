@@ -115,14 +115,14 @@ final class Model {
     /// Deliberately not silent about failing: `isFetchingCalendar` is what lets
     /// the reading screen say it is trying rather than say nothing, and offer
     /// the fetch again when it did not work.
-    func refreshCalendar(around date: CalendarDate? = nil) async {
+    func refreshCalendar(around date: CalendarDate? = nil, days: Int = 16) async {
         guard !isFetchingCalendar else { return }
         isFetchingCalendar = true
         defer { isFetchingCalendar = false }
 
         let centre = date ?? today
-        try? liturgical.loadSnapshot(around: centre)
-        _ = await liturgical.refresh(from: centre.adding(days: -1), days: 16)
+        try? liturgical.loadSnapshot(around: centre, window: max(days, 14))
+        _ = await liturgical.refresh(from: centre.adding(days: -1), days: days)
         calendarVersion += 1
     }
 
@@ -310,20 +310,29 @@ final class Model {
             updated.reckoningChangedOn = today
         }
         let jurisdictionChanged = updated.jurisdiction != settings.jurisdiction
+        let remindersChanged = updated.reminders != settings.reminders
+            || updated.observances != settings.observances
+        var saved = false
         do {
             try store.saveSettings(updated)
             settings = updated
+            saved = true
         } catch {
             trouble = "That setting did not save. \(error.localizedDescription)"
         }
         // A new church or a new reckoning means a different calendar, and the
         // one already cached answers for the old one. macOS re-fetches here;
         // iOS would have kept showing the previous jurisdiction's days.
-        if jurisdictionChanged {
+        if saved && jurisdictionChanged {
             try? liturgical.setJurisdiction(updated.jurisdiction, around: today)
             calendarVersion += 1
             Task { await refreshCalendar() }
         }
+        // Turning reminders off, or changing the lead, has to reach the
+        // system. Reload already reschedules; a settings write does not go
+        // through reload, and a switch that only saves is silence that never
+        // arrives.
+        if saved && remindersChanged { rescheduleReminders() }
     }
 
     func beginningIsDone() { update { $0.hasCompletedFirstRun = true } }

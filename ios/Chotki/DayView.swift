@@ -10,47 +10,120 @@ import ChotkiCore
 /// padding around it, not a bigger target.
 struct DayView: View {
     @Bindable var model: Model
-    /// Shared with the row so a tapped rule can become the screen it opens.
     var transition: Namespace.ID
-    /// Raised by the tab, which owns the sheet.
     var openLibrary: () -> Void
+    @State private var monthOpen = false
 
     private var entries: [DayEntry] { model.entries(on: model.selectedDate) }
 
     var body: some View {
         GeometryReader { proxy in
             VStack(spacing: 0) {
-                // Half, and no more. The rules below must always have room.
-                MonthGrid(model: model, maxHeight: proxy.size.height / 2)
-
-                Text(Format.longDate(model.selectedDate))
-                    .font(.system(size: 17))
-                    .foregroundStyle(Chotki.parchment)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .accessibilityLabel("The day")
-                    // The header changes with the selection rather than
-                    // snapping, so the eye follows what moved.
-                    .contentTransition(.numericText())
-                    .animation(.snappy(duration: 0.22), value: model.selectedDate)
-
-                if entries.isEmpty {
-                    EmptyDay(open: openLibrary)
-                } else {
-                    List {
-                        ForEach(entries, id: \.id) { entry in
-                            EntryRow(model: model, entry: entry, transition: transition)
-                                .listRowBackground(Chotki.ground)
-                                .listRowSeparatorTint(Chotki.line)
+                HomeCalendar(model: model, maxHeight: proxy.size.height / 2, expanded: $monthOpen)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if let title = model.liturgicalDay(model.selectedDate)?.title {
+                            Text(title)
+                                .font(Chotki.reading(15.5))
+                                .foregroundStyle(Chotki.muted)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 12)
+                        }
+                        fastNote
+                        dayHeader
+                        if model.rules.isEmpty {
+                            firstRule
+                        } else if entries.isEmpty {
+                            EmptyDay(open: openLibrary)
+                        } else {
+                            HStack(spacing: 0) {
+                                Text("Today's commitments")
+                                Text(" · ")
+                                Button("Add a new rule.", action: openLibrary)
+                                    .foregroundStyle(Chotki.gold)
+                                    .accessibilityLabel("Add a new rule")
+                            }
+                            .font(Chotki.reading(13))
+                            .foregroundStyle(Chotki.muted)
+                            .padding(.leading, 18)
+                            .padding(.top, 14)
+                            .padding(.bottom, 4)
+                            Commitments(model: model, openLibrary: openLibrary)
                         }
                     }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 8)
                 }
+                .accessibilityIdentifier("the day")
+                // The picture is not part of the day's scroll. It stays at the
+                // foot, and the saying is printed on it just above the bar.
+                SayingCard(
+                    date: model.selectedDate,
+                    persistMotion: model.selectedDate == model.today
+                )
             }
         }
         .background(Chotki.ground)
+    }
+
+    private var dayHeader: some View {
+        HStack {
+            Text(Format.longDate(model.selectedDate))
+                .font(Chotki.reading(17))
+                .foregroundStyle(Chotki.parchment)
+                .accessibilityLabel("The day")
+            Spacer(minLength: 8)
+            if model.settings.showOldStyleDates {
+                let old = model.selectedDate.adding(days: -13)
+                Text("\(old.day) \(Format.shortMonth(old.month)) o.s.")
+                    .font(Chotki.reading(13))
+                    .foregroundStyle(Chotki.faint)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder private var fastNote: some View {
+        if let day = model.liturgicalDay(model.selectedDate),
+           day.isFast, !day.isFastFree,
+           entries.contains(where: { $0.rule.isFastingRule }) || model.settings.observances.fasting == .observed {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("The calendar marks this as \(day.fastDescription).")
+                    .font(Chotki.reading(13))
+                    .foregroundStyle(Chotki.violet)
+                if !day.abstentions.isEmpty {
+                    Text("Customarily set aside: \(day.abstentions.joined(separator: ", ")).")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Chotki.faint)
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+        }
+    }
+
+    private var firstRule: some View {
+        Button(action: openLibrary) {
+            VStack(spacing: 14) {
+                Text("+")
+                    .font(.system(size: 28))
+                    .foregroundStyle(Chotki.gold)
+                    .frame(width: 54, height: 54)
+                    .overlay(Circle().stroke(Chotki.goldDim, lineWidth: 1.5))
+                Text("Create your first rule")
+                    .font(Chotki.reading(22))
+                    .fontWeight(.medium)
+                    .foregroundStyle(Chotki.parchment)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 28)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Create your first rule")
     }
 }
 
@@ -75,15 +148,13 @@ private struct EmptyDay: View {
                 .foregroundStyle(Chotki.faint)
 
             Button(action: open) {
-                Image(systemName: "books.vertical")
-                    .font(.system(size: 46, weight: .light))
-                    .foregroundStyle(Chotki.gold)
+                LibraryIcon(tint: Chotki.gold, side: 56)
                     .frame(width: 88, height: 88)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(.top, 18)
-            .accessibilityLabel("Library")
+            .padding(.top, 8)
+            .accessibilityLabel("Take something on from the library")
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -91,218 +162,6 @@ private struct EmptyDay: View {
     }
 }
 
-private struct EntryRow: View {
-    @Bindable var model: Model
-    let entry: DayEntry
-    var transition: Namespace.ID
-    @Environment(\.goToPlace) private var goToPlace
-    @Environment(\.pushRoute) private var pushRoute
-
-    var body: some View {
-        HStack(spacing: 10) {
-            // The box, and only the box. It draws small and responds across the
-            // 44pt the platform asks for.
-            Button {
-                withAnimation(.snappy(duration: 0.25)) { model.toggleKept(entry) }
-            } label: {
-                Image(systemName: entry.showsAsSatisfied ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 20))
-                    .foregroundStyle(entry.showsAsSatisfied ? Chotki.gold : Chotki.faint)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-                    // Settles rather than pops: this is an acknowledgement, not
-                    // a reward, and the app does not applaud anyone for praying.
-                    .symbolEffect(.bounce, options: .speed(2), value: entry.isKept)
-            }
-            .buttonStyle(.plain)
-            .disabled(entry.isDispensed)
-            .accessibilityLabel("Mark \(entry.rule.title) kept")
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.rule.title)
-                    .foregroundStyle(entry.showsAsSatisfied ? Chotki.muted : Chotki.parchment)
-                    .strikethrough(entry.showsAsSatisfied, color: Chotki.faint)
-
-                if let dispensation = entry.dispensation {
-                    // The Church lifted it. Said plainly, so the day teaches
-                    // something rather than the rule seeming to have broken.
-                    Text("Not observed during \(dispensation)")
-                        .font(.caption).foregroundStyle(Chotki.goldDim)
-                } else if entry.isStoodDown {
-                    Text("Stood down").font(.caption).foregroundStyle(Chotki.faint)
-                }
-            }
-
-            Spacer(minLength: 0)
-
-            // "All day" rather than "anytime": a fast is not optional, and
-            // "anytime" reads as though it were.
-            Text(entry.rule.timeOfDay.map { Format.time($0, model.settings.clockStyle) } ?? "All day")
-                .font(.system(size: 13))
-                .foregroundStyle(entry.isKept ? Chotki.faint : Chotki.muted)
-
-            // The way to the words, which is the point of the rule. Its own
-            // control, never the whole row.
-            //
-            // Asked `hasPrayers` before, so a reading rule and the Psalter rule
-            // had no way through on iOS — the same fault Android had for
-            // months, and the day's Gospel is no less a text for not being a
-            // prayer. Ask what the rule refers to.
-            reference
-
-            // Always drawn, never on a gesture alone. The Mac has had this
-            // pencil since the first version; iOS had no way to reach the
-            // editor at all — the route existed and nothing navigated to it.
-            Button { pushRoute(.editor(ruleID: entry.rule.id, startingFrom: nil)) } label: {
-                Image(systemName: "pencil")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Chotki.faint)
-                    .frame(width: 40, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Edit \(entry.rule.title)")
-        }
-        .padding(.vertical, 2)
-        // Long press is the Mac's right-click. Everything its context menu
-        // offers is here, in the same order, with the same words.
-        .contextMenu { menu }
-    }
-
-    @ViewBuilder
-    private var reference: some View {
-        switch entry.rule.reference {
-        case .rope:
-            Button {
-                model.prayers.choose(entry.rule.ropePrayerID)
-                pushRoute(.rope)
-            } label: {
-                Image(systemName: "circle.hexagongrid")
-                    .font(.system(size: 15))
-                    .foregroundStyle(Chotki.goldDim)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Pray \(entry.rule.title) on the rope")
-        case .prayers:
-            if let sequence = entry.rule.sequenceID {
-                Button {
-                    model.prayers.choose(sequence)
-                    pushRoute(.rope)
-                } label: {
-                    Image(systemName: "text.alignleft")
-                        .font(.system(size: 15))
-                        .foregroundStyle(Chotki.goldDim)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Read the prayers for \(entry.rule.title)")
-                .zoomSource(id: entry.rule.id, in: transition)
-            } else {
-                link(to: .prayers(ruleID: entry.rule.id),
-                     label: "Read the prayers for \(entry.rule.title)")
-                    .zoomSource(id: entry.rule.id, in: transition)
-            }
-        case .reading:
-            Button {
-                model.openReading(band: ReadingOrder.band(ofTitle: entry.rule.title))
-                goToPlace(.reading)
-            } label: {
-                Image(systemName: "text.alignleft")
-                    .font(.system(size: 15))
-                    .foregroundStyle(Chotki.goldDim)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Read the day\u{2019}s readings")
-        case .psalter:
-            link(to: .psalter, label: "Read today\u{2019}s kathisma")
-        case .reflections:
-            // The day this row is on, so the way through lands on that
-            // question rather than at the top of a seven-day scroll.
-            link(to: .reflections(weekday: entry.date.weekday), label: "Open Reflections")
-        case .none:
-            EmptyView()
-        }
-    }
-
-    private func link(to route: Route, label: String) -> some View {
-        Button { pushRoute(route) } label: {
-            Image(systemName: "text.alignleft")
-                .font(.system(size: 15))
-                .foregroundStyle(Chotki.goldDim)
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-    }
-
-    /// The Mac's right-click menu, option for option.
-    @ViewBuilder
-    private var menu: some View {
-        if entry.isDispensed {
-            // The Church lifted it. Nothing to mark, nothing to stand down.
-            Text("Lifted by the Church today")
-        } else {
-            switch entry.rule.reference {
-            case .rope:
-                Button("Pray on the rope") {
-                    model.prayers.choose(entry.rule.ropePrayerID)
-                    pushRoute(.rope)
-                }
-                Divider()
-            case .prayers:
-                Button("Read the prayers") {
-                    if let sequence = entry.rule.sequenceID {
-                        model.prayers.choose(sequence)
-                        pushRoute(.rope)
-                    } else {
-                        pushRoute(.prayers(ruleID: entry.rule.id))
-                    }
-                }
-                Divider()
-            case .reading:
-                Button("Read the day\u{2019}s readings") {
-                    model.openReading(band: ReadingOrder.band(ofTitle: entry.rule.title))
-                    goToPlace(.reading)
-                }
-                Divider()
-            case .psalter:
-                Button("Read today\u{2019}s kathisma") { pushRoute(.psalter) }
-                Divider()
-            case .reflections:
-                Button("Open Reflections") {
-                    pushRoute(.reflections(weekday: entry.date.weekday))
-                }
-                Divider()
-            case .none:
-                EmptyView()
-            }
-
-            Button(entry.isKept ? "Clear this day" : "Mark as kept") {
-                model.toggleKept(entry)
-            }
-            if !entry.isKept {
-                Button("Mark as kept, late") { model.markKeptLate(entry) }
-            }
-            Button("Stand down for this day") { model.standDownForTheDay(entry) }
-        }
-
-        Divider()
-        Button("Edit rule\u{2026}") {
-            pushRoute(.editor(ruleID: entry.rule.id, startingFrom: nil))
-        }
-        if model.isPaused(entry.rule) {
-            Button("Resume this rule") { model.resume(entry.rule) }
-        } else {
-            Button("Pause this rule") { model.pause(entry.rule) }
-        }
-    }
-}
 
 /// The zoom that carries a tapped thing into the screen it opens.
 ///

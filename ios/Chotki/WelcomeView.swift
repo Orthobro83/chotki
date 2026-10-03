@@ -9,7 +9,14 @@ import ChotkiCore
 /// partly so that cannot happen a third time.
 struct WelcomeView: View {
     @Bindable var model: Model
-    @State private var church = ""
+    @State private var name: String
+    @State private var church: String
+
+    init(model: Model) {
+        self.model = model
+        _name = State(initialValue: model.settings.displayName)
+        _church = State(initialValue: model.settings.namedChurch ?? "")
+    }
 
     var body: some View {
         ScrollView {
@@ -17,18 +24,35 @@ struct WelcomeView: View {
                 RopeMark(size: 72).padding(.top, 8)
 
                 Text(Welcome.title)
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(Chotki.gold)
+                    .font(Chotki.reading(26))
+                    .foregroundStyle(Chotki.parchment)
+                    .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("The welcome")
 
                 ForEach(Array(Welcome.paragraphs.enumerated()), id: \.offset) { _, paragraph in
                     Paragraph(paragraph)
                 }
 
-                Text(Welcome.churchPrompt)
-                    .font(.system(size: 17, weight: .semibold))
+                Text("What should we call you?")
+                    .font(Chotki.reading(26))
                     .foregroundStyle(Chotki.parchment)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
+                TextField("First name or Baptismal name.", text: $name)
+                    .font(Chotki.reading(17))
+                    .foregroundStyle(Chotki.parchment)
+                    .textInputAutocapitalization(.words)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .background(Chotki.panel)
+                    .accessibilityLabel("What should we call you?")
+
+                Text(Welcome.churchPrompt)
+                    .font(Chotki.reading(22))
+                    .foregroundStyle(Chotki.parchment)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 6)
                 Picker(Welcome.churchPrompt, selection: $church) {
                     Text(Welcome.noChurchAffiliation).tag("")
                     ForEach(Jurisdiction.known, id: \.name) { Text($0.name).tag($0.name) }
@@ -37,25 +61,33 @@ struct WelcomeView: View {
 
                 Button {
                     let chosen = church
+                    let called = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let today = model.today
                     withAnimation(.snappy) {
                         model.update {
+                            $0.displayName = called
                             $0.hasCompletedFirstRun = true
+                            if $0.firstRunOn == nil { $0.firstRunOn = today }
                             $0.chooseChurch(named: chosen.isEmpty ? nil : chosen)
                         }
                     }
                 } label: {
                     Text(Welcome.beginLabel)
-                        .font(.system(size: 17))
-                        .padding(.horizontal, 30).padding(.vertical, 10)
+                        .font(.system(size: 16))
+                        .foregroundStyle(Chotki.ground)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Chotki.gold, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                .buttonStyle(.bordered)
-                .tint(Chotki.gold)
+                .buttonStyle(.plain)
                 .padding(.top, 6)
+                .accessibilityLabel(Welcome.beginLabel)
             }
             .padding(.horizontal, 22)
             .padding(.vertical, 24)
         }
         .background(Chotki.ground)
+        .tint(Chotki.gold)
     }
 }
 

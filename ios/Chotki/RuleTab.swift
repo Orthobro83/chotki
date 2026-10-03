@@ -11,20 +11,10 @@ struct RuleTab: View {
     @State var model: Model
     /// From the shell, so the zoom survives the push into the stack.
     var transition: Namespace.ID
-    @State private var libraryShowing = false
+    @Binding var libraryShowing: Bool
 
     var body: some View {
         DayView(model: model, transition: transition) { libraryShowing = true }
-            .navigationTitle("Chotki")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { libraryShowing = true } label: {
-                        Label("Library", systemImage: "books.vertical")
-                    }
-                    .accessibilityLabel("Library")
-                }
-            }
             .sheet(isPresented: $libraryShowing) {
                 LibrarySheet(model: model)
                     .presentationDragIndicator(.visible)
@@ -56,68 +46,74 @@ struct LibrarySheet: View {
     @State var model: Model
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
-    /// Half height to browse, full to fill a form in.
-    ///
-    /// The editor in a medium sheet shows about two fields, and the recurrence
-    /// and reminder controls — the whole reason it opens before the rule lands
-    /// on the day — are below the fold. Browsing wants the day still visible
-    /// behind it; writing does not.
-    @State private var detent: PresentationDetent = .medium
+    @State private var openSection: String?
+    @State private var asking = false
+    @State private var hideCaution = false
+
+    private let sections: [(RuleCategory, String)] = [
+        (.services, "Services"),
+        (.prayer, "Prayer"),
+        (.reading, "Reading"),
+        (.fasting, "Fasting"),
+        (.life, "Life"),
+    ]
 
     var body: some View {
         NavigationStack(path: $path) {
-            List {
-                Section {
-                    Text("Take on what you are ready for. Two or three is a good beginning.")
-                        .font(.footnote).foregroundStyle(Chotki.faint)
-                        .listRowBackground(Chotki.ground)
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Select a prayer, reading, or discipline to add to your routine.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Chotki.faint)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
 
-                ForEach(RuleLibrary.bundled, id: \.id) { template in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(template.title).foregroundStyle(Chotki.parchment)
-                            Text(template.summary).font(.caption).foregroundStyle(Chotki.faint)
+                    ForEach(sections, id: \.0) { category, name in
+                        let templates = RuleLibrary.bundled.filter {
+                            $0.category == category && $0.id != "reflection"
                         }
-                        Spacer(minLength: 8)
-                        if model.isTaken(template) {
-                            Text("On your rule").font(.caption).foregroundStyle(Chotki.goldDim)
-                        } else if let resting = model.restingCopy(of: template) {
-                            Button("Take on") { model.resume(resting) }
-                                .buttonStyle(.bordered).tint(Chotki.gold)
-                                .accessibilityLabel("Take on \(template.title)")
-                        } else {
-                            // Into the editor, filled in — not straight onto
-                            // the day. How often and when are part of taking
-                            // something on, not something to discover
-                            // afterwards.
-                            NavigationLink(
-                                value: Route.editor(
-                                    ruleID: nil, startingFrom: model.ruleFrom(template)
-                                )
-                            ) {
-                                Text("Take on").font(.callout).foregroundStyle(Chotki.gold)
+                        if !templates.isEmpty {
+                            panel(name, key: category.rawValue, count: templates.count) {
+                                ForEach(templates, id: \.id) { template in
+                                    templateRow(template)
+                                }
                             }
-                            .fixedSize()
-                            .accessibilityLabel("Take on \(template.title)")
                         }
                     }
-                    .listRowBackground(Chotki.ground)
-                }
 
-                if !model.customEntries.isEmpty { custom }
-
-                Section {
-                    NavigationLink(value: Route.editor(ruleID: nil, startingFrom: nil)) {
-                        Label("Write your own rule", systemImage: "plus")
-                            .foregroundStyle(Chotki.gold)
+                    panel("Custom", key: "custom", count: model.customEntries.count) {
+                        if model.customEntries.isEmpty {
+                            Text("Nothing of your own yet.")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Chotki.faint)
+                                .padding(.leading, 18)
+                                .padding(.bottom, 12)
+                        } else {
+                            ForEach(model.customEntries, id: \.id) { rule in
+                                customRow(rule)
+                            }
+                        }
                     }
+
+                    Button(action: writeYourOwn) {
+                        VStack(spacing: 10) {
+                            Text("+")
+                                .font(Chotki.reading(30))
+                                .foregroundStyle(Chotki.gold)
+                                .frame(width: 54, height: 54)
+                                .overlay(Circle().stroke(Chotki.goldDim, lineWidth: 1.5))
+                            Text("Write your own rule")
+                                .font(Chotki.reading(16))
+                                .foregroundStyle(Chotki.parchment)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 28)
+                        .padding(.bottom, 32)
+                    }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Write your own rule")
-                    .listRowBackground(Chotki.ground)
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
             .background(Chotki.ground)
             .navigationTitle("Library")
             .navigationBarTitleDisplayMode(.inline)
@@ -136,54 +132,187 @@ struct LibrarySheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large], selection: $detent)
-        .onChange(of: path.count) { _, depth in
-            withAnimation(.snappy(duration: 0.25)) { detent = depth > 0 ? .large : .medium }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .overlay {
+            if asking { caution }
         }
     }
 
-    /// Rules he wrote, whether or not they are in force.
-    @ViewBuilder
-    private var custom: some View {
-        Section {
-            Text("Custom routines are usually taken on the advice of your priest or spiritual father.")
-                .font(.footnote).foregroundStyle(Chotki.faint)
-                .listRowBackground(Chotki.ground)
+    private func writeYourOwn() {
+        if model.settings.customCautionDismissed {
+            path.append(Route.editor(ruleID: nil, startingFrom: nil))
+        } else {
+            asking = true
+        }
+    }
 
-            ForEach(model.customEntries, id: \.id) { rule in
-                let onTheRule = model.isOnTheRule(rule)
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(rule.title)
-                            .foregroundStyle(onTheRule ? Chotki.muted : Chotki.parchment)
-                        Text(rule.timeOfDay.map { Format.time($0, model.settings.clockStyle) }
-                             ?? "All day")
-                            .font(.caption).foregroundStyle(Chotki.faint)
-                        if let note = rule.note, !note.isEmpty {
-                            Text(note).font(.caption).italic()
-                                .foregroundStyle(Chotki.faint)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    Spacer(minLength: 8)
-                    if onTheRule {
-                        Text("On your rule").font(.caption).foregroundStyle(Chotki.goldDim)
-                    } else {
-                        Button("Take on") { withAnimation(.snappy) { model.takeUp(rule) } }
-                            .buttonStyle(.bordered).tint(Chotki.gold)
-                            .accessibilityLabel("Take on \(rule.title)")
+    private var caution: some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+                .onTapGesture { asking = false }
+            VStack(alignment: .leading, spacing: 16) {
+                Text(customCaution)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Chotki.parchmentDim)
+                Button {
+                    hideCaution.toggle()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: hideCaution ? "checkmark.square.fill" : "square")
+                            .foregroundStyle(hideCaution ? Chotki.gold : Chotki.faint)
+                        Text("Don't show again")
+                            .foregroundStyle(Chotki.parchment)
                     }
                 }
-                .listRowBackground(Chotki.ground)
-                // The rule and everything it has kept stay as they are; this
-                // only takes it out of the library listing.
-                .swipeActions(edge: .trailing) {
-                    Button("Set aside") { withAnimation(.snappy) { model.setAside(rule) } }
-                        .tint(Chotki.faint)
+                .buttonStyle(.plain)
+                .accessibilityLabel("Don't show again")
+                Button("I understand") {
+                    if hideCaution {
+                        model.update { $0.customCautionDismissed = true }
+                    }
+                    asking = false
+                    path.append(Route.editor(ruleID: nil, startingFrom: nil))
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Chotki.gold)
+                .accessibilityLabel("I understand")
+            }
+            .padding(20)
+            .background(Chotki.panel, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(24)
+        }
+    }
+
+    private func panel<Content: View>(
+        _ name: String, key: String, count: Int, @ViewBuilder content: () -> Content
+    ) -> some View {
+        let isOpen = openSection == key
+        return VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    openSection = isOpen ? nil : key
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Text("›")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Chotki.muted)
+                        .rotationEffect(.degrees(isOpen ? 90 : 0))
+                    Text(name)
+                        .font(.system(size: 15))
+                        .foregroundStyle(Chotki.gold)
+                    Spacer()
+                    Text("\(count)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Chotki.faint)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 15)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isOpen ? "Close \(name)" : "Open \(name), \(count) rules")
+            if isOpen {
+                content()
+                    .padding(.bottom, 8)
+            }
+            Rectangle().fill(Chotki.lineSoft).frame(height: 1)
+        }
+    }
+
+    private func templateRow(_ template: RuleTemplate) -> some View {
+        let taken = model.isTaken(template)
+        return HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(template.title)
+                    .font(.system(size: 15))
+                    .foregroundStyle(taken ? Chotki.muted : Chotki.parchment)
+                Text(template.summary)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Chotki.faint)
+                if let when = plainly(template.recurrence) {
+                    Text(when).font(.system(size: 12)).foregroundStyle(Chotki.faint)
+                }
+                if let note = template.note, !taken {
+                    Text(note).font(.system(size: 12)).foregroundStyle(Chotki.goldDim)
                 }
             }
-        } header: {
-            Text("Custom").foregroundStyle(Chotki.gold)
+            Spacer(minLength: 8)
+            if taken {
+                Text("On your rule").font(.system(size: 12)).foregroundStyle(Chotki.goldDim)
+            } else if let resting = model.restingCopy(of: template) {
+                takeOn("Take on \(template.title)") { model.resume(resting) }
+            } else {
+                takeOn("Take on \(template.title)") {
+                    path.append(Route.editor(ruleID: nil, startingFrom: model.ruleFrom(template)))
+                }
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 8)
+    }
+
+    private func customRow(_ rule: Rule) -> some View {
+        let onTheRule = model.isOnTheRule(rule)
+        return HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(rule.title)
+                    .font(.system(size: 15))
+                    .foregroundStyle(onTheRule ? Chotki.muted : Chotki.parchment)
+                Text(rule.timeOfDay.map { Format.time($0, model.settings.clockStyle) } ?? "All day")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Chotki.faint)
+                if let note = rule.note, !note.isEmpty {
+                    Text(note).font(.system(size: 12)).foregroundStyle(Chotki.faint)
+                }
+            }
+            Spacer(minLength: 8)
+            if onTheRule {
+                Text("On your rule").font(.system(size: 12)).foregroundStyle(Chotki.goldDim)
+            } else {
+                takeOn("Take up \(rule.title)") { model.takeUp(rule) }
+            }
+            Button { model.setAside(rule) } label: {
+                Text("✕").font(.system(size: 14)).foregroundStyle(Chotki.faint)
+                    .padding(.leading, 10)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Set aside \(rule.title)")
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 8)
+    }
+
+    private func takeOn(_ label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text("Take on")
+                .font(.system(size: 13))
+                .foregroundStyle(Chotki.gold)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Chotki.goldDim, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    private func plainly(_ recurrence: Recurrence) -> String? {
+        switch recurrence {
+        case .weekly(let days) where !days.isEmpty:
+            return days.sorted { $0.rawValue < $1.rawValue }
+                .map { Format.weekdayName($0) + "s" }
+                .joined(separator: ", ")
+        case .monthly:
+            return "Monthly"
+        case .once:
+            return "Once"
+        case .liturgical(.akathist):
+            return "Fridays of the Akathist in Great Lent"
+        default:
+            return nil
         }
     }
 }
+
+private let customCaution =
+    "This section is for personalized routines aimed at improving your overall physical, mental, and spiritual health. It is not intended to enable you to manufacture your own Orthodoxy. We strongly recommend that where appropriate, custom rules be discussed with your priest or spiritual father. If that is not possible, keep these custom rules simple and attainable (e.g., jogging, swimming, sobriety)."

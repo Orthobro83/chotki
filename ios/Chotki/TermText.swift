@@ -105,7 +105,7 @@ struct TermText: View {
 
     var body: some View {
         Text(TermText.link(text, in: Glossary.shared(for: model.settings.jurisdiction.tradition)))
-            .font(.system(size: size))
+            .font(Chotki.reading(size))
             .foregroundStyle(colour)
             .fixedSize(horizontal: false, vertical: true)
             .environment(\.openURL, TermText.opening(openTerm))
@@ -178,7 +178,7 @@ struct PrayerProse: View {
         VStack(alignment: centred ? .center : .leading, spacing: 8) {
             ForEach(Array(linked.enumerated()), id: \.offset) { _, paragraph in
                 Text(paragraph)
-                    .font(.system(size: size))
+                    .font(Chotki.reading(size))
                     .foregroundStyle(Chotki.parchment)
                     .lineSpacing(spacing)
                     .multilineTextAlignment(centred ? .center : .leading)

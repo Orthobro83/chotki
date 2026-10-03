@@ -178,7 +178,7 @@ struct ScreenTests {
     /// the three platforms drifting apart.
     @Test("the welcome says what core says")
     func welcomeReadsFromCore() {
-        #expect(Welcome.beginLabel == "Begin")
+        #expect(Welcome.beginLabel == "Continue")
         let urls = Welcome.paragraphs.flatMap(\.spans).compactMap(\.url)
         #expect(urls.isEmpty)
     }

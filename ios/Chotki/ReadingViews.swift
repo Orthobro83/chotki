@@ -8,43 +8,36 @@ import ChotkiCore
 /// anyone what they must do, and never gives dietary instruction.
 struct ReadingView: View {
     @Bindable var model: Model
+    @Environment(\.pushRoute) private var pushRoute
     @State private var expanded: Set<Int> = []
 
     private var day: LiturgicalDay? { model.liturgicalDay(model.selectedDate) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                if let day {
-                    stored(day)
-                } else {
-                    if let week = model.liturgical.akathistWeek(model.selectedDate) {
-                        akathistSection(week)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    if let day {
+                        stored(day)
+                    } else {
+                        if let week = model.liturgical.akathistWeek(model.selectedDate) {
+                            akathistSection(week)
+                        }
+                        missing
                     }
-                    missing
                 }
+                // Without an explicit full width the column takes the width of its
+                // widest line, which on a day whose commemoration is short left the
+                // text in a narrow band with the ground either side of it.
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(18)
             }
-            // Without an explicit full width the column takes the width of its
-            // widest line, which on a day whose commemoration is short left the
-            // text in a narrow band with the ground either side of it.
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(18)
+            GlossaryOfTerms { pushRoute(.term(slug: nil)) }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Chotki.ground)
         .navigationTitle("Reading")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                // The reading is where unfamiliar words are thickest, so the
-                // glossary is one tap away from it rather than only from a
-                // word that happens to be linked.
-                NavigationLink(value: Route.term(slug: nil)) {
-                    Label("Glossary", systemImage: "character.book.closed")
-                }
-                .accessibilityLabel("Glossary")
-            }
-        }
         // Asks again when the day being looked at moves outside what was
         // fetched, and on first appearance. Cheap: the service only writes days
         // it did not already hold.
@@ -99,12 +92,12 @@ struct ReadingView: View {
                 disclosure(ReadingOrder.sectionTitle(band: band, sources: readings.map(\.source)), band: band) {
                     ForEach(Array(readings.enumerated()), id: \.offset) { _, reading in
                         Text("\(reading.source) · \(reading.display)")
-                            .font(.footnote).foregroundStyle(Chotki.gold)
+                            .font(Chotki.reading(13)).foregroundStyle(Chotki.gold)
                         // Scripture is left unlinked on purpose: linking every
                         // term inside a whole chapter turns a passage into a
                         // field of references.
                         Text(reading.text)
-                            .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                            .font(Chotki.reading(17)).foregroundStyle(Chotki.parchment)
                             .lineSpacing(4)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -129,9 +122,9 @@ struct ReadingView: View {
 
         if let patristic = PatristicReadings.shared.reading(for: model.selectedDate) {
             Divider().overlay(Chotki.line)
-            Text("From the fathers").font(.footnote).foregroundStyle(Chotki.gold)
+            Text("From the fathers").font(Chotki.reading(13)).foregroundStyle(Chotki.gold)
             Text(patristic.text)
-                .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                .font(Chotki.reading(17)).foregroundStyle(Chotki.parchment)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -146,7 +139,7 @@ struct ReadingView: View {
             Spacer()
             Text(model.settings.jurisdiction.reckoning.displayName)
         }
-        .font(.system(size: 11)).foregroundStyle(Chotki.faint)
+        .font(Chotki.reading(13)).foregroundStyle(Chotki.faint)
     }
 
     private func appointed(
@@ -159,11 +152,11 @@ struct ReadingView: View {
                 TermText(model: model, text: note, size: 13, colour: Chotki.muted)
             }
             if linked {
-                PrayerProse(model: model, paragraphs: paragraphs, size: 16, spacing: 4)
+                PrayerProse(model: model, paragraphs: paragraphs, size: 17, spacing: 4)
             } else {
                 ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
                     Text(paragraph)
-                        .font(.system(size: 16)).foregroundStyle(Chotki.parchment)
+                        .font(Chotki.reading(17)).foregroundStyle(Chotki.parchment)
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -178,7 +171,7 @@ struct ReadingView: View {
             Divider().overlay(Chotki.line)
             Button { toggle(band) } label: {
                 HStack {
-                    Text(title).font(.headline)
+                    Text(title).font(Chotki.reading(19))
                     Spacer()
                     Image(systemName: expanded.contains(band) ? "chevron.up" : "chevron.down")
                 }.foregroundStyle(Chotki.gold)
@@ -192,12 +185,12 @@ struct ReadingView: View {
     @ViewBuilder
     private func lifeBody(_ day: LiturgicalDay) -> some View {
         if let life = SaintLives.reading(on: day.observedDate) {
-            Text(life.dates).font(.system(size: 18, weight: .semibold)).foregroundStyle(Chotki.parchment)
+            Text(life.dates).font(Chotki.reading(18)).foregroundStyle(Chotki.parchment)
             if let preface = life.preface {
-                Text(preface).font(.system(size: 17, weight: .semibold)).foregroundStyle(Chotki.parchment)
+                Text(preface).font(Chotki.reading(17)).foregroundStyle(Chotki.parchment)
             }
             ForEach(Array(life.sections.enumerated()), id: \.offset) { _, section in
-                Text(section.heading).font(.system(size: 17, weight: .semibold)).foregroundStyle(Chotki.parchment)
+                Text(section.heading).font(Chotki.reading(17)).foregroundStyle(Chotki.parchment)
                 ForEach(Array(section.blocks.enumerated()), id: \.offset) { _, block in
                     blockText(block)
                 }
@@ -223,7 +216,7 @@ struct ReadingView: View {
         switch block.kind {
         case "heading":
             Text(block.text ?? "")
-                .font(.system(size: 16, weight: .semibold))
+                .font(Chotki.reading(16))
                 .foregroundStyle(Chotki.parchment)
                 .fixedSize(horizontal: false, vertical: true)
         case "lines":
@@ -239,7 +232,7 @@ struct ReadingView: View {
 
     private func prose(_ spans: [SaintLife.Span]) -> some View {
         spans.reduce(Text("")) { line, span in
-            var piece = Text(span.text).font(.system(size: 16))
+            var piece = Text(span.text).font(Chotki.reading(17))
             if span.italic { piece = piece.italic() }
             if span.bold { piece = piece.bold() }
             return line + piece
@@ -281,6 +274,7 @@ struct ReadingView: View {
                     .font(.footnote).foregroundStyle(Chotki.muted)
             } else {
                 Text("No reading stored for this day yet.")
+                    .font(Chotki.reading(17))
                     .foregroundStyle(Chotki.muted)
                 Button {
                     Task { await model.refreshCalendar(around: model.selectedDate) }
@@ -345,12 +339,12 @@ struct PsalterView: View {
                                     Text("Psalm \(psalm.number)")
                                         .font(.caption).foregroundStyle(Chotki.goldDim)
                                     if let title = psalm.superscription {
-                                        Text(title).font(.footnote).italic()
+                                        Text(title).font(Chotki.reading(13)).italic()
                                             .foregroundStyle(Chotki.muted)
                                     }
                                     ForEach(psalm.verses, id: \.number) { verse in
                                         Text("\(verse.number)  \(verse.text)")
-                                            .font(.system(size: 15))
+                                            .font(Chotki.reading(15))
                                             .foregroundStyle(Chotki.parchment)
                                             .fixedSize(horizontal: false, vertical: true)
                                     }

@@ -33,11 +33,22 @@ if [ "${ACTION:-}" = "device" ]; then
         echo "  xcrun xcodebuild -showBuildSettings 2>/dev/null | grep DEVELOPMENT_TEAM"
         exit 1
     fi
+    # A free Personal Team cannot mint a profile for "Any iOS Device".
+    # The connected phone has to be the destination, or Apple says the
+    # team has no devices and refuses the profile.
+    UDID=$(xcrun xcdevice list 2>/dev/null | python3 -c '
+import json, sys
+for device in json.load(sys.stdin):
+    if device.get("platform") == "com.apple.platform.iphoneos" and device.get("available") and device.get("identifier"):
+        print(device["identifier"])
+        break
+')
+    [ -n "${UDID:-}" ] || { echo "no connected iPhone"; exit 1; }
     # -allowProvisioningUpdates lets Xcode register the device and mint the
     # profile itself, which is what a free Personal Team needs and what would
     # otherwise be a trip through the interface.
     xcodebuild -project Chotki.xcodeproj -scheme Chotki \
-        -destination "generic/platform=iOS" \
+        -destination "platform=iOS,id=$UDID" \
         -derivedDataPath build -allowProvisioningUpdates \
         CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES \
         DEVELOPMENT_TEAM="$CHOTKI_TEAM" \

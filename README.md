@@ -14,18 +14,18 @@ You can add items of your own, whether or not they are Church canon, so that a r
 
 ## Status
 
-**1.0 beta, build 29.** Android and macOS are the current release. Android is in daily use by its author.
+**1.0 beta, build 29.** Android and macOS are the public release. Android is in daily use by its author. iOS is the same version, on the author's phone.
 
 What that means in practice:
 
 - **Android is 1.0 beta, build 29**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 1.0 beta, build 23, and the local build 28.
 - **macOS is 1.0 beta, build 29**, macOS 13 or later, Apple Silicon and Intel, in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
-- iOS is in development and a Linux version is planned.
+- **iOS is 1.0 beta, build 29.** It is not a public download. A free Apple developer account cannot use TestFlight, and a phone build signed that way stops opening after seven days. A Linux version is planned.
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 
 ### 1.0 beta, build 29
 
-The Android interface follows the redesign. macOS is the same build.
+The Android interface follows the redesign. macOS is the same build. The iPhone follows those screens: five tabs, the week at the top of the day, prayers and readings in the serif face, and the saying held at the foot of Home.
 
 - The rope and the cross play whenever the app is opened from a quit state — a force-stop, or a phone that was restarted. Returning to an app that is still in memory does not play them. The welcome asks what to call you, and it is shown only once. Settings keeps that name, and a spiritual father's name, and either can be changed later.
 - The day opens on one week. A grip beneath it opens the month, and reading the rules does not fold it shut. A great feast is gold, a Sunday is ochre, and a fast is violet. The selected day is outlined, not filled.

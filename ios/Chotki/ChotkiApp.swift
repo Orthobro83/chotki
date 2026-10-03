@@ -52,6 +52,7 @@ struct Shell: View {
     @State var model: Model
     @State private var place: Place = .rule
     @State private var paths: [Place: NavigationPath] = [:]
+    @State private var libraryShowing = false
     /// The first time this view is created in the process. Later creations —
     /// not a return from the background, which keeps this state — read the
     /// flag already spent.
@@ -60,17 +61,26 @@ struct Shell: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        Group {
-            if !model.settings.hasCompletedFirstRun {
-                WelcomeView(model: model)
-            } else {
-                places
+        ChotkiBackdrop {
+            Group {
+                if !model.settings.hasCompletedFirstRun {
+                    WelcomeView(model: model)
+                } else {
+                    places
+                }
             }
         }
         .overlay {
             if showOpening {
                 OpeningMark { showOpening = false }
                     .ignoresSafeArea()
+            }
+        }
+        .overlay {
+            if model.settings.hasCompletedFirstRun,
+               model.settings.shouldAskForSpiritualFather(on: model.today),
+               !showOpening {
+                FatherPrompt(model: model)
             }
         }
         .onAppear { ColdOpen.pending = false }
@@ -92,34 +102,85 @@ struct Shell: View {
     }
 
     private var places: some View {
-        TabView(selection: $place) {
-            ForEach(Place.allCases, id: \.self) { candidate in
-                NavigationStack(path: binding(for: candidate)) {
-                    content(for: candidate)
-                        .navigationDestination(for: Route.self) { route in
-                            Destination(model: model, route: route, transition: transition)
-                        }
+        VStack(spacing: 0) {
+            ZStack {
+                ForEach(Place.allCases, id: \.self) { candidate in
+                    stack(candidate)
+                        .opacity(candidate == place ? 1 : 0)
+                        .allowsHitTesting(candidate == place)
+                        .accessibilityHidden(candidate != place)
                 }
-                // A word tapped anywhere in this tab opens the glossary on
-                // *this* tab's stack, so the back-swipe returns to the passage
-                // it was read in rather than to some other tab's history.
-                .environment(\.goToPlace, GoToPlace { destination in
-                    place = destination
-                })
-                .environment(\.pushRoute, PushRoute { route in
-                    paths[candidate, default: NavigationPath()].append(route)
-                })
-                .environment(\.openTerm, OpenTerm { slug in
-                    paths[candidate, default: NavigationPath()].append(Route.term(slug: slug))
-                })
-                .tabItem { Label(candidate.rawValue, systemImage: candidate.symbol) }
-                .tag(candidate)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            placeBar
         }
-        .tint(Chotki.gold)
         .onChange(of: place) { _, new in
             if new == .reading { model.noteReadingTabSelected() }
         }
+    }
+
+    private func stack(_ candidate: Place) -> some View {
+        NavigationStack(path: binding(for: candidate)) {
+            VStack(spacing: 0) {
+                PhoneTitle(title: candidate == .rule ? greetingLine(model.settings.displayName) : candidate.rawValue) {
+                    if candidate == .rule {
+                        Button { libraryShowing = true } label: {
+                            Text("+")
+                                .font(.system(size: 28))
+                                .foregroundStyle(Chotki.gold)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Open the library")
+                    }
+                }
+                content(for: candidate)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: Route.self) { route in
+                Destination(model: model, route: route, transition: transition)
+                    .toolbar(.visible, for: .navigationBar)
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+        .environment(\.goToPlace, GoToPlace { destination in
+            place = destination
+        })
+        .environment(\.pushRoute, PushRoute { route in
+            paths[candidate, default: NavigationPath()].append(route)
+        })
+        .environment(\.openTerm, OpenTerm { slug in
+            paths[candidate, default: NavigationPath()].append(Route.term(slug: slug))
+        })
+        .tint(Chotki.gold)
+    }
+
+    private var placeBar: some View {
+        HStack(spacing: 0) {
+            ForEach(Place.allCases, id: \.self) { candidate in
+                let lit = candidate == place
+                Button {
+                    place = candidate
+                } label: {
+                    VStack(spacing: 2) {
+                        PlaceIcon(place: candidate, tint: lit ? Chotki.gold : Chotki.muted)
+                        Text(candidate.rawValue)
+                            .font(.system(size: 10))
+                            .foregroundStyle(lit ? Chotki.gold : Chotki.muted)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Go to \(candidate.rawValue)")
+            }
+        }
+        .padding(.horizontal, 0)
+        .background(Chotki.panel, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .padding(.horizontal, 14)
+        .padding(.bottom, 14)
     }
 
     private func binding(for place: Place) -> Binding<NavigationPath> {
@@ -132,7 +193,7 @@ struct Shell: View {
     @ViewBuilder
     private func content(for place: Place) -> some View {
         switch place {
-        case .rule: RuleTab(model: model, transition: transition)
+        case .rule: RuleTab(model: model, transition: transition, libraryShowing: $libraryShowing)
         case .prayers: RopeView(model: model)
         case .reading: ReadingView(model: model)
         case .progress: ProgressView_(model: model)

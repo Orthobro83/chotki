@@ -14,6 +14,15 @@ enum Chotki {
     static let parchmentDim = Color(red: 0.847, green: 0.812, blue: 0.741)
     static let muted = Color(red: 0.541, green: 0.522, blue: 0.471)
     static let faint = Color(red: 0.353, green: 0.337, blue: 0.298)
+    static let lineSoft = Color(red: 0.137, green: 0.145, blue: 0.173)
+
+    static let violet = Color(red: 0.604, green: 0.561, blue: 0.769)
+    static let ochre = Color(red: 0.651, green: 0.227, blue: 0.220)
+
+    /// Parchment cards are light. The ink on them is not the ground.
+    static let ink = Color(red: 0.102, green: 0.098, blue: 0.086)
+    static let inkFaint = Color(red: 0.431, green: 0.416, blue: 0.376)
+    static let inkBlurb = Color(red: 0.369, green: 0.353, blue: 0.314)
 
     // MARK: the reading face
 

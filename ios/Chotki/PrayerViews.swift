@@ -32,7 +32,7 @@ struct PrayersView: View {
                     ForEach(Array(prayers.enumerated()), id: \.element.id) { index, prayer in
                         VStack(alignment: .leading, spacing: 6) {
                             Text(prayer.title)
-                                .font(.system(size: 13))
+                                .font(Chotki.reading(13))
                                 .foregroundStyle(Chotki.gold)
                             if let rubric = prayer.rubric {
                                 Text(rubric).font(.system(size: 12)).italic()
@@ -72,6 +72,7 @@ struct PrayersView: View {
 /// belong to core's `PrayerScreen`, which is why this holds none of them.
 struct RopeView: View {
     @Bindable var model: Model
+    @Environment(\.pushRoute) private var pushRoute
 
     private var book: PrayerBook {
         PrayerBook.shared.scoped(to: model.settings.jurisdiction.tradition)
@@ -80,13 +81,16 @@ struct RopeView: View {
     private var showsRope: Bool { model.prayers.showsRope() }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                chooser
-                if showsRope { rope }
-                words
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    chooser
+                    if showsRope { rope }
+                    words
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
+            GlossaryOfTerms { pushRoute(.term(slug: nil)) }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Chotki.ground)
@@ -135,6 +139,7 @@ struct RopeView: View {
             }
         }
         .pickerStyle(.menu)
+        .font(Chotki.reading(17))
         .tint(Chotki.gold)
         .padding(.top, 8)
     }
@@ -235,6 +240,14 @@ struct RopeView: View {
         // praying, and the bell is the sound a rope makes.
         if completed {
             if model.settings.chimeOnCompletion { Sound.shared.playBell() }
+            // Only the Jesus Prayer, and only while it is the prayer open.
+            if model.prayers.selection == "jesus-prayer" {
+                model.entries(on: model.selectedDate)
+                    .filter {
+                        $0.rule.ropePrayerID == "jesus-prayer" || $0.rule.title == "The Jesus Prayer"
+                    }
+                    .forEach(model.markKept)
+            }
         } else if model.settings.tickEachKnot {
             Sound.shared.playTick()
         }
@@ -259,7 +272,7 @@ struct RopeWords: View {
                 ForEach(Array(prayers.enumerated()), id: \.element.id) { index, prayer in
                     VStack(alignment: .leading, spacing: 5) {
                         Text(prayer.title)
-                            .font(.system(size: 13))
+                            .font(Chotki.reading(13))
                             .foregroundStyle(Chotki.gold)
                         if let rubric = prayer.rubric {
                             Text(rubric).font(.system(size: 12)).italic()
@@ -267,10 +280,21 @@ struct RopeWords: View {
                         }
                         PrayerProse(
                             model: model, paragraphs: prayer.paragraphs,
-                            size: 16, matches: found[index]
+                            size: 17, matches: found[index]
                         )
                         PrayerAttribution(prayer: prayer)
                     }
+                }
+                if selection == "morning" || selection == "evening" {
+                    // Reaching the last line marks the rule. Opening the prayers does not.
+                    ReadingEnd(identity: "rope-\(selection)-\(model.selectedDate.iso)") {
+                        let title = selection == "morning" ? "Morning prayers" : "Evening prayers"
+                        model.entries(on: model.selectedDate)
+                            .filter { $0.rule.title == title }
+                            .forEach(model.markKept)
+                    }
+                    .frame(height: 1)
+                    .accessibilityHidden(true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
