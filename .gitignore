@@ -27,6 +27,8 @@ android/*/build/
 android/local.properties
 android/.idea/
 android/.kotlin/
+android/.image-tools/
+__pycache__/
 
 # Heap dumps from a Gradle/dex OOM
 *.hprof

@@ -4,7 +4,7 @@ The app itself is not affiliated with any church. A person names their own, or s
 
 ## The rule
 
-Written 2026-10-02. It applies to the Android and Mac apps now, to the iOS app when that design is brought over, and to a later Windows port.
+Written 2026-10-02. It applies to Android, Mac, and the redesigned iOS app now, and to a later Windows port.
 
 When a church is selected, feasts, fasts, readings, prayers, akathists, and services follow that church. The cycles are the daily one, the weekly one, the monthly one, and the days appointed through the year. When no church is named, those same things follow the Orthodox Church in America: New Calendar, Russian tradition. Settings does not show "Orthodox Church in America" in that case. It shows "I don't have a church affiliation yet."
 

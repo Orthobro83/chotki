@@ -3,10 +3,8 @@
 Decision record for the Reflections section of the Chotki **macOS** app, and for
 the typeface change that comes with it.
 
-Status: **built on macOS.** `core` and the macOS interface are done and tested;
-iOS and Android are not started. This document is the specification;
-`reflections-mockup.html` beside it was the layout it was designed against and
-is now superseded by the real screens.
+Status as of 3 October 2026: **retired on macOS**, retained on Android and iOS. Shared core and backups preserve the historical records. The implementation inventory below describes the original Mac feature and is retained as a decision record; it is not the current Mac surface. `project-rules.md` and `process.md` describe the retirement.
+
 
 What exists, in `core/Sources/ChotkiCore/Reflections/`: `Reflection`,
 `ReflectionQuestion`, `ReflectionEntry`, the seven seeded verbatim,

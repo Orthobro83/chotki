@@ -51,6 +51,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare portable image tools
+        run: |
+          python -m venv android/.image-tools
+          android/.image-tools/bin/python -m pip install --only-binary=:all: -r android/tools/image-requirements.txt
+      - name: Test image packaging
+        run: android/.image-tools/bin/python -m unittest discover -s android/tools -p 'test_*.py'
       # The instrumentation suite needs an emulator and is run locally. This is
       # the cheap half that CI was missing entirely: every Android break in this
       # port so far has been a compile, a dex or a manifest failure in :app,
@@ -58,6 +67,12 @@ jobs:
       - name: Assemble
         working-directory: android
         run: ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon
+      - name: Verify the packaged image libraries
+        run: |
+          android/.image-tools/bin/python android/tools/verify_sayings.py \
+            macos/Sources/Chotki/Resources/sayings \
+            android/app/build/outputs/apk/debug/app-debug.apk \
+            android/app/build/outputs/apk/release/app-release.apk
       # Signs with the debug key here, which is exactly why it must never be the
       # apk that ships. Guards against that silently becoming normal.
       - name: The release apk must not be debuggable

@@ -1,174 +1,126 @@
 #!/usr/bin/env python3
-"""Make the Android copy of the daily pictures.
+"""Build upright WebP copies of the Mac library on macOS, Linux, or Windows.
 
-The Mac library stays as it is. This writes a WebP copy fit inside 1280 by 1920,
-which covers the Home card: a phone-width strip, 220dp tall, plus the small
-drift onto the focal point. Focal points are fractions of the picture, so they
-still land on the same place. A file stored on its side is turned upright first,
-because the phone draws the pixels as stored and the Mac does not.
+Requires Python 3.10+ and tools/image-requirements.txt. Originals, order, and
+fractional focal positions stay unchanged. --version prints the encoder/cache
+identity for Gradle so changing a dependency invalidates generated assets.
 """
 
+import argparse
+import hashlib
+import json
 import shutil
-import struct
-import subprocess
-import sys
 from pathlib import Path
+
+try:
+    import PIL
+    from PIL import Image, ImageOps, features
+except ImportError:
+    raise SystemExit(
+        "Pillow is missing. Install android/tools/image-requirements.txt into "
+        "a Python 3.10+ environment and select it with CHOTKI_IMAGE_PYTHON."
+    )
 
 MAX_W = 1280
 MAX_H = 1920
-QUALITY = "75"
-# upright: a file whose pixels are stored sideways is turned before encoding.
-# The Mac shows that file upright; BitmapFactory does not.
-STAMP = f"{MAX_W}x{MAX_H}-q{QUALITY}-upright"
+QUALITY = 75
+METHOD = 6
+REQUIREMENTS = Path(__file__).with_name("image-requirements.txt")
 
 
-def cwebp_bin() -> str:
-    found = shutil.which("cwebp")
-    if found:
-        return found
-    for candidate in ("/opt/homebrew/bin/cwebp", "/usr/local/bin/cwebp"):
-        if Path(candidate).is_file():
-            return candidate
-    sys.exit("cwebp is not installed; the Android pictures cannot be shrunk")
+def digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def jpeg_orientation(path: Path) -> int:
-    """EXIF orientation, or 1 when the file does not say. Reads the SHORT, not the padding."""
-    data = path.read_bytes()
-    if not data.startswith(b"\xff\xd8"):
-        return 1
-    index = 2
-    while index + 4 < len(data):
-        if data[index] != 0xFF:
-            index += 1
-            continue
-        marker = data[index + 1]
-        if marker in (0xD8, 0x01) or 0xD0 <= marker <= 0xD7:
-            index += 2
-            continue
-        if marker in (0xD9, 0xDA):
-            break
-        segment_len = struct.unpack(">H", data[index + 2 : index + 4])[0]
-        if marker == 0xE1 and data[index + 4 : index + 10] == b"Exif\x00\x00":
-            return tiff_orientation(data[index + 10 : index + 2 + segment_len])
-        index += 2 + segment_len
-    return 1
-
-
-def tiff_orientation(tiff: bytes) -> int:
-    if len(tiff) < 8 or tiff[:2] not in (b"II", b"MM"):
-        return 1
-    order = "<" if tiff[:2] == b"II" else ">"
-    if struct.unpack(order + "H", tiff[2:4])[0] != 42:
-        return 1
-    offset = struct.unpack(order + "I", tiff[4:8])[0]
-    if offset + 2 > len(tiff):
-        return 1
-    count = struct.unpack(order + "H", tiff[offset : offset + 2])[0]
-    entry = offset + 2
-    for _ in range(count):
-        if entry + 12 > len(tiff):
-            return 1
-        tag, typ, n = struct.unpack(order + "HHI", tiff[entry : entry + 8])
-        if tag == 0x0112 and typ == 3 and n >= 1:
-            return struct.unpack(order + "H", tiff[entry + 8 : entry + 10])[0]
-        entry += 12
-    return 1
-
-
-def dimensions(path: Path) -> tuple[int, int]:
-    data = path.read_bytes()
-    if data.startswith(b"\x89PNG\r\n\x1a\n"):
-        return struct.unpack(">II", data[16:24])
-    index = 2
-    while index < len(data) - 8:
-        if data[index] != 0xFF:
-            index += 1
-            continue
-        marker = data[index + 1]
-        if marker in (0xC0, 0xC1, 0xC2):
-            height, width = struct.unpack(">HH", data[index + 5 : index + 9])
-            return width, height
-        if marker in (0xD8, 0xD9) or 0xD0 <= marker <= 0xD7:
-            index += 2
-            continue
-        segment = struct.unpack(">H", data[index + 2 : index + 4])[0]
-        index += 2 + segment
-    sys.exit(f"could not read the size of {path.name}")
-
-
-# How far to turn the stored pixels so they match the picture the Mac shows.
-# 6 is a quarter-turn clockwise, 8 is a quarter-turn the other way, 3 is a half-turn.
-TURNS = {3: "180", 6: "90", 8: "270"}
-
-
-def upright_copy(src: Path, temp: Path) -> Path:
-    orientation = jpeg_orientation(src)
-    if orientation in (0, 1):
-        return src
-    degrees = TURNS.get(orientation)
-    if degrees is None:
-        sys.exit(f"{src.name} is mirrored in a way this packager does not turn ({orientation})")
-    subprocess.check_call(
-        ["/usr/bin/sips", "-r", degrees, str(src), "--out", str(temp)],
-        stdout=subprocess.DEVNULL,
+def encoder_identity() -> str:
+    if not features.check("webp"):
+        raise RuntimeError("Pillow has no WebP support; install a wheel with libwebp support.")
+    expected = REQUIREMENTS.read_text().strip().split("==")[1]
+    if PIL.__version__ != expected:
+        raise RuntimeError(f"Pillow {expected} is required; found {PIL.__version__}.")
+    return (
+        f"pillow-{PIL.__version__}-webp-{features.version('webp')}"
+        f"-{MAX_W}x{MAX_H}-q{QUALITY}-m{METHOD}-exif-lanczos-v1"
+        f"-{digest(REQUIREMENTS)}-{digest(Path(__file__))}"
     )
-    return temp
 
 
-def main() -> None:
-    source = Path(sys.argv[1])
-    output = Path(sys.argv[2]) / "sayings"
-    output.mkdir(parents=True, exist_ok=True)
-    encoder = cwebp_bin()
-    stamp_path = output / "shrink-stamp.txt"
-    fresh = stamp_path.read_text() == STAMP if stamp_path.is_file() else False
+def convert(source: Path, destination: Path) -> None:
+    # Transpose first: orientation can swap width and height or mirror pixels.
+    with Image.open(source) as original:
+        image = ImageOps.exif_transpose(original)
+        image.thumbnail((MAX_W, MAX_H), Image.Resampling.LANCZOS)
+        # Avoid propagating EXIF/ICC/XMP into the generated phone copy.
+        image = image.convert("RGBA" if "A" in image.getbands() or "transparency" in image.info else "RGB")
+        image.info.clear()
+        temporary = destination.with_suffix(".tmp.webp")
+        try:
+            image.save(temporary, "WEBP", quality=QUALITY, method=METHOD)
+            temporary.replace(destination)
+        finally:
+            temporary.unlink(missing_ok=True)
 
-    names = [
-        line.strip()
-        for line in (source / "order.txt").read_text().splitlines()
-        if line.strip()
-    ]
-    written: list[str] = []
+
+def generate(source: Path, asset_root: Path) -> None:
+    identity = encoder_identity()  # Fail before changing generated assets.
+    output = asset_root / "sayings"
+    if source.resolve() == output.resolve() or source.resolve() in output.resolve().parents:
+        raise ValueError("Generated assets must be outside the source library.")
+    names = [line.strip() for line in (source / "order.txt").read_text().splitlines() if line.strip()]
+    destinations = [Path(name).with_suffix(".webp").name for name in names]
+    if len(set(destinations)) != len(destinations):
+        raise ValueError("Image names collide after conversion to WebP.")
     for name in names:
-        src = source / Path(name).name
-        if not src.is_file():
-            sys.exit(f"missing picture {name}")
-        dest_name = Path(name).with_suffix(".webp").name
-        dest = output / dest_name
-        if not (fresh and dest.is_file() and dest.stat().st_mtime >= src.stat().st_mtime):
-            encode_from = upright_copy(src, output / f".orient-{dest_name}.jpg")
-            try:
-                width, height = dimensions(encode_from)
-                scale = min(MAX_W / width, MAX_H / height, 1)
-                command = [
-                    encoder, "-quiet", "-q", QUALITY, "-m", "6", "-metadata", "none",
-                ]
-                if scale < 0.999:
-                    command += [
-                        "-resize",
-                        str(max(1, round(width * scale))),
-                        str(max(1, round(height * scale))),
-                    ]
-                command += [str(encode_from), "-o", str(dest)]
-                subprocess.check_call(command)
-            finally:
-                if encode_from != src:
-                    encode_from.unlink(missing_ok=True)
-        written.append(f"sayings/{dest_name}")
+        if not (source / Path(name).name).is_file():
+            raise FileNotFoundError(f"missing picture {name}")
+    metadata = source / "approved-sources.json"
+    if not metadata.is_file():
+        raise FileNotFoundError(metadata)
 
-    (output / "order.txt").write_text("\n".join(written) + "\n")
-    shutil.copyfile(source / "approved-sources.json", output / "approved-sources.json")
-    stamp_path.write_text(STAMP)
+    output.mkdir(parents=True, exist_ok=True)
+    manifest_path = output / "shrink-manifest.json"
+    try:
+        previous = json.loads(manifest_path.read_text())
+    except (FileNotFoundError, ValueError):
+        previous = {}
+    cached = previous.get("images", {}) if previous.get("encoder") == identity else {}
+    current = {}
+    for name, dest_name in zip(names, destinations):
+        src, dest = source / Path(name).name, output / dest_name
+        source_hash = digest(src)
+        entry = cached.get(dest_name, {})
+        if not (entry.get("source") == source_hash and dest.is_file()
+                and entry.get("output") == digest(dest)):
+            convert(src, dest)
+        current[dest_name] = {"source": source_hash, "output": digest(dest)}
 
-    keep = {Path(line).name for line in written}
-    keep.update({"order.txt", "approved-sources.json", "shrink-stamp.txt"})
+    (output / "order.txt").write_text("".join(f"sayings/{name}\n" for name in destinations))
+    shutil.copyfile(metadata, output / metadata.name)
+    (output / "shrink-stamp.txt").write_text(identity)
+    manifest_path.write_text(json.dumps({"encoder": identity, "images": current}, sort_keys=True))
+    keep = set(destinations) | {"order.txt", metadata.name, "shrink-stamp.txt", manifest_path.name}
     for child in output.iterdir():
         if child.name not in keep:
             child.unlink()
+    total = sum((output / name).stat().st_size for name in destinations)
+    print(f"shrunk {len(destinations)} pictures to {total / 1_000_000:.1f} MB")
 
-    total = sum((output / Path(line).name).stat().st_size for line in written)
-    print(f"shrunk {len(written)} pictures to {total / 1_000_000:.1f} MB")
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="store_true")
+    parser.add_argument("source", type=Path, nargs="?")
+    parser.add_argument("output", type=Path, nargs="?")
+    args = parser.parse_args()
+    try:
+        if args.version:
+            print(encoder_identity())
+        elif args.source is not None and args.output is not None:
+            generate(args.source, args.output)
+        else:
+            parser.error("source and output are required")
+    except (RuntimeError, ValueError, OSError) as error:
+        parser.exit(1, f"image packaging: {error}\n")
 
 
 if __name__ == "__main__":

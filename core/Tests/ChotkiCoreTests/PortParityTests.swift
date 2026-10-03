@@ -39,6 +39,26 @@ struct PortParityTests {
         try String(contentsOf: Self.root.appendingPathComponent(path), encoding: .utf8)
     }
 
+    @Test("each iOS reading surface offers completion after its content")
+    func iosReadingCompletionSurfaces() throws {
+        let text = try source("ios/Chotki/ReadingViews.swift")
+        func body(from start: String, to end: String) throws -> String {
+            let begin = try #require(text.range(of: start))
+            let finish = try #require(text.range(of: end, range: begin.upperBound..<text.endIndex))
+            return String(text[begin.upperBound..<finish.lowerBound])
+        }
+        let scripture = try body(from: "ForEach(ReadingOrder.orderedBands", to: "disclosure(ReadingOrder.sectionTitle(band: ReadingOrder.saintLifeBand)")
+        #expect(scripture.contains("readingEnd(band: band)"))
+        let departed = try body(from: "if model.settings.jurisdiction.tradition.isSlavic", to: "if let week = model.liturgical.akathistWeek")
+        #expect(departed.contains("readingEnd(band: ReadingOrder.departedBand)"))
+        let life = try body(from: "private func lifeBody", to: "private func blockText")
+        let unavailable = try #require(life.range(of: "} else {"))
+        #expect(life[..<unavailable.lowerBound].contains("readingEnd(band: ReadingOrder.saintLifeBand)"))
+        #expect(!life[unavailable.upperBound...].contains("readingEnd("), "unavailable content must not complete a rule")
+        let akathist = try body(from: "private func akathistSection", to: "private func readingEnd")
+        #expect(akathist.contains("readingEnd(band: ReadingOrder.akathistBand)"))
+    }
+
     /// The macOS file, the Android file, and what both must mention.
     ///
     /// Each entry is a thing a person can change. Add to this whenever the

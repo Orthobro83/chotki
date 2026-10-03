@@ -12,9 +12,10 @@ Kotlin reimplementation is written against.
 
 ## What this is
 
-A macOS app for keeping an Orthodox prayer rule and honestly measuring whether
-it is kept. Menu bar popover **and** a full window with a Dock icon. Written for
-Ryan, in daily use by him, published as an alpha at
+An app for keeping an Orthodox prayer rule and honestly measuring whether
+it is kept, on macOS, Android, and iOS. macOS has a menu bar popover **and** a
+full window with a Dock icon. Written for Ryan; Android and macOS are published
+as 1.0 beta, build 29 at
 `github.com/Orthobro83/chotki` for a private community to test.
 
 ## Where things are
@@ -77,8 +78,8 @@ sections of `design.md` before touching anything near them.
 - **Participation is never assumed.** Fasting and feasts are each
   hidden / shown / observed, defaulting to *shown*. People have health
   conditions and no parish within reach; neither is a failure.
-- **Text from the calendar is never re-cased.** The app's own labels are
-  lowercase by design; orthocal's words are shown as it writes them.
+- **Text from the calendar is never re-cased.** App headings use proper casing;
+  orthocal's words are shown as it writes them.
 
 ## Building, installing, verifying
 
@@ -91,7 +92,7 @@ cd macos && swift build          # or ./build-app.sh release
 `/Applications` leaves someone testing yesterday's binary — that has already
 happened and cost a whole exchange.
 
-Tests: `swift test` in both `core/` and `macos/`. Around 250 of them. CI runs
+Tests: `swift test` in both `core/` and `macos/` (474 core and 81 Mac tests as of 3 October 2026). CI runs
 core on macOS and Linux, the portability guard, and the macOS suite.
 
 ### Looking at the interface
@@ -107,7 +108,8 @@ show. It draws the view; it never reads the display.
 `CHOTKI_RENDER=<prefix>` is the older path: `ImageRenderer` on content views in
 isolation. Still useful for a single view in a known state, but it draws every
 scrolled screen as an empty panel, which is how a missing feature once got
-signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
+signed off here. Use synthetic practice and committed public calendar fixtures only, as required
+by `project-rules.md`. Never open or copy the live database for previews.
 `CHOTKI_EXPORT_ICON=<dir>` writes the iconset.
 
 **What neither can do:**
@@ -133,7 +135,7 @@ signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
   `~/Library/Preferences`, and an empty backup into Application Support.
   Anything a test constructs must be told not to touch the world.
 - **A screenshot nearly carried his private data** into a public README. The
-  render harness now copies only the liturgical cache.
+  current render harness uses synthetic practice and committed public calendar fixtures.
 - **Never run the Intel slice on his Mac.** The release is universal; the
   x86_64 half must never be launched here — no `arch -x86_64`, no Rosetta, not
   once to see whether it starts. Forcing it raises a Rosetta install prompt on
@@ -151,8 +153,8 @@ signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
   on 1 September 2026, when schema 7 turned up in his record before the build
   carrying it had ever been installed. Nothing was lost, because that migration
   only added — the next one that rewrites or drops a column would not have been
-  so forgiving. It now copies the file (with `-wal` and `-shm`) and opens the
-  copy. **Treat opening a store as a write.**
+  so forgiving. The subsequent 30 September rule prohibits even copying live data for
+  previews: use synthetic practice and public fixtures. **Treat opening a store as a write.**
 - **Never screen-capture his display.** It caught a private messaging window
   once. Use the render harness.
 - **Python edits that do not assert fail silently.** Several patches quietly
@@ -167,18 +169,18 @@ signed off here. `CHOTKI_RENDER_LIVE=1` uses the real data untouched;
 - **The database is WAL mode.** A file-level copy must include `-wal` and
   `-shm` or it silently loses recent data.
 
-## State as of 26 August 2026
+## State as of 3 October 2026
 
 Three platforms, all in daily testing by Ryan.
 
 | | |
 |---|---|
-| macOS | universal (arm64 + x86_64), ad-hoc signed, `v0.1.0-alpha` published |
-| Android | `v0.1.8-alpha` published, prerelease, signed with his own key |
-| iOS | on his iPhone 13 by free provisioning, seven days at a time |
+| macOS | 1.0 beta, build 29; universal (arm64 + x86_64), ad-hoc signed, not notarised; Intel slice never run |
+| Android | 1.0 beta, build 29; public sideload release, signed with his own key |
+| iOS | 1.0 beta, build 29; redesigned phone interface, free provisioning for seven days, no public download |
 
-**Published is not delivered.** The author hands builds to people himself. As of
-26 August nobody else had received any build. Never write that a named person has one.
+**Published is not delivered.** The author hands builds to people himself.
+Do not infer that a named person has a build from its publication.
 
 Outstanding, in rough priority:
 
@@ -188,7 +190,7 @@ Outstanding, in rough priority:
    anyone else running the iOS build.
 2. **A priest's review** of the glossary and the patristic attributions. He has
    said this will happen before the app goes further.
-3. **Landscape, before any public release.** Asked for on 26 August: the phones
+3. **Landscape remains outstanding despite the beta release.** Asked for on 26 August: the phones
    are portrait-locked, and the landscape layout for a phone or a tablet should
    be *the macOS layout* rather than a third design. macOS is already the wide
    arrangement — sidebar, calendar and the day side by side — so this is

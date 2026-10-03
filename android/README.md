@@ -1,13 +1,35 @@
 # Chotki for Android
 
-**Status: not started.** This folder holds the groundwork only — the plan, the
-specification, and the decisions still to make. No Kotlin, no Gradle, nothing
-built. Work begins 23 August 2026.
+## Current state — 3 October 2026
 
-- **[PORT.md](PORT.md)** — the phases, in order, each with a "done when"
-- **[PARITY.md](PARITY.md)** — what `core/` defines and the port must satisfy
-- **[../retrospective.md](../retrospective.md)** — how the macOS build went
-  wrong, and the guard rails that came out of it
+Android is 1.0 beta, build 29. The Kotlin core and Compose interface are implemented; the older planning discussion below records the port's original decisions. Shared text is exported from Swift and checked for parity. Home uses the approved 365-image Mac library through generated WebP assets. A named church supplies calendar and tradition; no affiliation follows OCA on the New Calendar while older saved churches remain unchanged.
+
+## Portable image packaging
+
+`syncDailyImages` generates the phone library with Python 3.10+ and pinned Pillow 12.0.0. It corrects all EXIF orientations, fits images inside 1280 × 1920 without enlargement, and writes WebP at quality 75 and method 6. Mac originals, image order, and focal positions are preserved. There is no `sips` or `cwebp` dependency.
+
+From the repository root, prepare the isolated environment once:
+
+```sh
+python3 -m venv android/.image-tools
+android/.image-tools/bin/python -m pip install --only-binary=:all: -r android/tools/image-requirements.txt
+android/.image-tools/bin/python -m unittest discover -s android/tools -p 'test_*.py'
+```
+
+Use a Python 3.10+ executable for the first command; the macOS system Python 3.9 is too old. On Windows, the environment's interpreter is `android/.image-tools/Scripts/python.exe`. Gradle discovers this project environment automatically. Alternatively, select an interpreter with `CHOTKI_IMAGE_PYTHON` or `-PimagePython=/absolute/path/to/python`; the Gradle property takes precedence. Install the same requirements into that interpreter's environment.
+
+The build fails early for a missing/wrong Pillow version or absent WebP support. Gradle tracks the script, requirements, selected interpreter, and actual encoder versions. The converter also checks source/output hashes so old timestamps or damaged generated files cannot silently reuse stale images. Its cache identity includes Pillow/libwebp versions and conversion settings.
+
+The Ubuntu app-build job creates the same environment, runs synthetic tests for all eight EXIF orientations, and verifies all 365 images inside both debug and release APKs. To verify locally after assembly:
+
+```sh
+android/.image-tools/bin/python android/tools/verify_sayings.py \
+  macos/Sources/Chotki/Resources/sayings \
+  android/app/build/outputs/apk/debug/app-debug.apk \
+  android/app/build/outputs/apk/release/app-release.apk
+```
+
+WebP bytes may differ from the earlier encoder. Source artwork and crop coordinates do not change. Updating Pillow requires updating the pin and regenerating/reviewing the library.
 
 ## The one thing to understand first
 
@@ -291,7 +313,7 @@ a change to make on an inference. Confirm before Phase 1.
 
 Not blockers for Android, but they do not disappear:
 
-- Universal binary — needs Xcode, which is still not installed
+- Universal binary — complete; the public Mac download contains arm64 and x86_64. Intel execution remains unverified.
 - Notarisation — needs the $99/year Apple Developer Program, Ryan's call
 - Priest review of the glossary, prayer texts and patristic attributions
-- Confirming the parish reckoning (Julian is the default)
+- Confirming the parish reckoning (named church supplies its calendar; no affiliation follows OCA on the New Calendar; older saved churches remain unchanged)

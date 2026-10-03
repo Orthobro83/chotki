@@ -1,5 +1,9 @@
 # Porting Chotki to iOS
 
+## Current state — 3 October 2026
+
+iOS is 1.0 beta, build 29, on the author’s phone and not a public download. The redesign is implemented: five custom tabs, commitment cards, a week/month calendar, grouped Library and Settings, shared 365-image artwork, and separate Reading disclosures. Church affiliation and the appointed readings use the shared core. Reflections remains available on iOS; its removal is specific to macOS. Phone orientation remains portrait. The port-planning notes below are historical and do not establish current feature completeness.
+
 Read `../retrospective.md` and `../android/PORT.md` first. The Android port is
 where the expensive lessons were bought, and most of them apply here even
 though the work is a different shape.

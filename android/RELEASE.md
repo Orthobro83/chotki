@@ -1,5 +1,13 @@
 # Making a Chotki apk
 
+## Image tools — before building
+
+Both debug and release builds generate the 365-image library with Python 3.10+
+and the pinned Pillow dependency. Prepare `android/.image-tools` using the
+[image packaging setup](README.md#portable-image-packaging) before running
+Gradle. A different environment can be selected with `CHOTKI_IMAGE_PYTHON` or
+`-PimagePython=/absolute/path/to/python`. No Mac image utility is required.
+
 ## The signing key — once, and never again
 
 Android ties an installed app to the key that signed it. An update signed with

@@ -15,7 +15,7 @@ Marked **[manual]** where a step needs a human — a decision, a system permissi
 - [x] Choose project location and split personal context out of the repo.
 - [x] `brew install gh` (2.97.0), `gh auth login`. Done 2026-08-19.
 - [x] Git identity set repo-locally. Done 2026-08-19.
-- [ ] **[manual]** Confirm which reckoning your parish keeps. Julian is the default, so for most Orthodox this is confirmation rather than a change.
+- [ ] **[manual]** Confirm which reckoning your parish keeps. A named church supplies its calendar; no affiliation follows OCA on the New Calendar. Older saved churches are preserved.
 - [x] `git init`, first commit, pushed to https://github.com/Orthobro83/chotki (public, MIT). Done 2026-08-19.
 
 ## Phase 1 — Foundations, and two spikes
@@ -57,7 +57,7 @@ Proof: **met 2026-08-19.** 51 tests green on macOS and Linux.
 
 ## Phase 3 — Core: liturgical layer
 
-- [x] `Jurisdiction` — name plus reckoning, defaulting to Julian, with a non-authoritative list of common jurisdictions. Done 2026-08-19.
+- [x] `Jurisdiction` — name plus reckoning, with a non-authoritative list of common jurisdictions. Originally defaulted to Julian (2026-08-19); since 2026-10-02, no affiliation follows OCA on the New Calendar and older saved churches are preserved.
 - [x] `OrthocalClient` behind an `HTTPFetching` seam, `FoundationNetworking` imported conditionally for Linux. Done 2026-08-19.
 - [x] `LiturgicalService.refresh` fetches the window and skips what is already held. Done 2026-08-19.
 - [x] Cache-first, with an in-memory snapshot so `LiturgicalDayProvider` stays **synchronous** — the recurrence engine never awaits. `refresh` never throws; failure sets `isOffline` for the interface to reflect. Done 2026-08-19.

@@ -1,5 +1,9 @@
 # chotki — Design
 
+## Current implementation — 3 October 2026
+
+The historical design and dated decisions below explain the project’s evolution. Current behavior is defined by the source, `project-rules.md`, and `church-practice.md`: 1.0 beta, build 29 on Android, Mac, and iOS; no affiliation follows OCA on the New Calendar while older churches are preserved; the bundled saint readings are 365 days of the Prologue from Ochrid under CC BY-SA 4.0. The former Dimitry translation track is superseded. Daily imagery uses the approved 365-image rotation. Taking on the Akathist schedules its appointed Lenten Fridays independently of fasting observance.
+
 A menu bar app for keeping an Orthodox prayer rule, and honestly measuring whether it is kept.
 
 Status: design complete. No code written yet.
@@ -541,7 +545,9 @@ A rule reaches its prayers from a mark on the row, always shown rather than only
       Liturgical/    orthocal client, cache, jurisdiction
       Scheduling/    in-process scheduler; Notifier protocol
       Platform/      LaunchAtLogin, TrayPresenter protocols
-    macos/           SwiftUI menu bar app — the only Apple-specific code
+    macos/           SwiftUI main window and menu-bar companion
+    ios/             SwiftUI iPhone app, using the same core
+    android/         Kotlin core and Jetpack Compose app
     .github/         CI: build + test core on macOS AND Linux
 
 ## Data model

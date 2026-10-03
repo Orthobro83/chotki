@@ -77,7 +77,7 @@ The Android interface follows the redesign. macOS is the same build. The iPhone 
 
 ## Calendar
 
-Both reckonings are supported and the setting is configurable. The default is Julian (Old Calendar), which is used by roughly 110 million Orthodox Christians against roughly 47 million on the Revised Julian calendar.
+Both reckonings are supported and the setting is configurable. A named church supplies its usual calendar and tradition. With no church affiliation, the app follows the Orthodox Church in America: New Calendar, Russian tradition, without displaying OCA as the person’s church. Older records retain their saved church. See [church-practice.md](church-practice.md).
 
 Julian and Gregorian reckoning do not affect days of the week — the Wednesday and Friday fast rhythm is identical under both. Only fixed feasts differ, by 13 days. The movable cycle, Pascha included, is the same for both, because nearly every Orthodox church computes Pascha on the Julian reckoning.
 
@@ -87,13 +87,13 @@ The app always displays civil Gregorian dates. Reckoning is a lookup layer, neve
 
 `core/` is a pure SwiftPM package — Foundation and SQLite only, no Apple-only imports. It holds the data model, recurrence expansion, scoring, the liturgical client, and the scheduler. It builds and tests on macOS, Linux, and Windows.
 
-`macos/` is the SwiftUI menu bar app, and the only Apple-specific code in the project. Platform services — notifications, launch at login, tray presentation — sit behind protocols defined in `core/`.
+`macos/` is the SwiftUI main-window and menu-bar app. `ios/` is the SwiftUI iPhone app and uses the same core. `android/` contains the Kotlin core reimplementation and Jetpack Compose interface. Shared-content checks keep their bundled texts in step. Platform services sit behind core protocols.
 
 Core tests run on Linux in CI from the first phase, so portability fails loudly rather than rotting quietly.
 
 ## Data
 
-Liturgical data comes from [orthocal.info](https://orthocal.info), a free public JSON API. No key, no account. It is the only network call the app makes: no analytics, no telemetry, no sync. Everything is stored locally in SQLite and backed up by JSON export.
+Liturgical data comes from [orthocal.info](https://orthocal.info), a free public JSON API. No key, no account. It is the only network call the app makes: no analytics, no telemetry, no sync. Practice records are stored locally in SQLite and backed up by JSON export. The bundled saint readings are the Prologue from Ochrid, recorded unchanged under CC BY-SA 4.0, with source and license links beneath each reading. There are 365 church-date entries; the source has no February 29 reading. Fetching this collection is a development tool, not an app network request. The daily artwork uses a shared 365-image rotation.
 
 ## A note on tone
 

@@ -102,6 +102,7 @@ struct ReadingView: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    readingEnd(band: band)
                 }
             }
         }
@@ -113,6 +114,7 @@ struct ReadingView: View {
         if model.settings.jurisdiction.tradition.isSlavic || held.contains(ReadingOrder.departedBand) {
             disclosure(ReadingOrder.sectionTitle(band: ReadingOrder.departedBand), band: ReadingOrder.departedBand) {
                 appointed(DepartedCommemoration.rubric, DepartedCommemoration.paragraphs, DepartedCommemoration.source)
+                readingEnd(band: ReadingOrder.departedBand)
             }
         }
 
@@ -202,6 +204,7 @@ struct ReadingView: View {
             if let url = URL(string: life.licenseURL) {
                 Link(life.license, destination: url).font(.system(size: 11)).foregroundStyle(Chotki.faint)
             }
+            readingEnd(band: ReadingOrder.saintLifeBand)
         } else {
             if !day.saints.isEmpty {
                 Text(day.saints.joined(separator: " · ")).font(.footnote).foregroundStyle(Chotki.muted)
@@ -252,12 +255,16 @@ struct ReadingView: View {
                 note: Akathist.fallbackNote(for: model.settings.jurisdiction.tradition),
                 linked: true
             )
-            ReadingEnd(identity: "\(model.selectedDate.iso)-akathist") {
-                model.finishReading(band: ReadingOrder.akathistBand)
-            }
-            .frame(height: 1)
-            .accessibilityHidden(true)
+            readingEnd(band: ReadingOrder.akathistBand)
         }
+    }
+
+    private func readingEnd(band: Int) -> some View {
+        ReadingEnd(identity: "\(model.selectedDate.iso)-\(band)") {
+            model.finishReading(band: band)
+        }
+        .frame(height: 1)
+        .accessibilityHidden(true)
     }
 
     /// Nothing stored for the day, and a way to ask again.

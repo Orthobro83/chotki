@@ -1,6 +1,8 @@
 # Chotki macOS Overhaul Process
 
-Updated: 2026-10-02.
+Updated: 2026-10-03.
+
+The phase statuses below describe current implementation and verification. Dated implementation-log entries preserve the decisions and evidence at the time; later entries supersede earlier requirements.
 Status: 1.0 beta, build 29. Android and the universal Mac build are the public release. iOS is the same version, on the author's phone, and is not a public download. The rope and the cross play only when the process was not running.
 
 ## Approach and Progress
@@ -72,15 +74,15 @@ Completion check: The parity checklist is satisfied across the full window and c
 
 ## Phase 6 — Imagery and Subtle Motion
 
-Status: Implemented; all 42 crops and motion geometry checked, hands-on motion review pending.
-- Bundle Android's existing 42-image rotation and preserve its date-based selection order.
+Status: Implemented with the approved 365-image rotation shared across Mac, Android, and iOS; final hands-on motion review remains open.
+- Use the approved 365-image library and focal positions stored with the Mac resources. Android generates compressed WebP copies; iOS references the same source folder.
 - Show daily sayings with readable overlays and appropriate desktop crops.
 - Add slow, subtle pans toward central subjects and faces in image panes except Progress.
 - Choose crop/focal positions deliberately; avoid cutting off faces, obscuring text, or restarting motion on routine updates.
 - Stop unnecessary animation when panes are hidden and honor Reduce Motion.
 - Verify imagery is included in the installed app bundle, not only available during development.
 
-Completion check: All 42 images resolve from the packaged app; sayings remain readable; motion is restrained and Progress imagery stays still.
+Completion check: All 365 images resolve from the packaged app; sayings remain readable; motion is restrained and Progress imagery stays still.
 
 ## Phase 7 — Due-Task Pulses and macOS Notifications
 
@@ -102,13 +104,13 @@ Status: In Progress.
 - Exercise real interactions with isolated data, including navigation, completion, editing, persistence, reminders, and backups.
 - Verify resizing, scrolling, keyboard use, Reduce Motion, image packaging, and the signed app bundle.
 - Build and inspect the universal binary; never launch the Intel slice on this Mac.
-- Present any remaining limitations honestly and resolve completion-blocking issues before setting `1.0.0-beta`.
+- Report remaining verification gaps explicitly. The beta name was assigned on 2026-10-02; it does not imply that every manual check below has passed.
 
 Completion check: Feature parity, visual review, interaction checks, data compatibility, and packaging pass; the beta build and validation notes are ready for review.
 
 ## Separate Track — Expand the Image Library
 
-Status: Complete at 365 selected images (original 42 plus 323 user-approved additions). The Mac bundle includes all 365 and every new image has a recorded focal point. 75 of 323 approved additions now use higher-resolution Commons copies; upgrading the remaining 248 and final visual interaction review remain before beta.
+Status: Complete at 365 selected images (original 42 plus 323 user-approved additions). The Mac bundle includes all 365 and every new image has a recorded focal point. 75 of 323 approved additions now use higher-resolution Commons copies; upgrading the remaining 248 and final visual interaction review remain open after the beta release.
 - Research high-quality public-domain Orthodox imagery conveying beauty and peace, toward a 365-image library.
 - Select art and photographs, excluding museum artifacts; prefer real public-domain imagery.
 - Use generative AI only if suitable public-domain images cannot meet the 365-image target; generated church visuals must contain no people or generated icons, and may include candles lit in the standard fashion.
@@ -118,21 +120,30 @@ Status: Complete at 365 selected images (original 42 plus 323 user-approved addi
 
 ## Separate Track — Life of the Day’s Saint
 
-Status: In Progress. Seven of 366 featured dates have complete English translations in source, including February 29 for leap years; 359 remain. The Reading section can be collapsed on Mac, Android, and iOS.
-- Choose one featured life for each observed church-calendar date from St. Dimitry of Rostov’s public-domain Russian collection.
-- Translate each complete life in natural English while preserving its sequence and theological meaning.
-- Retain an exact source link for each reading and check the English against the original before bundling it.
-- Keep untranslated dates explicit in the app rather than presenting an abridgment as complete.
+Status: Implemented with 365 days of the Prologue from Ochrid. This supersedes the Dimitry translation track and its 366-date target. The published source has no February 29 reading; that date remains explicitly unavailable.
+- Preserve the published English text, section structure, emphasis, and verse lines.
+- Cite each source page and CC BY-SA 4.0 license beneath its reading.
+- Select by observed church date, with both calendar dates recorded in the data.
+- Keep the Swift and Android JSON collections identical through `core/Tools/ochrid-prologue.py` and content parity tests.
+- The saint-life section is collapsible on Mac, Android, and iOS.
 
 ## Current Evidence and Open Details
 
 - 1.0 beta, build 29 is the current release, on Android, on the universal Mac build, and on iOS. iOS is not a public download. The earlier reservation of `1.0.0-beta` is lifted. The rope and the cross play on a cold start only. The Windows port is still ahead.
 - The fictional-data `Chotki Review.app` uses a distinct bundle identity and in-memory practice store. It does not open the live Chotki record; all physical UI checks here used this review app.
 - In the Review window, ordinary clicks were observed to open Morning Prayers, the Jesus Prayer with rope, the day's Gospel, the saint-life Reading section, the Add placard, and “Add a New Rule.” The completion circle changed the selected day's state; the saint-life disclosure collapsed by click. A right-click started the native card menu, and selecting its Expand Card action by keyboard expanded the card.
-- Mac: 76/76 tests pass. Shared core: 456/456 tests pass. Android core tests and debug assembly pass. The iOS Simulator build passed in the preceding verification and was not rerun for build.11.
-- Saint-life English content is complete in source for February 3, 21, 27, and 29, September 18 and 19, and October 1, sourced from St. Dimitry of Rostov's public-domain Russian edition. The other 359 dates are unfinished. Old Calendar lookup uses the observed church date.
+- 2026-10-03 review: shared core passes 473 tests. The Mac suite runs 81 tests; the sidebar resize render test reports three black-image assertions, while its geometry checks pass. Android and iOS builds were not rerun during that review. Earlier build.11 results remain in the dated log.
+- The bundled Prologue contains 365 church-date readings; Swift and Android copies match. February 29 is absent in the published source. Old Calendar lookup uses the observed church date.
 - The 365-image Mac rotation is approved and packaged. Of the 323 new images, 75 have higher-resolution Commons copies; 248 still use review-resolution copies. Final Retina sharpness review remains.
-- The review app's real Notification Center display, all nested routes at all window sizes, and final image-motion review still require hands-on verification before beta.
+- The review app's real Notification Center display, all nested routes at all window sizes, and final image-motion review still require hands-on verification; the beta release does not close these checks.
+
+## 3 October Follow-Up
+
+- iOS now places completion markers after every available scripture band, saint life, departed prayer, and Akathist. Opening a disclosure does not count; the existing UIKit marker requires deliberate scrolling to its end. Missing saint lives have no completion marker.
+- The iOS Simulator app builds and the focused scroll-completion test passes. All 474 shared-core tests pass, including a surface guard whose negative control fails when scripture completion is removed. Physical gestures on the installed phone have not been checked in this follow-up.
+- Android image packaging now uses pinned Pillow in a project environment, replacing `cwebp` and `sips`. Gradle tracks interpreter and encoder versions; CI installs the same dependency, tests all EXIF orientations, and verifies both APK image libraries. Setup and verification commands are in `android/README.md`.
+
+- Android correction verification: four portable image tests pass, including all eight EXIF orientations, alpha preservation, stale timestamps, cache invalidation, and corrupted output recovery. Both debug and release APKs build and pass verification of all 365 WebP images, dimensions, order, and focal metadata (59.5 MB image payload). Image 08 matches the former upright output in orientation and dimensions, with a visually comparable crop. An unchanged Gradle image task is UP-TO-DATE; a converter edit regenerates the library. Mac source assets are unchanged. Ubuntu CI is configured for the same checks but has not been executed in this local session.
 
 ## Implementation Log
 
@@ -175,7 +186,7 @@ Status: In Progress. Seven of 366 featured dates have complete English translati
 - 2026-10-01: `0.2.0-build.10` packages as signed arm64/x86_64 release plus a separately signed fictional Review app. Both ZIP archives pass integrity checks. Both `/Applications` copies were updated to build.10 after backing up build.8 and build.9 under `macos/dist/installed-backups/`; the installed Review app physically opened Morning Prayers from a card after installation. The normal app's live record was not opened for testing.
 - 2026-10-01: The translation track now also includes the complete September 19 life of the Martyr Zosimas in source, for the next Old Calendar day; it is not yet in build.10. The Russian collection has a February 29 life of John Cassian, so full daily coverage requires 366 dates, separate from the 365-image rotation.
 - 2026-10-02: `0.2.0-build.11` includes seven complete featured-life translations in source and both Mac bundles; 359 church dates remain. The shared core passes 456 tests, macOS passes 76 tests, and Android core tests and debug assembly pass. Both signed universal Mac bundles package successfully with arm64 and x86_64 slices; both ZIP archives pass integrity checks, and the release bundle contains all 365 approved daily images. This is a development build, not the beta milestone.
-- 2026-10-02: The release name is 1.0 beta, build 29. The opening mark plays when the app is started from a process that was not running, on Android, Mac, and the current iOS build, and not when an already-running app is brought forward. The iOS visual overhaul is still not started.
+- 2026-10-02: The release name is 1.0 beta, build 29. The opening mark plays when the app is started from a process that was not running, on Android, Mac, and the current iOS build, and not when an already-running app is brought forward. At that point the iOS visual overhaul had not started; the subsequent iOS commit implements it.
 - 2026-10-02: iOS takes the shipped name, 1.0 beta, build 29. The phone follows the Android screens. The build number does not move, because no new Android or Mac binary is being handed out, and iOS is not a GitHub release.
 
 ## Feature Parity Checklist

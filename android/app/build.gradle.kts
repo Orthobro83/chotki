@@ -3,6 +3,8 @@ import javax.inject.Inject
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
@@ -177,6 +179,15 @@ android {
 val syncDailyImages = tasks.register<SyncDailyImagesTask>("syncDailyImages") {
     macSayings.set(rootProject.file("../macos/Sources/Chotki/Resources/sayings"))
     script.set(rootProject.file("tools/shrink_sayings.py"))
+    requirements.set(rootProject.file("tools/image-requirements.txt"))
+    val localPython = rootProject.file(if (System.getProperty("os.name").startsWith("Windows"))
+        ".image-tools/Scripts/python.exe" else ".image-tools/bin/python")
+    python.set(providers.gradleProperty("imagePython")
+        .orElse(providers.environmentVariable("CHOTKI_IMAGE_PYTHON"))
+        .orElse(if (localPython.isFile) localPython.absolutePath else "python3"))
+    encoderVersion.set(providers.exec {
+        commandLine(python.get(), script.get().asFile.absolutePath, "--version")
+    }.standardOutput.asText.map { it.trim() })
     output.set(layout.buildDirectory.dir("generated/dailyImages"))
 }
 
@@ -202,6 +213,15 @@ abstract class SyncDailyImagesTask @Inject constructor(
     @get:InputFile
     abstract val script: RegularFileProperty
 
+    @get:InputFile
+    abstract val requirements: RegularFileProperty
+
+    @get:Input
+    abstract val python: Property<String>
+
+    @get:Input
+    abstract val encoderVersion: Property<String>
+
     @get:OutputDirectory
     abstract val output: DirectoryProperty
 
@@ -209,7 +229,7 @@ abstract class SyncDailyImagesTask @Inject constructor(
     fun shrink() {
         execOperations.exec {
             commandLine(
-                "python3",
+                python.get(),
                 script.get().asFile.absolutePath,
                 macSayings.get().asFile.absolutePath,
                 output.get().asFile.absolutePath,
