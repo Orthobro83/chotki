@@ -84,12 +84,13 @@ fun ReadinessBanner(
                 if (!readiness.exemptFromBatteryOptimisation) {
                     Text("Battery saving may hold reminders back.", color = Chotki.gold, fontSize = 14.sp)
                     Text(
-                        "Tap to let Chotki run in the background.",
+                        "Tap to open battery settings. Set Chotki to unrestricted if " +
+                            "reminders should come at the hour.",
                         color = Chotki.goldDim,
                         fontSize = 13.sp,
                         modifier = Modifier
-                            .clickable { context.startActivity(batteryExemptionIntent(context)) }
-                            .semantics { contentDescription = "Allow background" },
+                            .clickable { context.startActivity(batteryOptimisationSettingsIntent()) }
+                            .semantics { contentDescription = "Open battery settings" },
                     )
                 }
                 if (readiness.hasVendorSleepList) {

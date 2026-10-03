@@ -21,6 +21,29 @@ class AkathistTest {
         assertEquals(-16, Pascha.distance(d(2027, 4, 16)))
         assertEquals(0, Pascha.distance(d(2027, 5, 2)))
         assertEquals(5, Akathist.week(Pascha.distance(d(2027, 4, 16)), Tradition.GEORGIAN))
+        val october = d(2026, 10, 3)
+        assertEquals(Weekday.SATURDAY, october.weekday)
+        for (tradition in Tradition.entries) {
+            assertNull(Akathist.week(Pascha.distance(october), tradition))
+        }
+    }
+
+    @Test
+    fun `a Saturday Akathist is given the church's Fridays, and a chosen schedule is not`() {
+        val old = Rule(title = "An akathist", recurrence = Recurrence.Weekly(setOf(Weekday.SATURDAY)))
+        val repaired = Akathist.restoredAppointment(old)
+        assertEquals(Recurrence.Liturgical(LiturgicalTrigger.Akathist), repaired?.recurrence)
+        assertEquals(old.id, repaired?.id)
+        assertNull(
+            Akathist.restoredAppointment(
+                Rule(title = "An akathist", recurrence = Recurrence.Weekly(setOf(Weekday.FRIDAY))),
+            ),
+        )
+        assertNull(
+            Akathist.restoredAppointment(
+                Rule(title = "Saturday evening service", recurrence = Recurrence.Weekly(setOf(Weekday.SATURDAY))),
+            ),
+        )
     }
 
     private fun d(year: Int, month: Int, day: Int) = CalendarDate.of(year, month, day)!!

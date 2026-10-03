@@ -107,18 +107,12 @@ class BannerDismissals(context: Context) {
     }
 }
 
-/** Opens the system's own battery-optimisation dialogue for this app. */
-fun batteryExemptionIntent(context: Context): Intent =
-    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-        .setData(Uri.parse("package:${context.packageName}"))
-
 /**
- * The always-permitted fallback: opens the list and lets the person find the app.
+ * Opens the battery-optimisation list and lets the person find the app.
  *
- * Google Play restricts the direct request above to apps with a qualifying use
- * case. That does not apply to a directly installed APK, but it would need
- * answering if the Play Store ever came up, and this route never needs
- * permission at all.
+ * There is no direct exemption request. Play does not allow
+ * `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` for a prayer reminder, and this
+ * route does not need that permission.
  */
 fun batteryOptimisationSettingsIntent(): Intent =
     Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)

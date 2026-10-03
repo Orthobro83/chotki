@@ -217,6 +217,32 @@ struct RestoredPrayersTests {
     }
 }
 
+@Suite("An older Akathist, still set for every Saturday")
+struct RestoredAkathistTests {
+    let library = RuleLibrary.shared
+
+    @Test("it is given the church's Fridays")
+    func saturdayAkathistBecomesTheAppointment() {
+        let old = Rule(title: "An akathist", recurrence: .weekly(days: [.saturday]))
+        let repaired = library.restoringAkathistAppointment(in: [old])
+        #expect(repaired.count == 1)
+        #expect(repaired.first?.recurrence == .liturgical(.akathist))
+        #expect(repaired.first?.id == old.id)
+    }
+
+    @Test("the title match ignores case, and a chosen schedule is left alone")
+    func akathistScheduleLeftAlone() {
+        let cased = Rule(title: "an AKATHIST", recurrence: .weekly(days: [.saturday]))
+        #expect(library.restoredAkathistRecurrence(for: cased) == .liturgical(.akathist))
+
+        let friday = Rule(title: "An akathist", recurrence: .weekly(days: [.friday]))
+        let already = Rule(title: "An akathist", recurrence: .liturgical(.akathist))
+        let both = Rule(title: "An akathist", recurrence: .weekly(days: [.friday, .saturday]))
+        let vigil = Rule(title: "Saturday evening service", recurrence: .weekly(days: [.saturday]))
+        #expect(library.restoringAkathistAppointment(in: [friday, already, both, vigil]).isEmpty)
+    }
+}
+
 /// Rules of one's own, kept so they can be taken up again.
 @Suite("The custom library")
 struct CustomLibraryTests {

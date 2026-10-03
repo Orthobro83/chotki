@@ -8,6 +8,7 @@ import org.chotki.app.platform.AndroidDb
 import org.chotki.app.platform.AndroidHttp
 import org.chotki.app.platform.Reminders
 import org.chotki.core.Activation
+import org.chotki.core.Akathist
 import org.chotki.core.AppSettings
 import org.chotki.core.CalendarDate
 import org.chotki.core.ClockStyle
@@ -206,6 +207,7 @@ class AppState(
             settings = stamped
         }
         rules = store.rules()
+        restoreAkathistAppointment()
         activations = store.activations()
         occurrences = store.occurrences()
         // Idempotent, and it fills a gap rather than overwriting, so a question
@@ -217,6 +219,19 @@ class AppState(
             service.setJurisdiction(settings.jurisdiction, around = today, window = 21)
         }
         calendarVersion += 1
+    }
+
+    /**
+     * An Akathist still set for every Saturday is given the church's Fridays.
+     * Which of them it is comes from the selected church, through the same
+     * Pascha count the day list already uses. The old calendar and the new
+     * share those Fridays.
+     */
+    private fun restoreAkathistAppointment() {
+        val repaired = rules.mapNotNull { Akathist.restoredAppointment(it) }
+        if (repaired.isEmpty()) return
+        repaired.forEach { store.save(it) }
+        rules = store.rules()
     }
 
     /**

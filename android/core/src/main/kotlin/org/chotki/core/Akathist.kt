@@ -37,6 +37,18 @@ object Akathist {
     }
 
     /**
+     * The library used to offer this rule as every Saturday. That copy is
+     * given the church's Fridays. Any other schedule was chosen, and a renamed
+     * rule is left alone.
+     */
+    fun restoredAppointment(rule: Rule): Rule? {
+        if (!rule.title.equals(AKATHIST_RULE_TITLE, ignoreCase = true)) return null
+        val weekly = rule.recurrence as? Recurrence.Weekly ?: return null
+        if (weekly.days != setOf(Weekday.SATURDAY)) return null
+        return rule.copy(recurrence = Recurrence.Liturgical(LiturgicalTrigger.Akathist))
+    }
+
+    /**
      * Said once the section is opened, and only when the OCA's appointment is
      * standing in for a church whose own is not given here.
      */

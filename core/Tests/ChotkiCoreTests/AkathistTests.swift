@@ -64,6 +64,49 @@ struct AkathistTests {
         #expect(Akathist.week(paschaDistance: -44, tradition: .georgian) == nil)
     }
 
+    @Test("3 October 2026 is not an Akathist day, on either calendar, for any church")
+    func octoberThirdIsNotAppointed() throws {
+        let day = try #require(CalendarDate(year: 2026, month: 10, day: 3))
+        #expect(day.weekday == .saturday, "the old weekly rule would have fallen here")
+        let distance = Pascha.distance(on: day)
+        #expect(Akathist.lentFridays.contains(distance) == false)
+        for tradition in Tradition.allCases {
+            #expect(Akathist.week(paschaDistance: distance, tradition: tradition) == nil, "\(tradition)")
+        }
+
+        let old = Rule(title: akathistRuleTitle, recurrence: .weekly(days: [.saturday]))
+        let rule = try #require(RuleLibrary.shared.restoringAkathistAppointment(in: [old]).first)
+        let activation = Activation(
+            ruleID: rule.id, from: try #require(CalendarDate(year: 2026, month: 1, day: 1))
+        )
+        let fifth = try #require(CalendarDate(year: 2027, month: 4, day: 16))
+        let first = try #require(CalendarDate(year: 2027, month: 3, day: 19))
+        #expect(Pascha.distance(on: fifth) == -16)
+        #expect(Pascha.distance(on: first) == -44)
+
+        for shipped in Jurisdiction.known {
+            for reckoning in Reckoning.allCases {
+                var jurisdiction = shipped
+                jurisdiction.reckoning = reckoning
+                let service = LiturgicalService(store: InMemoryStore(), jurisdiction: jurisdiction)
+                let engine = RecurrenceEngine(liturgical: service, observances: .default)
+                let onOctober = engine.dueDates(
+                    rule: rule, activations: [activation], from: day, through: day
+                )
+                #expect(onOctober.isEmpty, "\(shipped.name) \(reckoning)")
+                let onFifth = engine.dueDates(
+                    rule: rule, activations: [activation], from: fifth, through: fifth
+                )
+                #expect(onFifth == [fifth], "\(shipped.name) \(reckoning)")
+                let onFirst = engine.dueDates(
+                    rule: rule, activations: [activation], from: first, through: first
+                )
+                let salutations = jurisdiction.tradition == .greek || jurisdiction.tradition == .antiochian
+                #expect(onFirst.isEmpty != salutations, "\(shipped.name) \(reckoning)")
+            }
+        }
+    }
+
     @Test("Friday 16 April 2027 is the Georgian fifth week, with nothing fetched")
     func georgianFridayDoesNotWaitOnTheCache() throws {
         let georgian = try #require(Jurisdiction.known.first { $0.name == "Georgian Orthodox Church" })

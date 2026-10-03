@@ -160,10 +160,12 @@ appears at all:
 3. **Battery optimisation** — Doze will defer an unexempted app's alarms, and
    Samsung's OneUI goes further with its own sleeping-apps list on top.
 
-So: a first-run screen that asks for all three, in plain language, saying what
-each is for. `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` puts the exemption
-one tap away; `PowerManager.isIgnoringBatteryOptimizations` reads back whether
-it took.
+So: a standing notice that names all three, in plain language, saying what
+each is for. Exact alarms are `SCHEDULE_EXACT_ALARM`, which the person grants.
+Play does not allow `USE_EXACT_ALARM` here, and does not allow a direct battery
+exemption either. The notice opens the battery list
+(`ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`) and leaves the choice there.
+`PowerManager.isIgnoringBatteryOptimizations` still reads whether they made it.
 
 **Two things that cannot be done for the user.** Samsung's "sleeping apps" list
 is separate from the standard exemption and cannot be set or even read
@@ -180,13 +182,6 @@ not firing.
 
 Asked once, plainly, and skippable. Never nagged: a wall of permission dialogues
 on first run is exactly the tone this app does not take.
-
-**One caveat for later.** Google Play restricts
-`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` to apps with a qualifying use case. It
-does not apply to a direct APK, but it would need answering if the Play Store
-ever comes up. The fallback that is always permitted is
-`ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`, which opens the list and lets the
-user find the app themselves.
 
 **Done when:** the diagnostic reports all three states correctly on the
 emulator, and a reminder fires on time across a reboot.

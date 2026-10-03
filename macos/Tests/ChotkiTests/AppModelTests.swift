@@ -80,6 +80,33 @@ struct TakingRulesOnTests {
         #expect(model.notice != nil, "and the change is stated, not silent")
     }
 
+    @Test("an Akathist still set for Saturday does not fall on 3 October 2026")
+    func oldSaturdayAkathistFollowsTheChurch() throws {
+        let model = try makeModel()
+        let today = try #require(CalendarDate(year: 2026, month: 10, day: 3))
+        model.save(Rule(title: "An akathist", recurrence: .weekly(days: [.saturday])), isNew: true)
+
+        let kept = try #require(model.rules.first { $0.title == "An akathist" })
+        #expect(kept.recurrence == .liturgical(.akathist))
+        #expect(model.entries(on: today).contains { $0.rule.title == "An akathist" } == false)
+
+        let fifth = try #require(CalendarDate(year: 2027, month: 4, day: 16))
+        let first = try #require(CalendarDate(year: 2027, month: 3, day: 19))
+        #expect(model.entries(on: fifth).contains { $0.rule.title == "An akathist" })
+
+        let greek = try #require(Jurisdiction.known.first { $0.name == "Greek Orthodox Archdiocese" })
+        let georgian = try #require(Jurisdiction.known.first { $0.name == "Georgian Orthodox Church" })
+        model.update { $0.jurisdiction = greek }
+        #expect(model.entries(on: first).contains { $0.rule.title == "An akathist" })
+        model.update { $0.jurisdiction = georgian }
+        #expect(model.entries(on: first).contains { $0.rule.title == "An akathist" } == false)
+        model.update { settings in
+            settings.jurisdiction.reckoning = .revisedJulian
+        }
+        #expect(model.entries(on: fifth).contains { $0.rule.title == "An akathist" })
+        #expect(model.entries(on: today).contains { $0.rule.title == "An akathist" } == false)
+    }
+
     @Test("a rule taken from the library is due, not merely stored")
     func libraryRuleBecomesDue() throws {
         let model = try makeModel()

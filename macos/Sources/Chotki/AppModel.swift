@@ -189,6 +189,7 @@ final class AppModel: ObservableObject {
             loadError = "Could not read your rules. \(error)"
         }
         restorePrayersOnOlderRules()
+        restoreAkathistAppointment()
         reconcileObservances()
         reconcileFirstRun()
         rearmReminders()
@@ -209,6 +210,21 @@ final class AppModel: ObservableObject {
         } catch {
             // Not worth an error in front of him: the rules are all still
             // there, they are only missing their link to the words.
+            loadError = nil
+        }
+    }
+
+    /// Gives the church's Fridays to an Akathist that is still every Saturday.
+    /// Decided in core; this only writes the result. Which Friday that is
+    /// depends on the church selected now, and the old calendar and the new
+    /// share it, because both count from Pascha.
+    private func restoreAkathistAppointment() {
+        let repaired = RuleLibrary.shared.restoringAkathistAppointment(in: rules)
+        guard !repaired.isEmpty else { return }
+        do {
+            for rule in repaired { try store.save(rule) }
+            rules = try store.rules(includeArchived: false).filter { $0.reference != .reflections }
+        } catch {
             loadError = nil
         }
     }

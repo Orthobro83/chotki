@@ -147,7 +147,7 @@ final class Model {
     /// once worked.
     func plannedReminders(now: Date = Date()) -> [PlannedNotification] {
         let scheduler = Scheduler(
-            engine: RecurrenceEngine(observances: settings.observances),
+            engine: RecurrenceEngine(liturgical: liturgical, observances: settings.observances),
             policy: settings.reminders
         )
         return [today, today.adding(days: 1)].flatMap { day in
@@ -161,7 +161,8 @@ final class Model {
     private var practice: Practice {
         Practice(
             rules: rules, activations: activations,
-            occurrences: occurrences, settings: settings
+            occurrences: occurrences, settings: settings,
+            liturgical: liturgical
         )
     }
 
@@ -179,7 +180,22 @@ final class Model {
         } catch {
             trouble = "Chotki could not read the record. \(error.localizedDescription)"
         }
+        restoreAkathistAppointment()
         rescheduleReminders()
+    }
+
+    /// Gives the church's Fridays to an Akathist that is still every Saturday.
+    /// The day list reads that through the church calendar, the same way the
+    /// other platforms do.
+    private func restoreAkathistAppointment() {
+        let repaired = RuleLibrary.shared.restoringAkathistAppointment(in: rules)
+        guard !repaired.isEmpty else { return }
+        do {
+            for rule in repaired { try store.save(rule) }
+            rules = try store.rules(includeArchived: false)
+        } catch {
+            trouble = "Chotki could not read the record. \(error.localizedDescription)"
+        }
     }
 
     // MARK: the day

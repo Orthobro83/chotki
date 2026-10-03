@@ -116,6 +116,31 @@ public struct RuleLibrary: Sendable {
         }
     }
 
+    /// The Fridays the Church appoints, for a copy that is still every Saturday.
+    ///
+    /// The library used to offer the Akathist as Saturday of every week. That
+    /// is not an appointment: the hymn follows Pascha, and which of those
+    /// Fridays depends on the church. A copy still carrying that one schedule
+    /// is given `.liturgical(.akathist)`, which the calendar then resolves.
+    /// Any other schedule was chosen, and is left alone. So is a renamed rule.
+    public func restoredAkathistRecurrence(for rule: Rule) -> Recurrence? {
+        guard rule.title.compare(akathistRuleTitle, options: .caseInsensitive) == .orderedSame
+        else { return nil }
+        guard rule.recurrence == .weekly(days: [.saturday]) else { return nil }
+        return .liturgical(.akathist)
+    }
+
+    /// Copies whose Akathist is still every Saturday, already given the
+    /// church's Fridays. Everything else is left out.
+    public func restoringAkathistAppointment(in rules: [Rule]) -> [Rule] {
+        rules.compactMap { rule in
+            guard let recurrence = restoredAkathistRecurrence(for: rule) else { return nil }
+            var repaired = rule
+            repaired.recurrence = recurrence
+            return repaired
+        }
+    }
+
     public func byCategory() -> [(RuleCategory, [RuleTemplate])] {
         RuleCategory.ordered.compactMap { category in
             let matching = templates.filter { $0.category == category }
