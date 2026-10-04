@@ -16,10 +16,10 @@ final class WindowsApp {
     var calendarRedraws = 0
     var calendarExpanded = false
     var visibleMonth = CalendarDate(Date(), in: .current)
+    var calendarTouched: Date?
     var weekAnchor = CalendarDate(Date(), in: .current)
     var calendarDates: [CalendarDate] = []
     var sidebarCollapsed = false
-    var artworkStarts:[String:Date]=[:]
     var revealExpandedCard=false
     var expandedRuleID: UUID?
     var flippedRuleID: UUID?
@@ -139,7 +139,8 @@ final class WindowsApp {
         // Calendar arrivals still update the model, then render after the fade.
         if ch_opening_active() != 0 { return }
         rendering = true
-        defer { rendering = false }
+        ch_render_begin()
+        defer { ch_render_end(); rendering = false }
         glossaryDetouring = false
         readerLinks.removeAll(); readerLinkOwners.removeAll()
         ch_taskbar(settings.showInDock ? 1 : 0)
@@ -154,7 +155,6 @@ final class WindowsApp {
         if ch_report_visible()==1 { try renderDetachedProgress(show:false) }
         control(202, 0, notice, contentLeft, max(0,ch_height()-35), contentWidth, 32)
         if editor != nil {
-            for item in Page.allCases { ch_enable(Int32(item.rawValue), 0) }
             renderEditor(); return
         }
         switch page {
@@ -214,6 +214,12 @@ final class WindowsApp {
                 }
                 if editor == nil && !glossaryDetouring && ([.home,.reading,.progress].contains(page) || (page == .prayers && showPsalter && readingCompletions.isEmpty)) { try render() }
                 return
+            }
+            if id == -11 && page == .home && !calendarExpanded {
+                weekAnchor=weekAnchor.adding(days: Int(event)); calendarTouched=Date(); ch_calendar_browse(1); try render(); return
+            }
+            if id == -12 {
+                if page == .home { setHomeDate(CalendarDate(Date(),in:.current)); calendarTouched=nil; ch_calendar_browse(0); try render() }; return
             }
             if id == -2 {
                 let changed=try heartbeat()
@@ -277,6 +283,7 @@ final class WindowsApp {
                 return
             }
             if let target = Page(rawValue: Int(id)), event == 0 {
+                if page != target { weekAnchor=CalendarDate(Date(),in:.current); visibleMonth=weekAnchor; calendarExpanded=false; calendarTouched=nil; ch_calendar_browse(0) }
                 editor = nil; libraryCaution = false; ch_reset_home_scroll(); page = target; glossarySlug = nil; glossaryQuery = ""; selectedRow = 0; notice = ""; readingTarget=nil; showPsalter=false; rulePrayerID=nil
                 if page == .reading { readingBand=nil; showPsalter=false }
                 if page == .prayers { selectedRow = prayers.firstIndex { $0.id == rope.selection } ?? 0 }
@@ -297,6 +304,7 @@ final class WindowsApp {
                     if try practice.isSettled(on: selectedDate) { notice = "Glory to God for all things" }
                 case 402,746,747: page = .library; selectedRow = 0
                 case 711,712:
+                    calendarTouched=Date(); ch_calendar_browse(1)
                     if calendarExpanded {
                         let first=CalendarDate(year:visibleMonth.year,month:visibleMonth.month,day:1)!
                         visibleMonth=id == 711 ? first.adding(days:-1) : first.adding(days:first.lastDayOfMonth)
@@ -305,7 +313,9 @@ final class WindowsApp {
                 case 403: setHomeDate(selectedDate.adding(days:-1))
                 case 404: setHomeDate(CalendarDate(Date(),in:.current))
                 case 405: setHomeDate(selectedDate.adding(days:1))
-                case 406: try showRuleMenu(); return
+                case 406:
+                    if try practice.entries(on:selectedDate).isEmpty { page = .library; selectedRow=0 }
+                    else { try showRuleMenu(); return }
                 case 410:
                     try takeSelectedRule()
                 case 411:
@@ -340,6 +350,36 @@ final class WindowsApp {
     }
     func verifyControls() throws {
         guard review else { throw BootstrapError.verification("UI checks require a synthetic review") }
+        if ProcessInfo.processInfo.environment["CHOTKI_VISUAL_REVIEW"]=="1" {
+            verifying=true; defer { verifying=false }
+            try press(101); try captureReview("visual-library-top")
+            ch_test_panel_wheel(5); try captureReview("visual-library-wheel")
+            ch_test_panel_scroll(1); try captureReview("visual-library-bottom")
+            let presetIndex=templates.firstIndex { $0.title.localizedCaseInsensitiveContains("Morning prayers") }!
+            try press(Int32(11000+presetIndex))
+            try require(editor?.presetHeading == templates[presetIndex].title.capitalized,"Preset editor heading")
+            try captureReview("visual-preset-editor")
+            if editor?.reminders == false { try press(533) }
+            try press(533)
+            try require(ch_checked(534)==0 && ch_checked(535)==0 && ch_checked(536)==0,"Silenced reminder leads must look unchecked")
+            try captureReview("visual-reminder-off")
+            try press(551)
+            try press(100); try captureReview("visual-home")
+            ch_test_resize(760,640); try render(); try captureReview("visual-home-narrow")
+            ch_test_resize(620,540); try render(); try captureReview("visual-home-minimum")
+            try require(ch_test_control_intersects(750)==1,"Home artwork disappeared at minimum size")
+            try press(102); try choosePrayer("morning")
+            try captureReview("visual-prayers")
+            try require(ch_test_reader_painted(301)==1,"Prayer text disappeared after repaint")
+            showGlossaryTerm("amen"); try captureReview("visual-glossary")
+            try require(ch_test_reader_painted(6014)==1,"Glossary text disappeared after repaint")
+            try press(6063); try press(106); try captureReview("visual-glossary-list")
+            try require(ch_test_reader_painted(6014)==1,"Glossary list disappeared after repaint")
+            try press(104); try captureReview("visual-progress")
+            ch_test_resize(760,640); try render(); try captureReview("visual-progress-narrow")
+            ch_test_resize(620,540); try render(); try captureReview("visual-progress-minimum")
+            print("Visible reader repaint checks passed."); ch_close(0); return
+        }
         verifying = true
         defer { verifying = false }
         guard ch_click(2000) == 1, try practice.entries(on: selectedDate).first?.isKept == true else { throw BootstrapError.verification("Home mark control") }

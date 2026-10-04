@@ -14,3 +14,4 @@
 - Use synthetic practice and public fixtures. Never open or copy live Chotki data.
 
 - Do not create or publish a Windows release candidate until the macOS parity port is finished. ARM64 remains deferred.
+- Windows is currently alpha. Future Windows app version labels, package names and GitHub-facing release text must use `alpha-rc<N>-build<N>` (with actual candidate/build numbers), not the shared macOS `1.0 beta` label. Keep platform version labels independent. Do not publish another candidate merely because it compiles or passes functional tests; scrolling, resize and navigation must also pass visual review.

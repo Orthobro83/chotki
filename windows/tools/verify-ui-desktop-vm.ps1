@@ -1,8 +1,8 @@
-param([ValidateSet('debug','release')][string]$Configuration='debug')
+param([ValidateSet('debug','release')][string]$Configuration='debug',[switch]$VisualOnly)
 # Verify the actual logged-in desktop, since SSH runs in noninteractive session 0.
 . $PSScriptRoot\windows-env.ps1
 . $PSScriptRoot\review-retention-vm.ps1
-Remove-OldChotkiReviews
+Remove-OldChotkiReviews -Keep 1
 & $PSScriptRoot\build-vm.ps1 -Configuration $Configuration
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $exe = Get-ChotkiExecutable $Configuration
@@ -17,7 +17,7 @@ Write-Output 'Bootstrap exit: 0'
 $name = 'ChotkiReview-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-ScheduledTaskPrincipal -UserId $identity.User.Value -LogonType Interactive -RunLevel Limited
-$action = New-ScheduledTaskAction -Execute 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -Argument ('-NoProfile -ExecutionPolicy Bypass -File C:\workspace-build\tools\review-vm.ps1 -Configuration '+$Configuration)
+$action = New-ScheduledTaskAction -Execute 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -Argument ('-NoProfile -ExecutionPolicy Bypass -File C:\workspace-build\tools\review-vm.ps1 -Configuration '+$Configuration+$(if($VisualOnly){' -VisualOnly'}else{''}))
 Register-ScheduledTask -TaskName $name -Action $action -Principal $principal | Out-Null
 $pidFile = 'C:\workspace-build\review.pid'
 Remove-Item $pidFile -ErrorAction SilentlyContinue
@@ -39,10 +39,10 @@ try {
     # Shared-drive transfers can fail even after the native UI test succeeds.
     $captures = Join-Path 'C:\workspace-build\reviews' $name
     New-Item -ItemType Directory -Force $captures | Out-Null
-    Copy-Item C:\workspace-build\review.bmp (Join-Path $captures 'review.bmp')
+    if(!$VisualOnly){Move-Item C:\workspace-build\review.bmp (Join-Path $captures 'review.bmp')}
     # review-vm.ps1 removes prior captures before this synthetic run. Collect
     # its complete surface set, including newly added parity checks.
-    Get-ChildItem 'C:\workspace-build' -Filter 'review-*.bmp' -File | Copy-Item -Destination $captures
+    Get-ChildItem 'C:\workspace-build' -Filter 'review-*.bmp' -File | Move-Item -Destination $captures
     $archive = "$captures.zip"
     Compress-Archive -Path "$captures\*.bmp" -DestinationPath $archive -Force
     Write-Output "Synthetic captures: $captures"

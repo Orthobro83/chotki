@@ -35,15 +35,15 @@ static UINT dpi=96;
 static int selectedPage=100;
 static ChotkiEvent callback;
 static void *context;
-static HFONT regular, reading, heading, smallFont, dateFont, captionFont;
+static HFONT regular, reading, heading, smallFont, dateFont, captionFont, listFont;
 static HBRUSH ground, panel;
-static int automation, exitCode, priorFocus, readerSerial, prayerKeys;
+static int automation, exitCode, priorFocus, readerSerial, prayerKeys, renderDepth, renderWasVisible, keyboardFocus;
 static wchar_t *testFilePath;
 static int testFileResult;
 static const COLORREF background = RGB(21,22,28), foreground = RGB(232,223,205);
 static const COLORREF gold=RGB(201,162,39), muted=RGB(163,158,143), line=RGB(46,42,32);
 typedef struct ChoiceItem { wchar_t *title,*group; int index; struct ChoiceItem *next; } ChoiceItem;
-typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil, motionStarted; double motionElapsed; int imageNumber; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
+typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
 static int px(int value) { return MulDiv(value,dpi,96); }
 static HWND findChild(int id) {
     HWND found=GetDlgItem(window,id);
@@ -66,8 +66,8 @@ static HFONT face(int size,int weight,int serif) {
     return CreateFontW(-px(size),0,0,0,weight,0,0,0,DEFAULT_CHARSET,0,0,CLEARTYPE_QUALITY,0,serif ? L"XCharter" : L"Segoe UI");
 }
 static void fonts(void) {
-    if(regular) { DeleteObject(regular); DeleteObject(reading); DeleteObject(heading); DeleteObject(smallFont); DeleteObject(dateFont); DeleteObject(captionFont); }
-    regular=face(13,FW_NORMAL,0); reading=face(18,FW_NORMAL,1); heading=face(28,FW_BOLD,1); smallFont=face(11,FW_NORMAL,0); dateFont=face(16,FW_SEMIBOLD,0); captionFont=face(15,FW_NORMAL,1);
+    if(regular) { DeleteObject(regular); DeleteObject(reading); DeleteObject(heading); DeleteObject(smallFont); DeleteObject(dateFont); DeleteObject(captionFont); DeleteObject(listFont); }
+    regular=face(13,FW_NORMAL,0); reading=face(18,FW_NORMAL,1); heading=face(28,FW_BOLD,1); smallFont=face(11,FW_NORMAL,0); dateFont=face(16,FW_SEMIBOLD,0); captionFont=face(15,FW_NORMAL,1); listFont=face(15,FW_NORMAL,0);
 }
 static void ink(HDC dc,HFONT font,COLORREF color) { SelectObject(dc,font); SetTextColor(dc,color); SetBkMode(dc,TRANSPARENT); }
 static void roundBox(HDC dc,RECT r,COLORREF fill,COLORREF stroke,int radius) {
@@ -76,10 +76,43 @@ static void roundBox(HDC dc,RECT r,COLORREF fill,COLORREF stroke,int radius) {
     RoundRect(dc,r.left,r.top,r.right,r.bottom,px(radius*2),px(radius*2));
     SelectObject(dc,oldPen); SelectObject(dc,oldBrush); DeleteObject(pen); DeleteObject(brush);
 }
+typedef struct { wchar_t text[512]; int separator,submenu; } MenuVisual;
+void ch_menu_style(void *opaque) {
+    HMENU menu=(HMENU)opaque; MENUINFO info={sizeof(info),MIM_BACKGROUND}; info.hbrBack=panel; SetMenuInfo(menu,&info);
+    for(int i=0;i<GetMenuItemCount(menu);i++) {
+        MENUITEMINFOW item={sizeof(item)}; item.fMask=MIIM_FTYPE|MIIM_SUBMENU|MIIM_STRING; wchar_t text[512]={0}; item.dwTypeData=text; item.cch=511;
+        GetMenuItemInfoW(menu,i,TRUE,&item);
+        MenuVisual *v=calloc(1,sizeof(*v)); wcsncpy_s(v->text,512,text,_TRUNCATE); v->separator=(item.fType&MFT_SEPARATOR)!=0; v->submenu=item.hSubMenu!=NULL;
+        if(item.hSubMenu) ch_menu_style(item.hSubMenu);
+        item.fMask=MIIM_FTYPE|MIIM_DATA; item.fType=MFT_OWNERDRAW; item.dwItemData=(ULONG_PTR)v; SetMenuItemInfoW(menu,i,TRUE,&item);
+    }
+}
+static void releaseMenuItems(HMENU menu) {
+    for(int i=0;i<GetMenuItemCount(menu);i++) {
+        MENUITEMINFOW item={sizeof(item)}; item.fMask=MIIM_DATA|MIIM_SUBMENU; GetMenuItemInfoW(menu,i,TRUE,&item);
+        if(item.hSubMenu) releaseMenuItems(item.hSubMenu);
+        free((void*)item.dwItemData);
+    }
+}
+void ch_menu_destroy(void *opaque) { HMENU menu=(HMENU)opaque; releaseMenuItems(menu); DestroyMenu(menu); }
+static void drawMenu(DRAWITEMSTRUCT *item) {
+    MenuVisual *v=(MenuVisual*)item->itemData; if(!v) return;
+    HDC dc=item->hDC; RECT r=item->rcItem; int saved=SaveDC(dc);
+    HBRUSH brush=CreateSolidBrush(item->itemState&ODS_SELECTED ? RGB(46,42,32) : RGB(28,30,38)); FillRect(dc,&r,brush); DeleteObject(brush);
+    if(v->separator) { RECT separator={r.left+px(12),(r.top+r.bottom)/2,r.right-px(12),(r.top+r.bottom)/2+1}; HBRUSH b=CreateSolidBrush(line); FillRect(dc,&separator,b); DeleteObject(b); }
+    else {
+        ink(dc,regular,item->itemState&ODS_DISABLED ? muted : foreground);
+        RECT label=r; label.left+=px(32); label.right-=px(24); DrawTextW(dc,v->text,-1,&label,DT_LEFT|DT_VCENTER|DT_SINGLELINE);
+        ink(dc,regular,gold);
+        if(item->itemState&ODS_CHECKED) { RECT tick=r; tick.right=tick.left+px(28); DrawTextW(dc,L"✓",-1,&tick,DT_CENTER|DT_VCENTER|DT_SINGLELINE); }
+        if(v->submenu) { RECT arrow=r; arrow.left=arrow.right-px(22); DrawTextW(dc,L"›",-1,&arrow,DT_CENTER|DT_VCENTER|DT_SINGLELINE); }
+    }
+    RestoreDC(dc,saved);
+}
 static void freeChoices(Visual *v) {
     while(v->choices) { ChoiceItem *next=v->choices->next; free(v->choices->title); free(v->choices->group); free(v->choices); v->choices=next; }
 }
-static void drawVisual(DRAWITEMSTRUCT *item) {
+static void drawVisualContent(DRAWITEMSTRUCT *item) {
     Visual *v=GetPropW(item->hwndItem,L"ChotkiVisual"); if(!v || (v->kind==11 && !v->summary) || (v->kind==12 && !v->path)) return;
     RECT r=item->rcItem; HDC dc=item->hDC; wchar_t text[2048]; GetWindowTextW(item->hwndItem,text,2048);
     int saved=SaveDC(dc);
@@ -91,7 +124,22 @@ static void drawVisual(DRAWITEMSTRUCT *item) {
     if(v->kind!=26) backdrop(dc,item->hwndItem);
     int disabled=!IsWindowEnabled(item->hwndItem), focus=(item->itemState & ODS_FOCUS)!=0;
     if(v->kind==16 || v->kind==17) { HBRUSH paper=CreateSolidBrush(foreground); FillRect(dc,&r,paper); DeleteObject(paper); }
-    if(v->kind==26) { ch_draw_border(dc,r.left,r.top,r.right-r.left,r.bottom-r.top,dpi); }
+    if(v->kind==0 || v->kind==5 || v->kind==25) {
+        HFONT font=(HFONT)SendMessageW(item->hwndItem,WM_GETFONT,0,0);
+        ink(dc,font ? font : regular,v->flags&64 ? muted : v->flags&1024 ? RGB(154,143,196) : v->flags&128 ? gold : foreground);
+        DrawTextW(dc,text,-1,&r,DT_NOPREFIX|DT_WORDBREAK|(v->kind==25 ? DT_CENTER : DT_LEFT));
+    } else if(v->kind==28) {
+        int center=(r.left+r.right)/2, top=(r.top+r.bottom-px(98))/2;
+        RECT circle={center-px(28),top,center+px(28),top+px(56)};
+        roundBox(dc,circle,v->hover ? RGB(46,42,32) : RGB(28,30,38),gold,56);
+        int cy=(circle.top+circle.bottom)/2;
+        HPEN plus=CreatePen(PS_SOLID,px(2),gold); HGDIOBJ old=SelectObject(dc,plus);
+        MoveToEx(dc,center-px(8),cy,NULL); LineTo(dc,center+px(8)+1,cy);
+        MoveToEx(dc,center,cy-px(8),NULL); LineTo(dc,center,cy+px(8)+1);
+        SelectObject(dc,old); DeleteObject(plus);
+        RECT label={r.left,top+px(72),r.right,top+px(98)};
+        ink(dc,regular,gold); DrawTextW(dc,text,-1,&label,DT_CENTER|DT_SINGLELINE);
+    } else if(v->kind==26) { ch_draw_border(dc,r.left,r.top,r.right-r.left,r.bottom-r.top,dpi); }
     else if(v->kind==6) {
         RECT box=r; box.right=box.left+px(14); box.top+=(box.bottom-box.top-px(14))/2; box.bottom=box.top+px(14);
         int checked=SendMessageW(item->hwndItem,BM_GETCHECK,0,0)==BST_CHECKED;
@@ -141,6 +189,17 @@ static void drawVisual(DRAWITEMSTRUCT *item) {
         RECT arrow=r; arrow.left=arrow.right-px(20); HFONT symbol=CreateFontW(-px(13),0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,0,0,CLEARTYPE_QUALITY,0,L"Segoe UI Symbol");
         ink(dc,symbol,gold); DrawTextW(dc,L"⌄",-1,&arrow,DT_CENTER|DT_VCENTER|DT_SINGLELINE); SelectObject(dc,regular); DeleteObject(symbol);
     } else if(v->kind==11) {
+        if(r.bottom-r.top<px(130)) {
+            roundBox(dc,r,foreground,foreground,18);
+            RECT category=r; category.left+=px(14); category.top+=px(8); category.bottom=category.top+px(18);
+            ink(dc,smallFont,RGB(94,89,79)); DrawTextW(dc,v->category,-1,&category,DT_SINGLELINE);
+            RECT title=r; title.left+=px(14); title.right-=px(10); title.top+=px(32); title.bottom=title.top+px(30);
+            HFONT compactTitle=face(16,FW_NORMAL,1); ink(dc,compactTitle,RGB(26,25,22));
+            DrawTextW(dc,text,-1,&title,DT_SINGLELINE|DT_END_ELLIPSIS); SelectObject(dc,regular); DeleteObject(compactTitle);
+            RECT time=r; time.left+=px(14); time.top=r.bottom-px(24); time.right-=px(35);
+            ink(dc,smallFont,RGB(94,89,79)); DrawTextW(dc,v->time,-1,&time,DT_SINGLELINE);
+            RestoreDC(dc,saved); return;
+        }
         roundBox(dc,r,foreground,foreground,22);
         RECT c=r; InflateRect(&c,-px(14),-px(14));
         ink(dc,smallFont,RGB(94,89,79));
@@ -171,18 +230,39 @@ static void drawVisual(DRAWITEMSTRUCT *item) {
         DrawTextW(dc,v->attribution,-1,&attribution,DT_WORDBREAK|DT_END_ELLIPSIS);
         RECT time=c; time.top=r.bottom-px(28); DrawTextW(dc,v->time,-1,&time,DT_SINGLELINE);
     } else if(v->kind==12) {
-        HRGN clip=CreateRoundRectRgn(r.left,r.top,r.right+1,r.bottom+1,v->flags&1 ? 0 : px(40),v->flags&1 ? 0 : px(40)); SelectClipRgn(dc,clip);
-        double progress=fmin(1,(v->motionElapsed+(v->motionStarted ? (GetTickCount64()-v->motionStarted)/1000.0 : 0))/(36.0/1.15));
-        ch_draw_art(dc,v->path,r.left,r.top,r.right-r.left,r.bottom-r.top,v->fx,v->fy,v->flags&1,progress,v->imageNumber);
-        RECT source=r; InflateRect(&source,-px(18),-px(18)); source.top=source.bottom-px(v->flags&1 ? 46 : 32);
-        ink(dc,smallFont,foreground); DrawTextW(dc,v->attribution,-1,&source,DT_WORDBREAK|DT_END_ELLIPSIS);
+        HRGN clip=CreateRoundRectRgn(r.left,r.top,r.right+1,r.bottom+1,px(40),px(40)); SelectClipRgn(dc,clip);
+        double progress=1; // Windows artwork is stationary.
+        ch_draw_art(dc,v->path,r.left,r.top,r.right-r.left,r.bottom-r.top,v->fx,v->fy,v->flags&1,progress,0);
+        RECT source=r; InflateRect(&source,-px(18),-px(18));
+        HFONT progressFont=NULL;
+        if(v->flags&1) {
+            wchar_t attribution[2048]; wcsncpy_s(attribution,2048,v->attribution,_TRUNCATE);
+            wchar_t *caption=wcschr(attribution,L'\n'); if(caption) *caption++=0;
+            HFONT iconCaptionFont=face(10,FW_NORMAL,0); ink(dc,iconCaptionFont,foreground);
+            RECT captionRect=source; captionRect.top=captionRect.bottom-px(28);
+            if(caption) DrawTextW(dc,caption,-1,&captionRect,DT_CENTER|DT_WORDBREAK);
+            SelectObject(dc,regular); DeleteObject(iconCaptionFont);
+            source.bottom=captionRect.top-px(6); source.top=source.bottom-px(20); source.left+=px(40);
+            HFONT sourceFont=face(12,FW_NORMAL,0); ink(dc,sourceFont,foreground); DrawTextW(dc,attribution,-1,&source,DT_SINGLELINE|DT_END_ELLIPSIS);
+            SelectObject(dc,regular); DeleteObject(sourceFont);
+            progressFont=CreateFontW(-px(16),0,0,0,FW_NORMAL,TRUE,0,0,DEFAULT_CHARSET,0,0,CLEARTYPE_QUALITY,0,L"XCharter");
+        } else {
+            source.top=source.bottom-px(32);
+            ink(dc,smallFont,foreground); DrawTextW(dc,v->attribution,-1,&source,DT_WORDBREAK|DT_END_ELLIPSIS);
+        }
         RECT quote=source; quote.bottom=source.top-px(6); RECT measured=quote;
-        HFONT progressFont=v->flags&1 ? face(16,FW_NORMAL,1) : NULL;
-        ink(dc,progressFont ? progressFont : reading,foreground); DrawTextW(dc,text,-1,&measured,DT_WORDBREAK|DT_CALCRECT);
+        wchar_t quoted[2050]; swprintf_s(quoted,2050,L"%ls%ls",text,v->flags&1 ? L"”" : L"");
+        ink(dc,progressFont ? progressFont : reading,foreground); DrawTextW(dc,quoted,-1,&measured,DT_WORDBREAK|DT_CALCRECT);
         quote.top=quote.bottom-(measured.bottom-measured.top); if(quote.top<r.top+px(42)) quote.top=r.top+px(42);
-        DrawTextW(dc,text,-1,&quote,DT_WORDBREAK);
-        RECT caption=r; caption.left+=px(18); caption.top=quote.top-px(22);
-        if(!(v->flags&1)) { ink(dc,smallFont,foreground); DrawTextW(dc,L"Sayings of the Church Fathers",-1,&caption,DT_SINGLELINE); }
+        DrawTextW(dc,quoted,-1,&quote,DT_WORDBREAK);
+        if(v->flags&1) {
+            RECT opening=quote; opening.left=r.left+px(18); opening.right=opening.left+px(40); opening.top-=px(11);
+            HFONT ornament=face(49,FW_NORMAL,1); ink(dc,ornament,gold);
+            DrawTextW(dc,L"“",-1,&opening,DT_SINGLELINE); SelectObject(dc,regular); DeleteObject(ornament);
+        } else {
+            RECT caption=r; caption.left+=px(18); caption.top=quote.top-px(22);
+            ink(dc,smallFont,foreground); DrawTextW(dc,L"Sayings of the Church Fathers",-1,&caption,DT_SINGLELINE);
+        }
         if(progressFont) { SelectObject(dc,regular); DeleteObject(progressFont); }
         DeleteObject(clip);
     } else if(v->kind==16) {
@@ -190,7 +270,7 @@ static void drawVisual(DRAWITEMSTRUCT *item) {
         roundBox(dc,circle,(v->flags&1) ? gold : foreground,RGB(168,138,51),16);
         if(v->flags&1) { ink(dc,smallFont,background); DrawTextW(dc,L"✓",-1,&circle,DT_CENTER|DT_VCENTER|DT_SINGLELINE); }
     } else if(v->kind==17 || v->kind==18) {
-        ink(dc,regular,v->kind==17 ? RGB(94,89,79) : v->flags&64 ? muted : gold); DrawTextW(dc,text,-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE);
+        ink(dc,v->customFont ? v->customFont : regular,v->kind==17 ? RGB(94,89,79) : v->flags&64 ? muted : gold); DrawTextW(dc,text,-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE);
     } else {
         COLORREF color=disabled ? RGB(100,97,88) : v->kind==9 ? ((v->flags&1) ? foreground : muted) : gold;
         COLORREF fill=(v->kind==9 && v->flags&1) || v->hover ? RGB(28,30,38) : background;
@@ -215,8 +295,31 @@ static void drawVisual(DRAWITEMSTRUCT *item) {
             DrawTextW(dc,text,-1,&label,DT_VCENTER|DT_SINGLELINE|(v->kind==9 ? DT_LEFT : DT_CENTER)|DT_END_ELLIPSIS);
         }
     }
-    if(focus) { RECT f=r; InflateRect(&f,-3,-3); DrawFocusRect(dc,&f); }
+    if(focus && keyboardFocus) { RECT f=r; InflateRect(&f,-3,-3); if(v->kind==6 || v->kind==27) f.right=f.left+px(20); DrawFocusRect(dc,&f); }
     RestoreDC(dc,saved);
+}
+// Paint each custom surface offscreen so the gradient and text arrive together.
+static void drawVisual(DRAWITEMSTRUCT *item) {
+    int width=item->rcItem.right-item->rcItem.left,height=item->rcItem.bottom-item->rcItem.top;
+    if(width<=0 || height<=0) return;
+    HDC memory=CreateCompatibleDC(item->hDC);
+    HBITMAP bitmap=CreateCompatibleBitmap(item->hDC,width,height); HGDIOBJ old=SelectObject(memory,bitmap);
+    SetViewportOrgEx(memory,-item->rcItem.left,-item->rcItem.top,NULL);
+    BitBlt(memory,item->rcItem.left,item->rcItem.top,width,height,item->hDC,item->rcItem.left,item->rcItem.top,SRCCOPY);
+    DRAWITEMSTRUCT copy=*item; copy.hDC=memory; drawVisualContent(&copy);
+    BitBlt(item->hDC,item->rcItem.left,item->rcItem.top,width,height,memory,item->rcItem.left,item->rcItem.top,SRCCOPY);
+    SelectObject(memory,old); DeleteObject(bitmap); DeleteDC(memory);
+}
+static void movePanelChildren(HWND parent,int dx,int dy) {
+    int count=0; for(HWND child=GetWindow(parent,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) count++;
+    HDWP batch=BeginDeferWindowPos(count);
+    for(HWND child=GetWindow(parent,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) {
+        RECT r; GetWindowRect(child,&r); MapWindowPoints(NULL,parent,(POINT*)&r,2);
+        if(batch) batch=DeferWindowPos(batch,child,NULL,r.left+dx,r.top+dy,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
+        else SetWindowPos(child,NULL,r.left+dx,r.top+dy,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
+    }
+    if(batch) EndDeferWindowPos(batch);
+    RedrawWindow(parent,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);
 }
 // Keep the two native rich readers alive across page and glossary redraws.
 // Parking them also preserves native selection/caret ownership until reattachment.
@@ -272,6 +375,26 @@ static void checkReaderEnd(HWND child) {
 static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) {
     Visual *v=GetPropW(hwnd,L"ChotkiVisual"); if(!v) return DefWindowProcW(hwnd,msg,wp,lp);
     WNDPROC previous=v->previous;
+    if(v->nativePaint && (msg==WM_PAINT || msg==WM_PRINTCLIENT || msg==WM_PRINT)) return CallWindowProcW(previous,hwnd,msg,wp,lp);
+    if(v->kind==19 && msg==WM_ERASEBKGND) return 1;
+    if(v->kind==19 && (msg==WM_PAINT || msg==WM_PRINTCLIENT)) {
+        RECT r; GetClientRect(hwnd,&r);
+        HDC source=GetDC(hwnd); FillRect(source,&r,ground);
+        // This Rich Edit version paints its active native view, rather than
+        // honoring an arbitrary print DC. Preserve that native paint first,
+        // then replace only its solid background with the app gradient.
+        v->nativePaint=1; InvalidateRect(hwnd,NULL,FALSE);
+        CallWindowProcW(previous,hwnd,WM_PAINT,0,0); v->nativePaint=0;
+        HDC memory=CreateCompatibleDC(source); HBITMAP bitmap=CreateCompatibleBitmap(source,max(1,r.right),max(1,r.bottom));
+        HGDIOBJ old=SelectObject(memory,bitmap); BitBlt(memory,0,0,r.right,r.bottom,source,0,0,SRCCOPY);
+        HDC dc=msg==WM_PAINT ? source : (HDC)wp; int saved=SaveDC(dc);
+        IntersectClipRect(dc,0,0,r.right,r.bottom); backdrop(dc,hwnd);
+        TransparentBlt(dc,0,0,r.right,r.bottom,memory,0,0,r.right,r.bottom,background);
+        RestoreDC(dc,saved); SelectObject(memory,old); DeleteObject(bitmap); DeleteDC(memory); ReleaseDC(hwnd,source); return 0;
+    }
+    if(msg==WM_LBUTTONDOWN) keyboardFocus=0;
+    if(msg==WM_ERASEBKGND && v->kind!=3 && v->kind!=8 && v->kind!=4 && v->kind!=2) return 1;
+    if(msg==WM_MOUSEWHEEL && GetDlgCtrlID(hwnd)>=800 && GetDlgCtrlID(hwnd)<=841) { ch_post(-11,GET_WHEEL_DELTA_WPARAM(wp)>0 ? -1 : 1); return 0; }
     if(msg==WM_KEYDOWN && wp=='A' && GetKeyState(VK_CONTROL)<0 && (v->kind==3 || v->kind==8)) {
         SendMessageW(hwnd,EM_SETSEL,0,-1); return 0;
     }
@@ -279,7 +402,7 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
     if(msg==WM_MOUSEMOVE && !v->hover) { v->hover=1; TRACKMOUSEEVENT track={sizeof(track),TME_LEAVE,hwnd,0}; TrackMouseEvent(&track); InvalidateRect(hwnd,NULL,FALSE); }
     if(msg==WM_MOUSELEAVE) { v->hover=0; InvalidateRect(hwnd,NULL,FALSE); }
     if(msg==WM_MOUSEWHEEL && GetParent(hwnd)!=window && v->kind!=19) return SendMessageW(GetParent(hwnd),msg,wp,lp);
-    if((v->kind==27 || v->kind==6 || v->kind==7) && (msg==WM_PAINT || msg==WM_PRINTCLIENT)) {
+    if((v->kind==0 || v->kind==5 || v->kind==25 || v->kind==27 || v->kind==6 || v->kind==7 || v->kind==12 || v->kind==20 || v->kind==26) && (msg==WM_PAINT || msg==WM_PRINTCLIENT)) {
         PAINTSTRUCT paint; HDC dc=msg==WM_PAINT ? BeginPaint(hwnd,&paint) : (HDC)wp;
         DRAWITEMSTRUCT item={0}; item.itemID=(UINT)-1; item.hwndItem=hwnd; item.hDC=dc; GetClientRect(hwnd,&item.rcItem); if(GetFocus()==hwnd) item.itemState|=ODS_FOCUS;
         drawVisual(&item); if(msg==WM_PAINT) EndPaint(hwnd,&paint); return 0;
@@ -293,10 +416,11 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
         free(v->summary); free(v->category); free(v->time); free(v->attribution); free(v->path); free(v);
         return result;
     }
-    int userScroll=v->tracked && (msg==WM_MOUSEWHEEL || (msg==WM_VSCROLL && LOWORD(wp)!=SB_ENDSCROLL) ||
+    int userScroll=v->kind!=19 && v->tracked && (msg==WM_MOUSEWHEEL || (msg==WM_VSCROLL && LOWORD(wp)!=SB_ENDSCROLL) ||
                    (msg==WM_KEYDOWN && (wp==VK_NEXT || wp==VK_PRIOR || wp==VK_DOWN || wp==VK_UP)));
     if(userScroll) v->scrolled=1;
     LRESULT result=CallWindowProcW(previous,hwnd,msg,wp,lp);
+    if(v->kind==19 && (msg==WM_VSCROLL || msg==WM_MOUSEWHEEL || msg==EM_LINESCROLL || msg==EM_SETSCROLLPOS)) InvalidateRect(hwnd,NULL,FALSE);
     if(userScroll && v->scrolled && !v->completed) {
         SCROLLINFO si={sizeof(si),SIF_ALL}; GetScrollInfo(hwnd,SB_VERT,&si);
         int atEnd=si.nPos+(int)si.nPage-1>=si.nMax || si.nMax==0;
@@ -313,8 +437,9 @@ static LRESULT CALLBACK scrollProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
         if(msg==WM_MOUSEWHEEL) si.nPos-=GET_WHEEL_DELTA_WPARAM(wp)/WHEEL_DELTA*px(48);
         else switch(LOWORD(wp)) { case SB_LINELEFT: si.nPos-=px(24); break; case SB_LINERIGHT: si.nPos+=px(24); break; case SB_PAGELEFT: si.nPos-=si.nPage; break; case SB_PAGERIGHT: si.nPos+=si.nPage; break; case SB_THUMBTRACK: si.nPos=si.nTrackPos; break; case SB_TOP: si.nPos=si.nMin; break; case SB_BOTTOM: si.nPos=si.nMax; break; }
         si.fMask=SIF_POS; SetScrollInfo(hwnd,bar,&si,TRUE); GetScrollInfo(hwnd,bar,&si);
+        ShowScrollBar(hwnd,bar,FALSE);
         if(bar==SB_HORZ) cardScroll=si.nPos; else homeScroll=si.nPos;
-        ScrollWindowEx(hwnd,bar==SB_HORZ ? old-si.nPos : 0,bar==SB_VERT ? old-si.nPos : 0,NULL,NULL,NULL,NULL,SW_SCROLLCHILDREN|SW_INVALIDATE);
+        movePanelChildren(hwnd,bar==SB_HORZ ? old-si.nPos : 0,bar==SB_VERT ? old-si.nPos : 0);
         UpdateWindow(hwnd); return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
@@ -332,21 +457,36 @@ extern int ch_tray_message(UINT message, WPARAM wp, LPARAM lp);
 static LRESULT CALLBACK procedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     if(ch_tray_message(msg,wp,lp)) return 0;
     switch (msg) {
+    case WM_MOUSEWHEEL: {
+        HWND first=findChild(800),last=findChild(806),toggle=findChild(713);
+        if(first && last && toggle) {
+            wchar_t label[8]={0}; GetWindowTextW(toggle,label,8);
+            if(wcscmp(label,L"⌄")==0) {
+                RECT a,b; GetWindowRect(first,&a); GetWindowRect(last,&b);
+                POINT pointer={(short)LOWORD(lp),(short)HIWORD(lp)};
+                if(pointer.x>=a.left-px(16) && pointer.x<=b.right+px(16) && pointer.y>=a.top-px(12) && pointer.y<=a.bottom+px(12)) {
+                    ch_post(-11,GET_WHEEL_DELTA_WPARAM(wp)>0 ? -1 : 1); return 0;
+                }
+            }
+        }
+        break;
+    }
     case WM_APP+11: checkReaderEnd((HWND)wp); return 0;
     case WM_APP+10: if(callback) callback(context,(int32_t)wp,(int32_t)lp); return 0;
     case WM_SIZE: if(ch_opening_active()) { ch_opening_resize(hwnd); return 0; } if(callback && currentParent && wp!=SIZE_MINIMIZED) callback(context,-4,0); return 0;
     case WM_DPICHANGED: { dpi=HIWORD(wp); fonts(); RECT *r=(RECT*)lp; SetWindowPos(hwnd,NULL,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE); return 0; }
-    case WM_DRAWITEM: drawVisual((DRAWITEMSTRUCT*)lp); return TRUE;
+    case WM_MEASUREITEM: {
+        MEASUREITEMSTRUCT *item=(MEASUREITEMSTRUCT*)lp;
+        if(item->CtlType==ODT_MENU) { MenuVisual *v=(MenuVisual*)item->itemData; if(!v) return FALSE;
+            HDC dc=GetDC(hwnd); HGDIOBJ old=SelectObject(dc,regular); SIZE size; GetTextExtentPoint32W(dc,v->text,(int)wcslen(v->text),&size); SelectObject(dc,old); ReleaseDC(hwnd,dc);
+            item->itemWidth=size.cx+px(64); item->itemHeight=px(v->separator ? 9 : 32); return TRUE;
+        } break;
+    }
+    case WM_DRAWITEM: if(((DRAWITEMSTRUCT*)lp)->CtlType==ODT_MENU) drawMenu((DRAWITEMSTRUCT*)lp); else drawVisual((DRAWITEMSTRUCT*)lp); return TRUE;
     case WM_APP+50: return lifecycleReview ? ch_opening_state() : -1;
     case WM_APP+12: ch_post(CH_TRAY_OPEN,0); return 0;
     case WM_TIMER:
-        if(wp==4) {
-            HWND image=findChild(750); Visual *v=GetPropW(image,L"ChotkiVisual");
-            if(v && v->kind==12 && v->motionStarted && v->motionElapsed+(GetTickCount64()-v->motionStarted)/1000.0<36.0/1.15) {
-                if(IsWindowVisible(hwnd) && !IsIconic(hwnd)) InvalidateRect(image,NULL,FALSE);
-            } else KillTimer(hwnd,4);
-            return 0;
-        }
+        if(wp==4) { KillTimer(hwnd,4); ch_post(-12,0); return 0; }
         if(wp==3) { ch_post(-9,0); return 0; }
         if(wp==2) {
             int active=0;
@@ -376,7 +516,7 @@ static LRESULT CALLBACK procedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 if(event->msg==WM_LBUTTONUP || event->msg==WM_MOUSEMOVE) {
                     POINTL point={(short)LOWORD(event->lParam),(short)HIWORD(event->lParam)};
                     LONG position=(LONG)SendMessageW(header->hwndFrom,EM_CHARFROMPOS,0,(LPARAM)&point);
-                    for(LinkRange *link=v->links;link;link=link->next) if(link->disclosure && position>=link->start && position<link->end) {
+                    for(LinkRange *link=v->links;link;link=link->next) if(position>=link->start && position<link->end) {
                         if(event->msg==WM_LBUTTONUP) { ch_post(-7,link->id); return 1; }
                         SetCursor(LoadCursorW(NULL,IDC_HAND)); return 1;
                     }
@@ -449,6 +589,15 @@ static LRESULT CALLBACK procedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 }
 static wchar_t *priorReadingText;
 static int priorReadingLine;
+void ch_calendar_browse(int32_t active) { KillTimer(window,4); if(active) SetTimer(window,4,30000,NULL); }
+void ch_render_begin(void) {
+    if(renderDepth++==0) { renderWasVisible=IsWindowVisible(window); if(renderWasVisible) SendMessageW(window,WM_SETREDRAW,FALSE,0); }
+}
+void ch_render_end(void) {
+    if(renderDepth<=0 || --renderDepth) return;
+    if(renderWasVisible) SendMessageW(window,WM_SETREDRAW,TRUE,0);
+    if(IsWindowVisible(window)) RedrawWindow(window,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);
+}
 void ch_clear(void) {
     prayerKeys=0;
     free(priorReadingText); priorReadingText=NULL; priorReadingLine=0;
@@ -464,6 +613,7 @@ void ch_clear(void) {
     HWND child;
     while((child=GetWindow(window,GW_CHILD))!=NULL) DestroyWindow(child);
     homePanel=NULL; cardPanel=NULL; currentParent=window;
+    InvalidateRect(window,NULL,TRUE);
 }
 static int sameReaderText(const wchar_t *a,const wchar_t *b) {
     while(*a && *b) {
@@ -476,18 +626,18 @@ static int sameReaderText(const wchar_t *a,const wchar_t *b) {
 }
 void ch_control(int32_t id, int32_t kind, const char *text, int32_t x, int32_t y, int32_t width, int32_t height) {
     // 6 checkbox, 7 choice, 8 editable multiline; other kinds defined in Swift.
-    const wchar_t *cls = (kind==1 || kind==6 || (kind>=9 && kind<=11) || kind==16 || kind==17 || kind==18 || kind==22 || kind==23 || kind==24 || kind==27) ? L"BUTTON" : kind==7 ? L"COMBOBOX" : kind == 2 ? L"LISTBOX" : kind == 19 ? L"RichEdit20W" : (kind == 3 || kind == 4 || kind==8) ? L"EDIT" : L"STATIC";
+    const wchar_t *cls = (kind==1 || kind==6 || (kind>=9 && kind<=11) || kind==16 || kind==17 || kind==18 || kind==22 || kind==23 || kind==24 || kind==27 || kind==28) ? L"BUTTON" : kind==7 ? L"COMBOBOX" : kind == 2 ? L"LISTBOX" : kind == 19 ? L"RichEdit20W" : (kind == 3 || kind == 4 || kind==8) ? L"EDIT" : L"STATIC";
     DWORD style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
-    if (kind == 1 || (kind>=9 && kind<=11) || kind==16 || kind==17 || kind==18 || kind==22 || kind==23 || kind==24) style |= WS_TABSTOP | BS_OWNERDRAW;
+    if (kind == 1 || (kind>=9 && kind<=11) || kind==16 || kind==17 || kind==18 || kind==22 || kind==23 || kind==24 || kind==28) style |= WS_TABSTOP | BS_OWNERDRAW;
     if(kind==27) style |= WS_TABSTOP | BS_AUTOCHECKBOX | BS_MULTILINE;
-    if (kind == 2) style |= WS_TABSTOP | LBS_NOTIFY | WS_VSCROLL | LBS_NOINTEGRALHEIGHT;
+    if (kind == 2) style |= WS_TABSTOP | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT;
     if (kind == 3) style |= WS_TABSTOP | ES_AUTOHSCROLL | WS_BORDER;
-    if (kind == 4 || kind == 19) style |= WS_TABSTOP | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL;
+    if (kind == 4 || kind == 19) style |= WS_TABSTOP | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL;
     if (kind==25) style |= SS_CENTER;
     if (kind == 12 || kind==20 || kind==26) style |= SS_OWNERDRAW;
     if (kind == 6) style |= WS_TABSTOP | BS_AUTOCHECKBOX | BS_MULTILINE;
-    if (kind == 7) style |= WS_TABSTOP | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL;
-    if (kind == 8) style |= WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL | WS_BORDER;
+    if (kind == 7) style |= WS_TABSTOP | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS;
+    if (kind == 8) style |= WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL | WS_BORDER;
     wchar_t *value = wide(text);
     HWND parent=currentParent ? currentParent : window;
     int offsetX=parent==cardPanel ? cardScroll : 0, offsetY=parent==homePanel ? homeScroll : 0;
@@ -514,11 +664,11 @@ void ch_control(int32_t id, int32_t kind, const char *text, int32_t x, int32_t y
         if(!reused) {
             v->kind=kind; v->serial=(kind==19 || kind==24 || kind==27) ? ++readerSerial : 0;
             SetPropW(child,L"ChotkiVisual",v);
-            if(kind!=19) v->previous=(WNDPROC)SetWindowLongPtrW(child,GWLP_WNDPROC,(LONG_PTR)visualProcedure);
+            v->previous=(WNDPROC)SetWindowLongPtrW(child,GWLP_WNDPROC,(LONG_PTR)visualProcedure);
         }
         while(v->links) { LinkRange *next=v->links->next; free(v->links); v->links=next; }
         while(v->ends) { ReadingRange *next=v->ends->next; free(v->ends); v->ends=next; }
-        v->tracked=v->scrolled=v->completed=v->token=0;
+        v->tracked=v->scrolled=v->completed=v->token=v->contentHeight=0;
         v->restoreLine=restoreReading ? priorReadingLine : 0;
         SendMessageW(child, WM_SETFONT, (WPARAM)(kind == 5 ? heading : (kind == 4 || kind==19) ? reading : regular), TRUE);
         if(kind==19) {
@@ -571,8 +721,9 @@ void ch_rule_menu(int32_t paused, int32_t dispensed, int32_t kept, int32_t expan
     AppendMenuW(removal,MF_STRING,462,L"The whole rule");
     AppendMenuW(menu,MF_POPUP,(UINT_PTR)removal,L"Remove");
     POINT point; GetCursorPos(&point);
+    ch_menu_style(menu);
     UINT selected=TrackPopupMenu(menu,TPM_RETURNCMD | TPM_RIGHTBUTTON,point.x,point.y,0,window,NULL);
-    DestroyMenu(menu);
+    ch_menu_destroy(menu);
     if(selected) ch_command(selected);
 }
 int32_t ch_text(int32_t id, char *buffer, int32_t length) {
@@ -620,6 +771,7 @@ int32_t ch_file_dialog(int32_t save, const char *suggested, char *path, int32_t 
     return WideCharToMultiByte(CP_UTF8,0,file,-1,path,length,NULL,NULL) ? 1 : -1;
 }
 static int32_t captureWindow(HWND target,const char *path) {
+    if(automation || platformReview) SetWindowPos(target,HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
     RedrawWindow(target,NULL,NULL,RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW);
     RECT r; GetClientRect(target,&r); int width=r.right, height=r.bottom;
     BITMAPINFO info; ZeroMemory(&info,sizeof(info));
@@ -628,7 +780,9 @@ static int32_t captureWindow(HWND target,const char *path) {
     HDC screen=GetDC(target), memory=CreateCompatibleDC(screen); void *pixels=NULL;
     HBITMAP bitmap=CreateDIBSection(screen,&info,DIB_RGB_COLORS,&pixels,NULL,0);
     HGDIOBJ old=SelectObject(memory,bitmap);
-    int ok=PrintWindow(target,memory,PW_CLIENTONLY);
+    // Capture the visible synthetic client after repainting. PrintWindow can
+    // omit transparent Rich Edit content and hid the stale-font defect.
+    int ok=BitBlt(memory,0,0,width,height,screen,0,0,SRCCOPY);
     if(target==window && ch_opening_active()) ch_opening_paint(memory);
     GdiFlush();
     // A noninteractive SSH desktop can return success with an empty bitmap.
@@ -669,6 +823,8 @@ static int ropeSpace(MSG *msg) {
     return 1;
 }
 static void dispatchUI(MSG *msg) {
+    if(msg->message==WM_KEYDOWN && msg->wParam==VK_TAB) keyboardFocus=1;
+    if(msg->message==WM_LBUTTONDOWN) keyboardFocus=0;
     if(ch_opening_active() && (msg->message==WM_KEYDOWN || msg->message==WM_KEYUP || msg->message==WM_CHAR || msg->message==WM_SYSKEYDOWN || msg->message==WM_SYSKEYUP)) return;
 
     if(ropeSpace(msg)) return;
@@ -702,7 +858,7 @@ void ch_attention(int32_t id,int32_t milliseconds) {
     if(milliseconds>0) { BOOL animations=TRUE; SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0); SetTimer(window,2,animations ? 33 : milliseconds,NULL); }
 }
 int32_t ch_test_attention(int32_t id) { Visual *v=GetPropW(findChild(id),L"ChotkiVisual"); return automation && v && v->attentionUntil>GetTickCount64(); }
-void ch_style(int32_t id,int32_t flags) { HWND handle=findChild(id); Visual *v=GetPropW(handle,L"ChotkiVisual"); if(v) { v->flags=flags; if(flags&256) SendMessageW(handle,WM_SETFONT,(WPARAM)dateFont,TRUE); else if(flags&512) SendMessageW(handle,WM_SETFONT,(WPARAM)smallFont,TRUE); else if(flags&1024) SendMessageW(handle,WM_SETFONT,(WPARAM)captionFont,TRUE); InvalidateRect(handle,NULL,FALSE); } }
+void ch_style(int32_t id,int32_t flags) { HWND handle=findChild(id); Visual *v=GetPropW(handle,L"ChotkiVisual"); if(v) { v->flags=flags; if(flags&2048) SendMessageW(handle,WM_SETFONT,(WPARAM)listFont,TRUE); else if(flags&256) SendMessageW(handle,WM_SETFONT,(WPARAM)dateFont,TRUE); else if(flags&512) SendMessageW(handle,WM_SETFONT,(WPARAM)smallFont,TRUE); else if(flags&1024) SendMessageW(handle,WM_SETFONT,(WPARAM)captionFont,TRUE); InvalidateRect(handle,NULL,FALSE); } }
 int32_t ch_test_space_modifier(int32_t id,int32_t modifier) {
     if(!automation || modifier<0 || modifier>255) return -1;
     BYTE saved[256],state[256]; if(!GetKeyboardState(saved)) return -1;
@@ -735,7 +891,8 @@ static HMENU choiceMenu(Visual *v) {
 void ch_choice_popup(int32_t id) {
     HWND child=findChild(id); Visual *v=GetPropW(child,L"ChotkiVisual"); if(!v || v->kind!=24) return;
     int serial=v->serial; HMENU menu=choiceMenu(v); RECT r; GetWindowRect(child,&r);
-    UINT selected=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_LEFTALIGN,r.left,r.bottom,0,window,NULL); DestroyMenu(menu);
+    ch_menu_style(menu);
+    UINT selected=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_LEFTALIGN,r.left,r.bottom,0,window,NULL); ch_menu_destroy(menu);
     // A nested menu loop may process a day rollover. Do not use stale state.
     Visual *current=GetPropW(findChild(id),L"ChotkiVisual");
     if(selected>=10000 && current && current->serial==serial) { current->choice=selected-10000; ch_post(id,1); }
@@ -753,7 +910,8 @@ int32_t ch_test_prayer_menu(int32_t id) {
 static void panelScroll(HWND handle,int bar,int total,int page,int position) {
     SCROLLINFO si={sizeof(si),SIF_RANGE|SIF_PAGE|SIF_POS,0,px(total)-1,px(page),position,0};
     SetScrollInfo(handle,bar,&si,TRUE); si.fMask=SIF_POS; GetScrollInfo(handle,bar,&si);
-    if(bar==SB_HORZ) { cardScroll=si.nPos; ShowScrollBar(handle,SB_HORZ,FALSE); } else homeScroll=si.nPos;
+    ShowScrollBar(handle,bar,FALSE);
+    if(bar==SB_HORZ) cardScroll=si.nPos; else homeScroll=si.nPos;
 }
 void ch_home_begin(int32_t x,int32_t y,int32_t width,int32_t height,int32_t contentHeight) {
     homePanel=CreateWindowExW(WS_EX_CONTROLPARENT,L"ChotkiScroll",L"The day",WS_CHILD|WS_VISIBLE|WS_CLIPCHILDREN|WS_VSCROLL,
@@ -772,7 +930,7 @@ void ch_reveal_card(int32_t id) {
     SCROLLINFO si={sizeof(si),SIF_ALL}; GetScrollInfo(cardPanel,SB_HORZ,&si); int previous=si.nPos;
     si.nPos += (bounds.left+bounds.right-viewport.right)/2; si.fMask=SIF_POS;
     SetScrollInfo(cardPanel,SB_HORZ,&si,FALSE); GetScrollInfo(cardPanel,SB_HORZ,&si); cardScroll=si.nPos;
-    ScrollWindowEx(cardPanel,previous-si.nPos,0,NULL,NULL,NULL,NULL,SW_SCROLLCHILDREN|SW_INVALIDATE);
+    movePanelChildren(cardPanel,previous-si.nPos,0);
 }
 int32_t ch_test_card_revealed(int32_t id) {
     if(!automation || !cardPanel) return 0;
@@ -837,7 +995,7 @@ int32_t ch_startup(int32_t enabled) {
 int32_t ch_test_startup(void) { return automation ? syntheticStartup : -1; }
 int32_t ch_measure_text(const char *text,int32_t width,int32_t flags) {
     wchar_t *value=wide(text); HDC dc=GetDC(window);
-    HFONT font=flags&256 ? dateFont : flags&512 ? smallFont : regular;
+    HFONT font=flags&2048 ? listFont : flags&256 ? dateFont : flags&512 ? smallFont : regular;
     HGDIOBJ old=SelectObject(dc,font); RECT rect={0,0,px(width),0};
     DrawTextW(dc,value,-1,&rect,DT_WORDBREAK|DT_CALCRECT|DT_NOPREFIX);
     SelectObject(dc,old); ReleaseDC(window,dc); free(value);
@@ -861,7 +1019,7 @@ int32_t ch_report_begin(void) {
     if(!reportWindow) {
         WNDCLASSW cls={0}; cls.lpfnWndProc=reportProcedure; cls.hInstance=GetModuleHandleW(NULL); cls.hCursor=LoadCursorW(NULL,IDC_ARROW); cls.hbrBackground=ground; cls.lpszClassName=L"ChotkiReport";
         RegisterClassW(&cls); RECT r={0,0,px(620),px(640)}; AdjustWindowRectExForDpi(&r,WS_OVERLAPPEDWINDOW,FALSE,0,dpi);
-        reportWindow=CreateWindowExW(0,cls.lpszClassName,L"Progress",WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,r.right-r.left,r.bottom-r.top,window,NULL,cls.hInstance,NULL);
+        reportWindow=CreateWindowExW(0,cls.lpszClassName,L"Progress",WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,CW_USEDEFAULT,CW_USEDEFAULT,r.right-r.left,r.bottom-r.top,window,NULL,cls.hInstance,NULL);
         BOOL dark=TRUE; DwmSetWindowAttribute(reportWindow,20,&dark,sizeof(dark));
     }
     if(!reportWindow) return 0;
@@ -876,6 +1034,17 @@ int32_t ch_test_report(int32_t operation) {
     if(operation==0) SendMessageW(reportWindow,WM_CLOSE,0,0);
     return IsWindow(reportWindow);
 }
+int32_t ch_test_control_intersects(int32_t id) {
+    if(!automation) return 0;
+    HWND child=findChild(id); if(!child || !IsWindowVisible(child)) return 0;
+    RECT visible; GetWindowRect(child,&visible);
+    for(HWND parent=GetParent(child);parent;parent=parent==window ? NULL : GetParent(parent)) {
+        RECT clip; GetClientRect(parent,&clip); MapWindowPoints(parent,NULL,(POINT*)&clip,2);
+        RECT intersection; if(!IntersectRect(&intersection,&visible,&clip)) return 0;
+        visible=intersection;
+    }
+    return visible.bottom-visible.top>=px(90);
+}
 int32_t ch_test_control_visible(int32_t id) {
     if(!automation) return 0;
     HWND child=findChild(id); if(!child || !IsWindowVisible(child)) return 0;
@@ -885,6 +1054,11 @@ int32_t ch_test_control_visible(int32_t id) {
         if(bounds.left<clip.left || bounds.right>clip.right || bounds.top<clip.top || bounds.bottom>clip.bottom) return 0;
     }
     return 1;
+}
+void ch_test_calendar_expire(void) { if(automation) { SendMessageW(window,WM_TIMER,4,0); ch_pump(); } }
+void ch_test_panel_wheel(int32_t turns) {
+    if(!automation || !homePanel) return;
+    for(int i=0;i<abs(turns);i++) SendMessageW(homePanel,WM_MOUSEWHEEL,MAKEWPARAM(0,turns>0 ? (short)-WHEEL_DELTA : (short)WHEEL_DELTA),0);
 }
 void ch_test_panel_scroll(int32_t bottom) { if(automation && homePanel) SendMessageW(homePanel,WM_VSCROLL,bottom ? SB_BOTTOM : SB_TOP,0); }
 void ch_home_content(int32_t height) { if(homePanel) { RECT r; GetClientRect(homePanel,&r); panelScroll(homePanel,SB_VERT,height,MulDiv(r.bottom,96,dpi),homeScroll); } }
@@ -896,17 +1070,14 @@ int32_t ch_rich_fit(int32_t id) {
     SetWindowPos(child,NULL,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED);
     SendMessageW(child,EM_SETEVENTMASK,0,SendMessageW(child,EM_GETEVENTMASK,0,0)|ENM_REQUESTRESIZE);
     SendMessageW(child,EM_REQUESTRESIZE,0,0);
-    int height=v->contentHeight+px(6); if(height<px(20)) height=r.bottom-r.top;
+    int height=v->contentHeight+px(6);
+    if(height<px(20)) {
+        LONG count=GetWindowTextLengthW(child); POINT last={0,0};
+        SendMessageW(child,EM_POSFROMCHAR,(WPARAM)&last,count>0 ? count-1 : 0);
+        height=max(px(24),last.y+px(28));
+    }
     MoveWindow(child,origin.x,origin.y,r.right-r.left,height,TRUE);
     v->suppressScroll--; return MulDiv(height,96,dpi);
-}
-void ch_image_motion(int32_t id,double elapsed,int32_t imageNumber) {
-    HWND image=findChild(id); Visual *v=GetPropW(image,L"ChotkiVisual"); if(!v || v->kind!=12) return;
-    BOOL animate=TRUE; SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animate,0);
-    v->motionElapsed=automation || platformReview || !animate ? 36.0/1.15 : fmax(0,elapsed);
-    v->motionStarted=GetTickCount64(); v->imageNumber=imageNumber;
-    if(v->motionElapsed<36.0/1.15) SetTimer(window,4,50,NULL);
-    InvalidateRect(image,NULL,FALSE);
 }
 void ch_reset_home_scroll(void) { homeScroll=0; cardScroll=0; }
 void ch_test_resize(int32_t width,int32_t height) {
@@ -968,7 +1139,7 @@ int32_t ch_run(ChotkiEvent event, void *data, int32_t automated) {
     if(!RegisterClassW(&cls)) return 2;
     WNDCLASSW scrollClass; ZeroMemory(&scrollClass,sizeof(scrollClass)); scrollClass.lpfnWndProc=scrollProcedure; scrollClass.hInstance=cls.hInstance; scrollClass.hCursor=cls.hCursor; scrollClass.lpszClassName=L"ChotkiScroll"; RegisterClassW(&scrollClass);
     RECT frame={0,0,px(1100),px(860)}; AdjustWindowRectExForDpi(&frame,WS_OVERLAPPEDWINDOW,FALSE,0,dpi);
-    window=CreateWindowExW(0,cls.lpszClassName,automated ? L"Chotki — Review" : L"Chotki",WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,frame.right-frame.left,frame.bottom-frame.top,NULL,NULL,cls.hInstance,NULL);
+    window=CreateWindowExW(0,cls.lpszClassName,automated ? L"Chotki — Review" : L"Chotki",WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,CW_USEDEFAULT,CW_USEDEFAULT,frame.right-frame.left,frame.bottom-frame.top,NULL,NULL,cls.hInstance,NULL);
     if(!window) return 3;
     readerParking=CreateWindowExW(0,L"STATIC",L"",0,0,0,0,0,HWND_MESSAGE,NULL,cls.hInstance,NULL);
     currentParent=window; InterlockedExchangePointer(&postWindow,window);
@@ -996,7 +1167,7 @@ int32_t ch_run(ChotkiEvent event, void *data, int32_t automated) {
         DestroyWindow(reportWindow); reportWindow=NULL;
     }
     if(readerParking) DestroyWindow(readerParking); readerParking=NULL;
-    DeleteObject(regular); DeleteObject(reading); DeleteObject(heading); DeleteObject(smallFont); DeleteObject(dateFont); DeleteObject(captionFont); DeleteObject(ground); DeleteObject(panel);
+    DeleteObject(regular); DeleteObject(reading); DeleteObject(heading); DeleteObject(smallFont); DeleteObject(dateFont); DeleteObject(captionFont); DeleteObject(listFont); DeleteObject(ground); DeleteObject(panel);
     free(testFilePath); testFilePath=NULL;
     ch_notifications_close();
     ch_sound_close();
@@ -1014,8 +1185,8 @@ void ch_rich_style(int32_t id,int32_t start,int32_t length,int32_t flags,int32_t
     CHARFORMAT2W format={0}; format.cbSize=sizeof(format);
     format.dwMask=CFM_FACE|CFM_SIZE|CFM_COLOR|CFM_BOLD|CFM_ITALIC|CFM_LINK|CFM_UNDERLINE;
     format.yHeight=size*15; // logical 96-DPI pixels converted to twips
-    format.crTextColor=flags&128 ? foreground : linkID>=0 || flags&8 ? gold : flags&4 ? muted : foreground;
-    format.dwEffects=(flags&1 ? CFE_BOLD : 0)|(flags&2 ? CFE_ITALIC : 0)|(linkID>=0 && !(flags&64) ? CFE_LINK|CFE_UNDERLINE : 0);
+    format.crTextColor=flags&128 ? foreground : flags&8 || (linkID>=0 && !(flags&128)) ? gold : flags&4 ? muted : foreground;
+    format.dwEffects=(flags&1 ? CFE_BOLD : 0)|(flags&2 ? CFE_ITALIC : 0);
     wcscpy_s(format.szFaceName,LF_FACESIZE,flags&256 ? L"Segoe UI Symbol" : flags&16 ? L"Segoe UI" : L"XCharter");
     SendMessageW(child,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&format);
     if(linkID>=0) {
@@ -1033,7 +1204,7 @@ void ch_rich_finish(int32_t id) {
     CHARRANGE top={0,0}; SendMessageW(child,EM_EXSETSEL,0,(LPARAM)&top);
     SendMessageW(child,EM_LINESCROLL,0,v->restoreLine-(int)SendMessageW(child,EM_GETFIRSTVISIBLELINE,0,0));
     v->suppressScroll--;
-    InvalidateRect(child,NULL,FALSE);
+    RedrawWindow(GetParent(child),NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN);
 }
 void ch_rich_center(int32_t id) {
     HWND child=findChild(id); Visual *v=GetPropW(child,L"ChotkiVisual"); if(!v) return;
@@ -1051,6 +1222,7 @@ void ch_glossary_begin(int32_t x,int32_t y,int32_t width,int32_t height) {
     ch_glossary_close(); glossaryFocus=GetFocus();
     for(HWND child=GetWindow(window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) EnableWindow(child,FALSE);
     glossaryPanel=CreateWindowExW(WS_EX_CONTROLPARENT,L"ChotkiScroll",L"Glossary",WS_CHILD|WS_VISIBLE|WS_CLIPCHILDREN,px(x),px(y),px(width),px(height),window,(HMENU)6099,GetModuleHandleW(NULL),NULL);
+    SetWindowPos(glossaryPanel,HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
     currentParent=glossaryPanel;
 }
 void ch_glossary_close(void) {
@@ -1066,20 +1238,35 @@ int32_t ch_test_link(int32_t id,int32_t index) {
     if(!automation) return 0; HWND child=findChild(id); Visual *v=GetPropW(child,L"ChotkiVisual"); if(!v) return 0;
     LinkRange *found=NULL; LONG after=-1;
     for(int i=0;i<=index;i++) { found=NULL; for(LinkRange *link=v->links;link;link=link->next) if(link->start>after && (!found || link->start<found->start)) found=link; if(!found) return 0; after=found->start; }
-    if(found->disclosure) {
-        ch_test_scroll_character(id,found->start,0);
-        POINT point={0,0}; SendMessageW(child,EM_POSFROMCHAR,(WPARAM)&point,found->start);
-        MSGFILTER event={0}; event.nmhdr.hwndFrom=child; event.nmhdr.idFrom=id; event.nmhdr.code=EN_MSGFILTER;
-        event.msg=WM_LBUTTONUP; event.lParam=MAKELPARAM(point.x+1,point.y+2);
-        SendMessageW(GetParent(child),WM_NOTIFY,id,(LPARAM)&event); return 1;
+    int originalLine=(int)SendMessageW(child,EM_GETFIRSTVISIBLELINE,0,0);
+    ch_test_scroll_character(id,found->start,0);
+    POINT point={0,0}; SendMessageW(child,EM_POSFROMCHAR,(WPARAM)&point,found->start);
+    MSGFILTER event={0}; event.nmhdr.hwndFrom=child; event.nmhdr.idFrom=id; event.nmhdr.code=EN_MSGFILTER;
+    event.msg=WM_LBUTTONUP; event.lParam=MAKELPARAM(point.x+1,point.y+2);
+    SendMessageW(GetParent(child),WM_NOTIFY,id,(LPARAM)&event);
+    ch_reader_scroll_line(id,originalLine); return 1;
+}
+int32_t ch_test_reader_painted(int32_t id) {
+    if(!automation) return 0;
+    HWND child=findChild(id); if(!child || !IsWindowVisible(child)) { printf("Visible reader check: id=%d missing=%d visible=%d\n",id,!child,child ? IsWindowVisible(child) : 0); return 0; }
+    RedrawWindow(window,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);
+    RECT r; GetClientRect(child,&r); HDC dc=GetDC(child); int pixels=0;
+    // Ignore the native scrollbar: its light track is not reader content.
+    for(int y=0;y<r.bottom;y++) for(int x=0;x<r.right-px(24);x++) {
+        COLORREF color=GetPixel(dc,x,y);
+        if(color!=CLR_INVALID && GetRValue(color)>140 && GetGValue(color)>120) pixels++;
+        if(pixels>50) { ReleaseDC(child,dc); return 1; }
     }
-    ENLINK event={0}; event.nmhdr.hwndFrom=child; event.nmhdr.idFrom=id; event.nmhdr.code=EN_LINK; event.msg=WM_LBUTTONUP; event.chrg.cpMin=found->start; event.chrg.cpMax=found->end;
-    SendMessageW(GetParent(child),WM_NOTIFY,id,(LPARAM)&event); return 1;
+    RECT bounds; GetWindowRect(child,&bounds); POINT center={(bounds.left+bounds.right)/2,(bounds.top+bounds.bottom)/2};
+    printf("Visible reader check: id=%d chars=%d client=%ldx%ld firstLine=%lld coveringControl=%d color=%lx\n",id,GetWindowTextLengthW(child),r.right,r.bottom,(long long)SendMessageW(child,EM_GETFIRSTVISIBLELINE,0,0),GetDlgCtrlID(WindowFromPoint(center)),(unsigned long)GetPixel(dc,5,5));
+    ReleaseDC(child,dc); return 0;
 }
 int32_t ch_test_rich_flags(int32_t id,int32_t start) {
     if(!automation) return -1; HWND child=findChild(id); CHARRANGE old,one={start,start+1}; SendMessageW(child,EM_EXGETSEL,0,(LPARAM)&old); SendMessageW(child,EM_EXSETSEL,0,(LPARAM)&one);
     CHARFORMAT2W format={0}; format.cbSize=sizeof(format); SendMessageW(child,EM_GETCHARFORMAT,SCF_SELECTION,(LPARAM)&format); SendMessageW(child,EM_EXSETSEL,0,(LPARAM)&old);
-    return (format.dwEffects&CFE_BOLD ? 1 : 0)|(format.dwEffects&CFE_ITALIC ? 2 : 0)|(format.dwEffects&CFE_LINK ? 32 : 0);
+    Visual *v=GetPropW(child,L"ChotkiVisual"); int linked=0;
+    if(v) for(LinkRange *link=v->links;link;link=link->next) if(start>=link->start && start<link->end) { linked=1; break; }
+    return (format.dwEffects&CFE_BOLD ? 1 : 0)|(format.dwEffects&CFE_ITALIC ? 2 : 0)|(linked ? 32 : 0)|(format.crTextColor==gold ? 64 : 0);
 }
 
 void ch_focus(int32_t id) { SetFocus(findChild(id)); }

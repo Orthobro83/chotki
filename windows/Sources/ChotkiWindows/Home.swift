@@ -3,19 +3,6 @@ import ChotkiCore
 import WindowsUI
 
 extension WindowsApp {
-    struct ArtworkPosition:Codable { let identity:String; let started:Date }
-    func artworkStart(on date:CalendarDate,image:URL) -> Date {
-        let key="pan3-\(date.iso)-\(image.lastPathComponent)"
-        if let start=artworkStarts[key] { return start }
-        let url=recordFiles.directory.appendingPathComponent("artwork-position.json")
-        let persist = !review && date==lastKnownToday
-        if persist,let data=try? Data(contentsOf:url),let old=try? JSONDecoder().decode(ArtworkPosition.self,from:data),old.identity==key {
-            artworkStarts[key]=old.started; return old.started
-        }
-        let now=Date(); artworkStarts[key]=now
-        if persist,let data=try? JSONEncoder().encode(ArtworkPosition(identity:key,started:now)) { try? data.write(to:url,options:.atomic) }
-        return now
-    }
     func homeCardSummary(_ entry:DayEntry) -> String {
         if flippedRuleID==entry.rule.id {
             return entry.dispensation.map { "Not observed during \($0)." }
@@ -59,7 +46,8 @@ extension WindowsApp {
     }
     func renderHome() throws {
         control(200, 5, greeting, contentLeft, 24, contentWidth, 38)
-        control(402, 18, "+", contentLeft+contentWidth-30, 28, 30, 28)
+        control(402, 18, "+", contentLeft+contentWidth-40, 22, 40, 40)
+        ch_font_size(402,26,0,0)
         var days: [CalendarDate] = []
         let calendarTop: Int32 = 80
         let calendarHeight: Int32
@@ -96,7 +84,8 @@ extension WindowsApp {
         let title = day?.title ?? (liturgical.isOffline ? "Calendar unavailable · Stored days remain available offline" : "")
         let panelTop = calendarTop+calendarHeight
         let extra: Int32 = day != nil && settings.observances.fasting.isVisible && day!.isFast && entries.contains(where: { $0.rule.isFastingRule }) ? 50 : 0
-        let expandedHeight: Int32 = entries.first { $0.rule.id==expandedRuleID }.map(expandedCardHeight) ?? 232
+        let compactCardHeight: Int32 = ch_height()<650 ? 96 : 232
+        let expandedHeight: Int32 = entries.first { $0.rule.id==expandedRuleID }.map(expandedCardHeight) ?? compactCardHeight
         let dateY: Int32 = 8 + (title.isEmpty ? 0 : 36) + extra
         let cardsY = dateY+64
         let artY = cardsY+expandedHeight+18
@@ -114,7 +103,7 @@ extension WindowsApp {
         control(745,0,"Today's Commitments",0,dateY+34,134,20); ch_style(745,64)
         control(746,18,"Add a New Rule",134,dateY+32,110,24)
         var x: Int32 = 0
-        let total = Int32(entries.count)*144 + (expandedRuleID == nil ? 0 : 168) + 132
+        let total = entries.isEmpty ? contentWidth : Int32(entries.count)*144 + (expandedRuleID == nil ? 0 : 168) + 132
         ch_cards_begin(0,cardsY,contentWidth,expandedHeight+20,total)
         ch_select(300,Int32(selectedRow))
         for (i, entry) in entries.enumerated() {
@@ -125,18 +114,18 @@ extension WindowsApp {
             let time = entry.isDispensed ? "Lifted Today" : entry.isStoodDown ? "Stood Down" : entry.rule.timeOfDay.map { Format.time($0,settings.clockStyle) } ?? "All Day"
             let attribution = entry.rule.suggestedByLabel(currentFather: settings.spiritualFatherName) ?? ""
             entry.rule.title.withCString { title in summary.withCString { body in category.withCString { cat in time.withCString { time in attribution.withCString { source in
-                ch_card(Int32(1000+i),title,body,cat,time,source,x,width,expanded ? expandedHeight : 232)
+                ch_card(Int32(1000+i),title,body,cat,time,source,x,width,expanded ? expandedHeight : compactCardHeight)
             } } } } }
             control(Int32(2000+i),16,"\(entry.isKept ? "Clear" : "Mark") \(entry.rule.title) as kept",x+width-32,10,22,22)
             ch_style(Int32(2000+i),entry.showsAsSatisfied ? 1 : 0); ch_enable(Int32(2000+i),entry.isDispensed ? 0 : 1)
             if flippedRuleID==entry.rule.id,entry.rule.glossarySlug != nil {
-                control(Int32(4000+i),18,"Learn More",x+14,expanded ? expandedHeight-32 : 198,100,24)
+                control(Int32(4000+i),18,"Learn More",x+14,expanded ? expandedHeight-32 : compactCardHeight-34,100,24)
             } else {
-            control(Int32(3000+i),17,expanded ? "↙" : "↗",x+width-32,expanded ? expandedHeight-30 : 198,24,24)
+            control(Int32(3000+i),17,expanded ? "↙" : "↗",x+width-32,expanded ? expandedHeight-30 : compactCardHeight-34,24,24)
             }
             x += width+12
         }
-        control(747,1,entries.isEmpty ? "+  Create Your First Rule" : "+  Add",x,0,120,232)
+        control(747,entries.isEmpty ? 28 : 1,entries.isEmpty ? "Create your First Rule" : "+  Add",x,0,entries.isEmpty ? contentWidth : 120,compactCardHeight)
         ch_cards_end()
         if revealExpandedCard,let index=entries.firstIndex(where: { $0.rule.id==expandedRuleID }) {
             ch_reveal_card(Int32(1000+index)); revealExpandedCard=false
@@ -145,15 +134,13 @@ extension WindowsApp {
             image.path.withCString { path in saying.text.withCString { quote in "\(saying.author) · \(saying.source)".withCString { source in
                 ch_image(750,path,quote,source,fx,fy,0,artY,contentWidth,270)
             } } }
-            let start=artworkStart(on:selectedDate,image:image)
-            let number=Int(image.deletingPathExtension().lastPathComponent) ?? 0
-            ch_image_motion(750,Date().timeIntervalSince(start),Int32(number))
+
         }
         ch_home_end()
         control(404,18,"Today",contentLeft+contentWidth-90,calendarTop+54,90,22)
         // The retained explicit action route is also reachable by keyboard.
         control(406,18,"…",contentLeft+contentWidth-65,28,28,28)
-        ch_enable(406,entries.isEmpty ? 0 : 1)
+
         requestCalendar()
     }
     func calendarChip(_ date: CalendarDate,id: Int32,x: Int32,y: Int32,width: Int32,height: Int32,week: Bool) {
@@ -168,7 +155,7 @@ extension WindowsApp {
         if selectedDate != date {
             expandedReadingBands.removeAll(); appointedKathisma=nil; manualKathisma=nil
         }
-        selectedDate=date; weekAnchor=date; visibleMonth=date; selectedRow=0
+        calendarTouched=Date(); ch_calendar_browse(1); selectedDate=date; weekAnchor=date; visibleMonth=date; selectedRow=0
         expandedRuleID=nil; flippedRuleID=nil; notice=""; ch_reset_home_scroll()
     }
 }

@@ -44,15 +44,16 @@ extension WindowsApp {
         }
         let numberHeight:Int32=settings.showConsistencyNumber && report.overall != nil ? 62 : 0
         let detailHeight:Int32=report.hasAnythingDue ? rowsHeight+92 : 0
-        var artY=summaryHeight+numberHeight+detailHeight+18
-        ch_home_begin(contentLeft,130,contentWidth,max(120,ch_height()-170),artY+332)
+        let artHeight:Int32=300
+        let artTop=ch_height()-24-artHeight
+        let viewportHeight=max(60,artTop-148)
+        ch_home_begin(contentLeft,130,contentWidth,viewportHeight,summaryHeight+numberHeight+detailHeight+18)
         reader(document,x:14,y:0,width:width,height:summaryHeight)
         summaryHeight=ch_rich_fit(301)
-        artY=summaryHeight+numberHeight+detailHeight+18
-        ch_home_content(artY+332)
+        ch_home_content(summaryHeight+numberHeight+detailHeight+18)
         var y=summaryHeight+8
         if settings.showConsistencyNumber,let value=report.overall {
-            control(20002,5,"\(Int((value*100).rounded()))%",14,y,110,40); ch_style(20002,128)
+            control(20002,5,"\(Int((value*100).rounded()))%",14,y,110,40); ch_style(20002,128); ch_font_size(20002,26,0,0)
             control(20003,0,"Kept, over the 30 days to then",128,y+16,width-120,24); ch_style(20003,64)
             y += 62
         }
@@ -67,13 +68,13 @@ extension WindowsApp {
             }
             control(20005,18,"Open in a window",14,y+6,190,30)
         }
+        ch_home_end()
         let image=WindowsAssets.root.appendingPathComponent("progress.jpg")
         let source="\(Self.progressAttribution)\n\(Self.progressCaption)"
         image.path.withCString { path in Self.progressQuote.withCString { quote in source.withCString { source in
-            ch_image(20006,path,quote,source,0.5,0,0,artY,contentWidth,300)
+            ch_image(20006,path,quote,source,0.5,0,contentLeft,artTop,contentWidth,artHeight)
         } } }
         ch_style(20006,1)
-        ch_home_end()
     }
     func renderDetachedProgress(show:Bool) throws {
         let width=ch_report_begin()

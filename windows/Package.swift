@@ -8,7 +8,7 @@ let package = Package(
     dependencies: [.package(name: "ChotkiCore", path: "shared-core")],
     targets: [
         .target(name: "WindowsUI", exclude: ["Notifications/LICENSE.txt"], publicHeadersPath: "include",
-                linkerSettings: [.linkedLibrary("user32"), .linkedLibrary("gdi32"), .linkedLibrary("comdlg32"), .linkedLibrary("gdiplus"), .linkedLibrary("dwmapi"), .linkedLibrary("shell32"), .linkedLibrary("ole32"), .linkedLibrary("advapi32"), .linkedLibrary("winmm"), .linkedLibrary("runtimeobject"), .linkedLibrary("propsys"), .linkedLibrary("shlwapi"), .linkedLibrary("uuid")]),
+                linkerSettings: [.linkedLibrary("user32"), .linkedLibrary("gdi32"), .linkedLibrary("msimg32"), .linkedLibrary("comdlg32"), .linkedLibrary("gdiplus"), .linkedLibrary("dwmapi"), .linkedLibrary("shell32"), .linkedLibrary("ole32"), .linkedLibrary("advapi32"), .linkedLibrary("winmm"), .linkedLibrary("runtimeobject"), .linkedLibrary("propsys"), .linkedLibrary("shlwapi"), .linkedLibrary("uuid")]),
         .executableTarget(
             name: "ChotkiWindows",
             dependencies: [.product(name: "ChotkiCore", package: "ChotkiCore"), "WindowsUI"],

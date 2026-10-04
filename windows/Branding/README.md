@@ -1,7 +1,7 @@
 # Windows application resources
 
 `tools/prepare-branding.py` generates the icon from canonical ChotkiCore vector
-geometry and reads the version from `macos/version.env`. Regenerate after changing
+geometry and reads the version from `Branding/version.json` (Windows alpha candidate/build counters). Regenerate after changing
 either; do not hand-edit `Version.h` or the icon. The SDK resource compiler embeds
 these alongside `Chotki.manifest`. Builds select the resource by content hash so
 an icon/version change also invalidates the incremental linker input.

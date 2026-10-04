@@ -69,7 +69,7 @@ extension WindowsApp {
                 guard !matching.isEmpty else { continue }
                 document.line(category.displayName, flags: 8 | 16, size: 13)
                 for entry in matching {
-                    document.line(entry.term, flags: 1, size: 18, link: .term(entry.slug))
+                    document.line(entry.term, flags: 16|128, size: 15, link: .term(entry.slug))
                     document.line(entry.short, flags: 4 | 16, size: 13)
                 }
             }

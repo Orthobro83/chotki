@@ -20,6 +20,7 @@ extension WindowsApp {
             try takeUp(resting); page = .home; ch_reset_home_scroll(); return
         }
         var draft = RuleDraft(nil, on: selectedDate, father: settings.spiritualFatherName)
+        draft.presetHeading = template.title.capitalized
         draft.rule = template.makeRule(source: "the library")
         draft.form = RecurrenceForm(draft.rule.recurrence)
         draft.hasTime = draft.rule.timeOfDay != nil
@@ -27,7 +28,7 @@ extension WindowsApp {
         draft.minute = draft.rule.timeOfDay?.minute ?? 30
         draft.reminders = draft.rule.effectiveReminders.enabled
         draft.leads = Set(draft.rule.effectiveReminders.leads)
-        editor = draft; notice = ""
+        editor = draft; notice = ""; ch_reset_home_scroll()
     }
     func renderLibrary() throws {
         title(libraryCaution ? "Writing Your Own Rule" : "Library", subtitle: libraryCaution ? "Keep it simple and attainable." : "Select a prayer, reading, or discipline to add to your routine.")
@@ -60,7 +61,7 @@ extension WindowsApp {
                         guard rule.title.compare(template.title,options:.caseInsensitive) == .orderedSame else { return false }
                         return try ruleIsActive(rule)
                     }
-                    let top=y; label(template.title,flags:256 | (taken ? 64 : 0),inset:4,available:width-150)
+                    let top=y; label(template.title,flags:2048 | (taken ? 64 : 0),inset:4,available:width-150)
                     if draw {
                         if taken { control(Int32(18000+index),0,"On your rule",width-116,top,125,24); ch_style(Int32(18000+index),128|512) }
                         else { control(Int32(11000+index),1,"Take on",width-98,top,106,28) }

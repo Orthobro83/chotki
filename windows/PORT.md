@@ -420,10 +420,10 @@ live record or changes the real login preference. The lifecycle wrapper runs it
 on the logged-in desktop with bounded cleanup. These package and lifecycle gates
 must pass before an RC is declared; assembly alone does not establish readiness.
 
-## Windows x86_64 release candidate acceptance
+## Earlier Windows preview acceptance (superseded)
 
-The first candidate is `windows-v1.0-beta.30-rc1`, using the canonical build-30
-version. The optimized GUI build, complete synthetic desktop suite, visual
+The earlier preview used the shared build-30 label. It is superseded by the
+Windows-only alpha version described below. Its optimized GUI build, complete synthetic desktop suite, visual
 review, physical mouse/keyboard/accessibility (including independent Home-card
 completion), real Windows notification delivery and native COM actions passed.
 The assembled payload and installed copy passed SQLite/settings/JSON/Psalter
@@ -435,5 +435,71 @@ close-to-tray and Quit with exit 0. Its private registry and task were removed.
 Installation on the VM is `%LOCALAPPDATA%\Programs\Chotki`, with a `Chotki`
 Desktop icon and Start menu shortcut. Installation and acceptance did not open
 live practice records. The release ZIP carries the integrity manifest and
-notices. The published candidate is ready for the user's form/function testing;
+notices. That published preview has been superseded by the installed alpha;
 real x86_64 hardware and native ARM64 are not claimed as verified by this VM.
+
+
+## User visual review corrections (4 October 2026)
+
+Earlier preview testing exposed stale glyphs when a visible native label changed fonts,
+solid reader backgrounds, incorrect empty-state typography and a blocked
+sidebar during rule creation. Windows labels now paint their current font on
+a fresh gradient, and native rich readers composite their active text view onto that same
+surface. Parent/child paint clipping also keeps page and resize repaints consistent. Reader link ranges retain mouse/keyboard navigation with explicit ochre
+styling instead of system hyperlink colors. Glossary list rows use the Mac's
+15-pixel system title and 13-pixel muted description.
+
+An empty Home shows a centered circular plus with “Create your First Rule”
+below it. Sidebar navigation discards an unfinished rule without saving it.
+The Progress report scrolls independently above its bottom-anchored rounded
+artwork, italic quotation, oversized gold opening quote, attribution and
+centered icon caption. Windows Home artwork is stationary; its movement timer
+and persisted animation position have been removed. Other platforms are
+unchanged. This supersedes earlier Home drift descriptions in this log.
+
+Visual review captures the visible synthetic window after repainting, rather
+than relying on PrintWindow's treatment of transparent controls. Focused visible-pixel checks reject blank readers after repainting. Synthetic
+checks cover sidebar draft cancellation across every destination, empty Home
+and Progress, UTF-16 bold/ochre link ranges, mouse hit testing, and repeated
+reader/glossary returns. User data and private diagnostics stay excluded.
+
+The corrected optimized x86_64 build passed the complete synthetic UI suite,
+focused visible-pixel review (including the 620-by-540 minimum window), and
+physical mouse, keyboard and native accessibility interaction checks. Its
+422 packaged files passed hash/size verification; the executable and all
+36 bundled DLLs are AMD64, and the executable uses the GUI subsystem.
+The corrected package is installed on the VM through the existing Desktop
+and Start menu shortcuts. Installed bootstrap and private lifecycle checks
+completed with exit code 0, including tray Quit and second-launch restoration.
+Live practice records were untouched. These corrections have not been
+published as a new GitHub release; RC1 remains the previously published build.
+
+## Windows alpha UI stabilization
+
+The next Windows package is labeled `alpha-rc2-build31` in its Windows-only
+version resource. The macOS version remains independent. Library and other
+scrolling panels now move their child controls together and repaint the
+complete surface, avoiding clipped text trails. Page redraws are batched so
+sidebar changes do not flash through intermediate layouts; batching preserves
+the window's hidden tray state. Custom controls paint through an offscreen
+buffer, with the circle's plus drawn from measured center coordinates.
+
+Library presets now open an editor headed by the preset name at the top of its
+form. Turning reminders off shows every lead option unchecked and disabled,
+while retaining the chosen leads if reminders are turned back on. Long-page
+scrollbars are hidden while wheel and keyboard scrolling remain available.
+The weekly strip moves through days with the wheel and returns to today's
+centered date after 30 seconds or after leaving Home. The Home layout uses
+compact cards at short window heights so its stationary artwork stays visible.
+Context and tray menus use Chotki's dark surface, muted disabled text and
+ochre selection marks. The Home add control is larger, and the ellipsis opens
+the selected rule's actions or navigates to Library when no rule exists.
+
+Synthetic review captured Library after real wheel movement and at its bottom,
+the preset editor, silenced reminders, and Home at 760-by-640 and 620-by-540.
+The complete functional suite and physical mouse, keyboard and accessibility
+review passed against a private synthetic record. The optimized package passed all 422 file hash and size checks; its executable
+and 36 DLLs have AMD64 PE headers. The VM's managed Chotki installation now
+runs `alpha-rc2-build31`; installed bootstrap, Desktop shortcut, private
+lifecycle, and tray Quit passed with exit code 0. Live practice records were
+untouched. This build has not been published as a GitHub release.

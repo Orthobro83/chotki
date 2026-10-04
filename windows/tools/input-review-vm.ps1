@@ -36,7 +36,11 @@ public static class ChotkiReviewInput {
     [StructLayout(LayoutKind.Sequential)] public struct Point { public int x,y; }
     [DllImport("user32.dll")] public static extern bool GetPhysicalCursorPos(out Point point);
     [DllImport("user32.dll")] public static extern IntPtr WindowFromPoint(Point point);
-    public static string MouseTarget() { Point point; GetPhysicalCursorPos(out point); return point.x+","+point.y+" control "+GetDlgCtrlID(WindowFromPoint(point)); }
+    [StructLayout(LayoutKind.Sequential)] public struct Rect { public int left,top,right,bottom; public int Width { get { return right-left; } } public int Height { get { return bottom-top; } } public override string ToString() { return left+","+top+","+Width+","+Height; } }
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd,out Rect rect);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd,out uint pid);
+    public static Rect Bounds(int handle) { Rect r; if(!GetWindowRect(new IntPtr(handle),out r))throw new Exception("Control was replaced before click"); return r; }
+    public static string MouseTarget() { Point point; GetPhysicalCursorPos(out point); uint pid; GetWindowThreadProcessId(WindowFromPoint(point),out pid); return point.x+","+point.y+" control "+GetDlgCtrlID(WindowFromPoint(point))+" process "+pid; }
     [DllImport("user32.dll")] public static extern int GetSystemMetrics(int index);
     public delegate bool EnumChild(IntPtr hwnd,IntPtr data);
     [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr parent,EnumChild callback,IntPtr data);
@@ -102,15 +106,15 @@ try {
         $element=Element $id
         if (!$element) { throw "UI Automation control $id missing" }
         for ($attempt=0;$attempt -lt 40;$attempt++) {
-            $bounds=$element.Current.BoundingRectangle; $frame=$script:root.Current.BoundingRectangle
+            $bounds=[ChotkiReviewInput]::Bounds($element.Current.NativeWindowHandle); $frame=[ChotkiReviewInput]::Bounds($script:root.Current.NativeWindowHandle)
             $pane=Element 9008
-            $clip=if($pane){$pane.Current.BoundingRectangle}else{$frame}
+            $clip=if($pane){[ChotkiReviewInput]::Bounds($pane.Current.NativeWindowHandle)}else{$frame}
             if ($bounds.Top -ge $clip.Top+4 -and $bounds.Bottom -le $clip.Bottom-24 -or $id -ge 100 -and $id -le 106) { break }
             [ChotkiReviewInput]::Click($clip.Right-35,$clip.Top+70)
             [ChotkiReviewInput]::Wheel($(if($bounds.Top -lt $clip.Top+4){120}else{-120}))
             Start-Sleep -Milliseconds 80; $element=Element $id
         }
-        $bounds=$element.Current.BoundingRectangle
+        $bounds=[ChotkiReviewInput]::Bounds($element.Current.NativeWindowHandle)
         [ChotkiReviewInput]::Click($bounds.Left+$bounds.Width/2,$bounds.Top+$bounds.Height/2)
         Start-Sleep -Milliseconds 150
         ('Click '+$id+' requested '+$bounds.ToString()+'; actual '+[ChotkiReviewInput]::MouseTarget()) | Add-Content $log
@@ -128,6 +132,7 @@ try {
     ('Name field role: '+$name.Current.ControlType.ProgrammaticName) | Add-Content $log
     Require ($name.Current.ControlType -eq [System.Windows.Automation.ControlType]::Edit) 'Name field accessibility role'
     Click-Control 311
+    $name=Element 311
     $name.SetFocus()
     Wait-For { (Element 311).Current.HasKeyboardFocus } 'Name field did not receive keyboard focus' 
     [ChotkiReviewInput]::KeyEvent(17,$false); [ChotkiReviewInput]::Press(65); [ChotkiReviewInput]::KeyEvent(17,$true)

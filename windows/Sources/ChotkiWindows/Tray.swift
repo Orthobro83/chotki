@@ -74,7 +74,8 @@ extension WindowsApp {
         enter(311, settings.displayName)
         try press(605)
         try require(settings.reminders.notificationsEnabled == original && ch_test_tray(0) == 1, "Settings toggle did not update the tray label")
-        try require(ch_test_window(1) == 0 && ch_tray_present() == 1, "Closing must keep the tray available")
+        let closedVisibility=ch_test_window(1), trayAfterClose=ch_tray_present()
+        try require(closedVisibility == 0 && trayAfterClose == 1, "Closing must keep the tray available (visible=\(closedVisibility), tray=\(trayAfterClose))")
         try require(ch_test_tray(Int32(CH_TRAY_OPEN)) == 1 && page == .home && ch_test_window(0) == 1,
                     "Open Chotki must reveal Home")
         _ = ch_test_window(2)

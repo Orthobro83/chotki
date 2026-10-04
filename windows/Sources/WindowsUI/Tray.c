@@ -1,3 +1,5 @@
+extern void ch_menu_style(void *menu);
+extern void ch_menu_destroy(void *menu);
 #define UNICODE
 #define _UNICODE
 #include "WindowsUI.h"
@@ -61,7 +63,7 @@ int ch_tray_attach(void *owner, int automation) {
     automated=automation; taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
     memset(&icon,0,sizeof(icon)); icon.cbSize=sizeof(icon); icon.hWnd=owner; icon.uID=1;
     icon.uFlags=NIF_MESSAGE|NIF_ICON|NIF_TIP|NIF_SHOWTIP; icon.uCallbackMessage=TRAY_MESSAGE;
-    icon.hIcon=ropeIcon(); wcscpy(icon.szTip,L"Chotki");
+    icon.hIcon=ropeIcon(); wcscpy_s(icon.szTip,_countof(icon.szTip),L"Chotki");
     return icon.hIcon && addIcon();
 }
 void ch_tray_detach(void) {
@@ -86,8 +88,9 @@ static HMENU trayMenu(void) {
 }
 static void showMenu(POINT point) {
     HMENU menu=trayMenu(); SetForegroundWindow(icon.hWnd);
+    ch_menu_style(menu);
     UINT command=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,point.x,point.y,0,icon.hWnd,NULL);
-    DestroyMenu(menu); PostMessageW(icon.hWnd,WM_NULL,0,0);
+    ch_menu_destroy(menu); PostMessageW(icon.hWnd,WM_NULL,0,0);
     if(command) ch_command(command);
     if(attached && command!=CH_TRAY_OPEN && command!=CH_TRAY_SETTINGS) Shell_NotifyIconW(NIM_SETFOCUS,&icon);
 }
@@ -109,7 +112,7 @@ int32_t ch_test_tray(int32_t command) {
     GetMenuStringW(menu,CH_TRAY_TOGGLE,label,64,MF_BYCOMMAND);
     int valid=GetMenuItemCount(menu)==4 && wcscmp(label,enabled ? L"Silence notifications" : L"Enable notifications")==0;
     for(int i=0;i<4;i++) valid=valid && GetMenuItemID(menu,i)==CH_TRAY_OPEN+i;
-    DestroyMenu(menu);
+    ch_menu_destroy(menu);
     if(!valid) return 0;
     if(command==0) return 1;
     if(command<CH_TRAY_OPEN || command>CH_TRAY_QUIT) return 0;

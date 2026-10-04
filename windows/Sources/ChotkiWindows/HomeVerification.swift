@@ -10,6 +10,16 @@ extension WindowsApp {
         try require(family.contains("XCharter"),"Reading font fell back to \(family)")
         try require(WindowsAssets.names.count==365 && !WindowsAssets.focuses.isEmpty && WindowsAssets.names.allSatisfy { FileManager.default.fileExists(atPath:WindowsAssets.root.appendingPathComponent($0).path) },"Artwork rotation/focus catalog is incomplete")
 
+        let savedDate=selectedDate, savedToday=lastKnownToday
+        let emptyDate=CalendarDate(year:2000,month:1,day:1)!
+        page = .home; setHomeDate(emptyDate); try render()
+        try require(try practice.entries(on:emptyDate).isEmpty && ch_test_control_visible(747)==1,"Centered first-rule prompt is missing")
+        try captureReview("home-empty")
+        try press(747); try require(page == .library,"First-rule prompt must open Library")
+        lastKnownToday=emptyDate; page = .progress; try render()
+        try require(ch_test_control_visible(20006)==1,"Empty Progress artwork must be anchored inside the viewport")
+        try captureReview("progress-empty")
+        lastKnownToday=savedToday; setHomeDate(savedDate)
         let date=CalendarDate(year:2026,month:8,day:19)!
         setHomeDate(date); page = .home; calendarExpanded=false
         try store.clearLiturgicalCache(reckoning:nil); try resetCalendarService()
@@ -25,6 +35,9 @@ extension WindowsApp {
         let previousSelection=selectedDate, anchor=weekAnchor
         try press(712)
         try require(selectedDate==previousSelection && weekAnchor==anchor.adding(days:7),"Week browsing changed the selected day")
+        ch_test_calendar_expire()
+        try require(weekAnchor==CalendarDate(Date(),in:.current),"Week must return to today after idle timeout")
+        setHomeDate(date); try render(); try press(712)
         try press(800)
         try require(selectedDate==anchor.adding(days:4),"Week chip did not select its day")
         setHomeDate(date); try render(); try press(713)

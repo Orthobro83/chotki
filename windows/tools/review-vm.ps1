@@ -1,6 +1,7 @@
-param([ValidateSet('debug','release')][string]$Configuration='debug')
+param([ValidateSet('debug','release')][string]$Configuration='debug',[switch]$VisualOnly)
 # Run on the logged-in VM desktop, using only synthetic data.
 . $PSScriptRoot\windows-env.ps1
+if($VisualOnly){$env:CHOTKI_VISUAL_REVIEW='1'}else{Remove-Item Env:CHOTKI_VISUAL_REVIEW -ErrorAction SilentlyContinue}
 $exe = Get-ChotkiExecutable $Configuration
 $OutputDir = $exe.DirectoryName
 $env:PATH = "$OutputDir;C:\Windows\system32;C:\Windows"

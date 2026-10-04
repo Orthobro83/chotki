@@ -5,6 +5,7 @@ import WindowsUI
 extension WindowsApp {
     func verifyReaderControls() throws {
         try press(102); try choosePrayer("morning")
+        try require(ch_test_reader_painted(301)==1,"Prayer text disappeared after repaint")
         let book = PrayerBook.shared.scoped(to: settings.jurisdiction.tradition)
         let morning = book.sequence(id: "morning")!
         let prayers = book.prayers(of: morning)
@@ -27,6 +28,7 @@ extension WindowsApp {
             try require(ch_test_link(301, 0) == 1, "Repeated glossary link")
             ch_pump()
             try require(glossaryDetouring, "Repeated glossary detour")
+            try require(ch_test_reader_painted(6014)==1,"Glossary detail text disappeared after repaint")
             try press(6063)
             try require(ch_test_reader_identity(301) == identity && ch_first_visible_line(301) == position,
                         "Repeated glossary return lost the native reader")
@@ -79,7 +81,7 @@ extension WindowsApp {
         reader(sample, x: contentLeft, y: 180, width: contentWidth, height: 350)
         try require(ch_test_rich_flags(301, 0) & 2 != 0, "Rubric italic style")
         let termStart = Int32("A 😀 rubric\r".utf16.count)
-        try require(ch_test_rich_flags(301, termStart) & 33 == 33, "Unicode offsets lost bold/link formatting")
+        try require(ch_test_rich_flags(301, termStart) & 97 == 97, "Unicode offsets lost bold, ochre color or link range")
         reviewedSourceURL = nil
 
         try require(ch_test_link(301, 1) == 1, "Source-credit hyperlink"); ch_pump()

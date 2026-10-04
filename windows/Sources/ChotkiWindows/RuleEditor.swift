@@ -3,6 +3,7 @@ import ChotkiCore
 import WindowsUI
 
 struct RuleDraft {
+    var presetHeading: String?
     let original: Rule?
     var rule: Rule
     var form: RecurrenceForm
@@ -51,15 +52,17 @@ extension WindowsApp {
     }
 
     func openEditor(_ rule: Rule? = nil) {
-        editor = RuleDraft(rule, on: selectedDate,
-                           father: settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines))
+        var draft = RuleDraft(rule, on: selectedDate,
+                              father: settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines))
+        if let rule, rule.source == "the library" { draft.presetHeading = rule.title.capitalized }
+        editor = draft
         notice = ""
         ch_reset_home_scroll()
     }
 
     func renderEditor() {
         guard let draft = editor else { return }
-        title(draft.original == nil ? "Write your own rule" : "Edit your rule", subtitle: "\(selectedDate.iso) · A rule is yours to change or set down.")
+        title(draft.presetHeading ?? (draft.original == nil ? "Write your own rule" : "Edit your rule"), subtitle: "\(selectedDate.iso) · A rule is yours to change or set down.")
         let width=min(620,contentWidth)-44
         ch_home_begin(contentLeft,124,contentWidth,max(120,ch_height()-164),1100)
         var y:Int32=8
@@ -98,7 +101,7 @@ extension WindowsApp {
         checkbox(533,"Remind me",checked:draft.reminders,x:14,y:y,width:width); y += 38
         let leadColumns=max(1,Int(width/190))
         for (i,lead) in ReminderLead.choices.enumerated() {
-            checkbox(Int32(534+i),lead.label,checked:draft.leads.contains(lead),x:14+Int32(i%leadColumns)*190,y:y+Int32(i/leadColumns)*36,width:185)
+            checkbox(Int32(534+i),lead.label,checked:draft.reminders && draft.hasTime && draft.leads.contains(lead),x:14+Int32(i%leadColumns)*190,y:y+Int32(i/leadColumns)*36,width:185)
             ch_enable(Int32(534+i),draft.reminders && draft.hasTime ? 1 : 0)
         }
         y += Int32((ReminderLead.choices.count+leadColumns-1)/leadColumns)*36+8
@@ -129,6 +132,7 @@ extension WindowsApp {
     /// Read before rebuilding controls, so changing recurrence never drops typed fields.
     func captureEditor() {
         guard var draft = editor else { return }
+        let leadsWereEditable=draft.reminders && draft.hasTime
         draft.rule.title = text(501); draft.rule.note = text(521).replacingOccurrences(of: "\r\n", with: "\n")
         if !draft.givenByPriest || draft.priestAttribution.isEmpty { draft.rule.source = text(523) }
         switch draft.form.kind {
@@ -144,8 +148,10 @@ extension WindowsApp {
         draft.form.kind = RecurrenceForm.Kind.allCases[max(0, Int(ch_selected(511)))]
         draft.hasTime = ch_checked(530) == 1
         draft.hour = max(0, Int(ch_selected(531))); draft.minute = max(0, Int(ch_selected(532)))
+        if leadsWereEditable {
+            draft.leads = Set(ReminderLead.choices.enumerated().compactMap { i, lead in ch_checked(Int32(534+i)) == 1 ? lead : nil })
+        }
         draft.reminders = ch_checked(533) == 1
-        draft.leads = Set(ReminderLead.choices.enumerated().compactMap { i, lead in ch_checked(Int32(534+i)) == 1 ? lead : nil })
         let given = ch_checked(524) == 1
         if given && !draft.givenByPriest && !settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             draft.priestAttribution = settings.spiritualFatherName.trimmingCharacters(in: .whitespacesAndNewlines)

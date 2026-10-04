@@ -45,6 +45,14 @@ extension WindowsApp {
     }
 
     func verifyRuleControls() throws {
+        let navigationCount=try store.rules(includeArchived:true).count
+        for destination in Page.allCases {
+            try press(101); try writeCustom()
+            enter(501,"Discard this unfinished rule")
+            try press(Int32(destination.rawValue))
+            try require(editor==nil && page==destination,"Sidebar must discard the draft and navigate")
+            try require(try store.rules(includeArchived:true).count==navigationCount,"Sidebar cancellation saved a draft")
+        }
         // Configure attribution through the real Settings controls.
         try press(105); enter(313, "Fr. Windows"); try press(430)
         try press(101); try writeCustom()

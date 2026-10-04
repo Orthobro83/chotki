@@ -1,8 +1,8 @@
 # Chotki for Windows
 
-Work in progress for **x86_64 Windows 11**. Current macOS is the visual and
-functional specification. Full parity is the release gate: do not publish a
-Windows release candidate until the port is complete. ARM64 is deferred.
+Windows **alpha-rc2-build31** targets x86_64 Windows 11. The current macOS app
+is the visual and functional specification. Full parity is the release gate;
+ARM64 is deferred.
 
 The SwiftPM executable combines canonical ChotkiCore with a native Win32 UI.
 Home includes grouped/collapsible navigation, week/month selection, separate
@@ -112,8 +112,9 @@ payload for the current user and creates Desktop/Start menu shortcuts. Its launc
 script excludes ARM64 toolchain paths. Program updates preserve the separate
 practice record. Draft assembly is not a release-candidate declaration.
 
-The first Windows candidate is `windows-v1.0-beta.30-rc1`. Its optimized desktop,
-physical input/accessibility, native notification, assembled-payload and installed
-lifecycle gates passed on the ARM64 VM under Prism. The candidate is installed on
-the VM with a Chotki Desktop icon. User acceptance and physical x86_64 hardware
-validation follow; native ARM64 remains deferred.
+The current alpha is installed on the VM with a Chotki Desktop icon. Its optimized
+desktop, physical input/accessibility, native notification, assembled-payload
+and installed lifecycle gates passed under Prism. Synthetic visual checks cover
+Library scrolling, editor state, and Home resizing. User acceptance and physical
+x86_64 hardware validation follow; native ARM64 remains deferred. This alpha
+build has not been published as a GitHub release.
