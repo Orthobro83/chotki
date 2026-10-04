@@ -51,7 +51,6 @@ fun RuleScreen(
     onReadPrayers: (DayEntry) -> Unit = {},
     onReadReading: (Int?) -> Unit = {},
     onReadPsalter: () -> Unit = {},
-    onReadReflections: (org.chotki.core.Weekday) -> Unit = {},
     onEdit: (DayEntry) -> Unit = {},
     onOpenLibrary: () -> Unit = {},
     /** Straight to the rope, already counting the prayer the rule names. */

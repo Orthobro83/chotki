@@ -61,7 +61,6 @@ object Content {
      * into the Swift core; retyping it here would be a second chance to get it
      * wrong.
      */
-    val reflections: ReflectionsJson by lazy { json.decodeFromString(load("reflections")) }
     val prayerSequences: List<PrayerSequenceJson> by lazy {
         json.decodeFromString(load("prayer-sequences"))
     }

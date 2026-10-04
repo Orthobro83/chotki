@@ -45,3 +45,21 @@ ios/build/
 
 # The iOS development team. Personal, and a generated project would lose it.
 ios/team.env
+
+# Disposable Windows VM local SSH host keys and diagnostic output
+windows/known_hosts.local
+windows/verification.local.txt
+
+# Generated Windows staging copy; canonical sources remain in core/
+windows/shared-core/
+windows/test-fixtures.zip
+windows/assets.zip
+windows/Sources/ChotkiWindows/Assets/
+
+windows/source-sync.zip
+
+# Local port diagnostics and one-off environment probes
+windows/SQLITE-SMOKE-TEST.md
+windows/VERIFICATION.md
+windows/toolchain-probe/
+windows/sqlite/

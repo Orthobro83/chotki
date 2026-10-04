@@ -172,7 +172,7 @@ struct ContentExportTests {
             ("prayer-sequences", sequences()), ("rule-library", library()),
             ("patristic-readings", readings()), ("prayer-sources", sources()),
             ("jurisdictions", jurisdictions()), ("practice-profiles", practiceProfiles()),
-            ("welcome", welcome()), ("reflections", reflections()),
+            ("welcome", welcome()),
             ("appointed-readings", appointed())
         ]
     }
@@ -197,36 +197,6 @@ struct ContentExportTests {
         ]
     }
 
-    /// The seven questions and the fixed copy around them.
-    ///
-    /// Exported rather than retyped for the same reason the prayers are: this
-    /// was transcribed once, and a second transcription
-    /// into Kotlin is a second chance to get it wrong. The explainer keeps its
-    /// spans so a link is not flattened away if one is ever added.
-    private func reflections() -> [String: Any] {
-        [
-            "days": Reflection.bundled.map { reflection in
-                [
-                    "weekday": reflection.weekday.rawValue,
-                    "title": reflection.question.title,
-                    "notice": reflection.question.notice,
-                    "task": reflection.question.task
-                ] as [String: Any]
-            },
-            "closingText": Reflection.closingText,
-            "addAsRuleLabel": Reflection.addAsRuleLabel,
-            "libraryNote": Reflection.libraryNote,
-            "explainer": Reflection.explainer.map { paragraph in
-                [
-                    "spans": paragraph.spans.map { span -> [String: Any] in
-                        var out: [String: Any] = ["text": span.text]
-                        if let url = span.url { out["url"] = url }
-                        return out
-                    }
-                ] as [String: Any]
-            }
-        ]
-    }
 
     /// Ryan's words, moved rather than retyped — the whole reason this lives in
     /// core is that the two platforms must say exactly the same thing.

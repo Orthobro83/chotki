@@ -40,5 +40,4 @@ enum Route: Hashable {
     /// `weekday` is the day to open on: tapping the way through from Tuesday's
     /// rule should land on Tuesday's question rather than at the top of a
     /// seven-day scroll. nil opens at the top, which is what Settings wants.
-    case reflections(weekday: Weekday? = nil)
 }

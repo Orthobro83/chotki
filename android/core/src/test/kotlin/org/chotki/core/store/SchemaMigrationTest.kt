@@ -45,8 +45,6 @@ class SchemaMigrationTest {
             """UPDATE rule SET recurrence = REPLACE(recurrence, '"liturgical"', '"org.chotki.core.Recurrence.Liturgical"');""",
             """UPDATE rule SET recurrence = REPLACE(recurrence, '"season"', '"org.chotki.core.LiturgicalTrigger.Season"');""",
             // v8
-            "DROP TABLE IF EXISTS reflection_entry;",
-            "DROP TABLE IF EXISTS reflection;",
             "DELETE FROM schema_version WHERE version > 1;",
         )
 
@@ -61,7 +59,7 @@ class SchemaMigrationTest {
          */
         val TABLES_MIGRATIONS_CREATE = listOf(
             "rule", "activation", "occurrence",
-            "liturgical_day", "app_settings", "reflection", "reflection_entry",
+            "liturgical_day", "app_settings",
         )
     }
 

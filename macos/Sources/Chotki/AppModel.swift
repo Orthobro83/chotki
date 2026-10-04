@@ -180,10 +180,10 @@ final class AppModel: ObservableObject {
 
     func reload() {
         do {
-            rules = try store.rules(includeArchived: false).filter { $0.reference != .reflections }
+            rules = try store.rules(includeArchived: false)
             activations = try store.activations(ruleID: nil)
             occurrences = try store.occurrences(ruleID: nil, from: nil, through: nil)
-            customEntries = CustomLibrary.entries(from: try store.rules(includeArchived: true)).filter { $0.reference != .reflections }
+            customEntries = CustomLibrary.entries(from: try store.rules(includeArchived: true))
             loadError = nil
         } catch {
             loadError = "Could not read your rules. \(error)"
@@ -206,7 +206,7 @@ final class AppModel: ObservableObject {
         guard !repaired.isEmpty else { return }
         do {
             for rule in repaired { try store.save(rule) }
-            rules = try store.rules(includeArchived: false).filter { $0.reference != .reflections }
+            rules = try store.rules(includeArchived: false)
         } catch {
             // Not worth an error in front of him: the rules are all still
             // there, they are only missing their link to the words.
@@ -223,7 +223,7 @@ final class AppModel: ObservableObject {
         guard !repaired.isEmpty else { return }
         do {
             for rule in repaired { try store.save(rule) }
-            rules = try store.rules(includeArchived: false).filter { $0.reference != .reflections }
+            rules = try store.rules(includeArchived: false)
         } catch {
             loadError = nil
         }

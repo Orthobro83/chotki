@@ -18,6 +18,9 @@ public enum EditScope: String, Sendable, Hashable, Codable {
 /// The mutations an edit implies. Pure data, so the whole three-way edit is
 /// testable without a database.
 public struct EditPlan: Sendable, Equatable {
+    /// Platforms can group rule creation/reactivation into one store transaction.
+    public init() {}
+
     public var updatedRules: [Rule] = []
     public var newRules: [Rule] = []
     public var updatedActivations: [Activation] = []

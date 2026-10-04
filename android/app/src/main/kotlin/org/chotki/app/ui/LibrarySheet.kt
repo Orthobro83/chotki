@@ -87,7 +87,7 @@ fun LibrarySheet(
 
         for (section in SECTIONS) {
             val templates = Content.ruleLibrary.filter {
-                it.category == section.key && it.id != "reflection"
+                it.category == section.key
             }
             if (templates.isEmpty()) continue
             item(key = "section-${section.key}") {
@@ -242,7 +242,7 @@ private val SECTIONS = listOf(
     Section("prayer", "Prayer"),
     Section("reading", "Reading"),
     Section("fasting", "Fasting"),
-    // Not in Ryan's list of five. It holds reflection, almsgiving, and the
+    // Not in Ryan's list of five. It holds almsgiving and the
     // prayer for the departed. Placed above Custom rather than folded into
     // Prayer, which none of them quite are.
     Section("life", "Life"),

@@ -5,7 +5,6 @@
 - 2026-09-30: Overhaul macOS to match the current Android redesign, preserving existing macOS capabilities across both the main window and menu-bar popover.
 - 2026-09-30: The redesign mockup is `/Volumes/2TB/grok-vault/chotki-alpha/mockups/elegant.html`; supplementary images are in this project's `imagery/` folder.
 - 2026-09-30: Use current Android source as the behavioral reference; older repository documentation contains stale status and tooling descriptions.
-- 2026-09-30: Remove Reflections entirely from the macOS app.
 - 2026-09-30: Retain the menu-bar companion; animate navigation highlights and pulse due-task sections in parchment for five seconds alongside macOS notifications.
 - 2026-09-30: Use Android's existing 42-image daily rotation; new library imagery requires user approval and should be high-quality, public-domain, Orthodox, beautiful, and peaceful, toward 365 images.
 - 2026-09-30: Use properly cased headings, a collapsible grouped sidebar, spacious desktop padding, light navigation transitions, and scrollbars visible during scrolling.
@@ -57,3 +56,6 @@
 - 2026-10-03: Android image packaging now uses Python 3.10+ and pinned Pillow in android/.image-tools (or CHOTKI_IMAGE_PYTHON / imagePython). Apply EXIF orientation before resizing and WebP encoding; keep Mac originals, order, and focal metadata unchanged. Track encoder versions and source/output hashes. This supersedes the open cwebp/sips dependency issue above.
 - 2026-10-03: Ubuntu CI verified the portable image pipeline on commit 08d10f3: debug and release assembly, image tests, 365-image APK verification, and release debuggability guard all passed. All six jobs passed: https://github.com/Orthobro83/chotki/actions/runs/37130032715.
 - 2026-10-03: A library copy titled "An akathist" that is still every Saturday is given the church's Akathist Fridays on load, on Mac, iOS, and Android. Any other schedule, and a renamed rule, is left alone. Which Friday it is follows the selected church. The old calendar and the new share those Fridays, because both count from Pascha. 3 October 2026 is a Saturday and is not one of them.
+- 2026-10-03: Windows port sources live in `windows/`, edited on Mac and synchronized over SSH to native `C:\workspace-build`. Keep credentials, host keys, generated sources/build output, diagnostics and environment probes out of GitHub. See `windows/BUILD-ENVIRONMENT.md` for mandatory allocator variables, explicit x86_64 target/native backend, vcpkg x64 dependencies, DLL guards and isolated execution.
+- 2026-10-03: Windows must be virtually indistinguishable in form and function from current macOS. ARM64 is deferred until the x86_64 port is complete. Do not create a Windows release candidate before the port is finished; publish current work as source only.
+- 2026-10-03: Remove retired feature implementations, routes, content and related promotional text from current repository files and GitHub-facing text. Preserve existing Git history.

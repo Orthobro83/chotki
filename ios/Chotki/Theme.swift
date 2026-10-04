@@ -49,7 +49,7 @@ enum Chotki {
     static let readingFace: String? = serifChain.first { UIFont(name: $0, size: 12) != nil }
 
     /// The face for anything meant to be read: prayers, psalms, the day's
-    /// readings, the fathers, glossary entries, reflections, the welcome.
+    /// readings, the fathers, glossary entries, the welcome.
     ///
     /// Chrome keeps the system sans — tab bars, the month grid's numerals,
     /// times, buttons and settings, where figures need to be tight and

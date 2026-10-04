@@ -20,21 +20,15 @@ Status: Complete.
 - Record a parity checklist here covering Home, Prayers, Reading, Progress, Library, Glossary, Settings, onboarding, editing, reminders, and backups.
 - Identify intentional Mac differences, including the sidebar, menu-bar companion, keyboard/mouse interaction, and launch-at-login.
 - Establish baseline core and macOS tests and builds, and inspect existing render and interaction tools.
-- Audit Reflections dependencies and stored records before removing the feature.
 - Establish one version source and document the first development build identifier.
 
 Completion check: Every Android feature has a mapped Mac destination or an explicit user-approved exclusion, and baseline failures are recorded.
 
-## Phase 2 — Behavior, Settings, and Reflections Removal
 
 Status: Complete.
 - Port missing Android decisions into the Swift core, including names, spiritual-father prompt timing, reading order, and completion behavior where needed.
-- Preserve backward-compatible settings decoding and existing non-Reflections records.
-- Remove Reflections from macOS navigation, library, views, model wiring, and relevant tests/resources.
-- Handle existing reflection rules and records explicitly so they cannot leave broken routes or distort progress; do not silently delete historical data.
 - Keep shared core changes compatible with iOS and avoid changing the Android reference unintentionally.
 
-Completion check: Relevant behavior and persistence tests pass, old records load safely, and macOS exposes no Reflections feature.
 
 ## Phase 3 — Desktop Shell and Navigation
 
@@ -99,7 +93,6 @@ Completion check: Controlled due-task scenarios produce the correct five-second 
 
 Status: In Progress.
 - Run relevant Swift core/macOS tests and shared compatibility checks.
-- Compare every Android feature against the completed Mac interface, and search for missed old headings, routes, and Reflections surfaces.
 - Render the actual window and popover using isolated sample data; never capture the desktop or open the live database for development verification.
 - Exercise real interactions with isolated data, including navigation, completion, editing, persistence, reminders, and backups.
 - Verify resizing, scrolling, keyboard use, Reduce Motion, image packaging, and the signed app bundle.
@@ -148,9 +141,7 @@ Status: Implemented with 365 days of the Prologue from Ochrid. This supersedes t
 ## Implementation Log
 
 - 2026-09-30: macOS baseline passed all 95 tests.
-- 2026-09-30: Core baseline ran 452 tests with seven pre-existing issues: Android surface parity (settings, prayer chooser, glossary linking, and Reflections route) plus three shared-content export mismatches.
 - 2026-09-30: Development begins at `0.2.0-build.1`; the numeric bundle build is tracked separately for Apple compatibility.
-- 2026-09-30: Retired Reflections data remains readable by backups and shared iOS core; the Mac excludes its rules from active practice, reminders, and progress.
 - 2026-09-30: The Swift core now includes all eighteen new Android glossary entries, revised welcome copy, and updated Psalter reference; source content was compared semantically with the Android resources.
 - 2026-09-30: Core suite passes 456 tests. macOS suite passes 68 tests. Offscreen real-window renders cover Home, month, narrow width, Library, Prayers, Reading, Progress, Settings, glossary, and companion.
 - 2026-09-30: The first visual pass found a glossary overlay covering the sidebar and a crowded narrow week strip; both were corrected and verified in a second offscreen render. The collapsed sidebar also renders without clipping.

@@ -440,9 +440,7 @@ extension Glossary {
             category: .prayer, related: ["jesus-prayer", "chotki", "trisagion"]
         ),
 
-        // Written by Ryan. The reflections send the reader to his spiritual
-        // father, and the glossary explained Confession and Confessor but not
-        // this — which are related and not the same thing.
+        // Spiritual guidance is related to confession but is a distinct concept.
         GlossaryEntry(
             slug: "spiritual-father", term: "Spiritual father",
             aliases: ["spiritual fathers", "spiritual guide"],

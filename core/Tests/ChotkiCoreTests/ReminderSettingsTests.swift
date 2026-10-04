@@ -235,7 +235,7 @@ struct SchemaMigrationTests {
     /// `makeLegacyDatabase`, and checked against the source by
     /// `everyLaterTableIsReversed` below, so forgetting one is a test failure
     /// rather than a puzzle.
-    static let tablesAfterVersionTwo = ["app_settings", "reflection", "reflection_entry"]
+    static let tablesAfterVersionTwo = ["app_settings"]
 
     private func makeLegacyDatabase(at path: String) throws {
         let store = try SQLiteStore(path: path)

@@ -669,7 +669,7 @@ private fun RuleMenu(
                     Item("Read today\u2019s kathisma", choosing(onReadPsalter))
                     HorizontalDivider(color = Chotki.lineSoft)
                 }
-                RuleReference.REFLECTIONS -> Unit
+
                 RuleReference.NONE -> Unit
             }
 

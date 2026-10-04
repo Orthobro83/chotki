@@ -5,7 +5,7 @@ import ChotkiCore
 /// What someone has chosen.
 ///
 /// The same groups as the phone: you, your church, the calendar, reminders,
-/// the prayer rope, the record, then general. Reflections and the glossary
+/// the prayer rope, the record, then general. The glossary
 /// stay reachable from here. The glossary is not a tab.
 struct SettingsView_: View {
     @Bindable var model: Model
@@ -156,12 +156,6 @@ struct SettingsView_: View {
 
                 group("Also")
                 panel {
-                    Button { pushRoute(.reflections(weekday: nil)) } label: {
-                        valueRow("Reflections", "")
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Reflections")
-                    hairline
                     Button { pushRoute(.term(slug: nil)) } label: {
                         valueRow("Glossary", "")
                     }

@@ -25,8 +25,6 @@ enum class RuleReference {
     /** The kathismata appointed for the day, and the psalms in them. */
     PSALTER,
 
-    /** The Reflections section, and today's question in it. */
-    REFLECTIONS,
 
     NONE,
 }
@@ -39,15 +37,6 @@ enum class RuleReference {
  * and stays theirs when the library changes underneath it.
  */
 const val PSALTER_RULE_TITLE = "A kathisma of the Psalter"
-
-/**
- * How a rule of one's own is recognised as the Reflections rule.
- *
- * Same reasoning as the Psalter's, and the same consequence: rename it and it
- * becomes an ordinary rule with no way through to the section. That is right.
- * It is theirs at that point, not ours.
- */
-const val REFLECTION_RULE_TITLE = "Reflection"
 
 /** The library title of the Akathist rule. A copy has no link back to its template. */
 const val AKATHIST_RULE_TITLE = "An akathist"
@@ -80,7 +69,6 @@ val Rule.reference: RuleReference
         // all three are what the Reading screen already shows.
         category == RuleCategory.READING -> RuleReference.READING
         title == PSALTER_RULE_TITLE -> RuleReference.PSALTER
-        title == REFLECTION_RULE_TITLE -> RuleReference.REFLECTIONS
         title == AKATHIST_RULE_TITLE || title == DEPARTED_RULE_TITLE -> RuleReference.READING
         else -> RuleReference.NONE
     }

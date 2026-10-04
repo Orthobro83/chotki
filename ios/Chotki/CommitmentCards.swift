@@ -159,8 +159,6 @@ private struct CommitmentCard: View {
             push(.psalter)
         case .prayers:
             push(.prayers(ruleID: rule.id))
-        case .reflections:
-            push(.reflections(weekday: entry.date.weekday))
         case .rope, .none:
             break
         }
@@ -195,11 +193,6 @@ private struct CommitmentCard: View {
                 Divider()
             case .psalter:
                 Button("Read today’s kathisma") { push(.psalter) }
-                Divider()
-            case .reflections:
-                Button("Open Reflections") {
-                    push(.reflections(weekday: entry.date.weekday))
-                }
                 Divider()
             case .none:
                 EmptyView()

@@ -32,7 +32,7 @@ struct LibraryViewContent: View {
                     .foregroundStyle(Theme.gold)
                     .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 3)
 
-                ForEach(templates.filter { $0.id != "reflection" }) { template in
+                ForEach(templates) { template in
                     TemplateRow(model: model, template: template, taken: isTaken(template))
                 }
             }

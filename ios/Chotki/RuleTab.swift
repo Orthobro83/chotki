@@ -70,7 +70,7 @@ struct LibrarySheet: View {
 
                     ForEach(sections, id: \.0) { category, name in
                         let templates = RuleLibrary.bundled.filter {
-                            $0.category == category && $0.id != "reflection"
+                            $0.category == category
                         }
                         if !templates.isEmpty {
                             panel(name, key: category.rawValue, count: templates.count) {

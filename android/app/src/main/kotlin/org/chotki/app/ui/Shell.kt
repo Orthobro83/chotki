@@ -282,20 +282,7 @@ fun Shell(state: AppState) {
                             PsalterScreen(state, Modifier.weight(1f))
                         }
 
-                        is Screen.Reflections -> {
-                            BackLink { journey = journey.back() }
-                            ReflectionsScreen(
-                                state = state,
-                                openAt = screen.weekday,
-                                modifier = Modifier.weight(1f),
-                                onTakeOn = {
-                                    state.ruleFrom("reflection")?.let {
-                                        journey = journey.push(
-                                            Screen.Editor(rule = null, startingFrom = it))
-                                    }
-                                },
-                            )
-                        }
+
 
                         Screen.Library -> {
                             BackLink { journey = journey.back() }
@@ -320,7 +307,6 @@ fun Shell(state: AppState) {
                                 journey = journey.go(Place.READING)
                             },
                             onReadPsalter = { journey = journey.push(Screen.Psalter) },
-                            onReadReflections = { journey = journey.push(Screen.Reflections(it)) },
                             onEdit = { journey = journey.push(Screen.Editor(it.rule)) },
                             onOpenLibrary = { journey = journey.push(Screen.Library) },
                             // The rope is a bar destination, so it is gone to

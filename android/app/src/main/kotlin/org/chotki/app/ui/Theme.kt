@@ -32,7 +32,7 @@ object Chotki {
 
     /**
      * The face for anything meant to be read: prayers, psalms, the day's
-     * readings, the fathers, glossary entries, reflections.
+     * readings, the fathers, glossary entries.
      *
      * **Android's own serif, not a bundled one.** macOS and iOS read in Iowan
      * Old Style, which is John Downer's, licensed to Apple, and may not be

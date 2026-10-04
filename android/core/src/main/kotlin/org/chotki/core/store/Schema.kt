@@ -165,48 +165,8 @@ object Schema {
         INSERT INTO schema_version (version) VALUES (7);
     """.trimIndent()
 
-    /**
-     * Reflections.
-     *
-     * **Eight here, seven on Swift, and that is correct** — the ladders are
-     * per-platform from 7 onward, as the note at the top of this file says.
-     * Swift's 7 is these two tables; Kotlin's 7 was the recurrence rewrite it
-     * needed and Swift did not. Only the table shape is shared.
-     *
-     * `weekday` is the primary key of `reflection` because there is exactly one
-     * per day and there always will be — they are rewritten, never added or
-     * removed, so there is no ordering within a day and no archived state.
-     *
-     * The seven are NOT seeded here. `Store.seedReflections()` does it from the
-     * generated content, so the shipped text lives in one place rather
-     * than being copied into a migration where it would drift.
-     */
+    /** Reserved historical migration; existing extra tables are left untouched. */
     private val V8 = """
-        CREATE TABLE reflection (
-            weekday INTEGER PRIMARY KEY,
-            title TEXT NOT NULL,
-            notice TEXT NOT NULL,
-            task TEXT NOT NULL,
-            edited_at TEXT
-        );
-
-        -- q_title, q_notice and q_task are the question as it stood when the
-        -- answer was written. They are copied, not joined: the wording is
-        -- editable, and a join would silently rewrite every past answer's
-        -- question the moment it changed.
-        CREATE TABLE reflection_entry (
-            id TEXT PRIMARY KEY,
-            weekday INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            text TEXT NOT NULL,
-            q_title TEXT NOT NULL,
-            q_notice TEXT NOT NULL,
-            q_task TEXT NOT NULL,
-            written_at TEXT NOT NULL,
-            UNIQUE(weekday, date)
-        );
-        CREATE INDEX reflection_entry_by_date ON reflection_entry(date);
-
         INSERT INTO schema_version (version) VALUES (8);
     """.trimIndent()
 }

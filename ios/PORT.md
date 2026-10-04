@@ -2,7 +2,7 @@
 
 ## Current state — 3 October 2026
 
-iOS is 1.0 beta, build 29, on the author’s phone and not a public download. The redesign is implemented: five custom tabs, commitment cards, a week/month calendar, grouped Library and Settings, shared 365-image artwork, and separate Reading disclosures. Church affiliation and the appointed readings use the shared core. Reflections remains available on iOS; its removal is specific to macOS. Phone orientation remains portrait. The port-planning notes below are historical and do not establish current feature completeness.
+iOS is 1.0 beta, build 29, on the author’s phone and not a public download. The redesign is implemented: five custom tabs, commitment cards, a week/month calendar, grouped Library and Settings, shared 365-image artwork, and separate Reading disclosures. Church affiliation and the appointed readings use the shared core. Phone orientation remains portrait. The port-planning notes below are historical and do not establish current feature completeness.
 
 Read `../retrospective.md` and `../android/PORT.md` first. The Android port is
 where the expensive lessons were bought, and most of them apply here even
@@ -221,39 +221,6 @@ Each ends with something runnable and tested, as the Android phases did.
 
 `sudo xcode-select -s /Applications/Xcode.app`, and an iOS Simulator runtime,
 which downloads separately from the SDK.
-
-## Reflections — built, 1 September 2026
-
-Seven weekday questions and a journal of answers. `reflections-decisions.md` at
-the repo root is the specification; what follows is what this platform chose
-where it could not simply copy the Mac.
-
-It inherited `core` unchanged — the model, the seven prompts, the journal logic,
-the archive and the store methods were already here and already passing — so
-only the view was written. `ReflectionsViews.swift`.
-
-- **A route, not a sixth tab.** Five is the cap here, and the sixth folds into a
-  "More" list. Reflections is reached from the rule row that names it and from
-  Settings, the arrangement the glossary and the Psalter already use.
-- **Past entries are a dated list you tap into**, not the Mac's panel with ◀ ▶
-  either side: there is no room for chevrons beside a full-width sheet. Each row
-  is a date and a two-line excerpt; opening one shows the question as it stood
-  when it was written, then the answer.
-- **The way through carries its weekday.** `Route.reflections(weekday:)` — tapped
-  on a Tuesday it scrolls to Tuesday's question rather than the top. The scroll
-  is deferred a turn, because a `LazyVStack` has not built the later days when
-  `onAppear` fires and scrolling to Saturday in the same pass finds nothing.
-- **The keyboard.** SwiftUI lifts the focused field clear on its own, checked on
-  the **last** day of the seven — the worst case, with nothing below to scroll
-  into — in the Simulator with the software keyboard actually up. Also
-  `.scrollDismissesKeyboard(.interactively)`, since seven fields with no way to
-  put the keyboard away but saving is unpleasant.
-- **Import and export** go through `fileImporter` / `fileExporter`. The picker
-  hands back a security-scoped URL, so the read is wrapped in
-  `startAccessingSecurityScopedResource`.
-
-Android has it now too, as of 2 September 2026 — see `android/PORT.md` for what
-that cost and where it chose differently.
 
 ## The typeface
 

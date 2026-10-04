@@ -140,23 +140,6 @@ struct OverhaulBehaviorTests {
         #expect(presentedMenuTitles.contains("Edit Rule…"))
     }
 
-    @Test("old Reflections remain in a backup but never enter practice or progress")
-    func retiredRecord() throws {
-        let store = InMemoryStore()
-        let old = Rule(title: reflectionRuleTitle, recurrence: .daily, category: RuleCategory.life.rawValue)
-        let current = Rule(title: "Morning prayers", recurrence: .daily)
-        try store.save(old)
-        try store.save(current)
-        let date = CalendarDate(Date(), in: .current)
-        try store.save(Activation(ruleID: old.id, from: date.adding(days: -40)))
-        try store.save(Activation(ruleID: current.id, from: date.adding(days: -40)))
-        let app = model(store: store)
-        #expect(app.rules.map(\.id) == [current.id])
-        #expect(app.entries(on: date).allSatisfy { $0.rule.id != old.id })
-        #expect(app.report().perRule.allSatisfy { $0.ruleID != old.id })
-        #expect(try store.rules(includeArchived: true).contains { $0.id == old.id })
-        #expect(try String(data: store.exportJSON(), encoding: .utf8)?.contains(old.id.uuidString) == true)
-    }
 
     @Test("the approved 365-image rotation is packaged with a focal point for each image")
     func packagedRotation() {

@@ -110,31 +110,6 @@ struct GlossaryCoverageTests {
         #expect(unexplained.isEmpty, complaint)
     }
 
-    /// The seven reflections are bundled text like any other, so they are held
-    /// to the same rule.
-    ///
-    /// **What this catches and what it does not.** The scan looks for
-    /// capitalised words mid-sentence, which in liturgical English is very
-    /// nearly the definition of a term of art. The prose is plain
-    /// modern English and capitalises nothing, so this test guards future edits
-    /// to the seven rather than finding much today. Terms of art that appear in
-    /// lowercase — "liturgy", "confession", "communion", "spiritual father" —
-    /// have to be found by reading. Three of those four the glossary already
-    /// explains; the fourth is in `awaitingAnEntry` above.
-    @Test("the reflections' terms of art are in the glossary")
-    func reflectionsAreCovered() {
-        // Titles are excluded: they are headings in title case — "Notice the
-        // Resistance" — and the scan reads every capital after the first word
-        // as a term. A heading is a label rather than something a reader
-        // stumbles through, and the rule is about the prose.
-        let text = Reflection.bundled.flatMap { [$0.notice, $0.task] }
-        let unexplained = candidates(in: text)
-        let complaint: Comment = """
-            no glossary entry for: \(unexplained.sorted().joined(separator: ", ")). \
-            Add entries, or add the word to `known` if a reader needs no help with it.
-            """
-        #expect(unexplained.isEmpty, complaint)
-    }
 
     /// The rule stated as a test of the glossary itself: a term the app links
     /// must be explainable.

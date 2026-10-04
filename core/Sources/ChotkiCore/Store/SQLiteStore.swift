@@ -15,7 +15,8 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.sel
 public final class SQLiteStore: Store, @unchecked Sendable {
 
     private var db: OpaquePointer?
-    private let lock = NSLock()
+    // A transaction holds the lock while invoking the same locked save methods.
+    private let lock = NSRecursiveLock()
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
@@ -210,41 +211,8 @@ public final class SQLiteStore: Store, @unchecked Sendable {
         }
 
         if current < 7 {
-            // Reflections. `weekday` is the primary key of `reflection` because
-            // there is exactly one per day and there always will be — they are
-            // rewritten, never added or removed, so there is no ordering within
-            // a day and no archived state.
-            //
-            // The seven are NOT seeded here. `Store.seedReflections()` does it
-            // from `Reflection.bundled`, so the shipped text lives in one
-            // place rather than being copied into a migration where it would
-            // drift.
+            // Reserve this historical schema version.
             try exec("""
-                CREATE TABLE reflection (
-                    weekday INTEGER PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    notice TEXT NOT NULL,
-                    task TEXT NOT NULL,
-                    edited_at TEXT
-                );
-
-                -- q_title, q_notice and q_task are the question as it stood
-                -- when the answer was written. They are copied, not joined:
-                -- the wording is editable, and a join would silently rewrite
-                -- every past answer's question the moment it changed.
-                CREATE TABLE reflection_entry (
-                    id TEXT PRIMARY KEY,
-                    weekday INTEGER NOT NULL,
-                    date TEXT NOT NULL,
-                    text TEXT NOT NULL,
-                    q_title TEXT NOT NULL,
-                    q_notice TEXT NOT NULL,
-                    q_task TEXT NOT NULL,
-                    written_at TEXT NOT NULL,
-                    UNIQUE(weekday, date)
-                );
-                CREATE INDEX reflection_entry_by_date ON reflection_entry(date);
-
                 INSERT INTO schema_version (version) VALUES (7);
                 """)
         }
@@ -510,105 +478,30 @@ public final class SQLiteStore: Store, @unchecked Sendable {
     /// A split that closed the old stretch but failed to open the new one would
     /// make a rule silently disappear. All of it lands, or none of it does.
     public func apply(_ plan: EditPlan) throws {
-        try locked { try exec("BEGIN IMMEDIATE;") }
-        do {
+        try transaction {
             for rule in plan.updatedRules + plan.newRules { try save(rule) }
             for activation in plan.updatedActivations + plan.newActivations { try save(activation) }
             for id in plan.removedActivationIDs { try removeActivation(id: id) }
             for occurrence in plan.newOccurrences { try save(occurrence) }
-            try locked { try exec("COMMIT;") }
-        } catch {
-            try? locked { try exec("ROLLBACK;") }
-            throw error
         }
     }
 
-    // MARK: reflections
+    /// A malformed relationship or failed write must never leave half a restore.
+    public func importBackup(_ backup: Backup) throws {
+        try transaction { try mergeBackupContents(backup) }
+    }
 
-    public func reflections() throws -> [Reflection] {
+    private func transaction(_ body: () throws -> Void) throws {
         try locked {
-            try query(
-                "SELECT weekday, title, notice, task, edited_at FROM reflection ORDER BY weekday;", []
-            ) { statement in
-                guard let weekday = Weekday(rawValue: Int(sqlite3_column_int(statement, 0))) else {
-                    throw StoreError.query("reflection has no weekday")
-                }
-                return Reflection(
-                    weekday: weekday,
-                    question: ReflectionQuestion(
-                        title: text(statement, 1) ?? "",
-                        notice: text(statement, 2) ?? "",
-                        task: text(statement, 3) ?? ""
-                    ),
-                    editedAt: decode(text(statement, 4))
-                )
+            try exec("BEGIN IMMEDIATE;")
+            do {
+                try body()
+                try exec("COMMIT;")
+            } catch {
+                try? exec("ROLLBACK;")
+                throw error
             }
         }
     }
 
-    public func save(_ reflection: Reflection) throws {
-        try locked {
-            try run("""
-                INSERT INTO reflection (weekday, title, notice, task, edited_at)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(weekday) DO UPDATE SET
-                    title = excluded.title, notice = excluded.notice,
-                    task = excluded.task, edited_at = excluded.edited_at;
-                """, [
-                    String(reflection.weekday.rawValue), reflection.question.title,
-                    reflection.question.notice, reflection.question.task,
-                    encode(reflection.editedAt)
-                ])
-        }
-    }
-
-    public func save(_ entry: ReflectionEntry) throws {
-        try locked {
-            try run("""
-                INSERT INTO reflection_entry
-                    (id, weekday, date, text, q_title, q_notice, q_task, written_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(weekday, date) DO UPDATE SET
-                    text = excluded.text, q_title = excluded.q_title,
-                    q_notice = excluded.q_notice, q_task = excluded.q_task,
-                    written_at = excluded.written_at;
-                """, [
-                    entry.id.uuidString, String(entry.weekday.rawValue), entry.date.iso, entry.text,
-                    entry.question.title, entry.question.notice, entry.question.task,
-                    encode(entry.writtenAt)
-                ])
-        }
-    }
-
-    public func reflectionEntries(
-        weekday: Weekday?, from: CalendarDate?, through: CalendarDate?
-    ) throws -> [ReflectionEntry] {
-        try locked {
-            var sql = """
-                SELECT id, weekday, date, text, q_title, q_notice, q_task, written_at
-                FROM reflection_entry WHERE 1 = 1
-                """
-            var bindings: [String?] = []
-            if let weekday { sql += " AND weekday = ?"; bindings.append(String(weekday.rawValue)) }
-            if let from { sql += " AND date >= ?"; bindings.append(from.iso) }
-            if let through { sql += " AND date <= ?"; bindings.append(through.iso) }
-            sql += " ORDER BY date DESC;"
-            return try query(sql, bindings) { statement in
-                guard
-                    let id = UUID(uuidString: text(statement, 0) ?? ""),
-                    let weekday = Weekday(rawValue: Int(sqlite3_column_int(statement, 1))),
-                    let date = CalendarDate(iso: text(statement, 2) ?? "")
-                else { throw StoreError.query("reflection entry is not readable") }
-                return ReflectionEntry(
-                    id: id, weekday: weekday, date: date, text: text(statement, 3) ?? "",
-                    question: ReflectionQuestion(
-                        title: text(statement, 4) ?? "",
-                        notice: text(statement, 5) ?? "",
-                        task: text(statement, 6) ?? ""
-                    ),
-                    writtenAt: decode(text(statement, 7)) ?? Date()
-                )
-            }
-        }
-    }
 }
