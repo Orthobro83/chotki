@@ -74,6 +74,9 @@ final class WindowsApp {
     var audioStatus:Int32=0
     var actionError: String?
     private var rendering = false
+    private var lastRenderedPage: Page?
+    private var lastRenderedSidebarCollapsed = false
+    private var lastRenderedCalendarExpanded = false
 
     init(review: Bool) throws {
         self.review = review
@@ -138,6 +141,13 @@ final class WindowsApp {
         // The opening owns the visible surface until its completion callback.
         // Calendar arrivals still update the model, then render after the fade.
         if ch_opening_active() != 0 { return }
+        if let lastRenderedPage, lastRenderedPage != page || lastRenderedSidebarCollapsed != sidebarCollapsed ||
+            (page == .home && lastRenderedCalendarExpanded != calendarExpanded) {
+            ch_transition(lastRenderedSidebarCollapsed != sidebarCollapsed ? 1 : 0)
+        }
+        lastRenderedPage = page
+        lastRenderedSidebarCollapsed = sidebarCollapsed
+        lastRenderedCalendarExpanded = calendarExpanded
         rendering = true
         ch_render_begin()
         defer { ch_render_end(); rendering = false }
@@ -378,6 +388,8 @@ final class WindowsApp {
             try press(102); try choosePrayer("morning")
             try captureReview("visual-prayers")
             try require(ch_test_reader_painted(301)==1,"Prayer text disappeared after repaint")
+            try press(103); try captureReview("visual-reading")
+            try require(ch_test_reader_painted(301)==1,"Reading text disappeared after repaint")
             showGlossaryTerm("amen"); try captureReview("visual-glossary")
             try require(ch_test_reader_painted(6014)==1,"Glossary text disappeared after repaint")
             try press(6063); try press(106); try captureReview("visual-glossary-list")

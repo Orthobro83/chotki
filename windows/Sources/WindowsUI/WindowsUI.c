@@ -41,13 +41,19 @@ static void *context;
 static HFONT regular, reading, heading, smallFont, dateFont, captionFont, listFont;
 static HBRUSH ground, panel;
 static int automation, exitCode, priorFocus, readerSerial, prayerKeys, renderDepth, renderWasVisible, keyboardFocus;
+static int transitionPending, transitionSidebar;
+static int transitionAttempts, transitionCreated, transitionError;
+static HWND transitionOverlay;
+static HBITMAP transitionBitmap;
+static ULONGLONG transitionStarted;
+static const int transitionDuration=250;
 static wchar_t *testFilePath;
 static int testFileResult;
 static const COLORREF background = RGB(21,22,28), foreground = RGB(232,223,205);
 static const COLORREF gold=RGB(201,162,39), muted=RGB(163,158,143), line=RGB(46,42,32);
 static const COLORREF parchmentDim=RGB(216,207,189), violet=RGB(154,143,196);
 typedef struct ChoiceItem { wchar_t *title,*group; int index; struct ChoiceItem *next; } ChoiceItem;
-typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll, wheelRemainder; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
+typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll, wheelRemainder, sidebarFinalX, paintCount; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
 static int px(int value) { return MulDiv(value,dpi,96); }
 static HWND findChild(int id) {
     HWND found=GetDlgItem(window,id);
@@ -137,7 +143,15 @@ static void sidebarIcon(HDC dc,int id,int x,int y,COLORREF color) {
     else if(id==106) { RoundRect(dc,x+px(4),y+px(2),x+a-px(4),y+a-px(2),px(2),px(2)); MoveToEx(dc,x+px(7),y+px(2),NULL); LineTo(dc,x+px(7),y+a-px(2)); MoveToEx(dc,x+px(9),y+px(7),NULL); LineTo(dc,x+px(12),y+px(7)); MoveToEx(dc,x+px(9),y+px(10),NULL); LineTo(dc,x+px(12),y+px(10)); }
     else if(id==104) { MoveToEx(dc,x+px(3),y+a-px(3),NULL); LineTo(dc,x+a-px(2),y+a-px(3)); MoveToEx(dc,x+px(3),y+a-px(3),NULL); LineTo(dc,x+px(3),y+px(3)); MoveToEx(dc,x+px(5),y+px(12),NULL); LineTo(dc,x+px(9),y+px(9)); LineTo(dc,x+px(12),y+px(11)); LineTo(dc,x+px(15),y+px(5)); }
     else if(id==101) { for(int row=0;row<2;row++) for(int col=0;col<2;col++) RoundRect(dc,x+px(3+col*7),y+px(3+row*7),x+px(8+col*7),y+px(8+row*7),px(1),px(1)); }
-    else if(id==105) { HFONT gear=face(17,FW_NORMAL,0); HGDIOBJ prior=SelectObject(dc,gear); RECT r={x,y,x+a,y+a}; SetBkMode(dc,TRANSPARENT); SetTextColor(dc,color); DrawTextW(dc,L"⚙",-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE); SelectObject(dc,prior); DeleteObject(gear); }
+    else if(id==105) {
+        // E713 is the standard Settings glyph in Windows' icon font.
+        HFONT gear=CreateFontW(-px(17),0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,0,0,
+                               CLEARTYPE_QUALITY,0,L"Segoe MDL2 Assets");
+        HGDIOBJ prior=SelectObject(dc,gear); RECT bounds={x,y,x+a,y+a};
+        SetBkMode(dc,TRANSPARENT); SetTextColor(dc,color);
+        DrawTextW(dc,L"\xE713",-1,&bounds,DT_CENTER|DT_VCENTER|DT_SINGLELINE);
+        SelectObject(dc,prior); DeleteObject(gear);
+    }
     SelectObject(dc,oldBrush); SelectObject(dc,oldPen); DeleteObject(pen);
 }
 static void calendarChevron(HDC dc,int id,RECT r) {
@@ -423,6 +437,7 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
     if(v->nativePaint && (msg==WM_PAINT || msg==WM_PRINTCLIENT || msg==WM_PRINT)) return CallWindowProcW(previous,hwnd,msg,wp,lp);
     if(v->kind==19 && msg==WM_ERASEBKGND) return 1;
     if(v->kind==19 && (msg==WM_PAINT || msg==WM_PRINTCLIENT)) {
+        v->paintCount++;
         RECT r; GetClientRect(hwnd,&r);
         HDC source=GetDC(hwnd); FillRect(source,&r,ground);
         // This Rich Edit version paints its active native view, rather than
@@ -435,6 +450,15 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
         HDC dc=msg==WM_PAINT ? source : (HDC)wp; int saved=SaveDC(dc);
         IntersectClipRect(dc,0,0,r.right,r.bottom); backdrop(dc,hwnd);
         TransparentBlt(dc,0,0,r.right,r.bottom,memory,0,0,r.right,r.bottom,background);
+        if(v->flags&32768) {
+            HPEN divider=CreatePen(PS_SOLID,1,line),oldPen=SelectObject(dc,divider);
+            for(LinkRange *link=v->links;link;link=link->next) if(link->disclosure) {
+                POINT position={0,0}; SendMessageW(hwnd,EM_POSFROMCHAR,(WPARAM)&position,link->start);
+                int y=position.y-px(8);
+                if(y>=0 && y<r.bottom) { MoveToEx(dc,0,y,NULL); LineTo(dc,r.right-px(2),y); }
+            }
+            SelectObject(dc,oldPen); DeleteObject(divider);
+        }
         RestoreDC(dc,saved); SelectObject(memory,old); DeleteObject(bitmap); DeleteDC(memory); ReleaseDC(hwnd,source); return 0;
     }
     if(msg==WM_LBUTTONDOWN) keyboardFocus=0;
@@ -453,7 +477,18 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
         v->wheelRemainder+=GET_WHEEL_DELTA_WPARAM(wp);
         int lines=v->wheelRemainder/(WHEEL_DELTA/3);
         v->wheelRemainder%=WHEEL_DELTA/3;
-        if(lines) SendMessageW(hwnd,EM_LINESCROLL,0,-lines);
+        if(lines) {
+            int atTop=before==0 && lines>0;
+            GETTEXTLENGTHEX options={GTL_NUMCHARS|GTL_PRECISE,1200};
+            LONG count=(LONG)SendMessageW(hwnd,EM_GETTEXTLENGTHEX,(WPARAM)&options,0);
+            POINT last={0,0}; RECT viewport; GetClientRect(hwnd,&viewport);
+            if(count>0) SendMessageW(hwnd,EM_POSFROMCHAR,(WPARAM)&last,count-1);
+            int totalLines=(int)SendMessageW(hwnd,EM_GETLINECOUNT,0,0);
+            // Rich Edit can report a negative position for the final paragraph
+            // mark even when the viewport is already at its last line.
+            int atBottom=count==0 || before>=totalLines-1 || (last.y>=0 && last.y<viewport.bottom);
+            if(!atTop && !(atBottom && lines<0)) SendMessageW(hwnd,EM_LINESCROLL,0,-lines);
+        }
         int after=(int)SendMessageW(hwnd,EM_GETFIRSTVISIBLELINE,0,0);
         if(after!=before) {
             if(v->tracked && !v->suppressScroll) { v->scrolled=1; PostMessageW(window,WM_APP+11,(WPARAM)hwnd,0); }
@@ -502,6 +537,7 @@ static LRESULT CALLBACK scrollProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
         si.fMask=SIF_POS; SetScrollInfo(hwnd,bar,&si,TRUE); GetScrollInfo(hwnd,bar,&si);
         ShowScrollBar(hwnd,bar,FALSE);
         if(bar==SB_HORZ) cardScroll=si.nPos; else homeScroll=si.nPos;
+        if(si.nPos==old) return 0;
         movePanelChildren(hwnd,bar==SB_HORZ ? old-si.nPos : 0,bar==SB_VERT ? old-si.nPos : 0);
         UpdateWindow(hwnd); return 0;
     }
@@ -513,6 +549,24 @@ static wchar_t *wide(const char *text) {
     wchar_t *result = calloc(length ? length : 1, sizeof(wchar_t));
     if (length) MultiByteToWideChar(CP_UTF8, 0, text, -1, result, length);
     return result;
+}
+static void endTransition(void) {
+    if(window) KillTimer(window,5);
+    if(transitionOverlay) { DestroyWindow(transitionOverlay); transitionOverlay=NULL; }
+    if(transitionBitmap) { DeleteObject(transitionBitmap); transitionBitmap=NULL; }
+}
+static void positionAnimatedSidebar(double progress) {
+    if(!transitionSidebar) return;
+    double remaining=1.0-progress; remaining=remaining*remaining*remaining;
+    for(HWND child=GetWindow(window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) {
+        Visual *v=GetPropW(child,L"ChotkiVisual");
+        if(!v || !(v->flags&(4096|65536))) continue;
+        RECT bounds; GetWindowRect(child,&bounds); MapWindowPoints(NULL,window,(POINT*)&bounds,2);
+        SetWindowPos(child,NULL,v->sidebarFinalX-px((int)(130*remaining)),bounds.top,0,0,
+                     SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE|SWP_NOREDRAW);
+    }
+    RECT stripe={0,0,px(205),px(520)};
+    RedrawWindow(window,&stripe,NULL,RDW_INVALIDATE|RDW_ALLCHILDREN);
 }
 extern int ch_tray_attach(void *owner, int automation);
 extern void ch_tray_detach(void);
@@ -547,8 +601,20 @@ static LRESULT CALLBACK procedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     }
     case WM_DRAWITEM: if(((DRAWITEMSTRUCT*)lp)->CtlType==ODT_MENU) drawMenu((DRAWITEMSTRUCT*)lp); else drawVisual((DRAWITEMSTRUCT*)lp); return TRUE;
     case WM_APP+50: return lifecycleReview ? ch_opening_state() : -1;
+    case WM_APP+51: return lifecycleReview ? (transitionAttempts<<16)|transitionCreated : -1;
+    case WM_APP+52: return lifecycleReview ? transitionError : -1;
     case WM_APP+12: ch_post(CH_TRAY_OPEN,0); return 0;
     case WM_TIMER:
+        if(wp==5) {
+            ULONGLONG elapsed=GetTickCount64()-transitionStarted;
+            if(elapsed>=transitionDuration || !transitionOverlay) { positionAnimatedSidebar(1); endTransition(); transitionSidebar=0; }
+            else {
+                double progress=(double)elapsed/transitionDuration;
+                positionAnimatedSidebar(progress);
+                SetLayeredWindowAttributes(transitionOverlay,0,(BYTE)(255-(elapsed*255/transitionDuration)),LWA_ALPHA);
+            }
+            return 0;
+        }
         if(wp==4) { KillTimer(hwnd,4); ch_post(-12,0); return 0; }
         if(wp==3) { ch_post(-9,0); return 0; }
         if(wp==2) {
@@ -653,13 +719,53 @@ static LRESULT CALLBACK procedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 static wchar_t *priorReadingText;
 static int priorReadingLine;
 void ch_calendar_browse(int32_t active) { KillTimer(window,4); if(active) SetTimer(window,4,30000,NULL); }
+void ch_transition(int32_t sidebar) { transitionPending=1; transitionSidebar=sidebar!=0; }
 void ch_render_begin(void) {
-    if(renderDepth++==0) { renderWasVisible=IsWindowVisible(window); if(renderWasVisible) SendMessageW(window,WM_SETREDRAW,FALSE,0); }
+    if(renderDepth++!=0) return;
+    renderWasVisible=IsWindowVisible(window);
+    if(!transitionPending || !renderWasVisible || automation || platformReview) {
+        endTransition(); transitionPending=0; transitionSidebar=0; return;
+    }
+    BOOL animations=TRUE; SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0);
+    if(!animations) { endTransition(); transitionPending=0; transitionSidebar=0; return; }
+    RECT r; GetClientRect(window,&r); HDC screen=GetDC(window),memory=CreateCompatibleDC(screen);
+    HBITMAP bitmap=CreateCompatibleBitmap(screen,max(1,r.right),max(1,r.bottom));
+    HGDIOBJ old=SelectObject(memory,bitmap);
+    int captured=BitBlt(memory,0,0,r.right,r.bottom,screen,0,0,SRCCOPY);
+    SelectObject(memory,old); DeleteDC(memory); ReleaseDC(window,screen);
+    endTransition();
+    if(captured) transitionBitmap=bitmap; else DeleteObject(bitmap);
+    transitionPending=0;
 }
 void ch_render_end(void) {
     if(renderDepth<=0 || --renderDepth) return;
-    if(renderWasVisible) SendMessageW(window,WM_SETREDRAW,TRUE,0);
     if(IsWindowVisible(window)) RedrawWindow(window,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);
+    if(transitionBitmap && renderWasVisible && IsWindowVisible(window)) {
+        transitionAttempts++;
+        RECT r; GetClientRect(window,&r);
+        transitionOverlay=CreateWindowExW(WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_NOACTIVATE,
+            L"STATIC",L"",WS_CHILD|WS_VISIBLE|SS_BITMAP|SS_NOTIFY,0,0,r.right,r.bottom,
+            window,(HMENU)9007,GetModuleHandleW(NULL),NULL);
+        if(transitionOverlay) {
+            SendMessageW(transitionOverlay,STM_SETIMAGE,IMAGE_BITMAP,(LPARAM)transitionBitmap);
+            SetWindowPos(transitionOverlay,HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+            if(!SetLayeredWindowAttributes(transitionOverlay,0,255,LWA_ALPHA) || !IsWindowVisible(transitionOverlay)) {
+                transitionError=GetLastError(); if(!transitionError) transitionError=10001;
+                endTransition(); transitionSidebar=0; return;
+            }
+            transitionCreated++;
+            if(transitionSidebar) {
+                for(HWND child=GetWindow(window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) {
+                    Visual *v=GetPropW(child,L"ChotkiVisual");
+                    if(!v || !(v->flags&(4096|65536))) continue;
+                    RECT bounds; GetWindowRect(child,&bounds); MapWindowPoints(NULL,window,(POINT*)&bounds,2);
+                    v->sidebarFinalX=bounds.left;
+                }
+                positionAnimatedSidebar(0);
+            }
+            transitionStarted=GetTickCount64(); SetTimer(window,5,16,NULL);
+        } else { transitionError=GetLastError(); endTransition(); transitionSidebar=0; }
+    }
 }
 void ch_clear(void) {
     libraryHoverCount=0;
@@ -700,7 +806,7 @@ void ch_control(int32_t id, int32_t kind, const char *text, int32_t x, int32_t y
     if (kind==25) style |= SS_CENTER;
     if (kind == 12 || kind==20 || kind==26) style |= SS_OWNERDRAW;
     if (kind == 6) style |= WS_TABSTOP | BS_AUTOCHECKBOX | BS_MULTILINE;
-    if (kind == 7) style |= WS_TABSTOP | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS;
+    if (kind == 7) style |= WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS;
     if (kind == 8) style |= WS_TABSTOP | ES_MULTILINE | ES_AUTOVSCROLL | WS_BORDER;
     wchar_t *value = wide(text);
     HWND parent=currentParent ? currentParent : window;
@@ -1125,6 +1231,12 @@ void ch_test_panel_wheel(int32_t turns) {
     for(int i=0;i<abs(turns);i++) SendMessageW(homePanel,WM_MOUSEWHEEL,MAKEWPARAM(0,turns>0 ? (short)-WHEEL_DELTA : (short)WHEEL_DELTA),0);
 }
 int32_t ch_test_reader_first_line(int32_t id) { return automation && findChild(id) ? (int32_t)SendMessageW(findChild(id),EM_GETFIRSTVISIBLELINE,0,0) : -1; }
+int32_t ch_test_reader_paint_count(int32_t id) {
+    HWND child=findChild(id);
+    if(child) UpdateWindow(child);
+    Visual *v=GetPropW(child,L"ChotkiVisual");
+    return automation && v && v->kind==19 ? v->paintCount : -1;
+}
 int32_t ch_test_reader_wheel(int32_t id,int32_t turns) {
     HWND child=findChild(id); if(!automation || !child) return -1;
     for(int i=0;i<abs(turns);i++) SendMessageW(child,WM_MOUSEWHEEL,MAKEWPARAM(0,turns>0 ? (short)-WHEEL_DELTA : (short)WHEEL_DELTA),0);
@@ -1289,13 +1401,24 @@ void ch_rich_finish(int32_t id) {
     HWND child=findChild(id); Visual *v=GetPropW(child,L"ChotkiVisual"); if(!v) return;
     v->suppressScroll++;
     CHARRANGE all={0,-1}; SendMessageW(child,EM_EXSETSEL,0,(LPARAM)&all);
-    PARAFORMAT2 paragraph={0}; paragraph.cbSize=sizeof(paragraph); paragraph.dwMask=PFM_LINESPACING|PFM_SPACEAFTER|PFM_ALIGNMENT; paragraph.wAlignment=PFA_LEFT;
+    PARAFORMAT2 paragraph={0}; paragraph.cbSize=sizeof(paragraph); paragraph.dwMask=PFM_LINESPACING|PFM_SPACEAFTER|PFM_ALIGNMENT|PFM_TABSTOPS; paragraph.wAlignment=PFA_LEFT;
     paragraph.bLineSpacingRule=5; paragraph.dyLineSpacing=24; paragraph.dySpaceAfter=160;
+    RECT area; GetClientRect(child,&area); paragraph.cTabCount=1; paragraph.rgxTabs[0]=MulDiv(max(px(120),area.right-px(30)),1440,dpi);
     SendMessageW(child,EM_SETPARAFORMAT,0,(LPARAM)&paragraph);
+    paragraph.dwMask=PFM_SPACEAFTER; paragraph.dySpaceAfter=320;
+    for(LinkRange *link=v->links;link;link=link->next) if(link->disclosure) {
+        CHARRANGE heading={link->start,link->end};
+        SendMessageW(child,EM_EXSETSEL,0,(LPARAM)&heading);
+        SendMessageW(child,EM_SETPARAFORMAT,0,(LPARAM)&paragraph);
+    }
     CHARRANGE top={0,0}; SendMessageW(child,EM_EXSETSEL,0,(LPARAM)&top);
     SendMessageW(child,EM_LINESCROLL,0,v->restoreLine-(int)SendMessageW(child,EM_GETFIRSTVISIBLELINE,0,0));
     v->suppressScroll--;
     RedrawWindow(GetParent(child),NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN);
+}
+void ch_reader_dividers(int32_t id) {
+    Visual *v=GetPropW(findChild(id),L"ChotkiVisual");
+    if(v && v->kind==19) { v->flags|=32768; InvalidateRect(findChild(id),NULL,FALSE); }
 }
 void ch_rich_center(int32_t id) {
     HWND child=findChild(id); Visual *v=GetPropW(child,L"ChotkiVisual"); if(!v) return;

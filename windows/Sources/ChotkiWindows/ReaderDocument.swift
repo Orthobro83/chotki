@@ -20,8 +20,8 @@ struct ReaderDocument {
     }
     mutating func disclosure(_ title: String, expanded: Bool, flags: Int32, size: Int32, link: ReaderLink) {
         runs.append(ReaderRun(text: title, flags: flags | 64, size: size, link: link))
-        // Charter and Segoe UI lack these chevrons; Segoe UI Symbol has them.
-        runs.append(ReaderRun(text: expanded ? "  ⌃" : "  ⌄", flags: 128 | 16 | 64 | 256, size: 13, link: link))
+        // A right tab keeps the disclosure affordance in a common column.
+        runs.append(ReaderRun(text: expanded ? "\t⌃" : "\t⌄", flags: 128 | 16 | 64 | 256, size: 16, link: link))
         runs.append(ReaderRun(text: "\n", size: size))
     }
     mutating func prose(_ text: String, matches: [TermMatch], flags: Int32 = 0, size: Int32 = 18) {

@@ -503,3 +503,24 @@ and 36 DLLs have AMD64 PE headers. The VM's managed Chotki installation now
 runs `alpha-rc2-build31`; installed bootstrap, Desktop shortcut, private
 lifecycle, and tray Quit passed with exit code 0. Live practice records were
 untouched. This build has not been published as a GitHub release.
+
+## Windows alpha-rc2-build33 visual and input pass
+
+The minute and hour dropdowns now have native wheel scrolling. Reader wheel
+events at the last line no longer ask Rich Edit to repaint a stationary page;
+Home's scroll panel likewise skips redraws when its position does not change.
+Reading disclosures use a common right-aligned chevron column, Mac-style
+dividing rules and closer row spacing. Settings uses the Windows Settings icon.
+
+The main window no longer uses `WM_SETREDRAW` during page rebuilds: Windows
+temporarily removes the visible window style for that message, which caused
+the taskbar button to blink. Calendar expansion and page navigation use a
+250 ms layered crossfade; the sidebar's controls slide into place. The fade
+respects the system's client-area animation setting. The stationary Home
+artwork remains visible through calendar changes.
+
+The optimized x86_64 UI suite, physical mouse-wheel review, package bootstrap,
+and installed lifecycle checks passed on the VM. The installed executable and
+36 runtime DLLs are AMD64, and all 422 payload files passed hash checks. The
+VM installation and local draft package are `alpha-rc2-build33`. No GitHub
+release was published; final Mac parity remains the release gate.

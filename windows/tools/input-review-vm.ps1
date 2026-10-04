@@ -57,6 +57,13 @@ public static class ChotkiReviewInput {
         events[1].data.mouse.flags=2; events[2].data.mouse.flags=4;
         if(SendInput(3,events,Marshal.SizeOf(typeof(Input)))!=3) throw new Exception("Mouse input rejected: "+Marshal.GetLastWin32Error());
     }
+    public static void Move(double x,double y) {
+        Input e=new Input();
+        e.data.mouse.x=(int)((x-GetSystemMetrics(76))*65535/(GetSystemMetrics(78)-1));
+        e.data.mouse.y=(int)((y-GetSystemMetrics(77))*65535/(GetSystemMetrics(79)-1));
+        e.data.mouse.flags=0xC001;
+        if(SendInput(1,new Input[]{e},Marshal.SizeOf(typeof(Input)))!=1) throw new Exception("Mouse move rejected");
+    }
     public static void KeyEvent(ushort key,bool up) {
         Input e=new Input(); e.type=1; e.data.key.vk=key; e.data.key.flags=up ? 2u : 0u;
         if(SendInput(1,new Input[]{e},Marshal.SizeOf(typeof(Input)))!=1) throw new Exception("Keyboard input rejected");
@@ -196,6 +203,18 @@ try {
     Click-Control 11000
     Wait-For { $null -ne (Element 501) } 'Physical template editor route'
     'PASS: physical Library Take on opens the editor.' | Add-Content $log
+    $minutes=Element 532
+    Require ($null -ne $minutes) 'Minute picker missing'
+    $minuteHandle=[IntPtr]$minutes.Current.NativeWindowHandle
+    $minuteBounds=[ChotkiReviewInput]::Bounds($minuteHandle)
+    [ChotkiReviewInput]::Click($minuteBounds.Left+$minuteBounds.Width/2,$minuteBounds.Top+$minuteBounds.Height/2)
+    Wait-For { [ChotkiReviewInput]::SendMessage($minuteHandle,0x0157,[UIntPtr]::Zero,[IntPtr]::Zero).ToInt32() -eq 1 } 'Minute picker did not open'
+    $topBefore=[ChotkiReviewInput]::SendMessage($minuteHandle,0x015b,[UIntPtr]::Zero,[IntPtr]::Zero).ToInt32()
+    [ChotkiReviewInput]::Move($minuteBounds.Left+30,$minuteBounds.Bottom+55)
+    [ChotkiReviewInput]::Wheel(-120)
+    Wait-For { [ChotkiReviewInput]::SendMessage($minuteHandle,0x015b,[UIntPtr]::Zero,[IntPtr]::Zero).ToInt32() -gt $topBefore } 'Open minute list ignored the mouse wheel'
+    [ChotkiReviewInput]::Press(27)
+    'PASS: physical mouse wheel scrolls the open minute picker.' | Add-Content $log
     'Physical input/accessibility smoke exit: 0' | Add-Content $log
 } catch {
     $_ | Out-String | Add-Content $log

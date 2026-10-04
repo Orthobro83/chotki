@@ -1,6 +1,6 @@
 # Chotki for Windows
 
-Windows **alpha-rc2-build31** targets x86_64 Windows 11. The current macOS app
+Windows **alpha-rc2-build33** targets x86_64 Windows 11. The current macOS app
 is the visual and functional specification. Full parity is the release gate;
 ARM64 is deferred.
 
@@ -31,9 +31,12 @@ Windows reminders reuse the core scheduler/ticker and provide native toasts,
 complete/snooze actions, withdrawal and due attention. A temporary-identity VM
 smoke test verified actual Windows notification history delivery and COM actions.
 
-Remaining work includes measured expansion, reading ornaments, artwork and
-opening motion/reduced motion, rope transitions, responsive editor polish,
-physical input/accessibility, installed startup acceptance and packaging. See [PORT.md](PORT.md).
+This alpha now has native wheel scrolling in the time picker, stationary
+end-of-reader scrolling, Mac-style Reading dividers and right-aligned chevrons,
+and short page fades with a sliding sidebar. Windows' standard Settings glyph
+replaces the ambiguous Unicode icon. It remains under visual review; further
+side-by-side Mac comparison and responsive editor polish are release gates. See
+[PORT.md](PORT.md).
 
 ## Build and verify
 

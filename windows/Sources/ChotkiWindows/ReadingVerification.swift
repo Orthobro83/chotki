@@ -45,6 +45,11 @@ extension WindowsApp {
         let document = text(301)
         try require(document.range(of: "Gospel passage 55")!.lowerBound < document.range(of: "The day's Epistle")!.lowerBound && document.range(of: "The day's Epistle")!.lowerBound < document.range(of: "Epistle passage 1")!.lowerBound, "Reading bodies are detached from their headings")
         ch_test_scroll_end(301,0); ch_pump()
+        let settledPaints = ch_test_reader_paint_count(301)
+        let settledLine = ch_test_reader_first_line(301)
+        _ = ch_test_reader_wheel_delta(301, -120, 3); ch_pump()
+        try require(ch_test_reader_first_line(301) == settledLine && ch_test_reader_paint_count(301) == settledPaints,
+                    "Overscrolling reading: line \(settledLine) to \(ch_test_reader_first_line(301)), paints \(settledPaints) to \(ch_test_reader_paint_count(301))")
         for rule in testRules { try require(try store.occurrences(ruleID: rule.id, from: date, through: date).isEmpty, "Programmatic inline scroll marked a rule") }
         let staleEpistle = readingCompletions.first { if case .band(1) = $0.value { return true }; return false }!.key
         try activateReaderLink(.readingSection(1))

@@ -59,6 +59,7 @@ extension WindowsApp {
         }
         for index in document.runs.indices where document.runs[index].flags == 0 { document.runs[index].flags = 512 }
         reader(document, x: contentLeft, y: 145, width: contentWidth, height: max(150,ch_height()-235))
+        ch_reader_dividers(301)
         control(778,1,"The Psalter",contentLeft,ch_height()-72,160,28)
         requestCalendar()
     }

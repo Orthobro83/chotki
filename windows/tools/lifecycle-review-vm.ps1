@@ -56,7 +56,36 @@ try {
         Await { [ChotkiLifecycle]::FindWindowEx($hwnd,[IntPtr]::Zero,'ChotkiOpening','The opening') -eq [IntPtr]::Zero } 'Opening animation did not finish'
         'Actual timed opening animation completed.' | Add-Content $log
     }
+    $fadeBefore=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
+    [ChotkiLifecycle]::PostMessage($hwnd,0x111,[IntPtr]713,[IntPtr]::Zero) | Out-Null
+    $sawCalendarFade=$false
+    for($frame=0;$frame -lt 35;$frame++) {
+        if([ChotkiLifecycle]::GetDlgItem($hwnd,9007) -ne [IntPtr]::Zero){$sawCalendarFade=$true}
+        if(![ChotkiLifecycle]::IsWindowVisible($hwnd)){throw 'Calendar expansion hid the main window and taskbar button'}
+        Start-Sleep -Milliseconds 10
+    }
+    $fadeAfter=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
+    ('Calendar fade counters: '+$fadeBefore+' to '+$fadeAfter+'; error '+[ChotkiLifecycle]::SendMessage($hwnd,0x8034,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()+'; sampled '+$sawCalendarFade) | Add-Content $log
+    if($animate){Require (($fadeAfter -band 0xffff) -gt ($fadeBefore -band 0xffff)) 'Calendar expansion created a visible layered crossfade'}
+    Require ([ChotkiLifecycle]::SendMessage($hwnd,0x8034,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32() -eq 0) 'Calendar fade had no Win32 error'
+    Await { [ChotkiLifecycle]::GetDlgItem($hwnd,9007) -eq [IntPtr]::Zero } 'Calendar expansion fade did not finish'
+    'Calendar expansion kept its taskbar window visible.' | Add-Content $log
+    $navigationFadeBefore=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
     [ChotkiLifecycle]::PostMessage($hwnd,0x111,[IntPtr]105,[IntPtr]::Zero) | Out-Null
+    $sawFade=$false
+    if($animate) {
+        for($frame=0;$frame -lt 35;$frame++) {
+            if([ChotkiLifecycle]::GetDlgItem($hwnd,9007) -ne [IntPtr]::Zero){$sawFade=$true}
+            if(![ChotkiLifecycle]::IsWindowVisible($hwnd)){throw 'Navigation hid the main window and taskbar button'}
+            Start-Sleep -Milliseconds 10
+        }
+        Await { [ChotkiLifecycle]::Control($hwnd,311) -ne [IntPtr]::Zero } 'Settings route completed before fade inspection'
+        $navigationFadeAfter=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
+        ('Navigation fade counters: '+$navigationFadeBefore+' to '+$navigationFadeAfter+'; error '+[ChotkiLifecycle]::SendMessage($hwnd,0x8034,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()+'; sampled '+$sawFade) | Add-Content $log
+        Require (($navigationFadeAfter -band 0xffff) -gt ($navigationFadeBefore -band 0xffff)) 'Navigation created a visible layered crossfade'
+        'Navigation kept its taskbar window visible throughout the fade.' | Add-Content $log
+        Await { [ChotkiLifecycle]::GetDlgItem($hwnd,9007) -eq [IntPtr]::Zero } 'Navigation crossfade did not finish'
+    }
     Await { [ChotkiLifecycle]::Control($hwnd,311) -ne [IntPtr]::Zero } 'Settings route failed after opening animation'
     Await { [ChotkiLifecycle]::Control($hwnd,625) -ne [IntPtr]::Zero } 'Login preference did not finish rendering'
     [ChotkiLifecycle]::SendMessage($hwnd,0,[IntPtr]::Zero,[IntPtr]::Zero) | Out-Null
