@@ -43,14 +43,27 @@ do {
         try verifyBootstrap()
     } else {
         let automated = CommandLine.arguments.contains("--ui-smoke")
-        let app = try WindowsApp(review: automated || CommandLine.arguments.contains("--review"))
-        let context = Unmanaged.passUnretained(app).toOpaque()
+        let notificationSmoke=CommandLine.arguments.contains("--notification-smoke")
+        let lifecycle=CommandLine.arguments.contains("--lifecycle-smoke")
+        let review=automated || notificationSmoke || lifecycle || CommandLine.arguments.contains("--review")
+        if lifecycle { ch_lifecycle_review(1) }
+        if (!review || lifecycle) && ch_single_instance()==0 { ch_exit(0) }
+        ch_review_mode(review && !lifecycle ? 1 : 0)
+        let app = try WindowsApp(review:review)
+        ch_start_hidden((( !review && app.settings.hasCompletedFirstRun) || lifecycle) && CommandLine.arguments.contains("--startup") ? 1 : 0)
+        app.notificationSmoke=notificationSmoke
+        WindowsApp.prepareTrayMark()
+        // The native loop retains only an opaque pointer. Keep its Swift owner
+        // alive until the loop and all synchronous window callbacks have ended.
+        let nativeOwner = Unmanaged.passRetained(app)
+        defer { nativeOwner.release() }
+        let context = nativeOwner.toOpaque()
         let status = ch_run({ context, id, event in
             guard let context else { return }
             MainActor.assumeIsolated {
                 Unmanaged<WindowsApp>.fromOpaque(context).takeUnretainedValue().handle(control: id, event: event)
             }
-        }, context, automated ? 1 : 0)
+        }, context, notificationSmoke ? 2 : automated ? 1 : 0)
         if status != 0 { throw BootstrapError.verification("Windows UI exit \(status)") }
     }
 } catch {

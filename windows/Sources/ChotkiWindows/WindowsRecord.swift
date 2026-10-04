@@ -59,7 +59,7 @@ extension WindowsApp {
         let previousNotice = notice
         writeDailyBackup(on: today)
         if notice != previousNotice { notice.withCString { ch_update(editor == nil ? 202 : 553, $0) } }
-        guard today != lastKnownToday, editor == nil else { return false }
+        guard today != lastKnownToday, editor == nil, !glossaryDetouring else { return false }
         let next = DayRollover.selection(showing: selectedDate, wasToday: lastKnownToday, isToday: today)
         lastKnownToday = today
         selectedDate = next

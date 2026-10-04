@@ -19,14 +19,32 @@ final class WindowsApp {
     var weekAnchor = CalendarDate(Date(), in: .current)
     var calendarDates: [CalendarDate] = []
     var sidebarCollapsed = false
+    var artworkStarts:[String:Date]=[:]
+    var revealExpandedCard=false
     var expandedRuleID: UUID?
     var flippedRuleID: UUID?
-    var readingBand: Int?
+    var readerLinks: [Int32: ReaderLink] = [:]
+    var readerLinkOwners: [Int32: [Int32]] = [:]
+    var nextReaderLink: Int32 = 1
+    var glossarySlug: String?
+    var glossaryQuery = ""
+    var glossaryDetouring = false
+    var glossaryResized = false
+    var reviewedSourceURL: String?
+    var expandedReadingBands: Set<Int> = []
+    // A rule route focuses one section; the Reading tab can expand several.
+    var readingBand: Int? {
+        get { expandedReadingBands.sorted().first }
+        set { expandedReadingBands = newValue.map { [$0] } ?? [] }
+    }
+    var appointedKathisma: Int?
+    var manualKathisma: Int?
+    var readingCompletions: [Int32: CompletionTarget] = [:]
     var readingToken: Int32 = 0
     var readingTarget: CompletionTarget?
+    var rulePrayerID:UUID?
     var showPsalter = false
     var lastKnownToday = CalendarDate(Date(), in: .current)
-    var settingsSection = 0
     var settings: AppSettings
     var page: Page = .home
     var selectedDate = CalendarDate(Date(), in: .current)
@@ -35,7 +53,25 @@ final class WindowsApp {
     var notice = ""
     var editor: RuleDraft?
     var customLibrary = false
+    var libraryCaution = false
+    var onboarding=false
+    var welcomeName=""
+    var fatherPromptNaming=false
+    var fatherPromptName=""
+    var welcomeChurch=0
     var verifying = false
+    var notificationSmoke=false
+    var nativeNotificationAttempts=0
+    var nativeSmokeNotification:PlannedNotification?
+    var notificationsStarted=false
+    var notificationStatus:Int32=0
+    var reminderTicker=ReminderTicker()
+    var reminderVerification=false
+    var reminderRuleIDs:Set<UUID>?
+    var reminderTestNow:Date?
+    var deliveredNotifications:[String:PlannedNotification]=[:]
+    var attentionUntil:[DueDestination:Date]=[:]
+    var audioStatus:Int32=0
     var actionError: String?
     private var rendering = false
 
@@ -47,6 +83,7 @@ final class WindowsApp {
             store = try SQLiteStore(path: recordFiles.directory.appendingPathComponent("chotki.sqlite").path)
         }
         settings = try store.loadSettings() ?? .default
+        onboarding = !review && !settings.hasCompletedFirstRun
         liturgical = LiturgicalService(store: store,
             client: review ? OrthocalClient(http: ReviewCalendarFetcher()) : OrthocalClient(),
             jurisdiction: settings.jurisdiction)
@@ -57,7 +94,16 @@ final class WindowsApp {
             try store.save(rule)
             try store.save(Activation(ruleID: rule.id, from: selectedDate.adding(days: -7)))
         }
+        let tick=WAV.encode(ToneRenderer.render(.tick)),bell=WAV.encode(ToneRenderer.render(.bell))
+        audioStatus=tick.withUnsafeBytes { tickBytes in bell.withUnsafeBytes { bellBytes in
+            ch_sound_prepare(tickBytes.bindMemory(to:UInt8.self).baseAddress,Int32(tick.count),bellBytes.bindMemory(to:UInt8.self).baseAddress,Int32(bell.count),review ? 1 : 0)
+        } }
         try repairObservances()
+        if !review, try practice.shouldMarkFirstRunComplete {
+            settings.hasCompletedFirstRun=true
+            settings.firstRunOn=settings.firstRunOn ?? selectedDate
+            try store.saveSettings(settings); onboarding=false
+        }
         writeDailyBackup()
     }
 
@@ -89,11 +135,23 @@ final class WindowsApp {
         control(201, 0, subtitle, contentLeft, 76, contentWidth)
     }
     func render() throws {
+        // The opening owns the visible surface until its completion callback.
+        // Calendar arrivals still update the model, then render after the fade.
+        if ch_opening_active() != 0 { return }
         rendering = true
         defer { rendering = false }
+        glossaryDetouring = false
+        readerLinks.removeAll(); readerLinkOwners.removeAll()
+        ch_taskbar(settings.showInDock ? 1 : 0)
+        ch_tray_enabled(settings.reminders.notificationsEnabled ? 1 : 0)
         ch_clear()
-        readingTarget=nil
+        readingTarget=nil; readingCompletions.removeAll()
+        if onboarding { renderOnboarding(); return }
+        if !verifying && settings.shouldAskForSpiritualFather(on:lastKnownToday) { renderFatherPrompt(); return }
         renderSidebar()
+        applyAttention()
+        try refreshReminders(now:reminderTestNow ?? Date())
+        if ch_report_visible()==1 { try renderDetachedProgress(show:false) }
         control(202, 0, notice, contentLeft, max(0,ch_height()-35), contentWidth, 32)
         if editor != nil {
             for item in Page.allCases { ch_enable(Int32(item.rawValue), 0) }
@@ -103,66 +161,68 @@ final class WindowsApp {
         case .home:
             try renderHome()
         case .library:
-            title("Library", subtitle: "Taking a rule on is always your choice.")
-            choice(320, ["From the Library", "Custom"], selected: customLibrary ? 1 : 0, x: 650, y: 112, width: 380)
-            if customLibrary {
-                let own = try customEntries
-                selectedRow = own.isEmpty ? 0 : min(selectedRow, own.count-1)
-                list(try own.map { try ruleIsActive($0) ? "On your rule · \($0.title)" : $0.title }, selected: selectedRow)
-                if own.indices.contains(selectedRow) { body(ruleSummary(own[selectedRow])) }
-                control(411, 1, "Edit", 475, 580, 145)
-                control(412, 1, "Set Aside", 650, 580, 150)
-                let paused = own.indices.contains(selectedRow) ? try practice.isPaused(own[selectedRow]) : true
-                control(413, 1, paused ? "Resume" : "Pause", 820, 580, 210)
-            } else {
-                list(templates.map(\.title), selected: selectedRow)
-                if templates.indices.contains(selectedRow) { body(templates[selectedRow].summary) }
-            }
-            control(410, 1, "Take On This Rule", 260, 580, 200)
-            control(414, 1, "Write Your Own Rule", 260, 620, 240)
+            try renderLibrary()
         case .prayers:
-            renderPrayers()
+            try renderPrayers()
         case .reading:
             try renderReading()
         case .progress:
-            title("Progress", subtitle: "Through yesterday · The last 30 days")
-            let report = try practice.report(today: CalendarDate(Date(), in: .current))
-            var text = report.summary.joined(separator: "\n\n")
-            if settings.showConsistencyNumber, let value = report.overall { text += "\n\nConsistency: \(Int((value * 100).rounded()))%" }
-            text += report.perRule.map { "\n\n\($0.title): \($0.kept + $0.keptLate) kept" }.joined()
-            body(text, x: 260, width: 770)
+            try renderProgress()
         case .settings:
             renderSettings()
         case .glossary:
-            title("Glossary", subtitle: "Words used in prayer and the church calendar")
-            list(terms.map(\.term), selected: selectedRow)
-            if terms.indices.contains(selectedRow) { body(terms[selectedRow].full) }
+            renderGlossary()
         }
     }
 
     func handle(control id: Int32, event: Int32) {
         guard !rendering else { return }
         do {
+            if event == 0 && (Int32(CH_TRAY_OPEN)...Int32(CH_TRAY_QUIT)).contains(id) {
+                actionError = nil; try handleTray(id); return
+            }
+            if onboarding && handleOnboarding(id,event:event) { return }
+            if try handleFatherPrompt(id,event:event) { return }
+            if id == -10 { try render(); return }
+            if id == -9 { try checkNativeNotificationSmoke(); return }
+            if id == -8 { try handleNotificationTicket(event); return }
+            if id == -7 { try followReaderLink(event); return }
+            if handleGlossary(id, event: event) { return }
             if id == -4 {
-                let names = page == .settings && settingsSection == 0 && editor == nil ? (text(311),text(313)) : nil
+                if glossaryDetouring {
+                    glossaryResized = true
+                    ch_glossary_resize(contentLeft, 16, contentWidth, ch_height()-32)
+                    return
+                }
+                let names = page == .settings && editor == nil ? (text(311),text(313)) : nil
                 if editor != nil { captureEditor() }
                 try render()
                 if let names { enter(311,names.0); enter(313,names.1) }
                 return
             }
-            if id == -6 { try completeReading(token:event); return }
+            if id == -6 { if !glossaryDetouring { try completeReading(token:event) }; return }
             if id == -3 {
                 guard event == calendarGeneration else { return }
                 calendarRedraws += 1
-                if editor == nil && [.home,.reading,.progress].contains(page) { try render() }
+                if page == .reading && readingTarget != nil {
+                    // A cache refresh updates the heading without disposing the
+                    // live native reader, its layout or the user's place.
+                    if let day = liturgical.cachedDay(for: selectedDate) {
+                        (day.title ?? "").withCString { ch_update(760, $0) }
+                    }
+                    return
+                }
+                if editor == nil && !glossaryDetouring && ([.home,.reading,.progress].contains(page) || (page == .prayers && showPsalter && readingCompletions.isEmpty)) { try render() }
                 return
             }
             if id == -2 {
-                if try heartbeat() { try render() }
+                let changed=try heartbeat()
+                try refreshReminders()
+                if changed, !glossaryDetouring { try render() }
                 return
             }
             if id != -1 { actionError = nil }
-            if id == 0 { try render(); return }
+            if id == 0 { try render(); try startNotifications(); if notificationSmoke { try beginNativeNotificationSmoke() }; return }
             if id == -1 { try verifyControls(); ch_close(0); return }
             if editor != nil && ((500...552).contains(id)) {
                 if event == 768 { // Native edit control: EN_CHANGE.
@@ -181,13 +241,15 @@ final class WindowsApp {
                 selectedRow = max(0, Int(ch_selected(300)))
                 try showRuleMenu(); return
             }
-            if page == .prayers && id == 321 && event == 1 {
-                let index=Int(ch_selected(321)); rope.choose(index==0 ? "morning" : index==1 ? "evening" : prayers[max(0,index-2)].id)
+            if page == .library { if try handleLibrary(id,event:event) { return } }
+            if page == .progress && id==20005 && event==0 { try renderDetachedProgress(show:true); return }
+            if try handlePrayer(id,event:event) { return }
+            if page == .prayers && id == 779 && event == 0 {
+                if showPsalter { showPsalter=false } else { openPsalter() }
                 try render(); return
             }
-            if page == .prayers && id == 779 && event == 0 { showPsalter.toggle(); try render(); return }
             if id == 90 && event == 0 {
-                let names = page == .settings && settingsSection == 0 && editor == nil ? (text(311),text(313)) : nil
+                let names = page == .settings && editor == nil ? (text(311),text(313)) : nil
                 if editor != nil { captureEditor() }
                 sidebarCollapsed.toggle(); try render()
                 if let names { enter(311,names.0); enter(313,names.1) }
@@ -198,22 +260,24 @@ final class WindowsApp {
                 if calendarDates.indices.contains(index) { setHomeDate(calendarDates[index]) }
                 try render(); return
             }
-            if page == .home && event == 0 && (1000..<4000).contains(id) {
+            if page == .home && event == 0 && (1000..<5000).contains(id) {
                 let entries=try practice.entries(on: selectedDate), index=Int(id%1000)
                 guard entries.indices.contains(index) else { return }
                 selectedRow=index
                 let entry=entries[index]
                 if id < 2000 { try openHomeEntry(entry) }
                 else if id < 3000 { try toggleHomeKept(entry) }
-                else { expandedRuleID=expandedRuleID == entry.rule.id ? nil : entry.rule.id }
+                else if id < 4000 { expandedRuleID=expandedRuleID == entry.rule.id ? nil : entry.rule.id; revealExpandedCard=expandedRuleID != nil }
+                else if let slug=entry.rule.glossarySlug { showGlossaryTerm(slug); return }
                 try render(); return
             }
+            if page == .prayers && showPsalter && handlePsalter(control: id, event: event) { return }
             if page == .reading && handleReading(control:id,event:event) { return }
             if page == .settings && handleSettings(control: id, event: event) {
                 return
             }
             if let target = Page(rawValue: Int(id)), event == 0 {
-                editor = nil; page = target; selectedRow = 0; notice = ""; readingTarget=nil; showPsalter=false
+                editor = nil; libraryCaution = false; ch_reset_home_scroll(); page = target; glossarySlug = nil; glossaryQuery = ""; selectedRow = 0; notice = ""; readingTarget=nil; showPsalter=false; rulePrayerID=nil
                 if page == .reading { readingBand=nil; showPsalter=false }
                 if page == .prayers { selectedRow = prayers.firstIndex { $0.id == rope.selection } ?? 0 }
             } else if id == 320, event == 1 {
@@ -253,26 +317,15 @@ final class WindowsApp {
                     }
                 case 413:
                     if let rule = try selectedCustomRule() { try togglePause(rule) }
-                case 414: openEditor()
-                case 450...455, 460...462: try homeRuleAction(id)
-                case 420:
-                    if rope.advance(), let selection=rope.selection {
-                        for entry in try practice.entries(on:selectedDate) where !entry.isKept && !entry.isDispensed && !entry.isStoodDown && ReadingCompletion.matches(entry.rule,prayer:selection,counted:true) {
-                            try store.save(Occurrence(ruleID:entry.rule.id,date:entry.date,status:.completed,completedAt:Date()))
-                        }
-                    }
-                case 421: rope.startAgain()
-                case 422...424: rope.aim(at: PrayerScreen.targets[Int(id)-422])
+                case 414: beginCustomRule()
+                case 450...458, 460...462: try homeRuleAction(id)
                 default: return
                 }
             } else { return }
-            if (420...424).contains(id) {
-                // Counting must preserve the reader's scroll position and focus.
-                "\(rope.count) of \(rope.target) knots".withCString { ch_update(201, $0) }
-            } else { try render() }
+            try render()
         } catch {
             actionError = error.localizedDescription
-            if id == -1 { print("UI verification failed: \(error)"); ch_close(1) }
+            if id == -1 || notificationSmoke { print("UI verification failed: \(error)"); ch_close(1) }
             else {
                 notice = error.localizedDescription
                 if verifying && !(error is RuleInputError) { print("Control \(id) failed: \(notice)") }
@@ -292,22 +345,37 @@ final class WindowsApp {
         guard ch_click(2000) == 1, try practice.entries(on: selectedDate).first?.isKept == true else { throw BootstrapError.verification("Home mark control") }
         guard ch_click(2000) == 1, try practice.entries(on: selectedDate).first?.isKept == false else { throw BootstrapError.verification("Home unmark control") }
         guard ch_click(402) == 1, page == .library else { throw BootstrapError.verification("Home Add route") }
-        guard ch_click(410) == 1, try store.rules(includeArchived: false).count == 2 else { throw BootstrapError.verification("Library take-on control") }
+        let templateIndex = templates.firstIndex { $0.title != "Jesus Prayer" }!
+        try press(Int32(11000+templateIndex))
+        try require(editor != nil && (try store.rules(includeArchived: false).count) == 1, "Taking a new template must open the editor first")
+        try press(550)
+        try require(try store.rules(includeArchived: false).count == 2, "Library editor save must activate the selected rule")
         guard ch_click(102) == 1, page == .prayers else { throw BootstrapError.verification("Prayer route") }
         guard ch_click(420) == 1, rope.count == 1 else { throw BootstrapError.verification("Prayer count") }
         guard ch_click(421) == 1, rope.count == 0 else { throw BootstrapError.verification("Prayer reset") }
         for target in [Page.reading, .progress, .settings, .glossary] {
+
             guard ch_click(Int32(target.rawValue)) == 1, page == target else {
                 throw BootstrapError.verification("Navigation to \(target)")
             }
         }
-        try verifyRuleControls()
-        try verifySettingsControls()
-        try verifyHomeControls()
+
+        try verifyOnboardingAndSound(); ch_flush()
+        try verifyNotificationControls(); ch_flush()
+        try verifyRuleControls(); ch_flush()
+        try verifySettingsControls(); ch_flush()
+        try verifyLibraryAndProgress(); ch_flush()
+        try verifyHomeControls(); ch_flush()
+        try verifyReaderControls(); ch_flush()
+        try verifyReadingSections(); ch_flush()
+        try verifyPrayerControls(); ch_flush()
+        try verifyTrayControls()
         page = .home; selectedRow = 0; notice = "Synthetic review · Control checks passed"; try render()
         if let path = ProcessInfo.processInfo.environment["CHOTKI_REVIEW_CAPTURE"] {
             guard path.withCString({ ch_capture($0) }) == 1 else { throw BootstrapError.verification("Window capture") }
         }
         print("UI controls passed: all seven pages, Home mark/unmark, Add route, Library activation, prayer count/reset.")
+        try require(ch_test_tray(Int32(CH_TRAY_QUIT)) == 1 && ch_tray_present() == 0, "Tray Quit must remove the icon and exit")
+        print("Tray Quit passed: icon removed and application closed.")
     }
 }

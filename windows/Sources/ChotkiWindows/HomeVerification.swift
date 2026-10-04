@@ -44,6 +44,11 @@ extension WindowsApp {
         try render()
         let index=try practice.entries(on:date).firstIndex { $0.rule.id==gospel.id }!
         let before=try store.occurrences(ruleID:gospel.id,from:date,through:date)
+        selectedRow=index
+        try homeRuleAction(457); try render()
+        try require(expandedRuleID==gospel.id,"Context-menu expansion")
+        try homeRuleAction(457); try render()
+        try require(expandedRuleID==nil,"Context-menu collapse")
         try press(Int32(3000+index))
         try require(expandedRuleID==gospel.id,"Expansion control opened a destination")
         try require(try store.occurrences(ruleID:gospel.id,from:date,through:date)==before,"Expansion marked a rule kept")
@@ -55,6 +60,10 @@ extension WindowsApp {
         ch_test_scroll_end(301,0); ch_pump()
         try require(try store.occurrences(ruleID:gospel.id,from:date,through:date).isEmpty,"Programmatic scrolling completed a reading")
         let firstLine=ch_first_visible_line(301)
+        let identity=ch_test_reader_identity(301), redrawCount=calendarRedraws
+        for _ in 0..<100 { ch_post(-3,calendarGeneration); ch_pump() }
+        try require(calendarRedraws>=redrawCount+100 && ch_test_reader_identity(301)==identity && ch_first_visible_line(301)==firstLine,
+                    "Calendar refresh disposed or moved the active reader")
         try render()
         try require(firstLine>0 && ch_first_visible_line(301)==firstLine,"Calendar redraw lost the reader position")
         ch_test_scroll_end(301,1); ch_pump()
@@ -74,11 +83,24 @@ extension WindowsApp {
         try require(page == .prayers && showPsalter && text(200)=="The Psalter","Psalter route")
         try press(779)
         try require(page == .prayers && !showPsalter,"Psalter return")
-        try choose(321,0)
+        try choosePrayer("morning")
         try require(rope.selection=="morning" && text(301).contains("Heavenly King"),"Morning sequence text was replaced with a single prayer")
 
         ch_test_resize(1100,860)
         try require(ch_width()==1100 && ch_height()==860,"Full-size review content sizing")
+        page = .home; setHomeDate(date)
+        var longCard=try fixture("A rule with a long public explanation")
+        longCard.note=String(repeating:"Keep a small beginning, with patience and attention.\n",count:24)
+        try store.save(longCard); try render()
+        let longIndex=try practice.entries(on:date).firstIndex { $0.rule.id==longCard.id }!
+        ch_test_resize(620,540)
+        try press(Int32(3000+longIndex))
+        let longEntry=try practice.entries(on:date)[longIndex]
+        try require(expandedCardHeight(longEntry)>380 && ch_test_card_revealed(Int32(1000+longIndex))==1,"Long expanded card is measured and revealed")
+        try captureReview("expanded-card-long")
+        try press(Int32(3000+longIndex))
+        longCard.archivedAt=Date(); try store.save(longCard)
+        ch_test_resize(1100,860)
         // Match the Mac's built-in fictional Home record for visual comparison.
         calendarTask?.cancel()
         for var rule in try store.rules(includeArchived:true) { rule.archivedAt=Date(); try store.save(rule) }
@@ -95,6 +117,18 @@ extension WindowsApp {
         page = .home; setHomeDate(date); calendarExpanded=false; sidebarCollapsed=false
         try resetCalendarService(); try render()
         ch_pump()
+        let fastEntries=try practice.entries(on:date)
+        if let fastIndex=fastEntries.firstIndex(where: { $0.rule.isFastingRule }),let slug=fastEntries[fastIndex].rule.glossarySlug {
+            try press(Int32(1000+fastIndex))
+            try require(flippedRuleID==fastEntries[fastIndex].rule.id,"Fasting card shows its explanation")
+            try press(Int32(4000+fastIndex))
+            try require(glossaryDetouring && glossarySlug==slug,"Fasting Learn More opens its glossary entry")
+            try press(6063)
+            try require(page == .home && flippedRuleID==fastEntries[fastIndex].rule.id,"Fasting glossary return preserves the card")
+            try homeRuleAction(458)
+            try require(glossaryDetouring && glossarySlug==slug,"Context-menu About This Rule")
+            try press(6063); try press(Int32(1000+fastIndex))
+        }
         try captureReview("home")
         try press(713); try captureReview("month"); try press(713)
         ch_test_resize(620,540)

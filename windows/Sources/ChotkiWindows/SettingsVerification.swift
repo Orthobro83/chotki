@@ -17,7 +17,6 @@ extension WindowsApp {
 
     func verifySettingsControls() throws {
         let originalSettings = settings
-        settingsSection = 0
         try press(105)
         let priestRule = try fixture("Attribution before clearing")
         var unrecorded = priestRule
@@ -36,18 +35,33 @@ extension WindowsApp {
         try press(604)
         try require(settings.showConsistencyNumber != originalSettings.showConsistencyNumber, "Consistency switch")
         try require(try store.loadSettings() == settings, "Settings did not persist")
+        let originalLead=settings.reminders.defaultLead
+        for (index,lead) in ReminderLead.choices.enumerated() {
+            try choose(606,index); try require(settings.reminders.defaultLead==lead,"Default reminder lead")
+        }
+        try choose(606,ReminderLead.choices.firstIndex(of:originalLead)!)
+        let tick=settings.tickEachKnot, chime=settings.chimeOnCompletion
+        try press(607); try press(608)
+        try require(settings.tickEachKnot != tick && settings.chimeOnCompletion != chime,"Sound switches")
+        try press(607); try press(608)
+        let taskbar=settings.showInDock, login=settings.launchAtLogin
+        try press(609); try require(settings.showInDock != taskbar,"Taskbar switch")
+        try press(609)
+        try press(625); try require(settings.launchAtLogin != login && ch_test_startup()==(login ? 0 : 1),"Login registration route")
+        try press(625)
+        try press(605); try require(ch_click(606)==0,"Silencing notifications must disable the lead picker")
+        try press(605)
         try captureReview("settings")
         try require(ruleSummary(priestRule).contains("6:30 AM"), "Clock setting did not reach rule summaries")
-        try selectCustom(priestRule.id); try press(411)
+        try selectCustom(priestRule.id); try pressCustom(14000)
         try require(text(531) == "6 AM", "Clock setting did not reach editor hour choices")
         try press(551); try press(104)
-        try require(!text(301).contains("Consistency:"), "Hidden consistency figure still appeared in Progress")
+        try require(text(20002).isEmpty, "Hidden consistency figure still appeared in Progress")
         try press(105); try press(604); try press(104)
-        try require(text(301).contains("Consistency:"), "Visible consistency figure was missing from Progress")
+        try require(text(20002).contains("%"), "Visible consistency figure was missing from Progress")
         try press(105)
 
         let occurrencesBefore = try store.occurrences(ruleID: nil, from: nil, through: nil)
-        try choose(600, 1)
         try choose(611, 1)
         try require(settings.namedChurch == Jurisdiction.known[0].name && settings.jurisdiction == Jurisdiction.known[0], "Church choice did not use shared jurisdiction")
         try require(settings.reckoningChangedOn == CalendarDate(Date(), in: .current), "Calendar change lacked scoring cutoff")
@@ -72,7 +86,6 @@ extension WindowsApp {
 
         // Exercise actual Settings button routes with a synthetic chooser response.
         // The OS dialog's physical interaction remains an acceptance gate.
-        try choose(600, 2)
         let backupURL = recordFiles.directory.appendingPathComponent("Верный record backup.json")
         let exported = try store.exportBackup()
         answerFileChooser(backupURL); try press(621)
@@ -150,7 +163,7 @@ extension WindowsApp {
         try require(lastKnownToday == start.adding(days: 2), "Midnight changed the date underneath an open editor")
         editor = nil; selectedDate = date; lastKnownToday = lastToday
         try store.saveSettings(originalSettings); settings = originalSettings
-        settingsSection = 0; actionError = nil
+        actionError = nil
         print("Settings/record UI passed: church and calendar choices, scoring cutoff, clock, names/attribution, history preservation, Unicode export, merge/idempotent restore, cancellation/errors, daily retention/recovery and midnight selection.")
     }
 }

@@ -11,6 +11,7 @@ windows = Path(__file__).resolve().parents[1]
 assets = windows / 'Sources/ChotkiWindows/Assets'
 assets.mkdir(parents=True, exist_ok=True)
 source = windows.parent / 'macos/Sources/Chotki/Resources'
+shutil.copy2(source / 'progress.jpg', assets / 'progress.jpg')
 shutil.copytree(source / 'sayings', assets / 'sayings', dirs_exist_ok=True)
 shutil.copytree(windows / 'Fonts', assets / 'fonts', dirs_exist_ok=True)
 shutil.copytree(source / 'Preview', assets / 'Preview', dirs_exist_ok=True)

@@ -1,6 +1,9 @@
 # Shared mandatory compiler and execution environment helpers.
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+# A verification script may isolate PATH before the next build in the same
+# SSH session. Preserve the compiler search path once, then restore only for builds.
+if (!$env:CHOTKI_COMPILER_PATH) { $env:CHOTKI_COMPILER_PATH=$env:PATH }
 $env:MIMALLOC_DISABLE_REDIRECT = '1'
 $env:SWIFT_DRIVER_USE_FRONTEND = '0'
 
@@ -12,9 +15,9 @@ function Test-IsX64([string]$FilePath) {
     } catch { return $false }
 }
 
-function Get-ChotkiExecutable {
+function Get-ChotkiExecutable([string]$Configuration) {
     $exe = Get-ChildItem C:\workspace-build\.build -Recurse -Filter ChotkiWindows.exe |
-        Where-Object FullName -NotMatch 'Intermediates' |
+        Where-Object { $_.FullName -notmatch 'Intermediates' -and (!$Configuration -or $_.Directory.Name -eq $Configuration) } |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if (!$exe) { throw 'ChotkiWindows.exe was not produced.' }
     if (!(Test-IsX64 $exe.FullName)) { throw 'Executable is not AMD64.' }

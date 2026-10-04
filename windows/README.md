@@ -10,12 +10,30 @@ rule-card open/expand/complete actions and the original 365-image rotation.
 Calendar retrieval caches to SQLite and posts native messages to repaint arriving
 data. The editor uses core recurrence/scoped edits; Settings includes JSON
 export/merge restore and daily backups. Reading uses shared texts and distinguishes
-deliberate end scrolling from programmatic navigation.
+deliberate end scrolling from programmatic navigation. Styled readers preserve
+rubrics, headings, emphasis and source links. Prayer glossary links open an
+in-app detour with search and related terms, preserving the reading position.
+Reading sections expand independently with their text directly beneath each
+heading. The Psalter groups appointed kathismata by service and offers all twenty
+for manual reading; completion follows the last verse, never a closed heading.
+Prayers now includes the large count, knot dots, grouped selection, rope-only
+mode, manual visibility and target/reset controls. Space counting rejects held
+repeat and modifiers and remains isolated from menus, glossary and other pages.
+The tray provides only Open Chotki, Silence/Enable notifications, Settings and Quit. Closing the window
+keeps Chotki available in the tray; Quit removes the icon and exits. The toggle
+persists the shared notification preference and agrees with Settings.
 
-Remaining work includes rich reading/glossary presentation, measured expansion,
-artwork motion/reduced motion, appointed-kathisma interactions, remaining screen
-layouts, physical input/accessibility, tray, notifications, audio, startup and
-packaging. See [PORT.md](PORT.md).
+Library, Progress and Settings now use their Mac section order and shared
+content. New templates open the editor first; custom-rule caution is remembered.
+Progress includes the stationary Mac artwork and a reusable ninety-day window.
+The canonical first-run welcome and synthesized tick/chime are implemented.
+Windows reminders reuse the core scheduler/ticker and provide native toasts,
+complete/snooze actions, withdrawal and due attention. A temporary-identity VM
+smoke test verified actual Windows notification history delivery and COM actions.
+
+Remaining work includes measured expansion, reading ornaments, artwork and
+opening motion/reduced motion, rope transitions, responsive editor polish,
+physical input/accessibility, installed startup acceptance and packaging. See [PORT.md](PORT.md).
 
 ## Build and verify
 
@@ -27,6 +45,8 @@ python3 windows/tools/prepare-core.py
 python3 windows/tools/prepare-assets.py
 python3 windows/tools/run-vm.py --upload windows/assets.zip
 python3 windows/tools/run-vm.py windows/tools/verify-vm.ps1
+python3 windows/tools/run-vm.py windows/tools/verify-ui-desktop-vm.ps1
+python3 windows/tools/run-vm.py windows/tools/verify-notifications-vm.ps1
 ```
 
 The SSH helper reads ignored `connection.local.md` fields `Host`, `Username` and
@@ -62,12 +82,38 @@ python3 windows/tools/run-vm.py windows/tools/verify-ui-desktop-vm.ps1
 ```
 
 Desktop review uses a temporary interactive scheduled task, captures the synthetic
-app window into ignored `.build/reviews/`, then removes the task. SSH's session 0
+app window on native `C:\workspace-build\reviews`, archives it, then removes the
+task. Retrieve the reported archive with `run-vm.py --download <remote-file>
+windows/.build/reviews/<archive-name>.zip` and unpack it locally. Downloads are
+limited to the native build workspace; review artifacts stay ignored. SSH's session 0
 cannot supply reliable screenshots. Native control checks complement visual review;
-physical input, accessibility and real x86_64 hardware acceptance remain required.
+physical input and native accessibility have also passed their separate harness.
+Real x86_64 hardware acceptance remains outside the ARM64 VM.
 
 ## Fonts and artwork
 
 Four licensed XCharter cuts follow the Mac's Charter fallback. Keep
 [Fonts/LICENSE.txt](Fonts/LICENSE.txt) with redistributed fonts. Apple's Iowan face
 is not bundled. Artwork, focal metadata and original notices come from Mac resources.
+
+
+## Windows packaging and startup review
+
+Run `prepare-branding.py` on the Mac after changing the canonical mark or version.
+`build-vm.ps1 -Configuration release` creates a GUI executable with embedded icon,
+version and per-monitor-DPI manifest. `verify-release-vm.ps1` runs the complete
+synthetic desktop suite against that optimized executable; `verify-input-vm.ps1`
+uses real mouse/keyboard events and native accessibility providers.
+
+`package-vm.ps1` builds a draft payload and integrity manifest without publishing
+it. `verify-lifecycle-vm.ps1` tests the packaged startup/second-instance/animation
+adapters in a private namespace. `install-windows.ps1` validates and installs a
+payload for the current user and creates Desktop/Start menu shortcuts. Its launch
+script excludes ARM64 toolchain paths. Program updates preserve the separate
+practice record. Draft assembly is not a release-candidate declaration.
+
+The first Windows candidate is `windows-v1.0-beta.30-rc1`. Its optimized desktop,
+physical input/accessibility, native notification, assembled-payload and installed
+lifecycle gates passed on the ARM64 VM under Prism. The candidate is installed on
+the VM with a Chotki Desktop icon. User acceptance and physical x86_64 hardware
+validation follow; native ARM64 remains deferred.

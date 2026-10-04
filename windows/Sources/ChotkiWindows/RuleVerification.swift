@@ -10,17 +10,21 @@ extension WindowsApp {
         try require(ch_click(id) == 1, "Missing or disabled control \(id)")
         try require(actionError == nil, actionError ?? "Control failed")
     }
-    func enter(_ id: Int32, _ value: String) { value.withCString { ch_update(id, $0) } }
+    func enter(_ id: Int32, _ value: String) { value.withCString { ch_update(id, $0) }; ch_pump() }
     func choose(_ id: Int32, _ index: Int) throws {
         ch_choose(id, Int32(index))
         try require(actionError == nil, actionError ?? "Choice failed")
     }
     func selectCustom(_ id: UUID) throws {
         try press(101)
-        try choose(320, 1)
         let index = try customEntries.firstIndex { $0.id == id }
         guard let index else { throw BootstrapError.verification("Custom entry \(id) is missing") }
-        try choose(300, index)
+        customLibrary=true; selectedRow=index
+    }
+    func pressCustom(_ base:Int32) throws { try press(base+Int32(selectedRow)) }
+    func writeCustom() throws {
+        try press(414)
+        if libraryCaution { try press(16601) }
     }
     func fixture(_ title: String, recurrence: Recurrence = .daily) throws -> Rule {
         let rule = Rule(title: title, note: "Keep this note", source: "Fr. Earlier",
@@ -43,7 +47,7 @@ extension WindowsApp {
     func verifyRuleControls() throws {
         // Configure attribution through the real Settings controls.
         try press(105); enter(313, "Fr. Windows"); try press(430)
-        try press(101); try press(414)
+        try press(101); try writeCustom()
         let before = try store.rules(includeArchived: true).count
         _ = ch_click(550)
         try require(editor != nil && actionError != nil, "Blank title must keep the editor open")
@@ -54,6 +58,13 @@ extension WindowsApp {
         try choose(511, 2) // Weekdays; previously typed fields must survive.
         try press(512); try press(515); try press(517) // Sunday off, Wednesday/Friday on.
         try press(524)
+        ch_test_resize(640,540)
+        try require(text(501)=="Windows weekly fixture" && text(521)=="A small beginning","Narrow editor retained typed fields")
+        ch_test_panel_scroll(0); try require(ch_test_control_visible(501)==1,"Narrow editor title is reachable")
+        try captureReview("editor-narrow-top")
+        ch_test_panel_scroll(1); try require(ch_test_control_visible(550)==1 && ch_test_control_visible(551)==1,"Narrow editor actions are reachable")
+        try captureReview("editor-narrow-actions")
+        ch_test_resize(1100,860); ch_test_panel_scroll(0)
         try captureReview("editor")
         try press(550)
         guard let created = try store.rules(includeArchived: true).first(where: { $0.title == "Windows weekly fixture" }) else {
@@ -63,19 +74,19 @@ extension WindowsApp {
         try require(created.timeOfDay == TimeOfDay(hour: 18, minute: 45), "Hour/minute controls")
         try require(created.note == "A small beginning" && created.source == "Fr. Windows" && created.givenByPriest == true, "Text/attribution survived recurrence changes")
         try require(Set(created.effectiveReminders.leads) == [.atTheTime, .tenMinutes, .oneHour], "Multiple reminder lead controls")
-        try selectCustom(created.id); try press(413)
+        try selectCustom(created.id); try pressCustom(15000)
         try require(try practice.isPaused(created), "Pause did not close activation")
-        try press(413)
+        try pressCustom(15000)
         try require(try !practice.isPaused(created), "Resume did not reopen activation")
         try require(try store.activations(ruleID: created.id).count == 2, "Resume created a different rule")
-        try press(411); try choose(541, 2); try press(552)
+        try pressCustom(14000); try choose(541, 2); try press(552)
         try require(try store.rule(id: created.id)?.isArchived == true, "Whole-rule removal did not archive")
         let pastActivations = try store.activations(ruleID: created.id).count
-        try selectCustom(created.id); try press(410)
+        try selectCustom(created.id); try pressCustom(12000)
         try require(try store.rule(id: created.id)?.isArchived == false, "Re-take did not restore the same rule")
         try require(try store.activations(ruleID: created.id).count == pastActivations + 1, "Re-take did not retain prior stretches and open a new one")
         try captureReview("library")
-        try press(412)
+        try pressCustom(13000)
         try require(try !customEntries.contains { $0.id == created.id }, "Set-aside still offered in Custom")
         try require(try store.rule(id: created.id)?.hiddenFromLibrary == true && !practice.isPaused(created), "Set-aside changed active practice")
 
@@ -85,15 +96,15 @@ extension WindowsApp {
         guard let jesus = home.firstIndex(where: { $0.rule.title == "Jesus Prayer" }) else { throw BootstrapError.verification("Home fixture missing") }
         try choose(300, jesus)
         let ruleID = home[jesus].rule.id
-        ch_command(451)
+        ch_command(451); ch_pump()
         try require(try store.occurrences(ruleID: ruleID, from: selectedDate, through: selectedDate).first?.status == .completedLate, "Explicit kept-late action")
-        ch_command(452)
+        ch_command(452); ch_pump()
         try require(try store.occurrences(ruleID: ruleID, from: selectedDate, through: selectedDate).isEmpty, "Reset silently excused the day")
-        ch_command(453)
+        ch_command(453); ch_pump()
         try require(try store.occurrences(ruleID: ruleID, from: selectedDate, through: selectedDate).first?.status == .skipped, "Stand-down action")
-        ch_command(450)
+        ch_command(450); ch_pump()
         try require(try store.occurrences(ruleID: ruleID, from: selectedDate, through: selectedDate).first?.status == .completed, "Mark-kept action")
-        ch_command(454)
+        ch_command(454); ch_pump()
         try require(editor?.original?.id == ruleID, "Home edit route")
         try press(551)
 
@@ -105,7 +116,7 @@ extension WindowsApp {
         ] + Self.fastingSeasons.map { .liturgical(.season($0)) }
         for (i, recurrence) in recurrences.enumerated() {
             let original = try fixture("Editor round trip \(i)", recurrence: recurrence)
-            try selectCustom(original.id); try press(411)
+            try selectCustom(original.id); try pressCustom(14000)
             enter(501, original.title + " revised"); try press(550)
             guard let loaded = try store.rule(id: original.id) else { throw BootstrapError.verification("Edited rule missing") }
             try require(loaded.recurrence == recurrence, "UI changed recurrence \(recurrence)")
@@ -115,11 +126,11 @@ extension WindowsApp {
         var longNoteRule = try fixture("Unicode and long-note fixture")
         longNoteRule.note = String(repeating: "Помилуй нас.\n", count: 600)
         try store.save(longNoteRule)
-        try selectCustom(longNoteRule.id); try press(411); try press(550)
+        try selectCustom(longNoteRule.id); try pressCustom(14000); try press(550)
         try require(try store.rule(id: longNoteRule.id)?.note == longNoteRule.note, "Editor truncated Unicode or a long note")
 
         // Invalid one-off dates cannot quietly become daily rules or write any data.
-        try press(414); enter(501, "One-off validation"); try choose(511, 0)
+        try writeCustom(); enter(501, "One-off validation"); try choose(511, 0)
         enter(512, "2026-02-30")
         let count = try store.rules(includeArchived: true).count
         _ = ch_click(550)
@@ -132,7 +143,7 @@ extension WindowsApp {
             let original = try fixture("Scope fixture \(scope.rawValue)")
             let yesterday = selectedDate.adding(days: -1)
             try store.save(Occurrence(ruleID: original.id, date: yesterday, status: .completed))
-            try selectCustom(original.id); try press(411)
+            try selectCustom(original.id); try pressCustom(14000)
             enter(501, original.title + " changed")
             try choose(541, Self.editScopes.firstIndex(of: scope)!)
             try press(550)
@@ -154,7 +165,7 @@ extension WindowsApp {
             let rule = try fixture("Remove fixture \(scope.rawValue)")
             let yesterday = selectedDate.adding(days: -1)
             try store.save(Occurrence(ruleID: rule.id, date: yesterday, status: .completed))
-            try selectCustom(rule.id); try press(411)
+            try selectCustom(rule.id); try pressCustom(14000)
             try choose(541, Self.editScopes.firstIndex(of: scope)!); try press(552)
             try require(try store.occurrences(ruleID: rule.id, from: yesterday, through: yesterday).first?.status == .completed, "Scoped removal lost history")
             if scope == .thisDay {

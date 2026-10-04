@@ -3,6 +3,34 @@ import ChotkiCore
 import WindowsUI
 
 extension WindowsApp {
+    struct ArtworkPosition:Codable { let identity:String; let started:Date }
+    func artworkStart(on date:CalendarDate,image:URL) -> Date {
+        let key="pan3-\(date.iso)-\(image.lastPathComponent)"
+        if let start=artworkStarts[key] { return start }
+        let url=recordFiles.directory.appendingPathComponent("artwork-position.json")
+        let persist = !review && date==lastKnownToday
+        if persist,let data=try? Data(contentsOf:url),let old=try? JSONDecoder().decode(ArtworkPosition.self,from:data),old.identity==key {
+            artworkStarts[key]=old.started; return old.started
+        }
+        let now=Date(); artworkStarts[key]=now
+        if persist,let data=try? JSONEncoder().encode(ArtworkPosition(identity:key,started:now)) { try? data.write(to:url,options:.atomic) }
+        return now
+    }
+    func homeCardSummary(_ entry:DayEntry) -> String {
+        if flippedRuleID==entry.rule.id {
+            return entry.dispensation.map { "Not observed during \($0)." }
+                ?? entry.rule.glossarySlug.flatMap { Glossary.shared(for:settings.jurisdiction.tradition).entry(slug:$0)?.short }
+                ?? ruleSummary(entry.rule)
+        }
+        return RuleLibrary.shared.templates.first { $0.title==entry.rule.title }?.summary ?? entry.rule.note ?? "A rule of your own."
+    }
+    func expandedCardHeight(_ entry:DayEntry) -> Int32 {
+        let title=entry.rule.title.withCString { ch_measure_reading($0,272,18) }
+        let body=homeCardSummary(entry).withCString { ch_measure_reading($0,272,13) }
+        let source=entry.rule.suggestedByLabel(currentFather:settings.spiritualFatherName) ?? ""
+        let attribution=source.isEmpty ? 0 : source.withCString { ch_measure_text($0,272,512) }
+        return max(232,124+title+body+attribution)
+    }
     var contentLeft: Int32 { sidebarCollapsed ? 82 : 212 }
     var contentWidth: Int32 { max(310, ch_width()-contentLeft-24) }
     var greeting: String {
@@ -68,7 +96,7 @@ extension WindowsApp {
         let title = day?.title ?? (liturgical.isOffline ? "Calendar unavailable · Stored days remain available offline" : "")
         let panelTop = calendarTop+calendarHeight
         let extra: Int32 = day != nil && settings.observances.fasting.isVisible && day!.isFast && entries.contains(where: { $0.rule.isFastingRule }) ? 50 : 0
-        let expandedHeight: Int32 = expandedRuleID == nil ? 232 : 380
+        let expandedHeight: Int32 = entries.first { $0.rule.id==expandedRuleID }.map(expandedCardHeight) ?? 232
         let dateY: Int32 = 8 + (title.isEmpty ? 0 : 36) + extra
         let cardsY = dateY+64
         let artY = cardsY+expandedHeight+18
@@ -93,9 +121,7 @@ extension WindowsApp {
             let expanded = expandedRuleID == entry.rule.id
             let width: Int32 = expanded ? 300 : 132
             let category = entry.rule.category.flatMap(RuleCategory.init(rawValue:))?.displayName ?? "Custom"
-            let summary = flippedRuleID == entry.rule.id ? entry.dispensation.map { "Not observed during \($0)." }
-                ?? entry.rule.glossarySlug.flatMap { Glossary.shared(for: settings.jurisdiction.tradition).entry(slug: $0)?.short }
-                ?? ruleSummary(entry.rule) : RuleLibrary.shared.templates.first { $0.title == entry.rule.title }?.summary ?? entry.rule.note ?? "A rule of your own."
+            let summary = homeCardSummary(entry)
             let time = entry.isDispensed ? "Lifted Today" : entry.isStoodDown ? "Stood Down" : entry.rule.timeOfDay.map { Format.time($0,settings.clockStyle) } ?? "All Day"
             let attribution = entry.rule.suggestedByLabel(currentFather: settings.spiritualFatherName) ?? ""
             entry.rule.title.withCString { title in summary.withCString { body in category.withCString { cat in time.withCString { time in attribution.withCString { source in
@@ -103,15 +129,25 @@ extension WindowsApp {
             } } } } }
             control(Int32(2000+i),16,"\(entry.isKept ? "Clear" : "Mark") \(entry.rule.title) as kept",x+width-32,10,22,22)
             ch_style(Int32(2000+i),entry.showsAsSatisfied ? 1 : 0); ch_enable(Int32(2000+i),entry.isDispensed ? 0 : 1)
+            if flippedRuleID==entry.rule.id,entry.rule.glossarySlug != nil {
+                control(Int32(4000+i),18,"Learn More",x+14,expanded ? expandedHeight-32 : 198,100,24)
+            } else {
             control(Int32(3000+i),17,expanded ? "↙" : "↗",x+width-32,expanded ? expandedHeight-30 : 198,24,24)
+            }
             x += width+12
         }
         control(747,1,entries.isEmpty ? "+  Create Your First Rule" : "+  Add",x,0,120,232)
         ch_cards_end()
+        if revealExpandedCard,let index=entries.firstIndex(where: { $0.rule.id==expandedRuleID }) {
+            ch_reveal_card(Int32(1000+index)); revealExpandedCard=false
+        }
         if let saying = PatristicReadings.shared.reading(for: selectedDate), let (image,fx,fy) = WindowsAssets.image(on: selectedDate) {
             image.path.withCString { path in saying.text.withCString { quote in "\(saying.author) · \(saying.source)".withCString { source in
                 ch_image(750,path,quote,source,fx,fy,0,artY,contentWidth,270)
             } } }
+            let start=artworkStart(on:selectedDate,image:image)
+            let number=Int(image.deletingPathExtension().lastPathComponent) ?? 0
+            ch_image_motion(750,Date().timeIntervalSince(start),Int32(number))
         }
         ch_home_end()
         control(404,18,"Today",contentLeft+contentWidth-90,calendarTop+54,90,22)
@@ -129,6 +165,9 @@ extension WindowsApp {
         ch_style(id,(date == selectedDate ? 1 : 0) | (fast ? 2 : 0) | (feast ? 4 : 0) | (date.weekday == .sunday ? 8 : 0) | (settled ? 16 : 0))
     }
     func setHomeDate(_ date: CalendarDate) {
+        if selectedDate != date {
+            expandedReadingBands.removeAll(); appointedKathisma=nil; manualKathisma=nil
+        }
         selectedDate=date; weekAnchor=date; visibleMonth=date; selectedRow=0
         expandedRuleID=nil; flippedRuleID=nil; notice=""; ch_reset_home_scroll()
     }

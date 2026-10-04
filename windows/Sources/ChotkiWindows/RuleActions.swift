@@ -13,6 +13,7 @@ extension WindowsApp {
     func openHomeEntry(_ entry: DayEntry) throws {
         if expandedRuleID == entry.rule.id { expandedRuleID=nil; return }
         if entry.rule.isFastingRule { flippedRuleID=flippedRuleID == entry.rule.id ? nil : entry.rule.id; return }
+        rulePrayerID=nil
         if let id=entry.rule.ropePrayerID ?? entry.rule.sequenceID {
             rope.choose(id); page = .prayers
             selectedRow=prayers.firstIndex { $0.id == id } ?? 0
@@ -20,10 +21,9 @@ extension WindowsApp {
         }
         switch entry.rule.reference {
         case .reading: page = .reading; readingBand=ReadingOrder.band(ofTitle:entry.rule.title); showPsalter=false
-        case .psalter: page = .prayers; showPsalter=true; selectedRow=0
+        case .psalter: openPsalter()
         case .prayers:
-            page = .prayers
-            if let id=entry.rule.prayerIDs?.first { rope.choose(id); selectedRow=prayers.firstIndex { $0.id == id } ?? 0 }
+            page = .prayers; showPsalter=false; rulePrayerID=entry.rule.id
         default: openEditor(entry.rule)
         }
     }
@@ -117,7 +117,16 @@ extension WindowsApp {
     }
     func showRuleMenu() throws {
         guard let entry = try selectedHomeEntry() else { return }
-        ch_rule_menu(try practice.isPaused(entry.rule) ? 1 : 0, entry.isDispensed ? 1 : 0)
+        let destination:String
+        switch entry.rule.reference {
+        case .rope: destination="Go to the Rope"
+        case .prayers: destination="Read the Prayers"
+        case .reading: destination=entry.rule.title.lowercased().contains("life of the day") ? "Read the Saint’s Life" : "Read the Day’s Readings"
+        case .psalter: destination="Read Today’s Kathisma"
+        default: destination="Open"
+        }
+        let paused=try practice.isPaused(entry.rule)
+        destination.withCString { ch_rule_menu(paused ? 1 : 0, entry.isDispensed ? 1 : 0, entry.isKept ? 1 : 0, expandedRuleID==entry.rule.id ? 1 : 0, entry.rule.glossarySlug==nil ? 0 : 1,$0) }
     }
     func homeRuleAction(_ id: Int32) throws {
         guard let entry = try selectedHomeEntry() else { return }
@@ -130,6 +139,15 @@ extension WindowsApp {
                 try store.save(Occurrence(ruleID: entry.rule.id, date: selectedDate, status: status,
                                           completedAt: status == .skipped ? nil : Date()))
             }
+        case 456:
+            guard !entry.isDispensed else { return }
+            expandedRuleID=nil; try openHomeEntry(entry)
+        case 457:
+            guard !entry.isDispensed else { return }
+            expandedRuleID=expandedRuleID==entry.rule.id ? nil : entry.rule.id
+            revealExpandedCard=expandedRuleID != nil
+        case 458:
+            if let slug=entry.rule.glossarySlug { showGlossaryTerm(slug) }
         case 454: openEditor(entry.rule)
         case 455: try togglePause(entry.rule)
         case 460...462: try removeRule(entry.rule, scope: Self.editScopes[Int(id)-460])

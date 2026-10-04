@@ -1,0 +1,66 @@
+Copyright © 2026 Ryan Macfarlane. All rights reserved.
+
+Chotki is not open-source software. The source is published so that it can be
+read, audited and discussed — not so that it can be reused.
+
+
+PERMISSION GRANTED DURING THE ALPHA
+
+While Chotki is in alpha, you are permitted to:
+
+  - download, build, install and run it for your own personal devotional use;
+  - read and study the source code;
+  - report problems, and suggest changes.
+
+This permission is given freely and costs nothing.
+
+
+WHAT IS NOT PERMITTED
+
+Without prior written permission from the copyright holder, you may not:
+
+  - sell, license, rent or otherwise charge for this software, in whole or in
+    part, whether modified or not;
+  - redistribute it, publish it, or make it available for download by others;
+  - use its source code, in whole or in substantial part, in another project;
+  - remove or alter this notice.
+
+
+FUTURE RELEASES
+
+Chotki is intended to become a paid application. The author has stated the
+intention to donate the proceeds to his church, or to causes chosen by it.
+That intention is recorded here as a statement of purpose. It is not a
+contractual undertaking, it creates no obligation enforceable by any person,
+and it does not make this software a charitable work or its purchase a
+donation.
+
+The permission granted above applies to the alpha. Later releases may carry
+different terms.
+
+
+NO WARRANTY
+
+This software is provided "as is", without warranty of any kind, express or
+implied, including but not limited to the warranties of merchantability,
+fitness for a particular purpose and non-infringement. In no event shall the
+author be liable for any claim, damages or other liability, whether in an
+action of contract, tort or otherwise, arising from, out of or in connection
+with the software or the use or other dealings in the software.
+
+
+A NOTE ON THE CONTENT
+
+The liturgical data shown in this application is retrieved from orthocal.info
+and belongs to its authors. The passages from the Church Fathers are drawn from
+translations published between 1885 and 1900, which are in the public domain.
+The prayers are from older public-domain liturgical English, chiefly the
+Hapgood Service Book of 1906. Where the application links to prayers published
+by parishes and jurisdictions, those are references to read, not the source of
+any wording reproduced here — their translations remain the property of their
+publishers.
+The glossary and other explanatory text are the author's own and carry the same
+terms as the software.
+
+Nothing in this application is authoritative on matters of faith or practice.
+It has not been reviewed or approved by any ecclesiastical authority.

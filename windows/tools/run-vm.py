@@ -12,7 +12,16 @@ import json
 root = Path(__file__).resolve().parents[1]
 values = dict(line.split(': ', 1) for line in (root / 'connection.local.md').read_text().splitlines() if ': ' in line)
 upload = len(sys.argv) == 3 and sys.argv[1] == '--upload'
-if upload:
+download = len(sys.argv) == 4 and sys.argv[1] == '--download'
+if download:
+    remote = sys.argv[2].replace('\\', '/')
+    if not remote.lower().startswith('c:/workspace-build/') or '..' in remote.split('/'):
+        raise SystemExit('Downloads must come from the native build workspace.')
+    destination = Path(sys.argv[3]).resolve()
+    destination.relative_to(root)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    script = '# download'
+elif upload:
     source = Path(sys.argv[2]).resolve()
     source.relative_to(root)
     script = '# upload'
@@ -22,9 +31,9 @@ elif len(sys.argv) == 2:
     # through SSH, then expand them onto native C: before invoking the script.
     archive = root / 'source-sync.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as bundle:
-        for name in ('Package.swift','README.md','AGENTS.md','BUILD-ENVIRONMENT.md','PORT.md'):
+        for name in ('Package.swift','README.md','AGENTS.md','BUILD-ENVIRONMENT.md','PORT.md','NOTIFICATIONS.md'):
             if (root/name).exists(): bundle.write(root/name,name)
-        for name in ('Sources','shared-core','Fonts','tools'):
+        for name in ('Sources','shared-core','Fonts','tools','Branding'):
             for item in (root/name).rglob('*'):
                 if item.is_file() and not any(part in ('Assets','.build','.swiftpm','__pycache__') for part in item.relative_to(root/name).parts):
                     bundle.write(item, str(item.relative_to(root)))
@@ -44,12 +53,17 @@ env['CHOTKI_VM_PASSWORD'] = values['Password']
 env['CHOTKI_VM_DESTINATION'] = values['Username'] + '@' + values['Host']
 env['CHOTKI_VM_COMMAND'] = 'powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ' + base64.b64encode(script.encode('utf-16le')).decode()
 env['CHOTKI_VM_KNOWN_HOSTS'] = str(root / 'known_hosts.local')
+if download:
+    env['CHOTKI_VM_DOWNLOAD'] = values['Username'] + '@' + values['Host'] + ':' + remote
+    env['CHOTKI_VM_DOWNLOAD_DESTINATION'] = str(destination)
 if upload:
     env['CHOTKI_VM_UPLOAD'] = str(source)
     env['CHOTKI_VM_UPLOAD_DESTINATION'] = values['Username'] + '@' + values['Host'] + ':C:/workspace-build/' + source.name
 expect = r'''
 set timeout 600
-if {[info exists env(CHOTKI_VM_UPLOAD)]} {
+if {[info exists env(CHOTKI_VM_DOWNLOAD)]} {
+    spawn -noecho scp -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$env(CHOTKI_VM_KNOWN_HOSTS) -o ConnectTimeout=10 $env(CHOTKI_VM_DOWNLOAD) $env(CHOTKI_VM_DOWNLOAD_DESTINATION)
+} elseif {[info exists env(CHOTKI_VM_UPLOAD)]} {
     spawn -noecho scp -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$env(CHOTKI_VM_KNOWN_HOSTS) -o ConnectTimeout=10 $env(CHOTKI_VM_UPLOAD) $env(CHOTKI_VM_UPLOAD_DESTINATION)
 } else {
     spawn -noecho ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$env(CHOTKI_VM_KNOWN_HOSTS) -o ConnectTimeout=10 -o NumberOfPasswordPrompts=1 $env(CHOTKI_VM_DESTINATION) $env(CHOTKI_VM_COMMAND)

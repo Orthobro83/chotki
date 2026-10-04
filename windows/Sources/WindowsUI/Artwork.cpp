@@ -7,7 +7,7 @@
 #include <cmath>
 #include <vector>
 
-extern "C" void ch_draw_art(void *context, const wchar_t *path, int x, int y, int width, int height, double fx, double fy) {
+extern "C" void ch_draw_art(void *context, const wchar_t *path, int x, int y, int width, int height, double fx, double fy, int stationary, double progress, int imageNumber) {
     if (!path || width<=0 || height<=0) return;
     static ULONG_PTR token = 0;
     if (!token) { Gdiplus::GdiplusStartupInput input; if (Gdiplus::GdiplusStartup(&token, &input, nullptr) != Gdiplus::Ok) return; }
@@ -17,10 +17,22 @@ extern "C" void ch_draw_art(void *context, const wchar_t *path, int x, int y, in
     if (!image || image->GetLastStatus() != Gdiplus::Ok) return;
     double iw = image->GetWidth(), ih = image->GetHeight();
     // Same cover + 8% overscan and approved subject crop as the Mac resting frame.
-    double scale = std::max(width / iw, height / ih) * 1.08;
+    double scale = std::max(width / iw, height / ih) * (stationary ? 1.0 : 1.08);
     double rw = iw * scale, rh = ih * scale;
     double ox = std::clamp(width * .5 - rw * fx, width - rw, 0.0);
-    double oy = std::clamp(height * .4 - rh * fy, height - rh, 0.0);
+    double oy = stationary ? 0 : std::clamp(height * .4 - rh * fy, height - rh, 0.0);
+    if(!stationary) {
+        auto nearby=[](double end,double lower,double travel,double sign) {
+            double preferred=sign>0 ? -end : end-lower,opposite=sign>0 ? end-lower : -end;
+            double direction=preferred>=std::min(travel,opposite) ? sign : -sign;
+            return std::clamp(end+direction*travel,lower,0.0);
+        };
+        double sx=nearby(ox,width-rw,14,imageNumber%2==0 ? 1 : -1);
+        double sy=nearby(oy,height-rh,18,imageNumber%3==0 ? 1 : -1);
+        // Smoothly arrive at the approved crop, then hold without repainting.
+        double eased=progress*progress*(3-2*progress);
+        ox=sx+(ox-sx)*eased; oy=sy+(oy-sy)*eased;
+    }
     Gdiplus::Graphics graphics(static_cast<HDC>(context));
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
     graphics.DrawImage(image.get(), Gdiplus::RectF(float(x + ox), float(y + oy), float(rw), float(rh)));
@@ -53,4 +65,64 @@ extern "C" void ch_draw_backdrop(void *context,int width,int height,int offsetX,
     BITMAPINFO info={}; info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER); info.bmiHeader.biWidth=sw;
     info.bmiHeader.biHeight=-sh; info.bmiHeader.biPlanes=1; info.bmiHeader.biBitCount=32;
     StretchDIBits(static_cast<HDC>(context),-offsetX,-offsetY,width,height,0,0,sw,sh,pixels.data(),&info,DIB_RGB_COLORS,SRCCOPY);
+}
+
+// Smooth circles retain the Mac rope's shape even at a five-pixel compact size.
+extern "C" void ch_draw_knots(void *context,int x,int y,int width,int count,int target,int diameter,int step) {
+    if(target<=0 || width<=0) return;
+    static ULONG_PTR token=0;
+    if(!token) { Gdiplus::GdiplusStartupInput input; if(Gdiplus::GdiplusStartup(&token,&input,nullptr)!=Gdiplus::Ok) return; }
+    Gdiplus::Graphics graphics(static_cast<HDC>(context));
+    graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+    Gdiplus::SolidBrush filled(Gdiplus::Color(255,201,162,39)),empty(Gdiplus::Color(255,28,30,38));
+    int columns=std::min(10,target);
+    for(int i=0;i<target;i++) {
+        float left=float(x)+(float(i%columns)+.5f)*float(width)/float(columns)-float(diameter)/2;
+        graphics.FillEllipse(i<count ? &filled : &empty,left,float(y+(i/columns)*step),float(diameter),float(diameter));
+    }
+}
+
+// macOS VenerationBorder: four open corners, hairlines, arrow/diamond tiles
+// and the outlined knot, in parchment at eleven percent opacity.
+extern "C" void ch_draw_border(void *context,int x,int y,int width,int height,int dpi) {
+    static ULONG_PTR token=0;
+    if(!token) { Gdiplus::GdiplusStartupInput input; if(Gdiplus::GdiplusStartup(&token,&input,nullptr)!=Gdiplus::Ok) return; }
+    Gdiplus::Graphics g(static_cast<HDC>(context)); g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+    float scale=float(dpi)/96, w=width/scale,h=height/scale;
+    float ax=std::min(74.0f,(w-28)/2-8),ay=std::min(74.0f,(h-28)/2-8);
+    if(ax<=0 || ay<=0) return;
+    g.TranslateTransform(float(x),float(y)); g.ScaleTransform(scale,scale);
+    Gdiplus::Color ink(28,232,223,205); Gdiplus::SolidBrush brush(ink);
+    auto polygon=[&](const std::vector<Gdiplus::PointF>& points) { g.FillPolygon(&brush,points.data(),(INT)points.size()); };
+    for(int corner=0;corner<4;corner++) {
+        auto state=g.Save(); g.TranslateTransform(corner%2 ? w-14 : 14,corner/2 ? h-14 : 14); g.ScaleTransform(corner%2 ? -1.0f : 1.0f,corner/2 ? -1.0f : 1.0f);
+        for(int vertical=0;vertical<2;vertical++) {
+            auto armState=g.Save(); if(vertical) { Gdiplus::Matrix swap(0,1,1,0,0,0); g.MultiplyTransform(&swap); }
+            float length=vertical ? ay : ax;
+            if(length>22) {
+                g.FillRectangle(&brush,22.0f,0.0f,length-22,0.9f); g.FillRectangle(&brush,22.0f,10.1f,length-22,0.9f);
+                for(float t=22;t+16<=length;t+=16) {
+                    polygon({{t+8,1.82f},{t+11.52f,5.5f},{t+8,9.18f},{t+4.48f,5.5f}});
+                    polygon({{t,5.5f},{t+2.72f,3.82f},{t+2.72f,7.18f}});
+                    polygon({{t+16,5.5f},{t+13.28f,3.82f},{t+13.28f,7.18f}});
+                }
+            }
+            g.Restore(armState);
+        }
+        for(int ring=0;ring<2;ring++) {
+            float radius=ring ? 6.38f : 10.4f; Gdiplus::Pen pen(ink,ring ? 1.6f : 1.0f);
+            Gdiplus::PointF points[]={{11,11-radius},{11+radius,11},{11,11+radius},{11-radius,11}};
+            g.DrawPolygon(&pen,points,4);
+        }
+        g.Restore(state);
+    }
+    auto edge=[&](Gdiplus::PointF from,Gdiplus::PointF to) {
+        if(from.X==to.X && from.Y==to.Y) return;
+        Gdiplus::LinearGradientBrush fade(from,to,Gdiplus::Color(0,232,223,205),ink);
+        Gdiplus::Color colors[]={Gdiplus::Color(0,232,223,205),ink,ink,Gdiplus::Color(0,232,223,205)};
+        Gdiplus::REAL positions[]={0,.22f,.78f,1}; fade.SetInterpolationColors(colors,positions,4);
+        Gdiplus::Pen pen(&fade,.9f); g.DrawLine(&pen,from,to);
+    };
+    edge({14+ax,14},{w-14-ax,14}); edge({14+ax,h-14},{w-14-ax,h-14});
+    edge({14,14+ay},{14,h-14-ay}); edge({w-14,14+ay},{w-14,h-14-ay});
 }
