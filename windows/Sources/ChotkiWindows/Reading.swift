@@ -25,7 +25,7 @@ extension WindowsApp {
         if let day {
             document.prose(day.summaryTitle, matches: glossary.scan(day.summaryTitle), flags: 8, size: 22)
             if settings.observances.fasting.isVisible && day.isFast {
-                document.line("The calendar marks this as \(day.fastDescription).", flags: 4 | 16, size: 13)
+                document.line("The calendar marks this as \(day.fastDescription).", flags: 1024 | 16, size: 13)
                 if !day.abstentions.isEmpty { document.line("Customarily set aside: \(day.abstentions.joined(separator: ", ")).", flags: 4 | 16, size: 13) }
             }
         }
@@ -33,7 +33,7 @@ extension WindowsApp {
             let expanded = expandedReadingBands.contains(band)
             let sources = day?.readings.filter { ReadingOrder.band(source: $0.source) == band }.map(\.source) ?? []
             document.disclosure(ReadingOrder.sectionTitle(band: band, sources: sources), expanded: expanded,
-                                flags: 8, size: 22, link: .readingSection(band))
+                                flags: 128, size: 22, link: .readingSection(band))
             if expanded {
                 if let text = readingDocument(band: band) {
                     document.append(text); document.finish(.band(band))
@@ -57,6 +57,7 @@ extension WindowsApp {
             let calendar = liturgical.isOffline ? "cached" : settings.jurisdiction.reckoning == .julian ? "old calendar" : "new calendar"
             document.line("\(day.paschaDistance) days since Pascha" + (day.tone.map { " · tone \($0)" } ?? "") + " · \(calendar)", flags: 4 | 16, size: 12)
         }
+        for index in document.runs.indices where document.runs[index].flags == 0 { document.runs[index].flags = 512 }
         reader(document, x: contentLeft, y: 145, width: contentWidth, height: max(150,ch_height()-235))
         control(778,1,"The Psalter",contentLeft,ch_height()-72,160,28)
         requestCalendar()

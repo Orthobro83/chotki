@@ -76,8 +76,9 @@ extension WindowsApp {
         try require(settings.reminders.notificationsEnabled == original && ch_test_tray(0) == 1, "Settings toggle did not update the tray label")
         let closedVisibility=ch_test_window(1), trayAfterClose=ch_tray_present()
         try require(closedVisibility == 0 && trayAfterClose == 1, "Closing must keep the tray available (visible=\(closedVisibility), tray=\(trayAfterClose))")
-        try require(ch_test_tray(Int32(CH_TRAY_OPEN)) == 1 && page == .home && ch_test_window(0) == 1,
-                    "Open Chotki must reveal Home")
+        let opened=ch_test_tray(Int32(CH_TRAY_OPEN)), homePage=page == .home, homeVisible=ch_test_window(0)
+        try require(opened == 1 && homePage && homeVisible == 1,
+                    "Open Chotki must reveal Home (menu=\(opened), home=\(homePage), visible=\(homeVisible))")
         _ = ch_test_window(2)
         try require(ch_test_tray(Int32(CH_TRAY_SETTINGS)) == 1 && page == .settings && ch_test_window(0) == 1,
                     "Settings must restore the minimized app")

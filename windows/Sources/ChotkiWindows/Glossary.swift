@@ -75,6 +75,7 @@ extension WindowsApp {
             }
             if found.isEmpty { document.line("No matching terms.", flags: 4, size: 16) }
         }
+        for index in document.runs.indices where document.runs[index].flags == 0 { document.runs[index].flags = 512 }
         ch_remove(6014)
         let x: Int32 = glossaryDetouring ? 12 : contentLeft
         let y: Int32 = glossaryDetouring ? 155 : 202

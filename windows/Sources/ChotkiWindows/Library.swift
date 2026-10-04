@@ -61,27 +61,28 @@ extension WindowsApp {
                         guard rule.title.compare(template.title,options:.caseInsensitive) == .orderedSame else { return false }
                         return try ruleIsActive(rule)
                     }
-                    let top=y; label(template.title,flags:2048 | (taken ? 64 : 0),inset:4,available:width-150)
+                    let top=y, titleID=labelID; label(template.title,flags:2048 | (taken ? 64 : 0),inset:4,available:width-150)
                     if draw {
                         if taken { control(Int32(18000+index),0,"On your rule",width-116,top,125,24); ch_style(Int32(18000+index),128|512) }
-                        else { control(Int32(11000+index),1,"Take on",width-98,top,106,28) }
+                        else { control(Int32(11000+index),1,"Take on",width-78,top,64,24) }
                     }
                     label(template.summary,inset:4,available:width-150)
                     if let trigger=template.requiredTrigger, !settings.observances.setting(for:trigger).drivesRules, !taken {
                         label("Taking this on will start observing \(ObservanceSettings.name(for:trigger)).",flags:128,inset:4,available:width-150)
                     }
-                    if let note=template.note { label(note,inset:4,available:width-150) }
+                    if let note=template.note { label(note,flags:64|16384,inset:4,available:width-150) }
                     if !template.glossarySlugs.isEmpty {
                         var x:Int32=18
                         for (term,slug) in template.glossarySlugs.prefix(3).enumerated() {
                             let text=glossary.entry(slug:slug)?.term ?? slug.replacingOccurrences(of:"-",with:" ")
-                            let w=min(width/3-8,Int32(text.count)*8+18)
-                            if draw { control(Int32(19000+index*3+term),18,text,x,y,w,24) }
+                            let w=min(width/3-8,Int32(text.count)*6+8)
+                            if draw { control(Int32(19000+index*3+term),18,text,x,y,w,18); ch_font_size(Int32(19000+index*3+term),12,0,0); ch_show(Int32(19000+index*3+term),0) }
                             x += w+6
                         }
-                        y += 28
+                        if draw { ch_library_hover(titleID,Int32(19000+index*3),Int32(min(3,template.glossarySlugs.count)),max(38,y-top+20)) }
+                        y += 8
                     }
-                    y=max(y,top+36)+14
+                    y=max(y,top+36)+12
                 }
             }
             if !own.isEmpty {
@@ -93,7 +94,7 @@ extension WindowsApp {
                         control(Int32(14000+index),18,rule.title,18,top,width-165,28)
                         ch_style(Int32(14000+index),active ? 64 : 0)
                         if active { control(Int32(18000+templates.count+index),0,"On your rule",width-126,top,102,24); ch_style(Int32(18000+templates.count+index),128|512) }
-                        else { control(Int32(12000+index),1,"Take on",width-130,top,95,28) }
+                        else { control(Int32(12000+index),1,"Take on",width-78,top,64,24) }
                         control(Int32(13000+index),18,"×",width-22,top,30,28)
                     }
                     y += max(28,rule.title.withCString { ch_measure_text($0,width-165,0) })+2

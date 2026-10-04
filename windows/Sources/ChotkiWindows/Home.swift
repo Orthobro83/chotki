@@ -26,22 +26,23 @@ extension WindowsApp {
         return "Good \(hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening")" + (name.isEmpty ? "" : ", \(name)")
     }
     func renderSidebar() {
-        control(90, 9, sidebarCollapsed ? "›" : "‹  Sidebar", 10, 10, sidebarCollapsed ? 38 : 168, 32)
+        control(90, 9, sidebarCollapsed ? "" : "Sidebar", 10, 7, sidebarCollapsed ? 38 : 168, 32)
+        ch_style(90,4096 | (sidebarCollapsed ? 8192 : 0))
         let groups: [(String, [(Page, String)])] = [
-            ("The Day", [(.home,"▦  Home")]), ("To Read", [(.prayers,"◌  Prayers"),(.reading,"▤  Reading")]),
-            ("The Record", [(.progress,"⌁  Progress"),(.library,"▧  Library")]),
-            ("Reference", [(.glossary,"▥  Glossary"),(.settings,"⚙  Settings")])]
-        var y: Int32 = 55
+            ("The Day", [(.home,"Home")]), ("To Read", [(.prayers,"Prayers"),(.reading,"Reading")]),
+            ("The Record", [(.progress,"Progress"),(.library,"Library")]),
+            ("Reference", [(.glossary,"Glossary"),(.settings,"Settings")])]
+        var y: Int32 = sidebarCollapsed ? 48 : 55
         for (label, items) in groups {
             if !sidebarCollapsed { control(80+y, 0, label, 20, y, 158, 19); ch_style(80+y,64|512) }
             y += sidebarCollapsed ? 12 : 25
             for (item, title) in items {
-                control(Int32(item.rawValue), 9, sidebarCollapsed ? String(title.prefix(1)) : title,
+                control(Int32(item.rawValue), 9, sidebarCollapsed ? "" : title,
                         10, y, sidebarCollapsed ? 38 : 168, 36)
-                ch_style(Int32(item.rawValue), page == item ? 1 : 0)
+                ch_style(Int32(item.rawValue),4096 | (sidebarCollapsed ? 8192 : 0) | (page == item ? 1 : 0))
                 y += 40
             }
-            y += 12
+            y += sidebarCollapsed ? 4 : 12
         }
     }
     func renderHome() throws {

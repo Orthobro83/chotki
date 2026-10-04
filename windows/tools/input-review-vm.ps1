@@ -45,6 +45,7 @@ public static class ChotkiReviewInput {
     public delegate bool EnumChild(IntPtr hwnd,IntPtr data);
     [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr parent,EnumChild callback,IntPtr data);
     [DllImport("user32.dll")] public static extern int GetDlgCtrlID(IntPtr hwnd);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr hwnd,uint message,UIntPtr wParam,IntPtr lParam);
     public static string Children(IntPtr parent) {
         string result=""; EnumChildWindows(parent,(hwnd,data)=>{ result+=GetDlgCtrlID(hwnd)+"@"+hwnd+" "; return true; },IntPtr.Zero); return result;
     }
@@ -66,7 +67,7 @@ public static class ChotkiReviewInput {
             Input up=down; up.data.key.flags=6;
             if(SendInput(2,new Input[]{down,up},Marshal.SizeOf(typeof(Input)))!=2) throw new Exception("Unicode input rejected"); }
     }
-    public static void Wheel(int delta) { Input e=new Input(); e.data.mouse.flags=0x800; e.data.mouse.data=unchecked((uint)delta); SendInput(1,new Input[]{e},Marshal.SizeOf(typeof(Input))); }
+    public static void Wheel(int delta) { Input e=new Input(); e.data.mouse.flags=0x800; e.data.mouse.data=unchecked((uint)delta); if(SendInput(1,new Input[]{e},Marshal.SizeOf(typeof(Input)))!=1) throw new Exception("Mouse wheel input rejected"); }
 }
 '@
 [ChotkiReviewInput]::SetProcessDpiAwarenessContext([IntPtr](-4)) | Out-Null
@@ -180,6 +181,16 @@ try {
     [ChotkiReviewInput]::Click($bounds.Left+$bounds.Width/2,$bounds.Top+$bounds.Height/2)
     Wait-For { (Element 321).Current.Name -eq 'Morning prayers' } 'Physical grouped prayer menu mouse selection'
     'PASS: native popup accessibility, real keyboard navigation/Escape and mouse selection without counting.' | Add-Content $log
+    $reader=Element 301
+    Require ($null -ne $reader) 'Morning prayer reader missing'
+    $readerHandle=[IntPtr]$reader.Current.NativeWindowHandle
+    $readerBounds=[ChotkiReviewInput]::Bounds($readerHandle)
+    $firstLine=[ChotkiReviewInput]::SendMessage($readerHandle,0x00CE,[UIntPtr]::Zero,[IntPtr]::Zero).ToInt32()
+    [ChotkiReviewInput]::Click($readerBounds.Left+$readerBounds.Width/2,$readerBounds.Top+[Math]::Min(90,$readerBounds.Height/2))
+    [ChotkiReviewInput]::Wheel(-120)
+    [ChotkiReviewInput]::Wheel(-120)
+    Wait-For { [ChotkiReviewInput]::SendMessage($readerHandle,0x00CE,[UIntPtr]::Zero,[IntPtr]::Zero).ToInt32() -gt $firstLine } 'Physical prayer mouse wheel did not scroll'
+    'PASS: physical mouse wheel scrolls the morning prayer reader.' | Add-Content $log
     Click-Control 101
     Wait-For { $null -ne (Element 11000) } 'Physical Library navigation'
     Click-Control 11000

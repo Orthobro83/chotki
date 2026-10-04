@@ -61,6 +61,9 @@ extension WindowsApp {
         try require(expandedReadingBands == [1], "Independent inline collapse")
         ch_test_scroll_end(301,1); ch_pump()
         try require(try store.occurrences(ruleID:testRules[1].id,from:date,through:date).first?.status == .completed, "Epistle completion after its neighbor collapsed")
+        ch_reader_scroll_line(301,0)
+        let readingFirstLine=ch_test_reader_first_line(301)
+        try require(ch_test_reader_wheel(301,2)>readingFirstLine,"Reading mouse wheel did not move the reader")
         // Restore public text for visual review.
         try cached(original.paschaDistance, readings: original.readings)
         expandedReadingBands=[0,1]; try render(); ch_reader_scroll_line(301,0)

@@ -33,6 +33,9 @@ static PVOID volatile postWindow;
 static int homeScroll, cardScroll, selectedCard;
 static UINT dpi=96;
 static int selectedPage=100;
+typedef struct { int anchor,first,count,height,active; } LibraryHover;
+static LibraryHover libraryHovers[128];
+static int libraryHoverCount;
 static ChotkiEvent callback;
 static void *context;
 static HFONT regular, reading, heading, smallFont, dateFont, captionFont, listFont;
@@ -42,8 +45,9 @@ static wchar_t *testFilePath;
 static int testFileResult;
 static const COLORREF background = RGB(21,22,28), foreground = RGB(232,223,205);
 static const COLORREF gold=RGB(201,162,39), muted=RGB(163,158,143), line=RGB(46,42,32);
+static const COLORREF parchmentDim=RGB(216,207,189), violet=RGB(154,143,196);
 typedef struct ChoiceItem { wchar_t *title,*group; int index; struct ChoiceItem *next; } ChoiceItem;
-typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
+typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll, wheelRemainder; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
 static int px(int value) { return MulDiv(value,dpi,96); }
 static HWND findChild(int id) {
     HWND found=GetDlgItem(window,id);
@@ -53,6 +57,17 @@ static HWND findChild(int id) {
     if(!found && cardPanel) found=GetDlgItem(cardPanel,id);
     if(!found && reportWindow) found=GetDlgItem(reportWindow,id);
     return found;
+}
+static void updateLibraryHover(POINT pointer) {
+    for(int i=0;i<libraryHoverCount;i++) {
+        LibraryHover *row=&libraryHovers[i]; HWND anchor=findChild(row->anchor);
+        if(!anchor) continue;
+        RECT r; GetWindowRect(anchor,&r); r.left-=px(4); r.right+=px(150); r.top-=px(3); r.bottom=r.top+px(row->height);
+        int inside=PtInRect(&r,pointer) && IsWindowVisible(anchor);
+        if(inside==row->active) continue;
+        row->active=inside;
+        for(int j=0;j<row->count;j++) { HWND link=findChild(row->first+j); if(link) ShowWindow(link,inside ? SW_SHOWNA : SW_HIDE); }
+    }
 }
 extern void ch_draw_art(void *context,const wchar_t *path,int x,int y,int width,int height,double fx,double fy,int stationary,double progress,int imageNumber);
 extern void ch_draw_border(void *dc,int x,int y,int width,int height,int scaleDpi);
@@ -112,6 +127,27 @@ static void drawMenu(DRAWITEMSTRUCT *item) {
 static void freeChoices(Visual *v) {
     while(v->choices) { ChoiceItem *next=v->choices->next; free(v->choices->title); free(v->choices->group); free(v->choices); v->choices=next; }
 }
+static void sidebarIcon(HDC dc,int id,int x,int y,COLORREF color) {
+    HPEN pen=CreatePen(PS_SOLID,max(1,px(1)),color); HGDIOBJ oldPen=SelectObject(dc,pen),oldBrush=SelectObject(dc,GetStockObject(NULL_BRUSH));
+    int a=px(18), s=px(3), m=px(9);
+    if(id==90) { RoundRect(dc,x+s,y+px(2),x+a-s,y+a-px(2),px(2),px(2)); MoveToEx(dc,x+px(7),y+px(2),NULL); LineTo(dc,x+px(7),y+a-px(2)); }
+    else if(id==100) { RoundRect(dc,x+s,y+px(4),x+a-s,y+a-px(2),px(2),px(2)); MoveToEx(dc,x+s,y+px(8),NULL); LineTo(dc,x+a-s,y+px(8)); MoveToEx(dc,x+px(6),y+px(2),NULL); LineTo(dc,x+px(6),y+px(6)); MoveToEx(dc,x+px(12),y+px(2),NULL); LineTo(dc,x+px(12),y+px(6)); }
+    else if(id==102) { for(int k=0;k<6;k++) { double angle=6.283185307179586*k/6; int cx=x+m+(int)(px(5)*cos(angle)),cy=y+m+(int)(px(5)*sin(angle)); Ellipse(dc,cx-px(1),cy-px(1),cx+px(2),cy+px(2)); } }
+    else if(id==103) { MoveToEx(dc,x+m,y+px(4),NULL); LineTo(dc,x+m,y+a-px(3)); MoveToEx(dc,x+m,y+px(5),NULL); LineTo(dc,x+px(4),y+px(3)); LineTo(dc,x+px(3),y+a-px(4)); LineTo(dc,x+m,y+a-px(3)); MoveToEx(dc,x+m,y+px(5),NULL); LineTo(dc,x+a-px(4),y+px(3)); LineTo(dc,x+a-px(3),y+a-px(4)); LineTo(dc,x+m,y+a-px(3)); }
+    else if(id==106) { RoundRect(dc,x+px(4),y+px(2),x+a-px(4),y+a-px(2),px(2),px(2)); MoveToEx(dc,x+px(7),y+px(2),NULL); LineTo(dc,x+px(7),y+a-px(2)); MoveToEx(dc,x+px(9),y+px(7),NULL); LineTo(dc,x+px(12),y+px(7)); MoveToEx(dc,x+px(9),y+px(10),NULL); LineTo(dc,x+px(12),y+px(10)); }
+    else if(id==104) { MoveToEx(dc,x+px(3),y+a-px(3),NULL); LineTo(dc,x+a-px(2),y+a-px(3)); MoveToEx(dc,x+px(3),y+a-px(3),NULL); LineTo(dc,x+px(3),y+px(3)); MoveToEx(dc,x+px(5),y+px(12),NULL); LineTo(dc,x+px(9),y+px(9)); LineTo(dc,x+px(12),y+px(11)); LineTo(dc,x+px(15),y+px(5)); }
+    else if(id==101) { for(int row=0;row<2;row++) for(int col=0;col<2;col++) RoundRect(dc,x+px(3+col*7),y+px(3+row*7),x+px(8+col*7),y+px(8+row*7),px(1),px(1)); }
+    else if(id==105) { HFONT gear=face(17,FW_NORMAL,0); HGDIOBJ prior=SelectObject(dc,gear); RECT r={x,y,x+a,y+a}; SetBkMode(dc,TRANSPARENT); SetTextColor(dc,color); DrawTextW(dc,L"⚙",-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE); SelectObject(dc,prior); DeleteObject(gear); }
+    SelectObject(dc,oldBrush); SelectObject(dc,oldPen); DeleteObject(pen);
+}
+static void calendarChevron(HDC dc,int id,RECT r) {
+    int cx=(r.left+r.right)/2,cy=(r.top+r.bottom)/2,wide=id==713 ? px(11) : px(4), high=id==713 ? px(3) : px(6);
+    HPEN pen=CreatePen(PS_SOLID,max(1,px(1)),gold); HGDIOBJ old=SelectObject(dc,pen);
+    if(id==711) { MoveToEx(dc,cx+wide,cy-high,NULL); LineTo(dc,cx-wide,cy); LineTo(dc,cx+wide,cy+high); }
+    else if(id==712) { MoveToEx(dc,cx-wide,cy-high,NULL); LineTo(dc,cx+wide,cy); LineTo(dc,cx-wide,cy+high); }
+    else { int up=0; wchar_t title[4]={0}; GetWindowTextW(GetDlgItem(window,713),title,4); up=wcscmp(title,L"⌃")==0; MoveToEx(dc,cx-wide,cy+(up ? high : -high),NULL); LineTo(dc,cx,cy+(up ? -high : high)); LineTo(dc,cx+wide,cy+(up ? high : -high)); }
+    SelectObject(dc,old); DeleteObject(pen);
+}
 static void drawVisualContent(DRAWITEMSTRUCT *item) {
     Visual *v=GetPropW(item->hwndItem,L"ChotkiVisual"); if(!v || (v->kind==11 && !v->summary) || (v->kind==12 && !v->path)) return;
     RECT r=item->rcItem; HDC dc=item->hDC; wchar_t text[2048]; GetWindowTextW(item->hwndItem,text,2048);
@@ -126,17 +162,17 @@ static void drawVisualContent(DRAWITEMSTRUCT *item) {
     if(v->kind==16 || v->kind==17) { HBRUSH paper=CreateSolidBrush(foreground); FillRect(dc,&r,paper); DeleteObject(paper); }
     if(v->kind==0 || v->kind==5 || v->kind==25) {
         HFONT font=(HFONT)SendMessageW(item->hwndItem,WM_GETFONT,0,0);
-        ink(dc,font ? font : regular,v->flags&64 ? muted : v->flags&1024 ? RGB(154,143,196) : v->flags&128 ? gold : foreground);
+        ink(dc,font ? font : regular,v->flags&16384 ? RGB(136,132,121) : v->flags&64 ? muted : v->flags&1024 ? RGB(154,143,196) : v->flags&128 ? gold : foreground);
         DrawTextW(dc,text,-1,&r,DT_NOPREFIX|DT_WORDBREAK|(v->kind==25 ? DT_CENTER : DT_LEFT));
     } else if(v->kind==28) {
         int center=(r.left+r.right)/2, top=(r.top+r.bottom-px(98))/2;
         RECT circle={center-px(28),top,center+px(28),top+px(56)};
         roundBox(dc,circle,v->hover ? RGB(46,42,32) : RGB(28,30,38),gold,56);
         int cy=(circle.top+circle.bottom)/2;
-        HPEN plus=CreatePen(PS_SOLID,px(2),gold); HGDIOBJ old=SelectObject(dc,plus);
-        MoveToEx(dc,center-px(8),cy,NULL); LineTo(dc,center+px(8)+1,cy);
-        MoveToEx(dc,center,cy-px(8),NULL); LineTo(dc,center,cy+px(8)+1);
-        SelectObject(dc,old); DeleteObject(plus);
+        int stroke=max(2,px(2)), arm=px(8); HBRUSH plus=CreateSolidBrush(gold);
+        RECT horizontal={center-arm,cy-stroke/2,center+arm,cy+(stroke+1)/2};
+        RECT vertical={center-stroke/2,cy-arm,center+(stroke+1)/2,cy+arm};
+        FillRect(dc,&horizontal,plus); FillRect(dc,&vertical,plus); DeleteObject(plus);
         RECT label={r.left,top+px(72),r.right,top+px(98)};
         ink(dc,regular,gold); DrawTextW(dc,text,-1,&label,DT_CENTER|DT_SINGLELINE);
     } else if(v->kind==26) { ch_draw_border(dc,r.left,r.top,r.right-r.left,r.bottom-r.top,dpi); }
@@ -270,7 +306,8 @@ static void drawVisualContent(DRAWITEMSTRUCT *item) {
         roundBox(dc,circle,(v->flags&1) ? gold : foreground,RGB(168,138,51),16);
         if(v->flags&1) { ink(dc,smallFont,background); DrawTextW(dc,L"✓",-1,&circle,DT_CENTER|DT_VCENTER|DT_SINGLELINE); }
     } else if(v->kind==17 || v->kind==18) {
-        ink(dc,v->customFont ? v->customFont : regular,v->kind==17 ? RGB(94,89,79) : v->flags&64 ? muted : gold); DrawTextW(dc,text,-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE);
+        if(v->kind==18 && GetDlgCtrlID(item->hwndItem)>=711 && GetDlgCtrlID(item->hwndItem)<=713) calendarChevron(dc,GetDlgCtrlID(item->hwndItem),r);
+        else { ink(dc,v->customFont ? v->customFont : regular,v->kind==17 ? RGB(94,89,79) : v->flags&64 ? muted : gold); DrawTextW(dc,text,-1,&r,GetDlgCtrlID(item->hwndItem)>=19000 && GetDlgCtrlID(item->hwndItem)<20000 ? DT_LEFT|DT_VCENTER|DT_SINGLELINE : DT_CENTER|DT_VCENTER|DT_SINGLELINE); }
     } else {
         COLORREF color=disabled ? RGB(100,97,88) : v->kind==9 ? ((v->flags&1) ? foreground : muted) : gold;
         COLORREF fill=(v->kind==9 && v->flags&1) || v->hover ? RGB(28,30,38) : background;
@@ -289,6 +326,14 @@ static void drawVisualContent(DRAWITEMSTRUCT *item) {
             wchar_t *newline=wcschr(text,L'\n'); if(newline) { *newline=0; DrawTextW(dc,text,-1,&letters,DT_CENTER|DT_SINGLELINE); text[0]=0; wcsncpy_s(text,2048,newline+1,_TRUNCATE); }
             RECT number=r; if(newline) { number.top+=px(20); number.bottom-=px(7); } HFONT numerals=face(newline ? 17 : 13,FW_SEMIBOLD,0); ink(dc,numerals,color); DrawTextW(dc,text,-1,&number,DT_CENTER|DT_VCENTER|DT_SINGLELINE); SelectObject(dc,regular); DeleteObject(numerals);
             if(v->flags&16) { HBRUSH dot=CreateSolidBrush(gold); RECT d={r.left+(r.right-r.left)/2-1,r.bottom-px(7),r.left+(r.right-r.left)/2+2,r.bottom-px(4)}; FillRect(dc,&d,dot); DeleteObject(dot); }
+        } else if(v->kind==9 && (v->flags&4096)) {
+            if((v->flags&1) || v->hover || v->attentionUntil>GetTickCount64()) roundBox(dc,r,fill,fill,8);
+            int iconX=(v->flags&8192) ? (r.left+r.right-px(18))/2 : r.left+px(10);
+            sidebarIcon(dc,GetDlgCtrlID(item->hwndItem),iconX,(r.top+r.bottom-px(18))/2,color);
+            if(!(v->flags&8192)) { RECT label=r; label.left+=px(42); ink(dc,regular,color); DrawTextW(dc,text,-1,&label,DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS); }
+        } else if(v->kind==1 && ((GetDlgCtrlID(item->hwndItem)>=11000 && GetDlgCtrlID(item->hwndItem)<13000))) {
+            roundBox(dc,r,v->hover ? RGB(40,36,30) : background,gold,4);
+            ink(dc,regular,gold); DrawTextW(dc,text,-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE);
         } else {
             if(v->kind!=9 || (v->flags&1) || v->hover || v->attentionUntil>GetTickCount64()) roundBox(dc,r,fill,v->kind==9 ? fill : line,8);
             RECT label=r; InflateRect(&label,-px(v->kind==9 ? 10 : 4),0); ink(dc,regular,color);
@@ -400,8 +445,22 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
     }
     if(msg==WM_KEYDOWN && wp==VK_ESCAPE && glossaryPanel) { ch_command(6063); return 0; }
     if(msg==WM_MOUSEMOVE && !v->hover) { v->hover=1; TRACKMOUSEEVENT track={sizeof(track),TME_LEAVE,hwnd,0}; TrackMouseEvent(&track); InvalidateRect(hwnd,NULL,FALSE); }
+    if(msg==WM_MOUSEMOVE || msg==WM_MOUSELEAVE) { POINT pointer; GetCursorPos(&pointer); updateLibraryHover(pointer); }
     if(msg==WM_MOUSELEAVE) { v->hover=0; InvalidateRect(hwnd,NULL,FALSE); }
     if(msg==WM_MOUSEWHEEL && GetParent(hwnd)!=window && v->kind!=19) return SendMessageW(GetParent(hwnd),msg,wp,lp);
+    if(msg==WM_MOUSEWHEEL && v->kind==19) {
+        int before=(int)SendMessageW(hwnd,EM_GETFIRSTVISIBLELINE,0,0);
+        v->wheelRemainder+=GET_WHEEL_DELTA_WPARAM(wp);
+        int lines=v->wheelRemainder/(WHEEL_DELTA/3);
+        v->wheelRemainder%=WHEEL_DELTA/3;
+        if(lines) SendMessageW(hwnd,EM_LINESCROLL,0,-lines);
+        int after=(int)SendMessageW(hwnd,EM_GETFIRSTVISIBLELINE,0,0);
+        if(after!=before) {
+            if(v->tracked && !v->suppressScroll) { v->scrolled=1; PostMessageW(window,WM_APP+11,(WPARAM)hwnd,0); }
+            InvalidateRect(hwnd,NULL,FALSE);
+        }
+        return 0;
+    }
     if((v->kind==0 || v->kind==5 || v->kind==25 || v->kind==27 || v->kind==6 || v->kind==7 || v->kind==12 || v->kind==20 || v->kind==26) && (msg==WM_PAINT || msg==WM_PRINTCLIENT)) {
         PAINTSTRUCT paint; HDC dc=msg==WM_PAINT ? BeginPaint(hwnd,&paint) : (HDC)wp;
         DRAWITEMSTRUCT item={0}; item.itemID=(UINT)-1; item.hwndItem=hwnd; item.hDC=dc; GetClientRect(hwnd,&item.rcItem); if(GetFocus()==hwnd) item.itemState|=ODS_FOCUS;
@@ -429,6 +488,10 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
     return result;
 }
 static LRESULT CALLBACK scrollProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) {
+    if(msg==WM_MOUSEMOVE || msg==WM_MOUSELEAVE) {
+        if(msg==WM_MOUSEMOVE && hwnd==homePanel && libraryHoverCount) { TRACKMOUSEEVENT track={sizeof(track),TME_LEAVE,hwnd,0}; TrackMouseEvent(&track); }
+        POINT pointer; GetCursorPos(&pointer); updateLibraryHover(pointer);
+    }
     if(msg==WM_NOTIFY || msg==WM_DRAWITEM || msg==WM_COMMAND || msg==WM_CONTEXTMENU || msg==WM_CTLCOLORSTATIC || msg==WM_CTLCOLOREDIT || msg==WM_CTLCOLORLISTBOX || msg==WM_CTLCOLORBTN) return SendMessageW(window,msg,wp,lp);
     if(msg==WM_ERASEBKGND) { backdrop((HDC)wp,hwnd); return 1; }
     if(msg==WM_VSCROLL || msg==WM_HSCROLL || msg==WM_MOUSEWHEEL) {
@@ -599,6 +662,7 @@ void ch_render_end(void) {
     if(IsWindowVisible(window)) RedrawWindow(window,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);
 }
 void ch_clear(void) {
+    libraryHoverCount=0;
     prayerKeys=0;
     free(priorReadingText); priorReadingText=NULL; priorReadingLine=0;
     HWND reader=findChild(301);
@@ -668,7 +732,7 @@ void ch_control(int32_t id, int32_t kind, const char *text, int32_t x, int32_t y
         }
         while(v->links) { LinkRange *next=v->links->next; free(v->links); v->links=next; }
         while(v->ends) { ReadingRange *next=v->ends->next; free(v->ends); v->ends=next; }
-        v->tracked=v->scrolled=v->completed=v->token=v->contentHeight=0;
+        v->tracked=v->scrolled=v->completed=v->token=v->contentHeight=v->wheelRemainder=0;
         v->restoreLine=restoreReading ? priorReadingLine : 0;
         SendMessageW(child, WM_SETFONT, (WPARAM)(kind == 5 ? heading : (kind == 4 || kind==19) ? reading : regular), TRUE);
         if(kind==19) {
@@ -858,7 +922,7 @@ void ch_attention(int32_t id,int32_t milliseconds) {
     if(milliseconds>0) { BOOL animations=TRUE; SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0); SetTimer(window,2,animations ? 33 : milliseconds,NULL); }
 }
 int32_t ch_test_attention(int32_t id) { Visual *v=GetPropW(findChild(id),L"ChotkiVisual"); return automation && v && v->attentionUntil>GetTickCount64(); }
-void ch_style(int32_t id,int32_t flags) { HWND handle=findChild(id); Visual *v=GetPropW(handle,L"ChotkiVisual"); if(v) { v->flags=flags; if(flags&2048) SendMessageW(handle,WM_SETFONT,(WPARAM)listFont,TRUE); else if(flags&256) SendMessageW(handle,WM_SETFONT,(WPARAM)dateFont,TRUE); else if(flags&512) SendMessageW(handle,WM_SETFONT,(WPARAM)smallFont,TRUE); else if(flags&1024) SendMessageW(handle,WM_SETFONT,(WPARAM)captionFont,TRUE); InvalidateRect(handle,NULL,FALSE); } }
+void ch_style(int32_t id,int32_t flags) { HWND handle=findChild(id); Visual *v=GetPropW(handle,L"ChotkiVisual"); if(v) { v->flags=flags; if(flags&16384) { v->customFont=CreateFontW(-px(13),0,0,0,FW_NORMAL,TRUE,FALSE,FALSE,DEFAULT_CHARSET,0,0,CLEARTYPE_QUALITY,0,L"Segoe UI"); SendMessageW(handle,WM_SETFONT,(WPARAM)v->customFont,TRUE); } else if(flags&2048) SendMessageW(handle,WM_SETFONT,(WPARAM)listFont,TRUE); else if(flags&256) SendMessageW(handle,WM_SETFONT,(WPARAM)dateFont,TRUE); else if(flags&512) SendMessageW(handle,WM_SETFONT,(WPARAM)smallFont,TRUE); else if(flags&1024) SendMessageW(handle,WM_SETFONT,(WPARAM)captionFont,TRUE); InvalidateRect(handle,NULL,FALSE); } }
 int32_t ch_test_space_modifier(int32_t id,int32_t modifier) {
     if(!automation || modifier<0 || modifier>255) return -1;
     BYTE saved[256],state[256]; if(!GetKeyboardState(saved)) return -1;
@@ -1060,6 +1124,33 @@ void ch_test_panel_wheel(int32_t turns) {
     if(!automation || !homePanel) return;
     for(int i=0;i<abs(turns);i++) SendMessageW(homePanel,WM_MOUSEWHEEL,MAKEWPARAM(0,turns>0 ? (short)-WHEEL_DELTA : (short)WHEEL_DELTA),0);
 }
+int32_t ch_test_reader_first_line(int32_t id) { return automation && findChild(id) ? (int32_t)SendMessageW(findChild(id),EM_GETFIRSTVISIBLELINE,0,0) : -1; }
+int32_t ch_test_reader_wheel(int32_t id,int32_t turns) {
+    HWND child=findChild(id); if(!automation || !child) return -1;
+    for(int i=0;i<abs(turns);i++) SendMessageW(child,WM_MOUSEWHEEL,MAKEWPARAM(0,turns>0 ? (short)-WHEEL_DELTA : (short)WHEEL_DELTA),0);
+    return (int32_t)SendMessageW(child,EM_GETFIRSTVISIBLELINE,0,0);
+}
+int32_t ch_test_reader_wheel_delta(int32_t id,int32_t delta,int32_t repeats) {
+    HWND child=findChild(id); if(!automation || !child || repeats<0 || repeats>32) return -1;
+    for(int i=0;i<repeats;i++) SendMessageW(child,WM_MOUSEWHEEL,MAKEWPARAM(0,(short)delta),0);
+    return (int32_t)SendMessageW(child,EM_GETFIRSTVISIBLELINE,0,0);
+}
+void ch_show(int32_t id,int32_t visible) { HWND child=findChild(id); if(child) ShowWindow(child,visible ? SW_SHOWNA : SW_HIDE); }
+void ch_library_hover(int32_t anchor,int32_t firstLink,int32_t count,int32_t height) {
+    if(libraryHoverCount>=128) return;
+    libraryHovers[libraryHoverCount++]=(LibraryHover){anchor,firstLink,count,height,0};
+}
+int32_t ch_test_library_hover(int32_t firstLink,int32_t active) {
+    if(!automation) return -1;
+    POINT pointer={0,0};
+    if(active) for(int i=0;i<libraryHoverCount;i++) if(libraryHovers[i].first==firstLink) {
+        HWND anchor=findChild(libraryHovers[i].anchor); RECT r;
+        if(anchor) { GetWindowRect(anchor,&r); pointer.x=r.left+px(10); pointer.y=r.top+px(10); }
+        break;
+    }
+    updateLibraryHover(pointer);
+    HWND link=findChild(firstLink); return link && IsWindowVisible(link);
+}
 void ch_test_panel_scroll(int32_t bottom) { if(automation && homePanel) SendMessageW(homePanel,WM_VSCROLL,bottom ? SB_BOTTOM : SB_TOP,0); }
 void ch_home_content(int32_t height) { if(homePanel) { RECT r; GetClientRect(homePanel,&r); panelScroll(homePanel,SB_VERT,height,MulDiv(r.bottom,96,dpi),homeScroll); } }
 int32_t ch_rich_fit(int32_t id) {
@@ -1185,7 +1276,7 @@ void ch_rich_style(int32_t id,int32_t start,int32_t length,int32_t flags,int32_t
     CHARFORMAT2W format={0}; format.cbSize=sizeof(format);
     format.dwMask=CFM_FACE|CFM_SIZE|CFM_COLOR|CFM_BOLD|CFM_ITALIC|CFM_LINK|CFM_UNDERLINE;
     format.yHeight=size*15; // logical 96-DPI pixels converted to twips
-    format.crTextColor=flags&128 ? foreground : flags&8 || (linkID>=0 && !(flags&128)) ? gold : flags&4 ? muted : foreground;
+    format.crTextColor=flags&128 ? foreground : flags&8 || (linkID>=0 && !(flags&128)) ? gold : flags&1024 ? violet : flags&4 ? muted : flags&512 ? parchmentDim : foreground;
     format.dwEffects=(flags&1 ? CFE_BOLD : 0)|(flags&2 ? CFE_ITALIC : 0);
     wcscpy_s(format.szFaceName,LF_FACESIZE,flags&256 ? L"Segoe UI Symbol" : flags&16 ? L"Segoe UI" : L"XCharter");
     SendMessageW(child,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&format);

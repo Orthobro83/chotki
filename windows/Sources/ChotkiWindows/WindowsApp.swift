@@ -353,6 +353,13 @@ final class WindowsApp {
         if ProcessInfo.processInfo.environment["CHOTKI_VISUAL_REVIEW"]=="1" {
             verifying=true; defer { verifying=false }
             try press(101); try captureReview("visual-library-top")
+            try press(90); try captureReview("visual-sidebar-collapsed"); try press(90)
+            if let index=templates.firstIndex(where:{ !$0.glossarySlugs.isEmpty }) {
+                let firstLink=Int32(19000+index*3)
+                try require(ch_test_library_hover(firstLink,0)==0 && ch_test_library_hover(firstLink,1)==1,"Library glossary links did not follow row hover")
+                try captureReview("visual-library-hover")
+                try require(ch_test_library_hover(firstLink,0)==0,"Library glossary links remained visible after mouse exit")
+            }
             ch_test_panel_wheel(5); try captureReview("visual-library-wheel")
             ch_test_panel_scroll(1); try captureReview("visual-library-bottom")
             let presetIndex=templates.firstIndex { $0.title.localizedCaseInsensitiveContains("Morning prayers") }!
