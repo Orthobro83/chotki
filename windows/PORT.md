@@ -545,5 +545,5 @@ The optimized UI suite, physical mouse and keyboard review, and installed
 private lifecycle review passed. One synthetic tray foreground assertion was
 intermittent under VM focus and passed on rerun; it did not indicate the main
 window was hidden in the paced normal-window review. `alpha-rc2-build34` is
-installed on the VM and available as a local draft ZIP. No GitHub release was
-published.
+installed on the VM and published as a GitHub prerelease for Windows alpha
+testing. It is not a beta or stable release.

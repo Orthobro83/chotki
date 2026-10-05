@@ -1,8 +1,8 @@
 # Chotki for Windows
 
 Windows **alpha-rc2-build34** targets x86_64 Windows 11. The current macOS app
-is the visual and functional specification. Full parity is the release gate;
-ARM64 is deferred.
+is the visual and functional specification. Full parity remains the goal for a
+stable release; ARM64 is deferred.
 
 The SwiftPM executable combines canonical ChotkiCore with a native Win32 UI.
 Home includes grouped/collapsible navigation, week/month selection, separate
@@ -108,16 +108,17 @@ version and per-monitor-DPI manifest. `verify-release-vm.ps1` runs the complete
 synthetic desktop suite against that optimized executable; `verify-input-vm.ps1`
 uses real mouse/keyboard events and native accessibility providers.
 
-`package-vm.ps1` builds a draft payload and integrity manifest without publishing
+`package-vm.ps1` builds a payload and integrity manifest without publishing
 it. `verify-lifecycle-vm.ps1` tests the packaged startup/second-instance/animation
 adapters in a private namespace. `install-windows.ps1` validates and installs a
 payload for the current user and creates Desktop/Start menu shortcuts. Its launch
 script excludes ARM64 toolchain paths. Program updates preserve the separate
-practice record. Draft assembly is not a release-candidate declaration.
+practice record. Package assembly alone does not declare a release candidate.
 
 The current alpha is installed on the VM with a Chotki Desktop icon. Its optimized
 desktop, physical input/accessibility, native notification, assembled-payload
 and installed lifecycle gates passed under Prism. Synthetic visual checks cover
 Library scrolling, editor state, and Home resizing. User acceptance and physical
-x86_64 hardware validation follow; native ARM64 remains deferred. This alpha
-build has not been published as a GitHub release.
+x86_64 hardware validation follow; native ARM64 remains deferred. This build is
+published as the [Windows alpha-rc2-build34 prerelease](https://github.com/Orthobro83/chotki/releases/tag/windows-alpha-rc2-build34)
+for testing. It is not a beta or stable Windows release.

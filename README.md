@@ -21,7 +21,7 @@ What that means in practice:
 - **Android is 1.0 beta, build 29**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 1.0 beta, build 23, and the local build 28.
 - **macOS is 1.0 beta, build 29**, macOS 13 or later, Apple Silicon and Intel, in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
 - **iOS is 1.0 beta, build 29.** It is not a public download. A free Apple developer account cannot use TestFlight, and a phone build signed that way stops opening after seven days. A Linux version is planned.
-- **Windows is alpha-rc2-build34**, an x86_64 Windows 11 VM build under visual review. It is not a public beta or a published release candidate; see [Windows status](windows/README.md).
+- **Windows is alpha-rc2-build34**, an x86_64 Windows 11 alpha release candidate under visual review. It is available as a [GitHub prerelease](https://github.com/Orthobro83/chotki/releases/tag/windows-alpha-rc2-build34), not a beta or stable release; see [Windows status](windows/README.md).
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 
 ### 1.0 beta, build 29
