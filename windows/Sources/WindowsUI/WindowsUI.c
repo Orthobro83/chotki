@@ -40,20 +40,14 @@ static ChotkiEvent callback;
 static void *context;
 static HFONT regular, reading, heading, smallFont, dateFont, captionFont, listFont;
 static HBRUSH ground, panel;
-static int automation, exitCode, priorFocus, readerSerial, prayerKeys, renderDepth, renderWasVisible, keyboardFocus;
-static int transitionPending, transitionSidebar;
-static int transitionAttempts, transitionCreated, transitionError;
-static HWND transitionOverlay;
-static HBITMAP transitionBitmap;
-static ULONGLONG transitionStarted;
-static const int transitionDuration=250;
+static int automation, exitCode, priorFocus, readerSerial, prayerKeys, renderDepth, renderLocked, keyboardFocus;
 static wchar_t *testFilePath;
 static int testFileResult;
 static const COLORREF background = RGB(21,22,28), foreground = RGB(232,223,205);
 static const COLORREF gold=RGB(201,162,39), muted=RGB(163,158,143), line=RGB(46,42,32);
 static const COLORREF parchmentDim=RGB(216,207,189), violet=RGB(154,143,196);
 typedef struct ChoiceItem { wchar_t *title,*group; int index; struct ChoiceItem *next; } ChoiceItem;
-typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll, wheelRemainder, sidebarFinalX, paintCount; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
+typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll, wheelRemainder, paintCount; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
 static int px(int value) { return MulDiv(value,dpi,96); }
 static HWND findChild(int id) {
     HWND found=GetDlgItem(window,id);
@@ -550,24 +544,6 @@ static wchar_t *wide(const char *text) {
     if (length) MultiByteToWideChar(CP_UTF8, 0, text, -1, result, length);
     return result;
 }
-static void endTransition(void) {
-    if(window) KillTimer(window,5);
-    if(transitionOverlay) { DestroyWindow(transitionOverlay); transitionOverlay=NULL; }
-    if(transitionBitmap) { DeleteObject(transitionBitmap); transitionBitmap=NULL; }
-}
-static void positionAnimatedSidebar(double progress) {
-    if(!transitionSidebar) return;
-    double remaining=1.0-progress; remaining=remaining*remaining*remaining;
-    for(HWND child=GetWindow(window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) {
-        Visual *v=GetPropW(child,L"ChotkiVisual");
-        if(!v || !(v->flags&(4096|65536))) continue;
-        RECT bounds; GetWindowRect(child,&bounds); MapWindowPoints(NULL,window,(POINT*)&bounds,2);
-        SetWindowPos(child,NULL,v->sidebarFinalX-px((int)(130*remaining)),bounds.top,0,0,
-                     SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE|SWP_NOREDRAW);
-    }
-    RECT stripe={0,0,px(205),px(520)};
-    RedrawWindow(window,&stripe,NULL,RDW_INVALIDATE|RDW_ALLCHILDREN);
-}
 extern int ch_tray_attach(void *owner, int automation);
 extern void ch_tray_detach(void);
 extern int ch_tray_message(UINT message, WPARAM wp, LPARAM lp);
@@ -601,20 +577,8 @@ static LRESULT CALLBACK procedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     }
     case WM_DRAWITEM: if(((DRAWITEMSTRUCT*)lp)->CtlType==ODT_MENU) drawMenu((DRAWITEMSTRUCT*)lp); else drawVisual((DRAWITEMSTRUCT*)lp); return TRUE;
     case WM_APP+50: return lifecycleReview ? ch_opening_state() : -1;
-    case WM_APP+51: return lifecycleReview ? (transitionAttempts<<16)|transitionCreated : -1;
-    case WM_APP+52: return lifecycleReview ? transitionError : -1;
     case WM_APP+12: ch_post(CH_TRAY_OPEN,0); return 0;
     case WM_TIMER:
-        if(wp==5) {
-            ULONGLONG elapsed=GetTickCount64()-transitionStarted;
-            if(elapsed>=transitionDuration || !transitionOverlay) { positionAnimatedSidebar(1); endTransition(); transitionSidebar=0; }
-            else {
-                double progress=(double)elapsed/transitionDuration;
-                positionAnimatedSidebar(progress);
-                SetLayeredWindowAttributes(transitionOverlay,0,(BYTE)(255-(elapsed*255/transitionDuration)),LWA_ALPHA);
-            }
-            return 0;
-        }
         if(wp==4) { KillTimer(hwnd,4); ch_post(-12,0); return 0; }
         if(wp==3) { ch_post(-9,0); return 0; }
         if(wp==2) {
@@ -719,53 +683,17 @@ static LRESULT CALLBACK procedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 static wchar_t *priorReadingText;
 static int priorReadingLine;
 void ch_calendar_browse(int32_t active) { KillTimer(window,4); if(active) SetTimer(window,4,30000,NULL); }
-void ch_transition(int32_t sidebar) { transitionPending=1; transitionSidebar=sidebar!=0; }
 void ch_render_begin(void) {
-    if(renderDepth++!=0) return;
-    renderWasVisible=IsWindowVisible(window);
-    if(!transitionPending || !renderWasVisible || automation || platformReview) {
-        endTransition(); transitionPending=0; transitionSidebar=0; return;
+    if(renderDepth++==0) {
+        // Hold child painting only while this synchronous Win32 tree is
+        // rebuilt. The main window remains visible to the taskbar.
+        renderLocked=IsWindowVisible(window) && LockWindowUpdate(window);
     }
-    BOOL animations=TRUE; SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0);
-    if(!animations) { endTransition(); transitionPending=0; transitionSidebar=0; return; }
-    RECT r; GetClientRect(window,&r); HDC screen=GetDC(window),memory=CreateCompatibleDC(screen);
-    HBITMAP bitmap=CreateCompatibleBitmap(screen,max(1,r.right),max(1,r.bottom));
-    HGDIOBJ old=SelectObject(memory,bitmap);
-    int captured=BitBlt(memory,0,0,r.right,r.bottom,screen,0,0,SRCCOPY);
-    SelectObject(memory,old); DeleteDC(memory); ReleaseDC(window,screen);
-    endTransition();
-    if(captured) transitionBitmap=bitmap; else DeleteObject(bitmap);
-    transitionPending=0;
 }
 void ch_render_end(void) {
     if(renderDepth<=0 || --renderDepth) return;
+    if(renderLocked) { LockWindowUpdate(NULL); renderLocked=0; }
     if(IsWindowVisible(window)) RedrawWindow(window,NULL,NULL,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW);
-    if(transitionBitmap && renderWasVisible && IsWindowVisible(window)) {
-        transitionAttempts++;
-        RECT r; GetClientRect(window,&r);
-        transitionOverlay=CreateWindowExW(WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_NOACTIVATE,
-            L"STATIC",L"",WS_CHILD|WS_VISIBLE|SS_BITMAP|SS_NOTIFY,0,0,r.right,r.bottom,
-            window,(HMENU)9007,GetModuleHandleW(NULL),NULL);
-        if(transitionOverlay) {
-            SendMessageW(transitionOverlay,STM_SETIMAGE,IMAGE_BITMAP,(LPARAM)transitionBitmap);
-            SetWindowPos(transitionOverlay,HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
-            if(!SetLayeredWindowAttributes(transitionOverlay,0,255,LWA_ALPHA) || !IsWindowVisible(transitionOverlay)) {
-                transitionError=GetLastError(); if(!transitionError) transitionError=10001;
-                endTransition(); transitionSidebar=0; return;
-            }
-            transitionCreated++;
-            if(transitionSidebar) {
-                for(HWND child=GetWindow(window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) {
-                    Visual *v=GetPropW(child,L"ChotkiVisual");
-                    if(!v || !(v->flags&(4096|65536))) continue;
-                    RECT bounds; GetWindowRect(child,&bounds); MapWindowPoints(NULL,window,(POINT*)&bounds,2);
-                    v->sidebarFinalX=bounds.left;
-                }
-                positionAnimatedSidebar(0);
-            }
-            transitionStarted=GetTickCount64(); SetTimer(window,5,16,NULL);
-        } else { transitionError=GetLastError(); endTransition(); transitionSidebar=0; }
-    }
 }
 void ch_clear(void) {
     libraryHoverCount=0;

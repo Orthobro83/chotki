@@ -52,7 +52,6 @@ int32_t ch_test_rich_flags(int32_t id, int32_t start);
 void ch_flush(void);
 void ch_clear(void);
 void ch_render_begin(void);
-void ch_transition(int32_t sidebar);
 void ch_calendar_browse(int32_t active);
 void ch_render_end(void);
 void ch_control(int32_t id, int32_t kind, const char *text, int32_t x, int32_t y, int32_t width, int32_t height);

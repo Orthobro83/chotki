@@ -34,7 +34,7 @@ extension WindowsApp {
             ("Reference", [(.glossary,"Glossary"),(.settings,"Settings")])]
         var y: Int32 = sidebarCollapsed ? 48 : 55
         for (label, items) in groups {
-            if !sidebarCollapsed { control(80+y, 0, label, 20, y, 158, 19); ch_style(80+y,64|512|65536) }
+            if !sidebarCollapsed { control(80+y, 0, label, 20, y, 158, 19); ch_style(80+y,64|512) }
             y += sidebarCollapsed ? 12 : 25
             for (item, title) in items {
                 control(Int32(item.rawValue), 9, sidebarCollapsed ? "" : title,

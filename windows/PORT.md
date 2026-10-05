@@ -524,3 +524,26 @@ and installed lifecycle checks passed on the VM. The installed executable and
 36 runtime DLLs are AMD64, and all 422 payload files passed hash checks. The
 VM installation and local draft package are `alpha-rc2-build33`. No GitHub
 release was published; final Mac parity remains the release gate.
+
+## Windows alpha-rc2-build34 transition rollback
+
+Real navigation revealed flicker in the layered snapshot crossfade introduced
+in build 33. It captured the main window while child controls were drawn
+separately, then faded that incomplete bitmap over rebuilt controls. The
+sidebar animation also moved newly created controls during the same redraw.
+Both effects have been removed. Page and calendar changes now hold child
+painting during the synchronous rebuild, then perform one redraw. This keeps
+the main window visible and avoids the taskbar blink caused by `WM_SETREDRAW`.
+There is no overlay or animation timer; the reader, icon, picker and
+Reading layout improvements from build 33 remain. The normal-window lifecycle
+review now dwells on Home, Reading, Prayers, Library, the sidebar and Settings,
+checking that the main window stays visible and no snapshot overlay appears.
+Early and settled captures from a paced synthetic session showed complete
+calendar, Reading and sidebar views after the batched redraw.
+
+The optimized UI suite, physical mouse and keyboard review, and installed
+private lifecycle review passed. One synthetic tray foreground assertion was
+intermittent under VM focus and passed on rerun; it did not indicate the main
+window was hidden in the paced normal-window review. `alpha-rc2-build34` is
+installed on the VM and available as a local draft ZIP. No GitHub release was
+published.

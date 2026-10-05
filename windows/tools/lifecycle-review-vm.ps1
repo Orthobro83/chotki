@@ -9,6 +9,9 @@ public static class ChotkiLifecycle {
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr FindWindow(string cls,string title);
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr FindWindowEx(IntPtr parent,IntPtr after,string cls,string title);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hwnd);
+    [StructLayout(LayoutKind.Sequential)] public struct Rect { public int left,top,right,bottom; }
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd,out Rect rect);
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hwnd,IntPtr after,int x,int y,int width,int height,uint flags);
     [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr hwnd,int id);
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr hwnd,StringBuilder text,int size);
     [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr hwnd,uint message,IntPtr wp,IntPtr lp);
@@ -28,6 +31,21 @@ $env:PATH="$($exe.DirectoryName);C:\Windows\system32;C:\Windows"
 Set-Location $exe.DirectoryName
 $log='C:\workspace-build\lifecycle-review.log'
 'Installed-adapter lifecycle review; private namespace and in-memory practice.' | Set-Content $log
+Add-Type -AssemblyName System.Drawing
+$captureDir='C:\workspace-build\reviews\SlowNavigation-current'
+if(Test-Path $captureDir){Remove-Item $captureDir -Recurse -Force}
+New-Item -ItemType Directory -Force $captureDir | Out-Null
+function Capture([string]$name) {
+    $bounds=New-Object ChotkiLifecycle+Rect
+    if(![ChotkiLifecycle]::GetWindowRect($script:hwnd,[ref]$bounds)){throw 'Window bounds unavailable for visual review'}
+    $width=$bounds.right-$bounds.left; $height=$bounds.bottom-$bounds.top
+    $bitmap=New-Object System.Drawing.Bitmap($width,$height)
+    $graphics=[System.Drawing.Graphics]::FromImage($bitmap)
+    try {
+        $graphics.CopyFromScreen($bounds.left,$bounds.top,0,0,(New-Object System.Drawing.Size($width,$height)))
+        $bitmap.Save((Join-Path $captureDir ($name+'.png')),[System.Drawing.Imaging.ImageFormat]::Png)
+    } finally { $graphics.Dispose(); $bitmap.Dispose() }
+}
 function Require([bool]$condition,[string]$message) { if(!$condition){throw $message}; $message | Add-Content $log }
 function Await([scriptblock]$condition,[string]$message,[int]$Attempts=70) { for($i=0;$i -lt $Attempts;$i++){if(& $condition){return};Start-Sleep -Milliseconds 100};throw $message }
 $registration='HKCU:\Software\Chotki\LifecycleReview'
@@ -48,6 +66,7 @@ try {
     Require ($second.ExitCode -eq 0) 'Second launch exits successfully'
     Await { [ChotkiLifecycle]::IsWindowVisible($hwnd) } 'Second launch failed to reveal the first instance'
     Await { [ChotkiLifecycle]::Text($hwnd,200).StartsWith('Good ') } 'Second launch did not finish rendering Home'
+    [ChotkiLifecycle]::SetWindowPos($hwnd,[IntPtr](-1),0,0,0,0,0x13) | Out-Null
     'Second launch brings the existing app to Home.' | Add-Content $log
     [bool]$animate=$false; [ChotkiLifecycle]::SystemParametersInfo(0x1042,0,[ref]$animate,0) | Out-Null
     ('Opening state: '+[ChotkiLifecycle]::SendMessage($hwnd,0x8032,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()) | Add-Content $log
@@ -56,36 +75,31 @@ try {
         Await { [ChotkiLifecycle]::FindWindowEx($hwnd,[IntPtr]::Zero,'ChotkiOpening','The opening') -eq [IntPtr]::Zero } 'Opening animation did not finish'
         'Actual timed opening animation completed.' | Add-Content $log
     }
-    $fadeBefore=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
-    [ChotkiLifecycle]::PostMessage($hwnd,0x111,[IntPtr]713,[IntPtr]::Zero) | Out-Null
-    $sawCalendarFade=$false
-    for($frame=0;$frame -lt 35;$frame++) {
-        if([ChotkiLifecycle]::GetDlgItem($hwnd,9007) -ne [IntPtr]::Zero){$sawCalendarFade=$true}
-        if(![ChotkiLifecycle]::IsWindowVisible($hwnd)){throw 'Calendar expansion hid the main window and taskbar button'}
-        Start-Sleep -Milliseconds 10
-    }
-    $fadeAfter=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
-    ('Calendar fade counters: '+$fadeBefore+' to '+$fadeAfter+'; error '+[ChotkiLifecycle]::SendMessage($hwnd,0x8034,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()+'; sampled '+$sawCalendarFade) | Add-Content $log
-    if($animate){Require (($fadeAfter -band 0xffff) -gt ($fadeBefore -band 0xffff)) 'Calendar expansion created a visible layered crossfade'}
-    Require ([ChotkiLifecycle]::SendMessage($hwnd,0x8034,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32() -eq 0) 'Calendar fade had no Win32 error'
-    Await { [ChotkiLifecycle]::GetDlgItem($hwnd,9007) -eq [IntPtr]::Zero } 'Calendar expansion fade did not finish'
-    'Calendar expansion kept its taskbar window visible.' | Add-Content $log
-    $navigationFadeBefore=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
-    [ChotkiLifecycle]::PostMessage($hwnd,0x111,[IntPtr]105,[IntPtr]::Zero) | Out-Null
-    $sawFade=$false
-    if($animate) {
-        for($frame=0;$frame -lt 35;$frame++) {
-            if([ChotkiLifecycle]::GetDlgItem($hwnd,9007) -ne [IntPtr]::Zero){$sawFade=$true}
-            if(![ChotkiLifecycle]::IsWindowVisible($hwnd)){throw 'Navigation hid the main window and taskbar button'}
-            Start-Sleep -Milliseconds 10
+    # Exercise the normal renderer at a human browsing pace. The synthetic UI
+    # smoke uses a different path and cannot reveal transient normal-window paint.
+    foreach($route in @(
+        @{id=713; target=730; expected='S'; name='calendar'},
+        @{id=103; target=200; expected='Reading'; name='Reading'},
+        @{id=102; target=200; expected='Prayers'; name='Prayers'},
+        @{id=101; target=200; expected='Library'; name='Library'},
+        @{id=90; target=90; expected=''; name='sidebar'},
+        @{id=90; target=90; expected='Sidebar'; name='sidebar restored'},
+        @{id=105; target=200; expected='Settings'; name='Settings'}
+    )) {
+        [ChotkiLifecycle]::PostMessage($hwnd,0x111,[IntPtr]$route.id,[IntPtr]::Zero) | Out-Null
+        Await { [ChotkiLifecycle]::Text($hwnd,$route.target) -eq $route.expected } ($route.name+' did not render') 150
+        Start-Sleep -Milliseconds 50
+        Capture ($route.name.Replace(' ','-')+'-early')
+        for($frame=0;$frame -lt 40;$frame++) {
+            if(![ChotkiLifecycle]::IsWindowVisible($hwnd)){throw ($route.name+' hid the main window and taskbar button')}
+            if([ChotkiLifecycle]::GetDlgItem($hwnd,9007) -ne [IntPtr]::Zero){throw ($route.name+' left a snapshot overlay on the page')}
+            Start-Sleep -Milliseconds 50
         }
-        Await { [ChotkiLifecycle]::Control($hwnd,311) -ne [IntPtr]::Zero } 'Settings route completed before fade inspection'
-        $navigationFadeAfter=[ChotkiLifecycle]::SendMessage($hwnd,0x8033,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()
-        ('Navigation fade counters: '+$navigationFadeBefore+' to '+$navigationFadeAfter+'; error '+[ChotkiLifecycle]::SendMessage($hwnd,0x8034,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()+'; sampled '+$sawFade) | Add-Content $log
-        Require (($navigationFadeAfter -band 0xffff) -gt ($navigationFadeBefore -band 0xffff)) 'Navigation created a visible layered crossfade'
-        'Navigation kept its taskbar window visible throughout the fade.' | Add-Content $log
-        Await { [ChotkiLifecycle]::GetDlgItem($hwnd,9007) -eq [IntPtr]::Zero } 'Navigation crossfade did not finish'
+        Capture ($route.name.Replace(' ','-')+'-settled')
+        ('Stable after two-second dwell: '+$route.name) | Add-Content $log
     }
+    Compress-Archive (Join-Path $captureDir '*.png') ($captureDir+'.zip') -Force
+    ('Slow visual capture archive: '+$captureDir+'.zip') | Add-Content $log
     Await { [ChotkiLifecycle]::Control($hwnd,311) -ne [IntPtr]::Zero } 'Settings route failed after opening animation'
     Await { [ChotkiLifecycle]::Control($hwnd,625) -ne [IntPtr]::Zero } 'Login preference did not finish rendering'
     [ChotkiLifecycle]::SendMessage($hwnd,0,[IntPtr]::Zero,[IntPtr]::Zero) | Out-Null
