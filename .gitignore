@@ -5,6 +5,7 @@ context.local.md
 # swift / spm
 .build/
 .swiftpm/
+linux/spike/ui/build/
 *.xcodeproj
 *.xcworkspace
 DerivedData/
