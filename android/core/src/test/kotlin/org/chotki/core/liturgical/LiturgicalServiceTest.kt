@@ -310,6 +310,6 @@ class UserAgentTest {
     @Test
     fun `requests name the app and where to find it`() {
         assertTrue(org.chotki.core.liturgical.HttpFetching.USER_AGENT.startsWith("Chotki"))
-        assertTrue(org.chotki.core.liturgical.HttpFetching.USER_AGENT.contains("https://github.com/Orthobro83/chotki"))
+        assertTrue(org.chotki.core.liturgical.HttpFetching.USER_AGENT.contains("https://github.com/rjmac83/chotki"))
     }
 }

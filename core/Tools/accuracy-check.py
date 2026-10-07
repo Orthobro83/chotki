@@ -26,7 +26,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_BUNDLE = HERE.parent / "Sources/ChotkiCore/Resources/calendar"
-USER_AGENT = "Chotki accuracy check (+https://github.com/Orthobro83/chotki)"
+USER_AGENT = "Chotki accuracy check (+https://github.com/rjmac83/chotki)"
 CAL_TO_APP = {"julian": "julian", "gregorian": "revisedJulian"}
 
 

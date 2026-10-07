@@ -23,7 +23,7 @@ QUERIES = [
     '"monastery" "Greece" haswbstatement:P275=Q6938433',
     '"Orthodox fresco" haswbstatement:P275=Q6938433',
 ]
-AGENT = 'ChotkiImageResearch/0.1 (https://github.com/Orthobro83/chotki; CC0 image curation)'
+AGENT = 'ChotkiImageResearch/0.1 (https://github.com/rjmac83/chotki; CC0 image curation)'
 API = 'https://commons.wikimedia.org/w/api.php?'
 
 

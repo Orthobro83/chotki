@@ -21,7 +21,7 @@ public struct URLSessionFetcher: HTTPFetching {
     /// Says who is asking. orthocal.info is a small service run by one person,
     /// and its maintainer is owed a way to tell which app a request came from
     /// and where to find it. A public project address, not a personal one.
-    public static let userAgent = "Chotki (+https://github.com/Orthobro83/chotki)"
+    public static let userAgent = "Chotki (+https://github.com/rjmac83/chotki)"
 
     private let timeout: TimeInterval
 

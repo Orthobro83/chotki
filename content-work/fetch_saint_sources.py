@@ -19,7 +19,7 @@ MONTHS = (
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
 )
 ROOT = Path(__file__).resolve().parent / "source-cache"
-USER_AGENT = "Chotki/0.2 (https://github.com/Orthobro83/chotki; public-domain saint-life translation research)"
+USER_AGENT = "Chotki/0.2 (https://github.com/rjmac83/chotki; public-domain saint-life translation research)"
 
 
 def days():

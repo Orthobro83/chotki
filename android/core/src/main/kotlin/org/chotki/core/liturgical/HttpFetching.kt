@@ -17,7 +17,7 @@ fun interface HttpFetching {
          * is owed a way to tell which app a request came from and where to find it. A public
          * project address, not a personal one.
          */
-        const val USER_AGENT = "Chotki (+https://github.com/Orthobro83/chotki)"
+        const val USER_AGENT = "Chotki (+https://github.com/rjmac83/chotki)"
     }
 }
 

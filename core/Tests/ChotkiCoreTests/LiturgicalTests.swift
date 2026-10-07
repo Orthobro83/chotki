@@ -324,7 +324,7 @@ struct UserAgentTests {
     @Test("requests name the app and where to find it")
     func userAgent() {
         #expect(URLSessionFetcher.userAgent.hasPrefix("Chotki"))
-        #expect(URLSessionFetcher.userAgent.contains("https://github.com/Orthobro83/chotki"))
+        #expect(URLSessionFetcher.userAgent.contains("https://github.com/rjmac83/chotki"))
     }
 }
 
