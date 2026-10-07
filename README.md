@@ -89,7 +89,7 @@ Julian and Gregorian reckoning do not affect days of the week; the Wednesday and
 
 ## Data
 
-**The church calendar.** Fasts, feasts, tones, commemorations and the appointed readings come from [Orthocal.info](https://orthocal.info) and its open-source code (MIT licence). Chotki ships with five years of that calendar (2026–2031), under both the Old and the New reckoning, generated from Orthocal's own code and carried inside the app, so those days need no network at all.
+**The church calendar.** Fasts, feasts, tones, commemorations and the appointed readings come from [Orthocal.info](https://orthocal.info) and its open-source code. Chotki ships with five years of that calendar (2026–2031), under both the Old and the New reckoning, generated from Orthocal's own code and carried inside the app, so those days need no network at all.
 
 Our sincere thanks to the Orthocal project and everyone who has contributed to it. Chotki's calendar rests on their work.
 
