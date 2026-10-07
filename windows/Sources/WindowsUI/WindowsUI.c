@@ -47,7 +47,7 @@ static const COLORREF background = RGB(21,22,28), foreground = RGB(232,223,205);
 static const COLORREF gold=RGB(201,162,39), muted=RGB(163,158,143), line=RGB(46,42,32);
 static const COLORREF parchmentDim=RGB(216,207,189), violet=RGB(154,143,196);
 typedef struct ChoiceItem { wchar_t *title,*group; int index; struct ChoiceItem *next; } ChoiceItem;
-typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll, wheelRemainder, paintCount; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; } Visual;
+typedef struct { int count,target,choice; ChoiceItem *choices; int kind, flags, nativePaint, contentHeight, hover, tracked, scrolled, completed, token, restoreLine, serial, suppressScroll, wheelRemainder, paintCount; LinkRange *links; ReadingRange *ends; WNDPROC previous; HFONT customFont; ULONGLONG attentionUntil; wchar_t *summary,*category,*time,*attribution,*path; double fx,fy; double *ring; int ringCount, ringBeads; double ringDot,ringBead,ringSide; } Visual;
 static int px(int value) { return MulDiv(value,dpi,96); }
 static HWND findChild(int id) {
     HWND found=GetDlgItem(window,id);
@@ -72,6 +72,7 @@ static void updateLibraryHover(POINT pointer) {
 extern void ch_draw_art(void *context,const wchar_t *path,int x,int y,int width,int height,double fx,double fy,int stationary,double progress,int imageNumber);
 extern void ch_draw_border(void *dc,int x,int y,int width,int height,int scaleDpi);
 extern void ch_draw_knots(void *context,int x,int y,int width,int count,int target,int diameter,int step);
+extern void ch_draw_ring(void *context,int x,int y,int count,int target,const double *centres,int knots,int beads,double dot,double bead,double side,int dpi);
 extern void ch_draw_backdrop(void *dc,int width,int height,int offsetX,int offsetY);
 static void backdrop(HDC dc,HWND target) {
     RECT r; GetClientRect(window,&r); POINT origin={0,0}; MapWindowPoints(target,window,&origin,1);
@@ -213,16 +214,21 @@ static void drawVisualContent(DRAWITEMSTRUCT *item) {
         SelectObject(dc,old); SelectObject(dc,oldPen); DeleteObject(fill);
     } else if(v->kind==20) {
         int compact=v->flags&1;
+        // The ring is the rope; the count sits in its middle. Where each knot goes comes from core.
+        int side=v->ringSide>0 ? (int)(v->ringSide*dpi/96+.5) : px(compact ? 140 : 240);
+        int ringLeft=r.left+((r.right-r.left)-side)/2, ringTop=r.top+px(4);
+        if(v->ring && v->ringCount==v->target)
+            ch_draw_ring(dc,ringLeft,ringTop,v->count,v->target,v->ring,v->ringCount,v->ringBeads,v->ringDot,v->ringBead,v->ringSide,dpi);
+        int numberHeight=px(compact ? 44 : 68), captionHeight=px(18);
+        int blockTop=ringTop+side/2-(numberHeight+captionHeight)/2;
         HFONT number=face(compact ? 40 : 64,FW_LIGHT,0);
-        RECT counter=r; counter.bottom=counter.top+px(compact ? 48 : 72);
+        RECT counter={ringLeft,blockTop,ringLeft+side,blockTop+numberHeight};
         wchar_t count[32]; swprintf_s(count,32,L"%d",v->count);
         ink(dc,number,gold); DrawTextW(dc,count,-1,&counter,DT_CENTER|DT_VCENTER|DT_SINGLELINE);
         SelectObject(dc,regular); DeleteObject(number);
-        RECT caption=r; caption.top+=px(compact ? 48 : 76); caption.bottom=caption.top+px(18);
+        RECT caption={ringLeft,blockTop+numberHeight,ringLeft+side,blockTop+numberHeight+captionHeight};
         wchar_t target[48]; swprintf_s(target,48,v->count>=v->target ? L"the knot is complete" : L"of %d",v->target);
         ink(dc,regular,v->count>=v->target ? gold : muted); DrawTextW(dc,target,-1,&caption,DT_CENTER|DT_SINGLELINE);
-        int step=px(compact ? 9 : 12), diameter=px(compact ? 5 : 7), top=r.top+px(compact ? 66 : 100);
-        ch_draw_knots(dc,r.left,top,r.right-r.left,v->count,v->target,diameter,step);
     } else if(v->kind==22 || v->kind==23) {
         int selected=v->kind==22 || (v->flags&1);
         roundBox(dc,r,selected ? gold : RGB(28,30,38),selected ? gold : RGB(28,30,38),v->kind==22 ? 6 : 4);
@@ -501,7 +507,7 @@ static LRESULT CALLBACK visualProcedure(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp) 
         while(v->links) { LinkRange *next=v->links->next; free(v->links); v->links=next; }
         while(v->ends) { ReadingRange *next=v->ends->next; free(v->ends); v->ends=next; }
         freeChoices(v); if(v->customFont) DeleteObject(v->customFont);
-        free(v->summary); free(v->category); free(v->time); free(v->attribution); free(v->path); free(v);
+        free(v->summary); free(v->category); free(v->time); free(v->attribution); free(v->path); free(v->ring); free(v);
         return result;
     }
     int userScroll=v->kind!=19 && v->tracked && (msg==WM_MOUSEWHEEL || (msg==WM_VSCROLL && LOWORD(wp)!=SB_ENDSCROLL) ||
@@ -750,7 +756,14 @@ void ch_control(int32_t id, int32_t kind, const char *text, int32_t x, int32_t y
         SetWindowPos(child,HWND_TOP,px(x)-offsetX,px(y)-offsetY,px(width),px(height),SWP_NOACTIVATE|SWP_FRAMECHANGED);
         ShowWindow(child,SW_SHOW);
     } else {
-        child=CreateWindowExW(0,cls,kind==19 ? L"" : value,style,px(x)-offsetX,px(y)-offsetY,px(width),px(kind==7 ? height+240 : height),parent,(HMENU)(INT_PTR)id,GetModuleHandleW(NULL),NULL);
+        // A pooled reader outlives the page that first needed it, but a Rich Edit sends its notifications
+        // (link clicks, scrolling, resize) to the window it was CREATED under, whatever it is moved to
+        // later. Created under a panel that the next render destroys (the welcome page), a reader went
+        // deaf for the rest of the session: sections would not open and links showed the text cursor.
+        // So it is always created under the main window and moved to its panel afterwards.
+        HWND creator=(kind==19 && poolIndex>=0) ? window : parent;
+        child=CreateWindowExW(0,cls,kind==19 ? L"" : value,style,px(x)-offsetX,px(y)-offsetY,px(width),px(kind==7 ? height+240 : height),creator,(HMENU)(INT_PTR)id,GetModuleHandleW(NULL),NULL);
+        if(child && creator!=parent) { SetParent(child,parent); SetWindowPos(child,HWND_TOP,px(x)-offsetX,px(y)-offsetY,px(width),px(height),SWP_NOACTIVATE); }
         // Match drawing order and hit testing: later controls overlay earlier
         // surfaces, including the separate card completion/expand buttons.
         if(child) SetWindowPos(child,HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
@@ -969,6 +982,13 @@ void ch_rope_update(int32_t id,int32_t count,int32_t target) {
     v->count=count; v->target=target;
     wchar_t description[80]; swprintf_s(description,80,L"%d of %d knots%s",count,target,count>=target ? L", the knot is complete" : L"");
     SetWindowTextW(child,description); InvalidateRect(child,NULL,FALSE);
+}
+void ch_rope_ring(int32_t id,const double *centres,int32_t knots,int32_t beads,double dot,double bead,double side) {
+    HWND child=findChild(id); Visual *v=GetPropW(child,L"ChotkiVisual"); if(!v || knots<0 || beads<0) return;
+    free(v->ring); v->ring=NULL; v->ringCount=0; v->ringBeads=0;
+    int total=knots+beads;
+    if(total>0 && centres) { v->ring=malloc(sizeof(double)*2*total); if(!v->ring) return; memcpy(v->ring,centres,sizeof(double)*2*total); v->ringCount=knots; v->ringBeads=beads; }
+    v->ringDot=dot; v->ringBead=bead; v->ringSide=side; InvalidateRect(child,NULL,FALSE);
 }
 void ch_prayer_keys(int32_t enabled) { prayerKeys=enabled!=0; }
 void ch_choice_add(int32_t id,const char *title,const char *group,int32_t index) {

@@ -521,7 +521,7 @@ private fun Fathers(state: AppState, day: LiturgicalDay) {
         )
         Text(
             when {
-                state.isOffline -> "cached"
+                state.isOffline(day.civilDate) -> "cached"
                 state.settings.jurisdiction.reckoning == Reckoning.JULIAN -> "old calendar"
                 else -> "new calendar"
             },

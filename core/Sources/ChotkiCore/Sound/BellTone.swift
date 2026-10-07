@@ -27,16 +27,24 @@ public struct ToneSpec: Sendable, Hashable {
     /// A short fade in, because a waveform that starts at full amplitude clicks.
     public let attack: Double
     public let gain: Double
+    /// Seconds over which the end is faded to nothing.
+    public let release: Double
+    /// Whether the release follows a raised cosine (smooth at both ends) rather than a straight line.
+    /// A long ring-out wants the cosine; a brief click does not need it.
+    public let smoothRelease: Bool
 
     public init(
         fundamental: Double, partials: [Partial], duration: Double,
-        attack: Double = 0.004, gain: Double = 1.0
+        attack: Double = 0.004, gain: Double = 1.0,
+        release: Double = 0.06, smoothRelease: Bool = false
     ) {
         self.fundamental = fundamental
         self.partials = partials
         self.duration = duration
         self.attack = attack
         self.gain = gain
+        self.release = release
+        self.smoothRelease = smoothRelease
     }
 
     /// The chime when a knot is complete.
@@ -56,8 +64,13 @@ public struct ToneSpec: Sendable, Hashable {
             Partial(ratio: 2.55, amplitude: 0.16, decay: 0.45),
             Partial(ratio: 3.42, amplitude: 0.09, decay: 0.28)
         ],
-        duration: 2.6,
-        gain: 0.55
+        // Long enough, and released over long enough, that the ring dies away rather than being
+        // cut: at 2.6 seconds the lowest partials were still a third as loud as they began, and a
+        // fade over the last 0.06 seconds was heard as the sound stopping.
+        duration: 3.6,
+        gain: 0.55,
+        release: 1.8,
+        smoothRelease: true
     )
 
     /// The soft click as a knot passes: quiet, brief, and pitched well above
@@ -72,6 +85,21 @@ public struct ToneSpec: Sendable, Hashable {
         duration: 0.05,
         attack: 0.001,
         gain: 0.16
+    )
+
+    /// The bead after every tenth knot: lower and rounder than the tick, so that with your
+    /// eyes closed a bead is felt as well as heard. Still brief, still quieter than the bell.
+    public static let tock = ToneSpec(
+        fundamental: 520,
+        partials: [
+            Partial(ratio: 0.50, amplitude: 0.45, decay: 0.060),
+            Partial(ratio: 1.00, amplitude: 1.00, decay: 0.045),
+            Partial(ratio: 2.35, amplitude: 0.30, decay: 0.022),
+            Partial(ratio: 3.90, amplitude: 0.10, decay: 0.010)
+        ],
+        duration: 0.14,
+        attack: 0.002,
+        gain: 0.26
     )
 }
 
@@ -98,10 +126,10 @@ public enum ToneRenderer {
             if t < spec.attack {
                 value *= t / spec.attack
             }
-            let fadeOut = 0.06
             let remaining = spec.duration - t
-            if remaining < fadeOut {
-                value *= max(0, remaining / fadeOut)
+            if remaining < spec.release {
+                let position = max(0, remaining / spec.release)      // 1 at the start of the release, 0 at the end
+                value *= spec.smoothRelease ? 0.5 * (1 - cos(.pi * position)) : position
             }
 
             samples[index] = Float(value * spec.gain)

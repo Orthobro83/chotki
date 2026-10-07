@@ -121,7 +121,7 @@ struct ReadingViewContent: View {
                 Text("\(day.paschaDistance) days since Pascha")
                 if let tone = day.tone { Text("· tone \(tone)") }
                 Spacer()
-                Text(model.liturgical.isOffline ? "cached" : model.settings.jurisdiction.reckoning == .julian ? "old calendar" : "new calendar")
+                Text(calendarLabel)
             }
             .font(.system(size: 13))
             .foregroundStyle(Theme.faint)
@@ -131,6 +131,15 @@ struct ReadingViewContent: View {
         .onAppear { applyFocus() }
         .onChange(of: model.readingRequest) { _ in applyFocus() }
         .onChange(of: model.selectedDate) { _ in applyFocus() }
+    }
+
+    /// Which calendar the day is from, or that it is a cached copy. A day inside the shipped
+    /// calendar is never "cached": that tag is for a day shown from an old fetch because the
+    /// network could not be reached.
+    private var calendarLabel: String {
+        model.liturgical.isOffline(on: model.selectedDate)
+            ? "cached"
+            : model.settings.jurisdiction.reckoning == .julian ? "old calendar" : "new calendar"
     }
 
     private func applyFocus() {

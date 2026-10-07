@@ -15,7 +15,7 @@ Kotlin reimplementation is written against.
 An app for keeping an Orthodox prayer rule and honestly measuring whether
 it is kept, on macOS, Android, and iOS. macOS has a menu bar popover **and** a
 full window with a Dock icon. Written for Ryan; Android and macOS are published
-as 1.0 beta, build 29 at
+as 1.0 beta, build 30 at
 `github.com/Orthobro83/chotki` for a private community to test.
 
 ## Where things are
@@ -26,7 +26,7 @@ as 1.0 beta, build 29 at
 | His live data | `~/Library/Application Support/Chotki/chotki.sqlite` (+ `-wal`, `-shm`) |
 | Daily backups | `~/Library/Application Support/Chotki/backups/` |
 | Installed app | `/Applications/Chotki.app` |
-| Liturgical data | `orthocal.info` — free, no key, the only network call the app makes |
+| Liturgical data | Shipped in the app for 2026–2031 on macOS, iOS, Windows and Android (`core/.../Resources/calendar/`, built by `core/Tools/calendar-bundle.py`); `orthocal.info` — free, no key, the only network call any version makes — answers later dates |
 
 `core/` is a pure SwiftPM package: Foundation and SQLite only. CI builds and
 tests it on Linux every push, and a guard job fails the build if it ever
@@ -92,7 +92,8 @@ cd macos && swift build          # or ./build-app.sh release
 `/Applications` leaves someone testing yesterday's binary — that has already
 happened and cost a whole exchange.
 
-Tests: `swift test` in both `core/` and `macos/` (474 core and 81 Mac tests as of 3 October 2026). CI runs
+Tests: `swift test` in both `core/` and `macos/` (453 core and 84 Mac tests as of 6 October 2026, counting Swift Testing's total; the
+3 October figure of 474 core was not reproducible). CI runs
 core on macOS and Linux, the portability guard, and the macOS suite.
 
 ### Looking at the interface
@@ -175,9 +176,9 @@ Three platforms, all in daily testing by Ryan.
 
 | | |
 |---|---|
-| macOS | 1.0 beta, build 29; universal (arm64 + x86_64), ad-hoc signed, not notarised; Intel slice never run |
-| Android | 1.0 beta, build 29; public sideload release, signed with his own key |
-| iOS | 1.0 beta, build 29; redesigned phone interface, free provisioning for seven days, no public download |
+| macOS | 1.0 beta, build 30; universal (arm64 + x86_64), ad-hoc signed, not notarised; Intel slice never run |
+| Android | 1.0 beta, build 30; sideload, signed with his own key; ships the calendar |
+| iOS | 1.0 beta, build 30; redesigned phone interface, free provisioning for seven days, no public download |
 
 **Published is not delivered.** The author hands builds to people himself.
 Do not infer that a named person has a build from its publication.

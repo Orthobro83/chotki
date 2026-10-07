@@ -14,6 +14,9 @@ import ChotkiCore
 /// may differ from what is written here.
 struct PrayerRopeView: View {
     @ObservedObject var model: AppModel
+    /// Width and height of the circle of knots. The window has room for a
+    /// larger one than the menu bar popover.
+    var diameter: CGFloat = 190
 
     private var screen: PrayerScreen { model.prayers }
     private var showsRope: Bool { screen.showsRope() }
@@ -23,9 +26,7 @@ struct PrayerRopeView: View {
             prayerChooser
 
             if showsRope {
-                counter
-                knots
-                    .padding(.horizontal, 22).padding(.bottom, 16)
+                ropeCircle
                 countButton
                 Text("Click, or press space.")
                     .font(.system(size: 15))
@@ -56,19 +57,43 @@ struct PrayerRopeView: View {
         .animation(.easeInOut(duration: 0.2), value: showsRope)
     }
 
+    /// The knots as a ring, with the count in the middle. The ring is the
+    /// rope; nothing hangs from it. "Start again" waits in the corner, where it
+    /// is findable and cannot be pressed by accident while counting.
+    private var ropeCircle: some View {
+        ZStack {
+            RopeCircle(count: screen.count, target: screen.target)
+            counter
+        }
+        .frame(width: diameter, height: diameter)
+        .contentShape(Circle())
+        .onTapGesture { advance() }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Prayer rope, \(screen.count) of \(screen.target) knots counted")
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .topTrailing) {
+            Button { model.prayers.startAgain() } label: {
+                Text("Start again")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.muted)
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 22)
+        }
+        .padding(.top, 4).padding(.bottom, 14)
+    }
+
     private var counter: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Text("\(screen.count)")
-                .font(.system(size: 64, weight: .light))
+                .font(.system(size: diameter * 0.28, weight: .light))
                 .foregroundStyle(Theme.gold)
                 .monospacedDigit()
                 .contentTransition(.numericText())
             Text(screen.isComplete ? "the knot is complete" : "of \(screen.target)")
-                .font(.system(size: 14))
+                .font(.system(size: 13))
                 .foregroundStyle(screen.isComplete ? Theme.goldDim : Theme.muted)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 2).padding(.bottom, 16)
     }
 
     private var countButton: some View {
@@ -141,12 +166,6 @@ struct PrayerRopeView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                Button { model.prayers.startAgain() } label: {
-                    Text("Start again")
-                        .font(.system(size: 15))
-                        .foregroundStyle(Theme.muted)
-                }
-                .buttonStyle(.plain)
             }
 
             Spacer()
@@ -162,18 +181,6 @@ struct PrayerRopeView: View {
         .frame(maxWidth: 760).frame(maxWidth: .infinity).padding(.horizontal, 24).padding(.vertical, 18)
     }
 
-    /// One dot per knot, filling as it goes.
-    private var knots: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: min(screen.target, 10))
-        return LazyVGrid(columns: columns, spacing: 5) {
-            ForEach(0..<screen.target, id: \.self) { index in
-                Circle()
-                    .fill(index < screen.count ? Theme.gold : Theme.panel)
-                    .frame(height: 7)
-            }
-        }
-    }
-
     private func advance() {
         let wasCounted = model.prayers.count
         let completed = model.prayers.advance()
@@ -185,7 +192,8 @@ struct PrayerRopeView: View {
             if let selection = screen.selection { model.finishPrayer(selection, counted: true) }
             if model.settings.chimeOnCompletion { sound.playBell() }
         } else if model.settings.tickEachKnot {
-            sound.playTick()
+            // A tock where a bead sits on the rope, a tick everywhere else.
+            if screen.cue == .tock { sound.playTock() } else { sound.playTick() }
         }
     }
 
@@ -241,5 +249,43 @@ struct RopeWords: View {
             }
             .frame(maxWidth: .infinity)
         }
+    }
+}
+
+/// The rope as a ring of knots: counted ones filled, the next one ringed in
+/// gold, the rest left as outlines.
+struct RopeCircle: View {
+    let count: Int
+    let target: Int
+
+    var body: some View {
+        Canvas { context, size in
+            let side = min(size.width, size.height)
+            let layout = RopeCircleLayout.layout(count: target, diameter: Double(side))
+            let origin = CGPoint(x: (size.width - side) / 2, y: (size.height - side) / 2)
+            func rect(_ centre: RopeCircleLayout.Point, _ size: Double) -> CGRect {
+                CGRect(x: origin.x + CGFloat(centre.x - size / 2), y: origin.y + CGFloat(centre.y - size / 2),
+                       width: CGFloat(size), height: CGFloat(size))
+            }
+            let dot = CGFloat(layout.dot)
+            for (index, centre) in layout.knots.enumerated() {
+                let path = Path(ellipseIn: rect(centre, layout.dot))
+                if index < count {
+                    context.fill(path, with: .color(Theme.gold))
+                } else if index == count {
+                    context.fill(path, with: .color(Theme.panel))
+                    context.stroke(path, with: .color(Theme.gold), lineWidth: max(1.2, dot * 0.28))
+                } else {
+                    context.fill(path, with: .color(Theme.panel))
+                    context.stroke(path, with: .color(Theme.faint.opacity(0.55)), lineWidth: max(0.7, dot * 0.14))
+                }
+            }
+            // A bead after every tenth knot: larger, and red, as the liturgy days are. Dimmer until passed.
+            for (index, centre) in layout.beads.enumerated() {
+                let passed = layout.beadHasBeenPassed(index, count: count)
+                context.fill(Path(ellipseIn: rect(centre, layout.bead)), with: .color(Theme.ochre.opacity(passed ? 1 : 0.55)))
+            }
+        }
+        .allowsHitTesting(false)
     }
 }

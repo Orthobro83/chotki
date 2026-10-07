@@ -42,9 +42,9 @@ final class Model {
     var prayers = PrayerScreen()
 
     /// Bumped when the calendar changes under us, so anything showing a day
-    /// re-reads it. `liturgicalDay(_:)` reads the store directly, and an
-    /// `@Observable` model cannot see that a table it does not hold has
-    /// changed.
+    /// re-reads it. `liturgicalDay(_:)` reads through the service (the shipped
+    /// calendar, then the cache), and an `@Observable` model cannot see that
+    /// something it does not hold has changed.
     private(set) var calendarVersion = 0
     private(set) var isFetchingCalendar = false
 
@@ -96,14 +96,14 @@ final class Model {
 
     var today: CalendarDate { CalendarDate(Date(), in: .current) }
 
-    init(store: SQLiteStore) {
+    init(store: SQLiteStore, calendarClient: OrthocalClient = OrthocalClient()) {
         self.store = store
         let now = CalendarDate(Date(), in: .current)
         self.selectedDate = now
         self.visibleMonth = now
         self.lastKnownToday = now
         let loaded = (try? store.loadSettings()) ?? .default
-        self.liturgical = LiturgicalService(store: store, jurisdiction: loaded.jurisdiction)
+        self.liturgical = LiturgicalService(store: store, client: calendarClient, jurisdiction: loaded.jurisdiction)
         reload()
         Task { await refreshCalendar() }
     }
@@ -273,7 +273,9 @@ final class Model {
     /// stays empty until something else happens to change.
     func liturgicalDay(_ date: CalendarDate) -> LiturgicalDay? {
         _ = calendarVersion
-        return try? store.liturgicalDay(civilDate: date, reckoning: settings.jurisdiction.reckoning)
+        // Through the service, not the store: the calendar that ships with the app is not in the
+        // store, and a read that goes round the service can never see it.
+        return liturgical.cachedDay(for: date)
     }
 
     func report(days: Int = 30) -> ProgressReport {

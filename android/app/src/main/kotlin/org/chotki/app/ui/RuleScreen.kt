@@ -3,6 +3,8 @@ package org.chotki.app.ui
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -87,13 +89,24 @@ fun RuleScreen(
             // One column, in document order. The saying follows whatever is
             // above it. It is not pinned to the bottom of the screen, and a
             // tall day scrolls to reach it.
+            //
+            // With no rule cards to fill the day, the picture is drawn at the foot of the screen, so the
+            // empty space is above it and "Create your first rule" has something to be above. It is
+            // still the last thing in the scroll, not fixed there.
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            val viewport = maxHeight
+            val noCards = state.rules.isEmpty() || entries.isEmpty()
             Column(
                 Modifier
-                    .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                     .testTag("the day"),
             ) {
+            Column(
+                Modifier.fillMaxWidth().defaultMinSize(minHeight = if (noCards) viewport else 0.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+              Column {
                 val liturgical = state.liturgicalDay(state.selectedDate)?.title
                 if (liturgical != null) {
                     Text(
@@ -164,11 +177,14 @@ fun RuleScreen(
                         givenBy = state.settings.givenByPriestPhrase(),
                     )
                 }
+              }
                 SayingCard(
                     state.selectedDate,
                     Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     persistMotion = state.selectedDate == state.today,
                 )
+            }
+            }
             }
         }
     }

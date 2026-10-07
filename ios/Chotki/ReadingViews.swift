@@ -295,7 +295,7 @@ struct ReadingView: View {
                 Text("The church calendar is the only thing Chotki asks the network for.")
                     .font(.footnote).foregroundStyle(Chotki.faint)
                     .multilineTextAlignment(.center)
-                if model.liturgical.isOffline {
+                if model.liturgical.isOffline(on: model.selectedDate) {
                     Text("It could not be reached just now.")
                         .font(.footnote).foregroundStyle(Chotki.faint)
                 }

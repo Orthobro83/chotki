@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import org.chotki.app.AppState
 import org.chotki.app.platform.Sounds
 import org.chotki.core.PrayerScreen
+import org.chotki.core.RopeCircleLayout
+import org.chotki.core.RopeCue
 import org.chotki.core.content.Glossary
 import org.chotki.core.content.Content
 import org.chotki.core.ropePrayerId
@@ -81,32 +83,24 @@ fun RopeScreen(
     val prayer = screen.selection?.let { id -> Content.prayers.firstOrNull { it.id == id } }
     val sequence = screen.selection?.let { id -> Content.prayerSequences.firstOrNull { it.id == id } }
 
-    Column(modifier.fillMaxSize()) {
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier.fillMaxSize()) {
+    // The ring takes what is left once the chooser, the buttons, the glossary row and a few lines of
+    // the words are accounted for: up to 260dp, but never so large that it pushes the prayer off a
+    // short screen. (A banner above, or a large font, makes the screen shorter than it looks.)
+    val ringSide = (maxHeight - 360.dp).coerceIn(120.dp, 260.dp).coerceAtMost(maxWidth - 48.dp)
+    Column(Modifier.fillMaxSize()) {
         // Choosing goes through `choosing`, which is what clears an earlier
         // decision about the rope rather than leaving it stuck to everything
         // picked afterwards.
         ChooserRow(screen) { chosen -> screen = screen.choosing(chosen) }
 
         if (showsRope) {
-            Text(
-                "${screen.count}",
-                color = Chotki.gold,
-                fontSize = 56.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .semantics { contentDescription = "The count" },
+            RopeRing(
+                screen,
+                side = ringSide,
+                onCount = { countKnot(state, screen) { screen = it } },
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
             )
-            Text(
-                if (screen.isComplete) "the knot is complete" else "of ${screen.target}",
-                color = if (screen.isComplete) Chotki.goldDim else Chotki.muted,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Knots(screen, Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
 
             Text(
                 "Count",
@@ -118,29 +112,7 @@ fun RopeScreen(
                     .padding(horizontal = 20.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(Chotki.gold)
-                    .clickable {
-                        val (next, completed) = screen.advanced()
-                        if (next.count != screen.count) {
-                            screen = next
-                            // The chime marks completion; the tick only confirms
-                            // a press landed. Never both at once — with your eyes
-                            // closed they would run together.
-                            if (completed) {
-                                if (state.settings.chimeOnCompletion) Sounds.playBell()
-                                // Only the Jesus Prayer, and only while it is the prayer open.
-                                if (screen.selection == "jesus-prayer") {
-                                    state.entries(state.selectedDate)
-                                        .filter {
-                                            it.rule.ropePrayerId == "jesus-prayer" ||
-                                                it.rule.title == "The Jesus Prayer"
-                                        }
-                                        .forEach(state::markKept)
-                                }
-                            } else if (state.settings.tickEachKnot) {
-                                Sounds.playTick()
-                            }
-                        }
-                    }
+                    .clickable { countKnot(state, screen) { screen = it } }
                     .padding(vertical = 14.dp)
                     .semantics { contentDescription = "Count a knot" },
             )
@@ -165,15 +137,6 @@ fun RopeScreen(
                             .semantics { contentDescription = "Count to $target" },
                     )
                 }
-                Text(
-                    "Start again",
-                    color = Chotki.muted,
-                    fontSize = 13.sp,
-                    modifier = Modifier
-                        .clickable { screen = screen.startingAgain() }
-                        .padding(8.dp)
-                        .semantics { contentDescription = "Start again" },
-                )
             }
         }
 
@@ -257,7 +220,47 @@ fun RopeScreen(
         } else {
             Spacer(Modifier.weight(1f))
         }
-        GlossaryOfTerms(onOpenGlossary)
+        // "Start again" sits at the far corner from the Count button, opposite the glossary link,
+        // so it is not pressed by accident while counting.
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            GlossaryOfTerms(onOpenGlossary, Modifier.weight(1f))
+            if (showsRope) {
+                Text(
+                    "Start again",
+                    color = Chotki.muted,
+                    fontFamily = Chotki.reading,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .clickable { screen = screen.startingAgain() }
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .semantics { contentDescription = "Start again" },
+                )
+            }
+        }
+    }
+    }
+}
+
+/**
+ * Counts a knot and makes its sound. Which sound is `PrayerScreen.cue`'s decision, so every
+ * platform agrees: a tick for a knot, a tock for the knot before a bead, the bell at the end.
+ */
+private fun countKnot(state: AppState, screen: PrayerScreen, update: (PrayerScreen) -> Unit) {
+    val (next, completed) = screen.advanced()
+    if (next.count == screen.count) return
+    update(next)
+    // The chime marks completion; the tick only confirms a press landed. Never both at once —
+    // with your eyes closed they would run together.
+    if (completed) {
+        if (state.settings.chimeOnCompletion) Sounds.playBell()
+        // Only the Jesus Prayer, and only while it is the prayer open.
+        if (next.selection == "jesus-prayer") {
+            state.entries(state.selectedDate)
+                .filter { it.rule.ropePrayerId == "jesus-prayer" || it.rule.title == "The Jesus Prayer" }
+                .forEach(state::markKept)
+        }
+    } else if (state.settings.tickEachKnot) {
+        if (next.cue == RopeCue.TOCK) Sounds.playTock() else Sounds.playTick()
     }
 }
 
@@ -430,31 +433,74 @@ private fun Option(label: String, onPick: () -> Unit) {
     )
 }
 
-/** One dot per knot, filling as it goes. */
+/**
+ * The rope as a ring: counted knots filled, the next one ringed in gold, the rest outlined, and a
+ * larger red bead between every ten, the first being both start and end. The count sits in the
+ * middle; tapping the ring counts. Where each mark goes is core's `RopeCircleLayout`.
+ */
 @Composable
-private fun Knots(screen: PrayerScreen, modifier: Modifier = Modifier) {
-    val perRow = minOf(screen.target, 10)
-    Column(modifier.fillMaxWidth()) {
-        var index = 0
-        while (index < screen.target) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for (column in 0 until perRow) {
-                    if (index < screen.target) {
-                        val filled = index < screen.count
-                        Box(
-                            Modifier
-                                .weight(1f)
-                                .size(9.dp)
-                                .clip(CircleShape)
-                                .background(if (filled) Chotki.gold else Chotki.panel),
-                        )
-                        index += 1
-                    } else {
-                        Box(Modifier.weight(1f))
+private fun RopeRing(screen: PrayerScreen, side: androidx.compose.ui.unit.Dp, onCount: () -> Unit, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(side), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.Canvas(Modifier.size(side)) {
+                val px = size.minDimension
+                val unit = px / side.value                      // pixels per layout unit
+                val layout = RopeCircleLayout.layout(screen.target, side.value.toDouble())
+                fun at(point: RopeCircleLayout.Point) = androidx.compose.ui.geometry.Offset(
+                    (point.x * unit).toFloat(), (point.y * unit).toFloat(),
+                )
+                val dot = (layout.dot * unit).toFloat()
+                layout.knots.forEachIndexed { index, knot ->
+                    val centre = at(knot)
+                    when {
+                        index < screen.count -> drawCircle(Chotki.gold, dot / 2, centre)
+                        index == screen.count -> {
+                            drawCircle(Chotki.panel, dot / 2, centre)
+                            val width = maxOf(1.2f * unit.toFloat(), dot * 0.28f)
+                            drawCircle(Chotki.gold, (dot - width) / 2, centre, style = androidx.compose.ui.graphics.drawscope.Stroke(width))
+                        }
+                        else -> {
+                            drawCircle(Chotki.panel, dot / 2, centre)
+                            val width = maxOf(0.7f * unit.toFloat(), dot * 0.14f)
+                            drawCircle(
+                                Chotki.faint.copy(alpha = 0.55f), (dot - width) / 2, centre,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width),
+                            )
+                        }
                     }
                 }
+                // A bead between every ten knots, larger and red as the liturgy days are. The first is
+                // filled from the start; the others are dimmer until their tenth knot is counted.
+                val bead = (layout.bead * unit).toFloat()
+                layout.beads.forEachIndexed { index, point ->
+                    val passed = layout.beadHasBeenPassed(index, screen.count)
+                    drawCircle(Chotki.ochre.copy(alpha = if (passed) 1f else 0.55f), bead / 2, at(point))
+                }
             }
-            Spacer(Modifier.size(6.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "${screen.count}",
+                    color = Chotki.gold,
+                    fontSize = 56.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics { contentDescription = "The count" },
+                )
+                Text(
+                    if (screen.isComplete) "the knot is complete" else "of ${screen.target}",
+                    color = if (screen.isComplete) Chotki.goldDim else Chotki.muted,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            // A sibling over the ring, not its parent, so the count keeps its own place in the
+            // semantics instead of being merged into the ring's.
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .clip(CircleShape)
+                    .clickable(onClick = onCount)
+                    .semantics { contentDescription = "Prayer rope, ${screen.count} of ${screen.target} knots counted" },
+            )
         }
     }
 }

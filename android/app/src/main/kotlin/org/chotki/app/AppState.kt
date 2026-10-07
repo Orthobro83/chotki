@@ -182,7 +182,11 @@ class AppState(
         }
     }
 
-    val isOffline: Boolean get() = liturgical?.isOffline ?: false
+    /**
+     * Whether this day is on screen from the cache because the network could not be reached. A day
+     * inside the calendar that ships with the app never is.
+     */
+    fun isOffline(date: CalendarDate): Boolean = liturgical?.isOffline(date) ?: false
 
     fun load() {
         settings = store.loadSettings() ?: AppSettings.DEFAULT

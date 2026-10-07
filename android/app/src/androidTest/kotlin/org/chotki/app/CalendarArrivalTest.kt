@@ -35,7 +35,8 @@ class CalendarArrivalTest {
 
     @Test fun theReadingAppearsWhenTheFortnightLands() {
         val store = SqliteStore(AndroidDb.inMemory())
-        val service = LiturgicalService(store)
+        // No bundled calendar: this is the arrival of days over the network, which the bundle would answer first.
+        val service = LiturgicalService(store, bundle = null)
         val state = AppState(store, liturgical = service).also { it.load() }
 
         compose.setContent { ReadingScreen(state) }

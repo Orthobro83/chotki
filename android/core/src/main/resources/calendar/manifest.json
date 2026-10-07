@@ -1,0 +1,28 @@
+{
+ "fieldsDigest": "b88f16b52a13418c",
+ "files": [
+  "julian-2026.json",
+  "julian-2027.json",
+  "julian-2028.json",
+  "julian-2029.json",
+  "julian-2030.json",
+  "julian-2031.json",
+  "revisedJulian-2026.json",
+  "revisedJulian-2027.json",
+  "revisedJulian-2028.json",
+  "revisedJulian-2029.json",
+  "revisedJulian-2030.json",
+  "revisedJulian-2031.json"
+ ],
+ "first": "2026-01-01",
+ "generatedAt": "2026-10-06",
+ "last": "2031-12-31",
+ "orthocalCommit": "5bdf0a5e1cad406388d7860ec74ed506a7a19197",
+ "schema": 1,
+ "scripture": {
+  "text": "King James Version with Apocrypha, public domain, eBible.org",
+  "translation": "kjv"
+ },
+ "textDigest": "be47e5ae7fdbb8c4",
+ "tradition": "slavic"
+}

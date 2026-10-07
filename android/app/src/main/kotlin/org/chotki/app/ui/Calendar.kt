@@ -60,6 +60,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import org.chotki.app.AppState
 import org.chotki.core.CalendarDate
+import org.chotki.core.TodayLink
 import org.chotki.core.Observance
 import org.chotki.core.Weekday
 import kotlin.math.abs
@@ -136,7 +137,11 @@ fun Calendar(
         }
 
         Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-            Navigation(folded, month, weekStart, ::step)
+            val link = TodayLink.needed(state.selectedDate, state.today, state.visibleMonth, monthOpen = !folded)
+            Navigation(folded, month, weekStart, ::step, link) {
+                state.selectedDate = state.today
+                state.visibleMonth = state.today
+            }
 
             if (folded) {
                 WeekStrip(state, reportDay)
@@ -243,6 +248,8 @@ private fun Navigation(
     month: CalendarDate,
     weekStart: CalendarDate,
     step: (Int) -> Unit,
+    todayLink: TodayLink?,
+    backToToday: () -> Unit,
 ) {
     // A box rather than SpaceBetween. With three flex children the label only
     // lands in the middle when both arrows happen to measure the same, and
@@ -267,6 +274,23 @@ private fun Navigation(
             if (collapsed) "The week after" else "The month after",
             Modifier.align(Alignment.CenterEnd),
         ) { step(1) }
+
+        // Sans-serif, between the arrow and the title, on the side today lies.
+        if (todayLink != null) {
+            val left = todayLink == TodayLink.OnTheLeft
+            Text(
+                todayLink.text,
+                color = Chotki.gold,
+                fontSize = 13.sp,
+                maxLines = 1,
+                modifier = Modifier
+                    .align(if (left) Alignment.CenterStart else Alignment.CenterEnd)
+                    .padding(horizontal = 44.dp)
+                    .clickable(onClick = backToToday)
+                    .padding(horizontal = 6.dp, vertical = 8.dp)
+                    .semantics { contentDescription = "Back to today" },
+            )
+        }
     }
 }
 

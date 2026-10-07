@@ -84,9 +84,12 @@ final class WindowsApp {
         }
         settings = try store.loadSettings() ?? .default
         onboarding = !review && !settings.hasCompletedFirstRun
+        // Synthetic review keeps the fixture-fed fetcher and no shipped calendar, so every existing
+        // verification still controls exactly what a day contains. A normal launch uses the calendar
+        // that ships with the app; --self-test checks that it loads on Windows.
         liturgical = LiturgicalService(store: store,
             client: review ? OrthocalClient(http: ReviewCalendarFetcher()) : OrthocalClient(),
-            jurisdiction: settings.jurisdiction)
+            jurisdiction: settings.jurisdiction, bundle: WindowsApp.calendarBundle(review: review))
         try liturgical.loadSnapshot(around: selectedDate)
         if review {
             settings.displayName = "Review"
@@ -94,10 +97,10 @@ final class WindowsApp {
             try store.save(rule)
             try store.save(Activation(ruleID: rule.id, from: selectedDate.adding(days: -7)))
         }
-        let tick=WAV.encode(ToneRenderer.render(.tick)),bell=WAV.encode(ToneRenderer.render(.bell))
-        audioStatus=tick.withUnsafeBytes { tickBytes in bell.withUnsafeBytes { bellBytes in
-            ch_sound_prepare(tickBytes.bindMemory(to:UInt8.self).baseAddress,Int32(tick.count),bellBytes.bindMemory(to:UInt8.self).baseAddress,Int32(bell.count),review ? 1 : 0)
-        } }
+        let tick=WAV.encode(ToneRenderer.render(.tick)),bell=WAV.encode(ToneRenderer.render(.bell)),tock=WAV.encode(ToneRenderer.render(.tock))
+        audioStatus=tick.withUnsafeBytes { tickBytes in bell.withUnsafeBytes { bellBytes in tock.withUnsafeBytes { tockBytes in
+            ch_sound_prepare(tickBytes.bindMemory(to:UInt8.self).baseAddress,Int32(tick.count),bellBytes.bindMemory(to:UInt8.self).baseAddress,Int32(bell.count),tockBytes.bindMemory(to:UInt8.self).baseAddress,Int32(tock.count),review ? 1 : 0)
+        } } }
         try repairObservances()
         if !review, try practice.shouldMarkFirstRunComplete {
             settings.hasCompletedFirstRun=true
@@ -105,6 +108,10 @@ final class WindowsApp {
             try store.saveSettings(settings); onboarding=false
         }
         writeDailyBackup()
+        // Review only: look at another day of the shipped calendar (CHOTKI_REVIEW_DATE=YYYY-MM-DD).
+        if review, let iso = ProcessInfo.processInfo.environment["CHOTKI_REVIEW_DATE"], let day = CalendarDate(iso: iso) {
+            selectedDate = day; weekAnchor = day; visibleMonth = day
+        }
     }
 
     var practice: Practice {

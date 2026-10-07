@@ -31,12 +31,12 @@ class ToneTest {
     fun `it fades in and out rather than starting or stopping abruptly`() {
         val samples = ToneRenderer.render(ToneSpec.BELL, rate)
         assertTrue(abs(samples.first()) < 0.001f, "it starts at ${samples.first()}")
-        assertTrue(abs(samples.last()) < 0.01f, "it ends at ${samples.last()}")
+        assertTrue(abs(samples.last()) < 0.001f, "it ends at ${samples.last()}")
     }
 
     @Test
     fun `nothing clips`() {
-        for (spec in listOf(ToneSpec.BELL, ToneSpec.TICK)) {
+        for (spec in listOf(ToneSpec.BELL, ToneSpec.TICK, ToneSpec.TOCK)) {
             val peak = ToneRenderer.render(spec, rate).maxOf { abs(it) }
             assertTrue(peak <= 1.0f, "peak $peak would clip")
             assertTrue(peak <= spec.gain.toFloat() + 1e-6f, "peak $peak exceeds its own ceiling")
@@ -91,5 +91,32 @@ class ToneTest {
         val at44 = ToneRenderer.render(ToneSpec.TICK, 44_100.0).size
         val at48 = ToneRenderer.render(ToneSpec.TICK, 48_000.0).size
         assertTrue(at48 > at44)
+    }
+
+    @Test
+    fun `the tock is lower than the tick, and still brief and quiet next to the bell`() {
+        assertTrue(ToneSpec.TOCK.fundamental < ToneSpec.TICK.fundamental / 2)
+        val bell = ToneRenderer.render(ToneSpec.BELL, rate)
+        val tock = ToneRenderer.render(ToneSpec.TOCK, rate)
+        assertTrue(tock.size * 20 < bell.size)
+        assertTrue(tock.maxOf { abs(it) } < bell.maxOf { abs(it) } / 2)
+    }
+
+    // The bell used to end 0.06 s after the lowest partials were still a third as loud.
+    @Test
+    fun `the bell has died away well before its last sample, and falls smoothly`() {
+        val samples = ToneRenderer.render(ToneSpec.BELL, rate)
+        val tail = samples.size / rate
+        fun peak(from: Double, to: Double): Float =
+            (from * rate).toInt().let { a -> (a until minOf(samples.size, (to * rate).toInt())).maxOf { abs(samples[it]) } }
+        val a = peak(tail - 1.8, tail - 1.35)
+        val b = peak(tail - 1.35, tail - 0.9)
+        val c = peak(tail - 0.9, tail - 0.45)
+        val d = peak(tail - 0.45, tail)
+        assertTrue(a > b && b > c && c > d, "$a $b $c $d")
+        assertTrue(d < a / 6)
+        val end = samples.takeLast(2_000)
+        val step = end.zipWithNext { x, y -> abs(y - x) }.max()
+        assertTrue(step < 0.0005f, "an abrupt end: $step")
     }
 }

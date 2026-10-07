@@ -18,9 +18,10 @@ void ch_review_mode(int32_t review);
 int32_t ch_opening_active(void);
 void ch_lifecycle_review(int32_t enabled);
 int32_t ch_single_instance(void);
-int32_t ch_sound_prepare(const unsigned char *tick,int32_t tickLength,const unsigned char *bell,int32_t bellLength,int32_t review);
-int32_t ch_sound_play(int32_t bell);
-int32_t ch_test_sound(int32_t bell);
+int32_t ch_sound_prepare(const unsigned char *tick,int32_t tickLength,const unsigned char *bell,int32_t bellLength,const unsigned char *tock,int32_t tockLength,int32_t review);
+/// kind: 0 tick, 1 bell, 2 tock.
+int32_t ch_sound_play(int32_t kind);
+int32_t ch_test_sound(int32_t kind);
 void ch_sound_close(void);
 int32_t ch_notifications_start(int32_t mode);
 int32_t ch_notification_show(const char *identifier,const char *title,const char *body);
@@ -86,6 +87,8 @@ void ch_attention(int32_t id,int32_t milliseconds);
 int32_t ch_test_attention(int32_t id);
 void ch_font_size(int32_t id,int32_t size,int32_t serif,int32_t bold);
 void ch_rope_update(int32_t id, int32_t count, int32_t target);
+/// Knot centres then bead centres (x,y pairs, 96-dpi units), the knot and bead diameters and the square's side, from core.
+void ch_rope_ring(int32_t id, const double *centres, int32_t knots, int32_t beads, double dot, double bead, double side);
 void ch_prayer_keys(int32_t enabled);
 void ch_choice_add(int32_t id, const char *title, const char *group, int32_t index);
 void ch_choice_popup(int32_t id);

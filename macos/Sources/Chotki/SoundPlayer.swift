@@ -16,6 +16,9 @@ final class SoundPlayer {
     /// that does not arrive is worse than none, because you are listening for it.
     private var ticks: [AVAudioPlayer] = []
     private var nextTick = 0
+    /// The bead's tock, in rotation for the same reason.
+    private var tocks: [AVAudioPlayer] = []
+    private var nextTock = 0
 
     /// One for the whole app. SwiftUI evaluates a `@State` initialiser every
     /// time a view struct is constructed — which is on every parent body
@@ -26,6 +29,7 @@ final class SoundPlayer {
     init() {
         bell = Self.make(.bell)
         ticks = (0..<4).compactMap { _ in Self.make(.tick) }
+        tocks = (0..<3).compactMap { _ in Self.make(.tock) }
     }
 
     private static func make(_ spec: ToneSpec) -> AVAudioPlayer? {
@@ -45,6 +49,14 @@ final class SoundPlayer {
         guard !ticks.isEmpty else { return }
         let player = ticks[nextTick % ticks.count]
         nextTick += 1
+        player.currentTime = 0
+        player.play()
+    }
+
+    func playTock() {
+        guard !tocks.isEmpty else { return }
+        let player = tocks[nextTock % tocks.count]
+        nextTock += 1
         player.currentTime = 0
         player.play()
     }

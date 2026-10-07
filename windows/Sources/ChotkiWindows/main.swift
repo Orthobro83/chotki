@@ -33,6 +33,7 @@ func verifyBootstrap() throws {
         throw BootstrapError.verification("Bundled Psalter resource")
     }
     print("Chotki Windows x86_64 framework ready: SQLite, settings, JSON backup and 151 bundled psalms verified.")
+    try verifyShippedCalendar()
 }
 
 do {

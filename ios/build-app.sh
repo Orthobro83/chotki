@@ -18,8 +18,10 @@ export CHOTKI_TEAM="${CHOTKI_TEAM:-}"
 #   ./ios/build-app.sh device   builds and installs on a connected iPhone
 if [ "${1:-}" = "device" ]; then ACTION=device; shift; fi
 
-#   ./ios/build-app.sh test   runs the suite instead of just building
-if [ "${1:-}" = "test" ]; then ACTION=test; shift; fi
+#   ./ios/build-app.sh test     runs the unit suite instead of just building
+#   ./ios/build-app.sh uitest   runs the UI tests, which drive the real app (slower)
+if [ "${1:-}" = "test" ]; then ACTION=test; SKIP=(-skip-testing:ChotkiUITests); shift; fi
+if [ "${1:-}" = "uitest" ]; then ACTION=test; ONLY=(-only-testing:ChotkiUITests); shift; fi
 
 # The project is generated, never edited. project.yml is the source.
 command -v xcodegen >/dev/null || { echo "xcodegen missing: brew install xcodegen"; exit 1; }
@@ -80,6 +82,7 @@ xcodebuild -project Chotki.xcodeproj -scheme Chotki \
     -destination "platform=iOS Simulator,name=$DEVICE" \
     -derivedDataPath build \
     CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+    ${SKIP[@]+"${SKIP[@]}"} ${ONLY[@]+"${ONLY[@]}"} \
     "${ACTION:-build}" | grep -E "error:|✘|BUILD|TEST" || true
 
 [ "${ACTION:-build}" = "test" ] && exit 0

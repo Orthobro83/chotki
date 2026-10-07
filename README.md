@@ -14,15 +14,27 @@ You can add items of your own, whether or not they are Church canon, so that a r
 
 ## Status
 
-**Android and macOS: 1.0 beta, build 29.** These are the public releases. Android is in daily use by its author. iOS is the same version, on the author's phone. Windows has its own alpha version.
+**Android and macOS: 1.0 beta, build 30.** These are the public releases. Android is in daily use by its author. iOS is the same version, on the author's phone. Windows has its own alpha version.
 
 What that means in practice:
 
-- **Android is 1.0 beta, build 29**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 1.0 beta, build 23, and the local build 28.
-- **macOS is 1.0 beta, build 29**, macOS 13 or later, Apple Silicon and Intel, in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
-- **iOS is 1.0 beta, build 29.** It is not a public download. A free Apple developer account cannot use TestFlight, and a phone build signed that way stops opening after seven days. A Linux version is planned.
-- **Windows is alpha-rc2-build34**, an x86_64 Windows 11 alpha release candidate under visual review. It is available as a [GitHub prerelease](https://github.com/Orthobro83/chotki/releases/tag/windows-alpha-rc2-build34), not a beta or stable release; see [Windows status](windows/README.md).
+- **Android is 1.0 beta, build 30**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 1.0 beta, build 29.
+- **macOS is 1.0 beta, build 30**, macOS 13 or later, Apple Silicon and Intel, in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
+- **iOS is 1.0 beta, build 30.** It is not a public download. A free Apple developer account cannot use TestFlight, and a phone build signed that way stops opening after seven days. A Linux version is planned.
+- **Windows is alpha-rc3-build35**, an x86_64 Windows 11 alpha release candidate under visual review. It is available as a [GitHub prerelease](https://github.com/Orthobro83/chotki/releases/tag/windows-alpha-rc3-build35), not a beta or stable release; see [Windows status](windows/README.md).
 - The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
+
+### 1.0 beta, build 30
+
+The church calendar now ships inside the app, on every platform, and the prayer rope has changed shape.
+
+- **The calendar for 2026–2031 is in the download**, under both the Old and the New Calendar, so those days need no network at all. The app asks orthocal.info only for dates after 2031. Scripture is the King James Version with the Apocrypha, public domain; long readings break into paragraphs by the Bible's own marks, and Orthocal's Composite readings (whose translation is not public domain) now show the King James text of the chapters they cite.
+- **The prayer rope is a ring.** The count sits in the middle and the 33, 50 and 100 choices remain; the knots shrink so the same ring holds any of them. Between every ten knots is a larger red bead, where one crosses oneself, and the first bead is both where the count begins and where it ends. A knot ticks, the knot before a bead gives a lower "tock", and the chime sounds as the count returns to the first bead. The chime now fades away rather than stopping.
+- **"Start again" has moved** to the bottom right on the phones, away from Count.
+- **A link back to today** ("← Today" or "Today →") appears beside the month or week heading once the calendar has been moved away from today.
+- **Home:** the day's picture scrolls with the day. With no rule cards yet, it rests above the bar and "Create your first rule" has the space above it. Folding the month is easier on the phone.
+- **Android:** the banner about reminders is gone, and the app no longer asks about battery saving. Notifications are asked for once, on the first launch, and the phone's permission is seen and changed in Settings.
+- Requests to orthocal.info now say who is asking, with the public project address.
 
 ### 1.0 beta, build 29
 
@@ -94,7 +106,7 @@ Core tests run on Linux in CI from the first phase, so portability fails loudly 
 
 ## Data
 
-Liturgical data comes from [orthocal.info](https://orthocal.info), a free public JSON API. No key, no account. It is the only network call the app makes: no analytics, no telemetry, no sync. Practice records are stored locally in SQLite and backed up by JSON export. The bundled saint readings are the Prologue from Ochrid, recorded unchanged under CC BY-SA 4.0, with source and license links beneath each reading. There are 365 church-date entries; the source has no February 29 reading. Fetching this collection is a development tool, not an app network request. The daily artwork uses a shared 365-image rotation.
+The church calendar — fasts, feasts, tones, commemorations and the appointed readings — comes from [orthocal.info](https://orthocal.info), whose author, Brian Glass, has welcomed its use here. From build 30 on macOS, iOS and Android, and from Windows alpha-rc3-build35, the apps carry five years of it (2026–2031) inside the app, generated from Orthocal's open-source code and checked against the live service, so those days need no network at all; the apps ask orthocal.info only for dates beyond that. The scripture is the King James Version with the Apocrypha, public domain, from [eBible.org](https://ebible.org); Orthocal's own saints' lives and Composite readings are not used. orthocal.info is the only network call any version of the app makes: no key, no account, no analytics, no telemetry, no sync. Practice records are stored locally in SQLite and backed up by JSON export. The bundled saint readings are the Prologue from Ochrid, recorded unchanged under CC BY-SA 4.0, with source and license links beneath each reading. There are 365 church-date entries; the source has no February 29 reading. Fetching this collection is a development tool, not an app network request. The daily artwork uses a shared 365-image rotation.
 
 ## A note on tone
 

@@ -126,6 +126,18 @@ public struct LiturgicalDay: Sendable, Hashable, Codable {
         return fastLevelDescription
     }
 
+    /// The same day with other readings.
+    public func replacing(readings: [Reading]) -> LiturgicalDay {
+        LiturgicalDay(
+            civilDate: civilDate, reckoning: reckoning, observedDate: observedDate,
+            tone: tone, title: title, summaryTitle: summaryTitle, saints: saints, feasts: feasts,
+            fastLevel: fastLevel, fastLevelDescription: fastLevelDescription,
+            fastException: fastException, fastExceptionDescription: fastExceptionDescription,
+            abstentions: abstentions, feastLevel: feastLevel, feastLevelDescription: feastLevelDescription,
+            readings: readings, paschaDistance: paschaDistance, fetchedAt: fetchedAt
+        )
+    }
+
     public func isStale(asOf now: Date, maxAge: TimeInterval = 60 * 60 * 24 * 30) -> Bool {
         now.timeIntervalSince(fetchedAt) > maxAge
     }

@@ -1,7 +1,11 @@
 . $PSScriptRoot\windows-env.ps1
 & $PSScriptRoot\build-vm.ps1
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-Copy-Item Z:\windows\test-fixtures.zip C:\workspace-build\test-fixtures.zip -Force
+# Prefer the archive uploaded from this checkout (run-vm.py --upload windows/test-fixtures.zip); the shared
+# mount may belong to another checkout. Fall back to the mount only when nothing was uploaded.
+if (!(Test-Path C:\workspace-build\test-fixtures.zip)) {
+    Copy-Item Z:\windows\test-fixtures.zip C:\workspace-build\test-fixtures.zip -Force
+}
 Expand-Archive C:\workspace-build\test-fixtures.zip C:\workspace-build -Force
 Set-Location C:\workspace-build\shared-core
 swift build --triple x86_64-unknown-windows-msvc --build-system native --build-tests -Xcc -IC:\vcpkg\installed\x64-windows\include -Xlinker -LC:\vcpkg\installed\x64-windows\lib

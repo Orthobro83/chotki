@@ -82,6 +82,37 @@ extern "C" void ch_draw_knots(void *context,int x,int y,int width,int count,int 
     }
 }
 
+// The rope as a ring: counted knots filled, the next one ringed in gold, the rest outlined, and a
+// larger red bead after every tenth knot. Geometry is core's (RopeCircleLayout), in 96-dpi units;
+// only the scale is applied here. `centres` holds the knots, then the beads.
+extern "C" void ch_draw_ring(void *context,int x,int y,int count,int target,const double *centres,int knots,int beads,double dot,double bead,double side,int dpi) {
+    (void)side;
+    if(target<=0 || knots!=target || !centres) return;
+    static ULONG_PTR token=0;
+    if(!token) { Gdiplus::GdiplusStartupInput input; if(Gdiplus::GdiplusStartup(&token,&input,nullptr)!=Gdiplus::Ok) return; }
+    Gdiplus::Graphics graphics(static_cast<HDC>(context));
+    graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+    float scale=float(dpi)/96, d=float(dot)*scale;
+    Gdiplus::SolidBrush filled(Gdiplus::Color(255,201,162,39)),empty(Gdiplus::Color(255,28,30,38));
+    for(int i=0;i<target;i++) {
+        float left=float(x)+float(centres[2*i])*scale-d/2, top=float(y)+float(centres[2*i+1])*scale-d/2;
+        if(i<count) { graphics.FillEllipse(&filled,left,top,d,d); continue; }
+        graphics.FillEllipse(&empty,left,top,d,d);
+        bool next=i==count;
+        float width=next ? std::max(1.2f,float(dot)*.28f)*scale : std::max(0.7f,float(dot)*.14f)*scale;
+        Gdiplus::Pen pen(next ? Gdiplus::Color(255,201,162,39) : Gdiplus::Color(140,110,106,98),width);
+        graphics.DrawEllipse(&pen,left+width/2,top+width/2,d-width,d-width);
+    }
+    // Beads: the liturgy-day red (A63A38), dimmer until the tenth knot before them is counted.
+    float b=float(bead)*scale;
+    for(int j=0;j<beads;j++) {
+        const double *c=centres+2*(knots+j);
+        bool passed=j==0 || count>=j*10;
+        Gdiplus::SolidBrush red(Gdiplus::Color(passed ? 255 : 140,166,58,56));
+        graphics.FillEllipse(&red,float(x)+float(c[0])*scale-b/2,float(y)+float(c[1])*scale-b/2,b,b);
+    }
+}
+
 // macOS VenerationBorder: four open corners, hairlines, arrow/diamond tiles
 // and the outlined knot, in parchment at eleven percent opacity.
 extern "C" void ch_draw_border(void *context,int x,int y,int width,int height,int dpi) {

@@ -1,6 +1,6 @@
 # Chotki for Windows
 
-Windows **alpha-rc2-build34** targets x86_64 Windows 11. The current macOS app
+Windows **alpha-rc3-build35** (candidate; rc2-build34 is the published prerelease) targets x86_64 Windows 11. The current macOS app
 is the visual and functional specification. Full parity remains the goal for a
 stable release; ARM64 is deferred.
 

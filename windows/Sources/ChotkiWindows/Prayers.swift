@@ -32,17 +32,25 @@ extension WindowsApp {
         let compact = ch_height()<700
         var y: Int32 = compact ? 150 : 160
         if shown {
-            let rows = Int32((rope.target+9)/10)
-            let panelHeight: Int32 = (compact ? 66 : 100)+rows*(compact ? 9 : 12)
+            let side: Double = compact ? 140 : 240
+            let panelHeight = Int32(side)+8
             control(426,20,"",left,y,width,panelHeight)
             ch_style(426,compact ? 1 : 0)
             ch_rope_update(426,Int32(rope.count),Int32(rope.target))
+            let layout = RopeCircleLayout.layout(count:rope.target,diameter:side)
+            let centres = (layout.knots+layout.beads).flatMap { [$0.x,$0.y] }
+            centres.withUnsafeBufferPointer { ch_rope_ring(426,$0.baseAddress,Int32(layout.knots.count),Int32(layout.beads.count),layout.dot,layout.bead,side) }
+            // "Start again" waits in the corner, findable and not pressable by accident while counting.
+            control(421,18,"Start again",left+width-100,y+2,100,26)
+            ch_style(421,64)
             y += panelHeight+10
             control(420,22,"Count",left,y,width,compact ? 34 : 42)
             y += compact ? 40 : 48
-            control(427,25,"Click, or press space.",left,y,width,22)
-            ch_style(427,64)
-            y += compact ? 26 : 34
+            if !compact {
+                control(427,25,"Click, or press space.",left,y,width,22)
+                ch_style(427,64)
+                y += 34
+            }
         }
         if let selection = rope.selection {
             let sequence = book.sequence(id:selection)
@@ -59,8 +67,6 @@ extension WindowsApp {
                 control(id,23,"\(target)",left+Int32(index)*48,footerY,42,26)
                 ch_style(id,rope.target == target ? 1 : 0)
             }
-            control(421,18,"Start again",left+150,footerY,100,26)
-            ch_style(421,64)
         }
         control(425,18,shown ? "Hide rope" : "Show rope",left+width-95,footerY,95,26)
         control(779,18,"The Psalter",left,ch_height()-52,110,25)
@@ -126,7 +132,7 @@ extension WindowsApp {
             let completed=rope.advance()
             if rope.count != before {
                 if completed { if settings.chimeOnCompletion { _=ch_sound_play(1) } }
-                else if settings.tickEachKnot { _=ch_sound_play(0) }
+                else if settings.tickEachKnot { _=ch_sound_play(rope.cue == .tock ? 2 : 0) }
             }
             if completed, let selection = rope.selection {
                 for entry in try practice.entries(on:selectedDate) where !entry.isKept && !entry.isDispensed && !entry.isStoodDown && ReadingCompletion.matches(entry.rule,prayer:selection,counted:true) {

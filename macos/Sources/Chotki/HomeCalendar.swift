@@ -12,12 +12,17 @@ struct HomeCalendar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if model.calendarExpanded {
-                HStack {
-                    arrow(-1)
+                ZStack {
                     Text(Format.monthAndYear(model.visibleMonth)).font(.system(size: 13, weight: .medium))
-                        .frame(maxWidth: .infinity)
-                    arrow(1)
-                }.foregroundStyle(Theme.parchment)
+                        .foregroundStyle(Theme.parchment)
+                    HStack(spacing: 0) {
+                        arrow(-1)
+                        if todayLink == .onTheLeft { todayButton(.onTheLeft) }
+                        Spacer(minLength: 0)
+                        if todayLink == .onTheRight { todayButton(.onTheRight) }
+                        arrow(1)
+                    }
+                }
                 ZStack {
                     month(model.visibleMonth)
                         .id("\(model.visibleMonth.year)-\(model.visibleMonth.month)")
@@ -28,6 +33,17 @@ struct HomeCalendar: View {
                 }.frame(maxWidth: .infinity).frame(height: 214).clipped()
                 expansionButton.frame(maxWidth: .infinity)
             } else {
+                // The week has no heading of its own, so it gets the month's: the same line, and the
+                // same place for the way back to today.
+                ZStack {
+                    Text(Format.monthAndYear(model.selectedDate)).font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Theme.parchment)
+                    HStack(spacing: 0) {
+                        if todayLink == .onTheLeft { todayButton(.onTheLeft) }
+                        Spacer(minLength: 0)
+                        if todayLink == .onTheRight { todayButton(.onTheRight) }
+                    }
+                }.frame(height: 22)
                 GeometryReader { geo in
                     let cap: CGFloat = compact ? 318 : 330
                     let weekWidth = min(cap, max(0, geo.size.width - 46))
@@ -79,6 +95,21 @@ struct HomeCalendar: View {
                 else { await model.loadCalendarWeek() }
             }
             .onChange(of: model.selectedDate) { _ in model.clearThanksgiving() }
+    }
+    private var todayLink: TodayLink? {
+        TodayLink.needed(selected: model.selectedDate, today: model.today,
+                         visibleMonth: model.visibleMonth, monthOpen: model.calendarExpanded)
+    }
+    /// Sans-serif, on the side today lies.
+    private func todayButton(_ link: TodayLink) -> some View {
+        Button {
+            model.selectedDate = model.today
+            model.visibleMonth = model.today
+            anchor = model.today
+        } label: {
+            Text(link.text).font(.system(size: 12)).foregroundStyle(Theme.gold)
+                .padding(.horizontal, 6).frame(height: 28).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityLabel("Back to today")
     }
     private var expansionButton: some View {
         Button {

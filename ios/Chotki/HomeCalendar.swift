@@ -27,7 +27,7 @@ struct HomeCalendar: View {
         model.selectedDate.adding(days: -(model.selectedDate.weekday.rawValue - 1))
     }
 
-    private let chrome: CGFloat = 82
+    private let chrome: CGFloat = 88
     private let legible: CGFloat = 24
 
     private var monthCell: CGFloat {
@@ -62,18 +62,43 @@ struct HomeCalendar: View {
         }
     }
 
+    private var todayLink: TodayLink? {
+        TodayLink.needed(selected: model.selectedDate, today: model.today,
+                         visibleMonth: model.visibleMonth, monthOpen: !folded)
+    }
+
     private var navigation: some View {
         ZStack {
             Text(folded ? weekLabel(weekStart) : Format.monthAndYear(month))
                 .font(Chotki.reading(16))
                 .foregroundStyle(Chotki.parchment)
-            HStack {
+            HStack(spacing: 0) {
                 arrow("‹", folded ? "The week before" : "The month before", -1)
-                Spacer()
+                if todayLink == .onTheLeft { backToToday(.onTheLeft) }
+                Spacer(minLength: 0)
+                if todayLink == .onTheRight { backToToday(.onTheRight) }
                 arrow("›", folded ? "The week after" : "The month after", 1)
             }
         }
         .padding(.vertical, 6)
+    }
+
+    /// Sans-serif, between the arrow and the title, on the side today lies.
+    private func backToToday(_ link: TodayLink) -> some View {
+        Button {
+            model.selectedDate = model.today
+            model.visibleMonth = model.today
+            recenter += 1
+        } label: {
+            Text(link.text)
+                .font(.system(size: 13))
+                .foregroundStyle(Chotki.gold)
+                .lineLimit(1)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back to today")
     }
 
     private func arrow(_ glyph: String, _ label: String, _ by: Int) -> some View {
@@ -142,8 +167,11 @@ struct HomeCalendar: View {
                 .rotationEffect(.degrees(expanded ? 180 : 0))
                 .frame(width: 52, height: 12)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 2)
-                .padding(.bottom, 8)
+                // The target is the whole width, and reaches below the chevron rather than up
+                // towards the dates. (While the month is open the day view adds a strip under it.)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(expanded ? "Show one week" : "Show the whole month")

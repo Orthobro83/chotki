@@ -177,6 +177,16 @@ class ShellTest {
         compose.onNodeWithText("24-hour").performScrollTo().assertIsDisplayed()
     }
 
+    // No banner over the day: the phone's permissions are asked once, and then live in Settings.
+    @Test
+    fun noReminderBannerOverTheDayAndThePermissionLivesInSettings() {
+        show()
+        compose.onNodeWithText("Reminders may arrive late.", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Battery saving", substring = true).assertDoesNotExist()
+        compose.onNodeWithContentDescription("Go to Settings").performClick()
+        compose.onNodeWithText("Phone permission").performScrollTo().assertIsDisplayed()
+    }
+
     /**
      * Both ways in, and they are different controls.
      *

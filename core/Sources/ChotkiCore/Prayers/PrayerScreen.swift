@@ -9,6 +9,16 @@ import Foundation
 ///
 /// The rope rule lives here too, so it is tested rather than asserted in a view
 /// body, and so the Android version inherits it.
+/// The sound a counted knot makes. Which one is the screen's decision, so every platform agrees.
+public enum RopeCue: Sendable, Equatable {
+    /// An ordinary knot.
+    case tick
+    /// The knot before a bead: the place to cross oneself.
+    case tock
+    /// The last knot of the rope.
+    case bell
+}
+
 public struct PrayerScreen: Equatable, Sendable {
 
     /// What is being prayed. `nil` is the rope on its own, for someone who has
@@ -58,6 +68,15 @@ public struct PrayerScreen: Equatable, Sendable {
     }
 
     public var isComplete: Bool { count >= target }
+
+    /// The sound for the knot just counted. The last knot rings the bell, which takes the place of
+    /// a bead's tock there; otherwise every tenth knot, where a bead sits on the rope, is a tock.
+    public var cue: RopeCue { Self.cue(afterCounting: count, of: target) }
+
+    public static func cue(afterCounting count: Int, of target: Int) -> RopeCue {
+        if count >= target { return .bell }
+        return count > 0 && count % RopeCircleLayout.beadEvery == 0 ? .tock : .tick
+    }
 
     // MARK: changing it
 

@@ -110,7 +110,7 @@ struct AkathistTests {
     @Test("Friday 16 April 2027 is the Georgian fifth week, with nothing fetched")
     func georgianFridayDoesNotWaitOnTheCache() throws {
         let georgian = try #require(Jurisdiction.known.first { $0.name == "Georgian Orthodox Church" })
-        let service = LiturgicalService(store: InMemoryStore(), jurisdiction: georgian)
+        let service = LiturgicalService(store: InMemoryStore(), jurisdiction: georgian, bundle: nil)
         let friday = try #require(CalendarDate(year: 2027, month: 4, day: 16))
         #expect(service.cachedDay(for: friday) == nil)
         #expect(Pascha.distance(on: friday) == -16)

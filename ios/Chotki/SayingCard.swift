@@ -10,12 +10,22 @@ struct SayingCard: View {
     var date: CalendarDate
     var persistMotion: Bool
 
+    /// The picture is never more than a third of the screen's height, so a short phone keeps most of
+    /// its day; on every current iPhone 220 points is the smaller of the two.
+    static var height: CGFloat { min(220, UIScreen.main.bounds.height / 3) }
+
     private var saying: PatristicReading? { PatristicReadings.shared.reading(for: date) }
 
     var body: some View {
         if let saying, let name = SayingImages.name(for: date), let image = SayingImages.image(named: name) {
             DriftingArtwork(image: image, name: name, date: date, persist: persistMotion)
-                .frame(height: 220)
+                // Decoration, not a control. The picture is drawn larger than the card and
+                // slid into place, and its touch area is that larger size: for some days'
+                // pictures it reached up over the calendar and swallowed taps meant for the
+                // chevron under the month. Nothing here is tapped, so nothing here takes touches.
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+                .frame(height: SayingCard.height)
                 .overlay(alignment: .bottomLeading) {
                     // On the picture, as low as it can sit: the bar is the next thing down.
                     VStack(alignment: .leading, spacing: 4) {
@@ -36,6 +46,8 @@ struct SayingCard: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                // Decoration: touches go through it to the day beneath.
+                .allowsHitTesting(false)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
         }

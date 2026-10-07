@@ -124,7 +124,8 @@ final class AppModel: ObservableObject {
         startsReminders: Bool = true,
         writesBackups: Bool = true,
         loadsCalendar: Bool = true,
-        isReviewSample: Bool = false
+        isReviewSample: Bool = false,
+        calendarClient: OrthocalClient = OrthocalClient()
     ) {
         self.store = store
         self.notifier = notifier
@@ -140,7 +141,7 @@ final class AppModel: ObservableObject {
         }
         try? store.saveSettings(loaded)
         self.settings = loaded
-        self.liturgical = LiturgicalService(store: store, jurisdiction: loaded.jurisdiction)
+        self.liturgical = LiturgicalService(store: store, client: calendarClient, jurisdiction: loaded.jurisdiction)
         let now = CalendarDate(Date(), in: .current)
         self.selectedDate = now
         self.visibleMonth = now

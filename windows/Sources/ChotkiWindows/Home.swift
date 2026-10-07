@@ -82,7 +82,7 @@ extension WindowsApp {
         let entries = try practice.entries(on: selectedDate)
         selectedRow = entries.isEmpty ? 0 : min(selectedRow,entries.count-1)
         let day = liturgical.cachedDay(for: selectedDate)
-        let title = day?.title ?? (liturgical.isOffline ? "Calendar unavailable · Stored days remain available offline" : "")
+        let title = day?.title ?? (liturgical.isOffline(on: selectedDate) ? "Calendar unavailable · Stored days remain available offline" : "")
         let panelTop = calendarTop+calendarHeight
         let extra: Int32 = day != nil && settings.observances.fasting.isVisible && day!.isFast && entries.contains(where: { $0.rule.isFastingRule }) ? 50 : 0
         let compactCardHeight: Int32 = ch_height()<650 ? 96 : 232

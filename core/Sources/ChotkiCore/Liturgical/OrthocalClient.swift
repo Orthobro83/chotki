@@ -30,10 +30,46 @@ struct OrthocalResponse: Decodable {
 
         struct Verse: Decodable {
             let content: String?
+            let book: String?
+            let chapter: Number?
+            let verse: Number?
+            let paragraphStart: Bool?
         }
 
+        /// Orthocal's keyed verses carry numbers; its Composite readings carry strings,
+        /// and an empty book. Either is read as a number where it is one.
+        struct Number: Decodable {
+            let value: Int?
+            init(from decoder: Decoder) throws {
+                let c = try decoder.singleValueContainer()
+                if let n = try? c.decode(Int.self) { value = n }
+                else if let s = try? c.decode(String.self) { value = Int(s) }
+                else { value = nil }
+            }
+        }
+
+        /// What this reading says, as the app will show it.
+        ///
+        /// Orthocal's Composite readings are not the KJV: they carry a translation that
+        /// is not ours to show, so they are never read from the network. A known one is
+        /// resolved from the verses its title cites; an unknown one (a composite added
+        /// upstream since) has no text rather than text we have not audited. Every other
+        /// reading is keyed KJV, joined into paragraphs by the same rule as the bundle.
         var text: String {
-            (passage ?? []).compactMap(\.content).joined(separator: " ")
+            if let runs = ScriptureText.composite(display: display) {
+                return ScriptureText.text(for: runs) ?? ""
+            }
+            if display.hasPrefix("Composite") { return "" }
+            var verses: [ScriptureText.Verse] = []
+            for verse in passage ?? [] {
+                guard let content = verse.content, let book = verse.book, !book.isEmpty,
+                      let chapter = verse.chapter?.value, let number = verse.verse?.value
+                else { return "" }
+                verses.append(ScriptureText.Verse(
+                    book: book, chapter: chapter, verse: number, text: content,
+                    opensParagraph: verse.paragraphStart ?? false))
+            }
+            return ScriptureText.join(verses)
         }
     }
 }

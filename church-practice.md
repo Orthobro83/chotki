@@ -12,11 +12,11 @@ An existing record that already stored a church, and has no affiliation field, k
 
 ## What already follows the church
 
-The calendar is the church's reckoning. Fixed feasts, the fasting marks, and the appointed readings come from orthocal for that reckoning: `julian` or `gregorian`. Old and new calendars share Pascha, Great Lent, and Pentecost. They differ on the fixed feasts, by thirteen days.
+The calendar is the church's reckoning. Fixed feasts, the fasting marks, and the appointed readings come from the calendar generated from orthocal for that reckoning (`julian` or `gregorian`), shipped in the app for 2026–2031 on macOS, iOS and Windows and fetched from orthocal.info on Android and for later dates. Old and new calendars share Pascha, Great Lent, and Pentecost. They differ on the fixed feasts, by thirteen days.
 
 The saint's life is the life of the observed church day. The Prologue from Ochrid records both the old-calendar date and the new-calendar date, and the reckoning picks which day is shown.
 
-The Akathist Fridays are distances from Pascha. They are computed in the app, so a Friday a year ahead is not blank while that day is still being fetched. The rest of the reading — the feast, the fast, the scripture — still waits on the fetched day, and the screen says so.
+The Akathist Fridays are distances from Pascha. They are computed in the app, so a Friday a year ahead is not blank even where the day itself is not known. Inside the shipped calendar the rest of the reading — the feast, the fast, the scripture — is there too; beyond it, and on Android, it waits on the fetched day, and the screen says so.
 
 The prayer for the departed is the daily Slavic commemoration. It is shown for the Russian, Serbian, and Bulgarian traditions. The OCA, ROCOR, Moscow, the Polish Orthodox Church, and the OCU are in the Russian tradition, so they are included. Romanian and Georgian are not.
 

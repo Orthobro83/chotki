@@ -247,14 +247,14 @@ struct SettingsViewContent: View {
     // outright. The closures only ever run on the main actor, so the warning is
     // benign and left alone deliberately.
     private func observanceRow(
-        _ title: String, value: Observance, set: @escaping (Observance) -> Void
+        _ title: String, value: Observance, set: @escaping @MainActor (Observance) -> Void
     ) -> some View {
         HStack {
             Text(title)
                 .font(.system(size: 14))
                 .foregroundStyle(Theme.parchment)
             Spacer()
-            Picker("", selection: Binding(get: { value }, set: set)) {
+            Picker("", selection: Binding(get: { value }, set: { newValue in MainActor.assumeIsolated { set(newValue) } })) {
                 Text("Hidden").tag(Observance.hidden)
                 Text("Shown").tag(Observance.shown)
                 Text("Observed").tag(Observance.observed)
@@ -293,7 +293,7 @@ struct SettingsViewContent: View {
     }
 
     private func toggleRow(
-        _ title: String, help: String?, isOn: Bool, set: @escaping (Bool) -> Void
+        _ title: String, help: String?, isOn: Bool, set: @escaping @MainActor (Bool) -> Void
     ) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
@@ -301,7 +301,7 @@ struct SettingsViewContent: View {
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.parchment)
                 Spacer()
-                Toggle("", isOn: Binding(get: { isOn }, set: set))
+                Toggle("", isOn: Binding(get: { isOn }, set: { newValue in MainActor.assumeIsolated { set(newValue) } }))
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .controlSize(.mini)

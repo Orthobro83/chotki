@@ -2,7 +2,7 @@
 
 ## Current implementation — 3 October 2026
 
-The historical design and dated decisions below explain the project’s evolution. Current behavior is defined by the source, `project-rules.md`, and `church-practice.md`: 1.0 beta, build 29 on Android, Mac, and iOS; no affiliation follows OCA on the New Calendar while older churches are preserved; the bundled saint readings are 365 days of the Prologue from Ochrid under CC BY-SA 4.0. The former Dimitry translation track is superseded. Daily imagery uses the approved 365-image rotation. Taking on the Akathist schedules its appointed Lenten Fridays independently of fasting observance.
+The historical design and dated decisions below explain the project’s evolution. Current behavior is defined by the source, `project-rules.md`, and `church-practice.md`: 1.0 beta, build 30 on Android, Mac, and iOS; no affiliation follows OCA on the New Calendar while older churches are preserved; the bundled saint readings are 365 days of the Prologue from Ochrid under CC BY-SA 4.0. The former Dimitry translation track is superseded. Daily imagery uses the approved 365-image rotation. Taking on the Akathist schedules its appointed Lenten Fridays independently of fasting observance.
 
 A menu bar app for keeping an Orthodox prayer rule, and honestly measuring whether it is kept.
 
@@ -491,7 +491,7 @@ A rule reaches its prayers from a mark on the row, always shown rather than only
 - Repository: https://github.com/Orthobro83/chotki — public, MIT, branch `main`. Personal context lives in `context.local.md`, which is gitignored and must never be committed.
 - orthocal's URL takes a **civil** date; the response body reports the date in the requested reckoning. `/api/julian/2027/1/13/` answers with year 2026, month 12, day 31. The cache is keyed on the civil date and the reported date is stored as data. Discovered 2026-08-19.
 - orthocal codes: `fast_level` 0 none, 1 Wednesday/Friday, 2 Great Lent, 3 Apostles, 4 Dormition, 5 Nativity. `fast_exception` 11 is Fast Free; other exceptions relax a fast rather than lifting it. `feast_level` 7 and 8 are the Major Feasts of the Theotokos and of the Lord — the Great Feasts; lower levels are ranked days.
-- Liturgical data source: `orthocal.info` — free public JSON API, no key. `/api/julian/YYYY/M/D/` for Old Calendar, `/api/gregorian/YYYY/M/D/` for New. Returns tone, commemorations, feast level, fast level, abstentions, and full scripture passage text. It is the only network call the app makes.
+- Liturgical data source: `orthocal.info` — free public JSON API, no key. `/api/julian/YYYY/M/D/` for Old Calendar, `/api/gregorian/YYYY/M/D/` for New. Returns tone, commemorations, feast level, fast level, abstentions, and full scripture passage text. It is the only network call the app makes. **Amended 2026-10-06:** macOS, iOS and Windows ship the calendar for 2026–2031 inside the app and ask the service only for later dates; see the decision of that date below.
 
 ## Calendar facts (settled 2026-08-19, worth not re-deriving)
 
@@ -534,6 +534,7 @@ A rule reaches its prayers from a mark on the row, always shown rather than only
 - 2026-08-19 — Store all-day dates as calendar dates, never timestamps. A timestamp shifts a day under DST and the bug surfaces months later.
 - 2026-08-19 — Editing/deleting a repeating rule always offers three choices: this day only, this and future, whole series. This determines the schema; retrofitting it is a rewrite.
 - 2026-08-19 — Reading tab prefetches 14 days ahead and caches. The app never blocks on the network and never shows a spinner where text should be.
+- 2026-10-06 — **The calendar ships with the app.** Orthocal is a small service run by one person and the app may reach many people, so the calendar for 2026–2031 (both reckonings, the Slavic tradition, as before) is generated from a local clone of Orthocal's MIT code, audited, and bundled in `core/Sources/ChotkiCore/Resources/calendar/`. The service answers from memory, then the bundle, then the cache; it asks the network only for dates none of those has, and the bundle wins wherever it has a day. Readings are stored as verse runs and resolved from one bundled King James Version (with the Apocrypha), so every word of scripture is public domain and the audit is one file. Orthocal's Composite readings, which carry a translation that is not public domain, are resolved to the KJV of the passages their titles cite; their text is never read from the network. Verses are joined into paragraphs using the Bible's own paragraph marks. Regenerate with `core/Tools/calendar-bundle.py` before the window ends (about 2031) and spot-check with `core/Tools/accuracy-check.py` (a few dozen polite requests).
 - 2026-08-19 — Saint quotes ship as a bundled local file of public-domain patristic text (Nicene & Post-Nicene Fathers). Philokalia translations are still in copyright; scraping is brittle and unnecessary.
 
 ## Repository layout
@@ -586,7 +587,7 @@ Everything else is computed. A day with no Occurrence row and a covering Activat
 ## Out of scope for v1
 
 - iCloud or cross-device sync. Store is local; backup is JSON export.
-- Any network call other than orthocal. No analytics, no account, no telemetry.
+- Any network call other than orthocal. No analytics, no account, no telemetry. (Since 2026-10-06, orthocal is asked only for dates the shipped calendar does not cover.)
 - A mobile companion.
 - Notarisation and store distribution. Ad-hoc signed.
 - Multiple profiles or households.

@@ -208,7 +208,7 @@ struct MainWindowView: View {
                     Header(title: "Prayers") { self.prayerRuleID = nil; model.screen = .main }
                     PrayerView(model: model, ruleID: prayerRuleID)
                 }
-            } else { PrayerRopeView(model: model) }
+            } else { PrayerRopeView(model: model, diameter: 240) }
         case .reading: ReadingView(model: model)
         case .progress: ProgressTabView(model: model)
         case .library: LibraryView(model: model)

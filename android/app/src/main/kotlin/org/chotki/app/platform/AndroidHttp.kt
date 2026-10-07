@@ -22,7 +22,7 @@ class AndroidHttp(private val timeoutMillis: Int = 20_000) : HttpFetching {
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = timeoutMillis
             readTimeout = timeoutMillis
-            setRequestProperty("User-Agent", "chotki")
+            setRequestProperty("User-Agent", HttpFetching.USER_AGENT)
         }
         try {
             val code = connection.responseCode

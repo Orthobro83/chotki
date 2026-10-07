@@ -13,7 +13,7 @@ struct ToneTests {
 
     // Clipping turns a bell into a buzz, and it is the most likely way this
     // goes wrong: seven partials summed can easily exceed full scale.
-    @Test("nothing clips", arguments: [ToneSpec.bell, .tick])
+    @Test("nothing clips", arguments: [ToneSpec.bell, .tick, .tock])
     func neverClips(spec: ToneSpec) {
         let samples = ToneRenderer.render(spec)
         let peak = samples.reduce(Float(0)) { max($0, abs($1)) }
@@ -24,13 +24,13 @@ struct ToneTests {
 
     // A waveform that starts at full amplitude clicks, which on a prayer rope
     // would be worse than no sound at all.
-    @Test("it fades in rather than clicking", arguments: [ToneSpec.bell, .tick])
+    @Test("it fades in rather than clicking", arguments: [ToneSpec.bell, .tick, .tock])
     func fadesIn(spec: ToneSpec) {
         let samples = ToneRenderer.render(spec)
         #expect(abs(samples[0]) < 0.001)
     }
 
-    @Test("it fades out rather than being cut off", arguments: [ToneSpec.bell, .tick])
+    @Test("it fades out rather than being cut off", arguments: [ToneSpec.bell, .tick, .tock])
     func fadesOut(spec: ToneSpec) {
         let samples = ToneRenderer.render(spec)
         #expect(abs(samples[samples.count - 1]) < 0.001)
@@ -109,5 +109,37 @@ struct WAVTests {
         let second = Int16(littleEndian: data[46..<48].withUnsafeBytes { $0.load(as: Int16.self) })
         #expect(first == 32_767)
         #expect(second == -32_767)
+    }
+}
+
+@Suite("The tock and the bell's ending")
+struct TockTests {
+    @Test("the tock is lower than the tick, and still brief and quiet next to the bell")
+    func tockIsLowerAndBrief() {
+        #expect(ToneSpec.tock.fundamental < ToneSpec.tick.fundamental / 2)
+        let bell = ToneRenderer.render(.bell), tock = ToneRenderer.render(.tock)
+        #expect(tock.count < bell.count / 20)
+        let bellPeak = bell.reduce(Float(0)) { max($0, abs($1)) }
+        let tockPeak = tock.reduce(Float(0)) { max($0, abs($1)) }
+        #expect(tockPeak < bellPeak / 2)
+    }
+
+    // The bell used to end 0.06 s after the lowest partials were still a third as loud.
+    @Test("the bell has died away well before its last sample, and falls smoothly")
+    func bellEndsSmoothly() {
+        let samples = ToneRenderer.render(.bell)
+        let rate = 44_100
+        func peak(_ from: Double, _ to: Double) -> Float {
+            samples[Int(from * Double(rate))..<min(samples.count, Int(to * Double(rate)))].reduce(Float(0)) { max($0, abs($1)) }
+        }
+        let tail = Double(samples.count) / Double(rate)
+        // Loudness falls across each successive stretch of the release, to nothing.
+        let a = peak(tail - 1.8, tail - 1.35), b = peak(tail - 1.35, tail - 0.9), c = peak(tail - 0.9, tail - 0.45), d = peak(tail - 0.45, tail)
+        #expect(a > b && b > c && c > d)
+        #expect(d < a / 6)
+        // And no abrupt step: neighbouring samples at the very end differ by almost nothing.
+        let end = samples.suffix(2_000)
+        let step = zip(end, end.dropFirst()).map { abs($1 - $0) }.max() ?? 0
+        #expect(step < 0.0005)
     }
 }

@@ -2,6 +2,7 @@ package org.chotki.core.sound
 
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.sin
@@ -29,6 +30,13 @@ data class ToneSpec(
     /** A short fade in, because a waveform that starts at full amplitude clicks. */
     val attack: Double = 0.004,
     val gain: Double = 1.0,
+    /** Seconds over which the end is faded to nothing. */
+    val release: Double = 0.06,
+    /**
+     * Whether the release follows a raised cosine (smooth at both ends) rather than a straight
+     * line. A long ring-out wants the cosine; a brief click does not need it.
+     */
+    val smoothRelease: Boolean = false,
 ) {
     companion object {
         /**
@@ -50,8 +58,13 @@ data class ToneSpec(
                 Partial(2.55, 0.16, 0.45),
                 Partial(3.42, 0.09, 0.28),
             ),
-            duration = 2.6,
+            // Long enough, and released over long enough, that the ring dies away rather than being
+            // cut: at 2.6 seconds the lowest partials were still a third as loud as they began, and a
+            // fade over the last 0.06 seconds was heard as the sound stopping.
+            duration = 3.6,
             gain = 0.55,
+            release = 1.8,
+            smoothRelease = true,
         )
 
         /**
@@ -68,6 +81,23 @@ data class ToneSpec(
             duration = 0.05,
             attack = 0.001,
             gain = 0.16,
+        )
+
+        /**
+         * The bead after every tenth knot: lower and rounder than the tick, so that with your
+         * eyes closed a bead is felt as well as heard. Still brief, still quieter than the bell.
+         */
+        val TOCK = ToneSpec(
+            fundamental = 520.0,
+            partials = listOf(
+                Partial(0.50, 0.45, 0.060),
+                Partial(1.00, 1.00, 0.045),
+                Partial(2.35, 0.30, 0.022),
+                Partial(3.90, 0.10, 0.010),
+            ),
+            duration = 0.14,
+            attack = 0.002,
+            gain = 0.26,
         )
     }
 }
@@ -97,9 +127,12 @@ object ToneRenderer {
             // Fade in over the attack, and out over the last stretch, so the
             // sample neither clicks on nor is cut off mid-swing.
             if (t < spec.attack) value *= t / spec.attack
-            val fadeOut = 0.06
             val remaining = spec.duration - t
-            if (remaining < fadeOut) value *= max(0.0, remaining / fadeOut)
+            if (remaining < spec.release) {
+                // 1 at the start of the release, 0 at the end.
+                val position = max(0.0, remaining / spec.release)
+                value *= if (spec.smoothRelease) 0.5 * (1 - cos(PI * position)) else position
+            }
 
             samples[index] = (value * spec.gain).toFloat()
         }

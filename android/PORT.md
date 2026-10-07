@@ -149,6 +149,14 @@ references all resolve, and the prayer-scanning tests pass.
 
 ### Phase 8a — Making reminders actually arrive
 
+> **Amended 6 October 2026 (Ryan).** The standing banner is gone, and so is every mention of battery
+> optimisation: the app does not ask about it at all. Notifications are asked for **once, on the first
+> launch**, and the phone's permission is then seen and changed in **Settings › Reminders › Phone
+> permission**, with **Exact times** beside it on Android 12 and later. Exact alarms stay
+> `SCHEDULE_EXACT_ALARM` (granted by the person), never `USE_EXACT_ALARM`. Without that grant a
+> reminder at a set hour still arrives, a little late, and Settings says "Approximate". What follows
+> is the history that led here.
+
 Its own step because it is the most likely thing to fail silently on a real
 phone, and because three separate systems have to say yes before a reminder
 appears at all:
@@ -311,3 +319,25 @@ Mac app to check something.
    Labels and headings in Compose take their capitalisation from the shared
    content, which is already correct — do not lower-case them in the view, which
    is how the macOS app acquired the habit in six separate places.
+
+## Prayer rope and calendar: what Android takes in Phase 9 (updated 6 October 2026)
+
+The other platforms have moved on; Android implements all of this in Phase 9, from core's tests:
+
+- **Ring.** Knot and bead positions come from core's `RopeCircleLayout` (`core/Sources/ChotkiCore/Prayers/RopeCircleLayout.swift`,
+  tests in `core/Tests/ChotkiCoreTests/RopeCircleTests.swift`). Port the arithmetic exactly and add a drift test. Counted knots
+  filled, the next one ringed in gold, the rest outlined; the count in the middle; the 33/50/100 selector stays.
+- **Beads.** Exactly ten knots between beads; beads are *added* dots, never replacing a knot, drawn 1.4x the knot, in the
+  liturgy-day red (`Chotki.ochre`, A63A38). The first bead is both start and end: filled from the start, silent when the
+  rope is begun, and it chimes when the last knot brings the count back to it. 100 knots: 10 beads; 50: 5; 33: 4 (the three
+  after each ten, plus the start bead, with three knots between the last and the start). Later beads are dimmer until passed.
+- **Sounds.** `PrayerScreen.cue` decides: tick for a knot, **tock** for the knot before a bead (every tenth, except the
+  last), bell on completion. Port `ToneSpec.tock` (lower, rounder, brief) and play it where the cue says. The tock follows
+  the same "click on each knot" setting as the tick.
+- **Bell ending.** The bell is longer (3.6 s) with a raised-cosine release over the last 1.8 s so it dies away rather than
+  stopping; `ToneSpec` gained `release` and `smoothRelease`. Port both and the matching tests in `ToneTests.swift`.
+- **"Start again"** is bottom right of the Prayers screen on phones, opposite "Glossary of terms", away from Count.
+- **Home.** Android already has the layout iOS was brought to match: the picture is the last item of the day's scroll,
+  moves with it, and is pushed down when the calendar opens. Nothing to change.
+- **Calendar.** The "← Today" / "Today →" link between the chevron and the month or week heading is **already on Android**
+  (`TodayLink.kt` and its test, added 6 October). Windows keeps its own existing Today button.

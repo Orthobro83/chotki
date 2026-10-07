@@ -178,10 +178,6 @@ fun Shell(state: AppState) {
         ) > 0f
     }
 
-    val readiness = remember(journey) { ReminderReadiness.of(context) }
-    val dismissals = remember { BannerDismissals(context) }
-    var dismissed by remember(readiness) { mutableStateOf(dismissals.isDismissed(readiness)) }
-
     // Back goes back one screen, and only leaves the app from the day itself.
     // Without this it fell through to Android's default at every depth: three
     // fields into the editor, back closed Chotki.
@@ -210,13 +206,6 @@ fun Shell(state: AppState) {
     // bottom of the screen while its labels sit above the gesture pill.
     ChotkiBackdrop {
     Column(Modifier.fillMaxSize().padding(top = belowStatusBar)) {
-        if (!dismissed) {
-            ReadinessBanner(readiness) {
-                dismissals.dismiss(readiness)
-                dismissed = true
-            }
-        }
-
         // Always in the corner, wherever you are — except on the Reading,
         // where the glossary takes its place. The library used to be a word at
         // the foot of the day and nowhere else, so it was invisible from every

@@ -143,6 +143,12 @@ enum RenderMode {
     /// itself gets all of it. The window is positioned far off any screen and
     /// never ordered in front of anything: this draws the view, it does not
     /// capture the display.
+    /// `CHOTKI_RENDER_DATE=YYYY-MM-DD` draws another day of the shipped calendar. Fictional practice
+    /// and the shipped calendar only; nothing is read from anyone's record.
+    private static var renderDate: CalendarDate? {
+        ProcessInfo.processInfo.environment["CHOTKI_RENDER_DATE"].flatMap { CalendarDate(iso: $0) }
+    }
+
     static func runWindow(prefix: String) {
         do {
             let store = try seededStore()
@@ -150,7 +156,7 @@ enum RenderMode {
                 store: store, notifier: NullNotifier(), launchAtLogin: NullLaunchAtLogin(),
                 storage: .none(), startsReminders: false, writesBackups: false, loadsCalendar: false
             )
-            model.selectedDate = CalendarDate(year: 2026, month: 8, day: 19)!
+            model.selectedDate = renderDate ?? CalendarDate(year: 2026, month: 8, day: 19)!
             model.visibleMonth = model.selectedDate
             try? model.liturgical.loadSnapshot(around: model.selectedDate)
 
@@ -195,6 +201,16 @@ enum RenderMode {
                 model.prayers = PrayerScreen(selection: "morning")
                 model.screen = .prayerRope
             }
+            // The rope is a ring of knots; check each offered count.
+            for target in PrayerScreen.targets {
+                shot("window-rope-\(target)") {
+                    var screen = PrayerScreen(selection: "jesus-prayer")
+                    screen.aim(at: target)
+                    for _ in 0..<(target * 2 / 5) { _ = screen.advance() }
+                    model.prayers = screen
+                    model.screen = .prayerRope
+                }
+            }
             describeMenus(in: host)
             shot("window-glossary") { model.openGlossary("publican") }
             shot("window-reading") { model.openReading(band: 0) }
@@ -225,6 +241,14 @@ enum RenderMode {
             draw(popover, "popover-library", prefix: prefix) { model.screen = .library }
             draw(popover, "popover-prayers", prefix: prefix) {
                 model.prayers = PrayerScreen(selection: "jesus-prayer", count: 12)
+                model.screen = .prayerRope
+            }
+            draw(popover, "popover-reading", prefix: prefix) { model.openReading(band: 0) }
+            draw(popover, "popover-rope-100", prefix: prefix) {
+                var screen = PrayerScreen(selection: "jesus-prayer")
+                screen.aim(at: 100)
+                for _ in 0..<40 { _ = screen.advance() }
+                model.prayers = screen
                 model.screen = .prayerRope
             }
             draw(popover, "popover-glossary", prefix: prefix) { model.openGlossary("amen") }

@@ -51,8 +51,14 @@ with the software or the use or other dealings in the software.
 
 A NOTE ON THE CONTENT
 
-The liturgical data shown in this application is retrieved from orthocal.info
-and belongs to its authors. The passages from the Church Fathers are drawn from
+The church calendar shown in this application (fasts, feasts, tones,
+commemorations and the appointed readings) comes from orthocal.info and its
+open-source code (MIT licence), whose author, Brian Glass, has permitted its use
+here, and belongs to its authors. On macOS, iOS and Windows it is generated from
+that code and shipped inside the application; on Android it is retrieved from
+orthocal.info. The scripture is the King James Version with the Apocrypha, which
+is in the public domain, from eBible.org. Orthocal's saints' lives, and the
+Composite readings whose translation is not in the public domain, are not used. The passages from the Church Fathers are drawn from
 translations published between 1885 and 1900, which are in the public domain.
 The prayers are from older public-domain liturgical English, chiefly the
 Hapgood Service Book of 1906. Where the application links to prayers published

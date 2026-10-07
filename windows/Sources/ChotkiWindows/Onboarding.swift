@@ -106,10 +106,16 @@ extension WindowsApp {
         try press(420)
         try require(ch_test_sound(0)==tick+1 && ch_test_sound(1)==bell,"Accepted knot plays one tick")
         try press(420); try require(ch_test_sound(0)==tick+1,"Rejected rapid press must not tick")
+        // The tenth knot, where a bead sits on the rope, tocks instead of ticking.
+        let tock=ch_test_sound(2), ticksBefore=ch_test_sound(0)
+        rope.advanceToSoundFixture(8)
+        try press(420); try require(ch_test_sound(0)==ticksBefore+1 && ch_test_sound(2)==tock,"The ninth knot ticks")
+        Thread.sleep(forTimeInterval:1.1)
+        try press(420); try require(ch_test_sound(2)==tock+1 && ch_test_sound(0)==ticksBefore+1,"The tenth knot tocks, not ticks")
         try saveSettings { $0.tickEachKnot=false }
         rope.advanceToSoundFixture(32)
         try press(420)
-        try require(ch_test_sound(1)==bell+1 && ch_test_sound(0)==tick+1,"Completing a knot plays its bell without an extra tick")
+        try require(ch_test_sound(1)==bell+1 && ch_test_sound(0)==tick+2,"Completing a knot plays its bell without an extra tick")
         try saveSettings { $0.chimeOnCompletion=false }
         rope.startAgain(); rope.advanceToSoundFixture(32); try press(420)
         try require(ch_test_sound(1)==bell+1,"Disabled completion chime")

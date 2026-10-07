@@ -13,12 +13,15 @@ final class Sound {
     private var bell: AVAudioPlayer?
     private var ticks: [AVAudioPlayer] = []
     private var next = 0
+    private var tocks: [AVAudioPlayer] = []
+    private var nextTock = 0
 
     private init() {
         bell = Self.make(.bell)
         // Several, because a knot can be counted faster than a tick decays and
         // one player restarting cuts its own tail off.
         ticks = (0..<4).compactMap { _ in Self.make(.tick) }
+        tocks = (0..<3).compactMap { _ in Self.make(.tock) }
         configureSession()
     }
 
@@ -50,6 +53,15 @@ final class Sound {
         guard !ticks.isEmpty else { return }
         let player = ticks[next % ticks.count]
         next += 1
+        player.currentTime = 0
+        player.play()
+    }
+
+    /// The bead after every tenth knot.
+    func playTock() {
+        guard !tocks.isEmpty else { return }
+        let player = tocks[nextTock % tocks.count]
+        nextTock += 1
         player.currentTime = 0
         player.play()
     }

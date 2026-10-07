@@ -18,6 +18,11 @@ public enum HTTPError: Error, Sendable {
 }
 
 public struct URLSessionFetcher: HTTPFetching {
+    /// Says who is asking. orthocal.info is a small service run by one person,
+    /// and its maintainer is owed a way to tell which app a request came from
+    /// and where to find it. A public project address, not a personal one.
+    public static let userAgent = "Chotki (+https://github.com/Orthobro83/chotki)"
+
     private let timeout: TimeInterval
 
     public init(timeout: TimeInterval = 20) {
@@ -27,7 +32,7 @@ public struct URLSessionFetcher: HTTPFetching {
     public func data(from url: URL) async throws -> Data {
         var request = URLRequest(url: url)
         request.timeoutInterval = timeout
-        request.setValue("chotki", forHTTPHeaderField: "User-Agent")
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
         let (data, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw HTTPError.status(http.statusCode)

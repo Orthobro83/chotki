@@ -128,4 +128,22 @@ class RopeTest {
             "Lord Jesus Christ, Son of God, have mercy on me, a sinner.",
         ).assertIsDisplayed()
     }
+
+    // The ring itself counts, as well as the Count button, and says where it is for a screen reader.
+    @Test
+    fun tappingTheRingCounts() {
+        show()
+        compose.onNodeWithContentDescription("Prayer rope", substring = true).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("The count").assertTextEquals("1")
+        compose.onNodeWithContentDescription("Prayer rope, 1 of 33 knots counted").assertIsDisplayed()
+    }
+
+    // Opposite the glossary link, away from Count, so it is not pressed by accident.
+    @Test
+    fun startAgainSitsBesideTheGlossaryLink() {
+        show()
+        compose.onNodeWithContentDescription("Glossary of terms").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Start again").assertIsDisplayed()
+    }
 }

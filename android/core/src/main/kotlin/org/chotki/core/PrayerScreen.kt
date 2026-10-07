@@ -13,6 +13,18 @@ import org.chotki.core.content.Content
  * Immutable, unlike the Swift original's mutating struct: in Compose, state that
  * is replaced rather than mutated is state that reliably recomposes.
  */
+/** The sound a counted knot makes. Which one is the screen's decision, so every platform agrees. */
+enum class RopeCue {
+    /** An ordinary knot. */
+    TICK,
+
+    /** The knot before a bead: the place to cross oneself. */
+    TOCK,
+
+    /** The last knot of the rope. */
+    BELL,
+}
+
 data class PrayerScreen(
     /**
      * What is being prayed. Null is the rope on its own, for someone who has the
@@ -26,6 +38,13 @@ data class PrayerScreen(
 ) {
     companion object {
         val targets = listOf(33, 50, 100)
+
+        /** Ported from `PrayerScreen.cue(afterCounting:of:)`. */
+        fun cue(count: Int, target: Int): RopeCue = when {
+            count >= target -> RopeCue.BELL
+            count > 0 && count % RopeCircleLayout.BEAD_EVERY == 0 -> RopeCue.TOCK
+            else -> RopeCue.TICK
+        }
 
         /**
          * Whether the rope belongs alongside a given selection.
@@ -48,6 +67,12 @@ data class PrayerScreen(
     fun showsRope(): Boolean = ropeOverride ?: ropeBelongs(selection)
 
     val isComplete: Boolean get() = count >= target
+
+    /**
+     * The sound for the knot just counted. The last knot rings the bell, which takes the place of
+     * a bead's tock there; otherwise every tenth knot, where a bead sits on the rope, is a tock.
+     */
+    val cue: RopeCue get() = cue(count, target)
 
     /**
      * Choosing again returns to following the prayer, so one decision about the

@@ -23,9 +23,13 @@ object Sounds {
 
     private val tick by lazy { pcm(ToneSpec.TICK) }
     private val bell by lazy { pcm(ToneSpec.BELL) }
+    private val tock by lazy { pcm(ToneSpec.TOCK) }
 
     fun playTick() = play(tick)
     fun playBell() = play(bell)
+
+    /** The bead after every tenth knot. */
+    fun playTock() = play(tock)
 
     private fun pcm(spec: ToneSpec): ShortArray {
         val samples = ToneRenderer.render(spec, SAMPLE_RATE.toDouble())

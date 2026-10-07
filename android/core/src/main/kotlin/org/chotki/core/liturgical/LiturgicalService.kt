@@ -3,6 +3,7 @@ package org.chotki.core.liturgical
 import org.chotki.core.Akathist
 import org.chotki.core.CalendarDate
 import org.chotki.core.Pascha
+import org.chotki.core.ScriptureText
 import org.chotki.core.FastingSeason
 import org.chotki.core.Jurisdiction
 import org.chotki.core.LiturgicalDay
@@ -10,8 +11,25 @@ import org.chotki.core.LiturgicalDayProvider
 import org.chotki.core.store.Store
 import java.time.Instant
 
+/** Whether the network may be asked for calendar days at all. */
+enum class NetworkPolicy {
+    /**
+     * The default. Ask orthocal.info only for dates that neither the bundled calendar nor the
+     * cache can answer. If it is gone, the app carries on exactly as it does offline.
+     */
+    BEYOND_BUNDLE,
+
+    /** Never ask. The bundled calendar and whatever is already cached are all there is. */
+    NEVER,
+}
+
 /**
  * Cache-first access to the church calendar.
+ *
+ * **Order of answers:** the in-memory snapshot, then the calendar bundled with the app
+ * ([BundledCalendar]), then the SQLite cache of days fetched from the network. The bundle wins
+ * wherever it has the day, so a cached row for a covered date is left alone and never shown. The
+ * network is asked only for dates none of those can answer.
  *
  * Two rules govern this type. The network is only ever a refill — every read is
  * answered from cache, so opening the app on a plane shows the day rather than a
@@ -23,6 +41,9 @@ class LiturgicalService(
     private val store: Store,
     private val client: OrthocalClient? = null,
     jurisdiction: Jurisdiction = Jurisdiction.DEFAULT,
+    /** The calendar that ships with the app; tests of the network and cache layers pass null. */
+    private val bundle: BundledCalendar? = BundledCalendar.standard,
+    private val networkPolicy: NetworkPolicy = NetworkPolicy.BEYOND_BUNDLE,
 ) : LiturgicalDayProvider {
 
     private val lock = Any()
@@ -46,6 +67,16 @@ class LiturgicalService(
      * be.
      */
     val isOffline: Boolean get() = synchronized(lock) { lastRefreshFailed }
+
+    /**
+     * Whether the day on screen is one the app is showing from its cache because the network could
+     * not be reached. A day inside the bundled calendar never is, however the last refresh went:
+     * the bundle does not depend on the network.
+     */
+    fun isOffline(date: CalendarDate): Boolean = isOffline && bundle?.covers(date) != true
+
+    /** True when [date] is answered by the calendar that ships with the app. */
+    fun isBundled(date: CalendarDate): Boolean = bundle?.covers(date) == true
 
     fun lastRefresh(): Instant? = synchronized(lock) { lastSuccessfulRefresh }
 
@@ -76,7 +107,8 @@ class LiturgicalService(
         val days = store.liturgicalDays(reckoning, around.plusDays(-window), around.plusDays(window))
         synchronized(lock) {
             for (day in days) {
-                snapshot[day.civilDate] = day
+                if (bundle?.covers(day.civilDate) == true) continue
+                snapshot[day.civilDate] = ScriptureText.sanitised(day)
                 knownAbsent.remove(day.civilDate)
             }
         }
@@ -96,12 +128,13 @@ class LiturgicalService(
         val days = runCatching { store.liturgicalDays(reckoning, from, through) }.getOrDefault(emptyList())
         synchronized(lock) {
             for (day in days) {
-                snapshot[day.civilDate] = day
+                if (bundle?.covers(day.civilDate) == true) continue
+                snapshot[day.civilDate] = ScriptureText.sanitised(day)
                 knownAbsent.remove(day.civilDate)
             }
             var date = from
             while (date <= through) {
-                if (date !in snapshot) knownAbsent.add(date)
+                if (date !in snapshot && bundle?.covers(date) != true) knownAbsent.add(date)
                 date = date.plusDays(1)
             }
         }
@@ -109,6 +142,10 @@ class LiturgicalService(
 
     fun cachedDay(date: CalendarDate): LiturgicalDay? {
         synchronized(lock) { snapshot[date] }?.let { return it }
+        bundle?.day(date, jurisdiction.reckoning)?.let { shipped ->
+            synchronized(lock) { snapshot[date] = shipped; knownAbsent.remove(date) }
+            return shipped
+        }
         // A month grid asks about forty-two days on every redraw, and most of
         // them fall outside the cached window. Without remembering the misses,
         // each redraw ran forty-two queries that were always going to find
@@ -116,6 +153,7 @@ class LiturgicalService(
         if (synchronized(lock) { date in knownAbsent }) return null
 
         val found = runCatching { store.liturgicalDay(date, jurisdiction.reckoning) }.getOrNull()
+            ?.let(ScriptureText::sanitised)
         synchronized(lock) {
             if (found != null) snapshot[date] = found else knownAbsent.add(date)
         }
@@ -130,6 +168,7 @@ class LiturgicalService(
      */
     fun refresh(from: CalendarDate, days: Int = 14, now: Instant = Instant.now()): Int {
         val client = this.client ?: return 0
+        if (networkPolicy == NetworkPolicy.NEVER) return 0
         val reckoning = jurisdiction.reckoning
         var fetched = 0
         var anyFailure = false

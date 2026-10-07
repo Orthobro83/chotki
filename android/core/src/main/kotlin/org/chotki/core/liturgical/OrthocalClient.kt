@@ -3,10 +3,12 @@ package org.chotki.core.liturgical
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import org.chotki.core.CalendarDate
 import org.chotki.core.LiturgicalDay
 import org.chotki.core.Reading
 import org.chotki.core.Reckoning
+import org.chotki.core.ScriptureText
 import java.time.Instant
 
 /**
@@ -41,11 +43,42 @@ private data class OrthocalResponse(
         @SerialName("short_display") val shortDisplay: String,
         val passage: List<Verse>? = null,
     ) {
+        /**
+         * Orthocal's keyed verses carry numbers; its Composite readings carry strings, and an
+         * empty book. Either is read as a number where it is one.
+         */
         @Serializable
-        data class Verse(val content: String? = null)
+        data class Verse(
+            val content: String? = null,
+            val book: String? = null,
+            val chapter: JsonPrimitive? = null,
+            val verse: JsonPrimitive? = null,
+            @SerialName("paragraph_start") val paragraphStart: Boolean? = null,
+        )
 
+        /**
+         * What this reading says, as the app will show it.
+         *
+         * Orthocal's Composite readings are not the KJV: they carry a translation that is not ours
+         * to show, so they are never read from the network. A known one is resolved from the verses
+         * its title cites; an unknown one (a composite added upstream since) has no text rather
+         * than text we have not audited. Every other reading is keyed KJV, joined into paragraphs
+         * by the same rule as the bundle.
+         */
         val text: String
-            get() = (passage ?: emptyList()).mapNotNull { it.content }.joinToString(" ")
+            get() {
+                ScriptureText.composite(display)?.let { return ScriptureText.text(it) ?: "" }
+                if (display.startsWith("Composite")) return ""
+                val verses = mutableListOf<ScriptureText.Verse>()
+                for (verse in passage ?: emptyList()) {
+                    val content = verse.content ?: return ""
+                    val book = verse.book?.takeIf { it.isNotEmpty() } ?: return ""
+                    val chapter = verse.chapter?.content?.toIntOrNull() ?: return ""
+                    val number = verse.verse?.content?.toIntOrNull() ?: return ""
+                    verses += ScriptureText.Verse(book, chapter, number, content, verse.paragraphStart ?: false)
+                }
+                return ScriptureText.join(verses)
+            }
     }
 }
 

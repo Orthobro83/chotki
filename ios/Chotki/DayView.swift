@@ -13,13 +13,18 @@ struct DayView: View {
     var transition: Namespace.ID
     var openLibrary: () -> Void
     @State private var monthOpen = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var entries: [DayEntry] { model.entries(on: model.selectedDate) }
+
+    /// No rule cards to show: no rules at all, or none due on this day.
+    private var noCards: Bool { model.rules.isEmpty || entries.isEmpty }
 
     var body: some View {
         GeometryReader { proxy in
             VStack(spacing: 0) {
                 HomeCalendar(model: model, maxHeight: proxy.size.height / 2, expanded: $monthOpen)
+                GeometryReader { scroll in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         if let title = model.liturgicalDay(model.selectedDate)?.title {
@@ -52,17 +57,35 @@ struct DayView: View {
                             .padding(.bottom, 4)
                             Commitments(model: model, openLibrary: openLibrary)
                         }
+                        // With no cards to fill the day, the picture is drawn at the foot of the screen, so the
+                        // empty space is above it and "Create your first rule" has something to be above.
+                        // It is still the last thing in the scroll, not fixed there.
+                        if noCards { Spacer(minLength: 0) }
+                        // The picture is the last thing in the day: it scrolls with the cards, and
+                        // moves down with them when the calendar opens.
+                        SayingCard(
+                            date: model.selectedDate,
+                            persistMotion: model.selectedDate == model.today
+                        )
+                        .padding(.top, 14)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 8)
+                    .frame(maxWidth: .infinity, minHeight: noCards ? scroll.size.height : 0, alignment: .topLeading)
+                }
                 }
                 .accessibilityIdentifier("the day")
-                // The picture is not part of the day's scroll. It stays at the
-                // foot, and the saying is printed on it just above the bar.
-                SayingCard(
-                    date: model.selectedDate,
-                    persistMotion: model.selectedDate == model.today
-                )
+                // While the month is open, the band just under it folds it again. The chevron is thin
+                // and the dates sit right above it; this is the room a thumb needs below.
+                .overlay(alignment: .top) {
+                    if monthOpen {
+                        Color.clear
+                            .frame(height: 30)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { monthOpen = false }
+                            }
+                            .accessibilityHidden(true)
+                    }
+                }
             }
         }
         .background(Chotki.ground)

@@ -85,6 +85,25 @@ Plus, with no protocol behind them, the two deliberate platform-glue types:
 `ReminderDriver` (a `Timer` on a run loop → `AlarmManager`) and
 `SettingsStorage` (an Application Support path → app-private storage).
 
+## The bundled calendar (ported, build 30)
+
+The Swift core ships the church calendar inside the app and resolves scripture from a bundled King
+James Version, so the calendar needs no network call for the days it covers. **Android has it too
+(Phase 9).** The Kotlin side is:
+
+- `PassageRun`, `ScriptureText` (paragraph rule, resolver, composite table), `BundledCalendar`
+- `LiturgicalService`: answer order snapshot, then the bundle, then the cache; the bundle wins
+  wherever it has a day; cached rows are sanitised on read; `NetworkPolicy`; `isOffline(date)`
+- `OrthocalClient`: keyed verses joined into paragraphs; Composite readings resolved from
+  their citation (Orthocal's own text for them is never shown); unknown ones have no text
+- `android/core/src/main/resources/calendar/`, **byte-identical** to
+  `core/Sources/ChotkiCore/Resources/calendar/`. A Swift test (`CalendarExportTests`) and a Kotlin one
+  (`BundledCalendarTest`) both fail if they drift; the Kotlin suite also checks the text digest and the
+  fields digest in `manifest.json`, so the port resolves every word exactly as the builder did.
+
+Also ported in the same phase: `RopeCircleLayout`, `PrayerScreen.cue`, `ToneSpec.TOCK`, the bell's
+release (`release` and `smoothRelease`), and `TodayLink`, each with the Swift suite's tests.
+
 ## The database
 
 Ported at phase 4. `:core` holds the schema, the ladder and every query behind a

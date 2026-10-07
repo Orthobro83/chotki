@@ -64,6 +64,16 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    // What the phone allows, read again whenever the person comes back from the phone's own settings.
+    var phone by remember { mutableStateOf(PhonePermissions.of(context)) }
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) phone = PhonePermissions.of(context)
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     var keepingNotice by remember { mutableStateOf<String?>(null) }
     var churchOpen by remember { mutableStateOf(false) }
     var leadOpen by remember { mutableStateOf(false) }
@@ -196,6 +206,18 @@ fun SettingsScreen(
                 SwitchRow("Notifications", state.settings.reminders.notificationsEnabled) { on ->
                     state.updateSettings {
                         it.copy(reminders = it.reminders.copy(notificationsEnabled = on))
+                    }
+                }
+                Hairline()
+                // The phone's own permission, which the app asks for once and then leaves alone. It
+                // is changed here, in the phone's settings, when someone wants it changed.
+                ValueRow("Phone permission", if (phone.notificationsAllowed) "Allowed" else "Not allowed") {
+                    context.startActivity(notificationSettingsIntent(context))
+                }
+                if (phone.exactAlarmsNeedAGrant) {
+                    Hairline()
+                    ValueRow("Exact times", if (phone.exactAlarmsAllowed) "Allowed" else "Approximate") {
+                        exactAlarmSettingsIntent(context)?.let(context::startActivity)
                     }
                 }
                 Hairline()

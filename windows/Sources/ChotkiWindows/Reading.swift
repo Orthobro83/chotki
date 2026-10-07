@@ -54,7 +54,7 @@ extension WindowsApp {
             document.line("\(patristic.author) · \(patristic.source)", flags: 4 | 16, size: 13)
         }
         if let day {
-            let calendar = liturgical.isOffline ? "cached" : settings.jurisdiction.reckoning == .julian ? "old calendar" : "new calendar"
+            let calendar = liturgical.isOffline(on: selectedDate) ? "cached" : settings.jurisdiction.reckoning == .julian ? "old calendar" : "new calendar"
             document.line("\(day.paschaDistance) days since Pascha" + (day.tone.map { " · tone \($0)" } ?? "") + " · \(calendar)", flags: 4 | 16, size: 12)
         }
         for index in document.runs.indices where document.runs[index].flags == 0 { document.runs[index].flags = 512 }

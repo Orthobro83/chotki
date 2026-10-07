@@ -36,11 +36,15 @@ class MainActivity : ComponentActivity() {
         state = AppState.open(this)
         state.load()
 
-        // Asked once, plainly, and not insisted on. From Android 13 nothing
-        // appears without it and nothing errors — so the alternative to asking
-        // is reminders that silently never come.
+        // Asked once, on the first launch, and never again by the app: from Android 13 nothing
+        // appears without it, so the alternative to asking is reminders that silently never come.
+        // After that the permission is seen and changed in Settings, where the person looks for it.
         if (Build.VERSION.SDK_INT >= 33) {
-            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            val prefs = getSharedPreferences("permissions", MODE_PRIVATE)
+            if (!prefs.getBoolean("asked-for-notifications", false)) {
+                prefs.edit().putBoolean("asked-for-notifications", true).apply()
+                askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
 
         // Fills in the fortnight ahead, off the main thread. The interface shows
