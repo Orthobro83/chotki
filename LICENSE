@@ -1,15 +1,18 @@
-Copyright © 2026 Ryan Macfarlane. All rights reserved.
+Copyright © 2026 Ryan Macfarlane.
 
-Chotki is not open-source software. The source is published so that it can be
-read, audited and discussed — not so that it can be reused.
+Chotki is a free application. The source is published so that it can be read,
+audited, reused and built upon, but not commercialised.
 
 
-PERMISSION GRANTED DURING THE ALPHA
+PERMISSION GRANTED
 
-While Chotki is in alpha, you are permitted to:
+Chotki is free and will remain free. You are permitted to:
 
-  - download, build, install and run it for your own personal devotional use;
-  - read and study the source code;
+  - download, build, install and run it for your own use;
+  - read, study and audit the source code;
+  - reuse, modify and build upon the source code, provided the result is not
+    commercialised and this notice is kept;
+  - redistribute it, or works derived from it, free of charge;
   - report problems, and suggest changes.
 
 This permission is given freely and costs nothing.
@@ -17,26 +20,20 @@ This permission is given freely and costs nothing.
 
 WHAT IS NOT PERMITTED
 
-Without prior written permission from the copyright holder, you may not:
+You may not commercialise Chotki or anything derived from it. Without prior
+written permission from the copyright holder, you may not:
 
-  - sell, license, rent or otherwise charge for this software, in whole or in
-    part, whether modified or not;
-  - redistribute it, publish it, or make it available for download by others;
-  - use its source code, in whole or in substantial part, in another project;
+  - sell, license for a fee, rent or otherwise charge for this software, in
+    whole or in part, whether modified or not;
+  - include it in a product or service that is sold, or that requires payment
+    to access;
   - remove or alter this notice.
 
 
-FUTURE RELEASES
+NOT OPEN SOURCE
 
-Chotki is intended to become a paid application. The author has stated the
-intention to donate the proceeds to his church, or to causes chosen by it.
-That intention is recorded here as a statement of purpose. It is not a
-contractual undertaking, it creates no obligation enforceable by any person,
-and it does not make this software a charitable work or its purchase a
-donation.
-
-The permission granted above applies to the alpha. Later releases may carry
-different terms.
+Because of the restriction on commercial use, Chotki is source-available
+rather than open-source software in the strict sense.
 
 
 NO WARRANTY
@@ -53,18 +50,24 @@ A NOTE ON THE CONTENT
 
 The church calendar shown in this application (fasts, feasts, tones,
 commemorations and the appointed readings) comes from orthocal.info and its
-open-source code (MIT licence), whose author, Brian Glass, has permitted its use
-here, and belongs to its authors. On macOS, iOS and Windows it is generated from
-that code and shipped inside the application; on Android it is retrieved from
-orthocal.info. The scripture is the King James Version with the Apocrypha, which
-is in the public domain, from eBible.org. Orthocal's saints' lives, and the
-Composite readings whose translation is not in the public domain, are not used. The passages from the Church Fathers are drawn from
-translations published between 1885 and 1900, which are in the public domain.
-The prayers are from older public-domain liturgical English, chiefly the
-Hapgood Service Book of 1906. Where the application links to prayers published
-by parishes and jurisdictions, those are references to read, not the source of
-any wording reproduced here — their translations remain the property of their
-publishers.
+open-source code (MIT licence), and belongs to its authors. The calendar
+bundled with the application was generated from that code. Any content
+generated from Orthocal that is not in the public domain was replaced with
+public-domain equivalents.
+
+The scripture is the King James Version with the Apocrypha, which is in the
+public domain, from eBible.org. Orthocal's saints' lives, and the Composite
+readings whose translation is not in the public domain, are not used. The
+passages from the Church Fathers are drawn from translations published between
+1885 and 1900, which are in the public domain. The prayers are from older
+public-domain liturgical English, chiefly the Hapgood Service Book of 1906.
+
+The daily lives of the saints are the Prologue from Ochrid by St. Nikolai
+Velimirovic, from app.ochrid.com, shown unchanged and licensed under the
+Creative Commons Attribution-ShareAlike 4.0 licence (CC BY-SA 4.0,
+https://creativecommons.org/licenses/by-sa/4.0/). Those texts remain under
+that licence; it does not extend to the rest of the software.
+
 The glossary and other explanatory text are the author's own and carry the same
 terms as the software.
 

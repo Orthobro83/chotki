@@ -16,7 +16,7 @@ An app for keeping an Orthodox prayer rule and honestly measuring whether
 it is kept, on macOS, Android, and iOS. macOS has a menu bar popover **and** a
 full window with a Dock icon. Written for Ryan; Android and macOS are published
 as 1.0 beta, build 30 at
-`github.com/Orthobro83/chotki` for a private community to test.
+`github.com/rjmac83/chotki` for a private community to test.
 
 ## Where things are
 

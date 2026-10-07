@@ -14,66 +14,38 @@ You can add items of your own, whether or not they are Church canon, so that a r
 
 ## Status
 
-**Android and macOS: 1.0 beta, build 30.** These are the public releases. Android is in daily use by its author. iOS is the same version, on the author's phone. Windows has its own alpha version.
+**1.0 beta, build 30.**
 
-What that means in practice:
+- **Android** — Android 8 / API 26 or later. Sideload for now; see [Getting it](#android). In daily use by its author.
+- **macOS** — macOS 13 or later, Apple Silicon and Intel in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
+- **iOS** — not a public download. A free Apple developer account cannot use TestFlight, and a phone build signed that way stops opening after seven days.
+- **Windows** — an x86_64 Windows 11 alpha, [alpha-rc3-build35](https://github.com/rjmac83/chotki/releases/tag/windows-alpha-rc3-build35), published as a prerelease. See [Windows status](windows/README.md).
 
-- **Android is 1.0 beta, build 30**, OS version Android 8 / API 26 or later. Strictly sideload for now, see [Getting it](#android). This build supersedes 1.0 beta, build 29.
-- **macOS is 1.0 beta, build 30**, macOS 13 or later, Apple Silicon and Intel, in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).
-- **iOS is 1.0 beta, build 30.** It is not a public download. A free Apple developer account cannot use TestFlight, and a phone build signed that way stops opening after seven days. A Linux version is planned.
-- **Windows is alpha-rc3-build35**, an x86_64 Windows 11 alpha release candidate under visual review. It is available as a [GitHub prerelease](https://github.com/Orthobro83/chotki/releases/tag/windows-alpha-rc3-build35), not a beta or stable release; see [Windows status](windows/README.md).
-- The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
-
-### 1.0 beta, build 30
-
-The church calendar now ships inside the app, on every platform, and the prayer rope has changed shape.
-
-- **The calendar for 2026–2031 is in the download**, under both the Old and the New Calendar, so those days need no network at all. The app asks orthocal.info only for dates after 2031. Scripture is the King James Version with the Apocrypha, public domain; long readings break into paragraphs by the Bible's own marks, and Orthocal's Composite readings (whose translation is not public domain) now show the King James text of the chapters they cite.
-- **The prayer rope is a ring.** The count sits in the middle and the 33, 50 and 100 choices remain; the knots shrink so the same ring holds any of them. Between every ten knots is a larger red bead, where one crosses oneself, and the first bead is both where the count begins and where it ends. A knot ticks, the knot before a bead gives a lower "tock", and the chime sounds as the count returns to the first bead. The chime now fades away rather than stopping.
-- **"Start again" has moved** to the bottom right on the phones, away from Count.
-- **A link back to today** ("← Today" or "Today →") appears beside the month or week heading once the calendar has been moved away from today.
-- **Home:** the day's picture scrolls with the day. With no rule cards yet, it rests above the bar and "Create your first rule" has the space above it. Folding the month is easier on the phone.
-- **Android:** the banner about reminders is gone, and the app no longer asks about battery saving. Notifications are asked for once, on the first launch, and the phone's permission is seen and changed in Settings.
-- Requests to orthocal.info now say who is asking, with the public project address.
-
-### 1.0 beta, build 29
-
-The Android interface follows the redesign. macOS is the same build. The iPhone follows those screens: five tabs, the week at the top of the day, prayers and readings in the serif face, and the saying held at the foot of Home.
-
-- The rope and the cross play whenever the app is opened from a quit state — a force-stop, or a phone that was restarted. Returning to an app that is still in memory does not play them. The welcome asks what to call you, and it is shown only once. Settings keeps that name, and a spiritual father's name, and either can be changed later.
-- The day opens on one week. A grip beneath it opens the month, and reading the rules does not fold it shut. A great feast is gold, a Sunday is ochre, and a fast is violet. The selected day is outlined, not filled.
-- Home shows what the calendar marks for a fast when a fasting rule is due, or when fasting is set to observed. It describes the day. It does not tell anyone what to eat.
-- Prayers is a menu. A counted prayer keeps the rope. A prayer that is read does not. Reaching the count, or the last line, marks that rule. The circle on the day can be checked and unchecked at will.
-- The day's readings are always there, with a rule's own readings first. Scrolling to the end of one marks it, when it is on the rule.
-- The bar is Home, Prayers, Reading, Progress, and Settings. The glossary is reached from a word, and from Settings.
-- A saying of the fathers sits on the picture at the foot of Progress.
-
-- [design.md](design.md) — data model, liturgical handling, scoring
-- [checklist.md](checklist.md) — build order, phase by phase
-- [mockup.html](mockup.html) — the interface
-- [plan.html](plan.html) — the full plan, formatted
+The glossary and the passages from the Fathers are introductory and await a priest's review. **Do not treat them as authoritative.**
 
 ## What it looks like
 
 <p align="center">
-  <img src="screenshots/chotki-welcome.png" width="330" alt="The first-run welcome: an independent project, not affiliated with any church, asking what to call you.">
+  <img src="screenshots/chotki-home.png" width="260" alt="Home: the week, the day's commitments as cards, and a saying of the fathers.">
+  <img src="screenshots/chotki-prayers-rope.png" width="260" alt="The Jesus Prayer on the rope, nine of fifty knots counted.">
+  <img src="screenshots/chotki-prayers.png" width="260" alt="Morning prayers read as text, with glossary terms underlined.">
 </p>
 
-**The welcome**, shown once and then not again. It says the app is not affiliated with any church, that it is not a spiritual father, and it asks what to call you.
+**Home** and **Prayers.** Home holds the week and the day's commitments as cards; a circle on each marks it kept. A counted prayer brings the rope: thirty-three, fifty or a hundred knots, with the words underneath. A prayer that is read does not; the menu at the top switches between them.
 
 <p align="center">
-  <img src="screenshots/chotki-prayers-rope.png" width="330" alt="The Jesus Prayer on the rope, eight of thirty-three knots counted.">
-  <img src="screenshots/chotki-prayers.png" width="330" alt="Morning prayers read as text, without the rope.">
+  <img src="screenshots/chotki-reading.png" width="260" alt="Reading: the day's Gospel expanded beneath the day's commemoration.">
+  <img src="screenshots/chotki-progress.png" width="260" alt="Progress in words, then 92 percent over the last thirty days, then each rule.">
+  <img src="screenshots/chotki-settings.png" width="260" alt="Settings: name, church, reckoning, and what the calendar shows.">
 </p>
 
-**Prayers.** A counted prayer brings the rope: thirty-three, fifty, or a hundred, with the words underneath. A prayer that is read does not. The menu at the top switches between them.
+**Reading, Progress and Settings.** Reading is the commemoration and the appointed passages, each section opening on its own. Progress leads with what happened in words, puts the figure second, and stops at yesterday; today is never judged. Settings holds your name, your church and reckoning, and how much of the calendar you want shown.
 
 <p align="center">
-  <img src="screenshots/chotki-reading.png" width="330" alt="The day's commemoration and the Gospel, with glossary terms underlined.">
-  <img src="screenshots/chotki-progress.png" width="330" alt="Progress in words, then a percentage, then each rule, over a picture of four saints.">
+  <img src="screenshots/chotki-desktop-home.png" width="720" alt="The macOS window: a sidebar, the week and the day's commitments.">
 </p>
 
-**The day's reading**, and **progress**. The reading is the commemoration and the appointed passages, with unfamiliar terms underlined. Progress leads with what happened in words, puts the figure second, and stops at yesterday. Today is never judged.
+**On the Mac**, the same screens sit in a window with a sidebar, and a cross in the menu bar opens a smaller companion. The screenshots use a fictional practice record.
 
 ## What it does
 
@@ -90,11 +62,24 @@ The Android interface follows the redesign. macOS is the same build. The iPhone 
 
 ## Calendar
 
-Both reckonings are supported and the setting is configurable. A named church supplies its usual calendar and tradition. With no church affiliation, the app follows the Orthodox Church in America: New Calendar, Russian tradition, without displaying OCA as the person’s church. Older records retain their saved church. See [church-practice.md](church-practice.md).
+Chotki does not compute the church calendar itself. Every fast, feast, tone, commemoration and appointed reading comes from [Orthocal.info](https://orthocal.info), so the app can show what Orthocal knows and nothing else. This is a limit worth understanding.
 
-Julian and Gregorian reckoning do not affect days of the week — the Wednesday and Friday fast rhythm is identical under both. Only fixed feasts differ, by 13 days. The movable cycle, Pascha included, is the same for both, because nearly every Orthodox church computes Pascha on the Julian reckoning.
+**What Orthocal provides.** Orthocal.info is an Eastern Orthodox calendar service giving commemorations, fasting, scripture readings and other information for each day of the liturgical year. It supports two traditions, each on either the New (Revised Julian) or the Old (Julian) calendar:
 
-The app always displays civil Gregorian dates. Reckoning is a lookup layer, never a display layer.
+- **Slavic**, reflecting the practice of the Orthodox Church in America (OCA) and the Russian Orthodox Church Outside of Russia (ROCOR). Its fasting indications follow the OCA's *Fasting & Fast-Free Seasons of the Church*.
+- **Greek**, reflecting the practice of the Antiochian Archdiocese and the Greek Orthodox Archdiocese. Orthocal describes this option as still in beta while its data is verified. The two traditions keep the same fasting seasons, but differ on a handful of days a year, on a more lenient first phase of the Nativity Fast, and on a few additional wine-and-oil allowances in Great Lent.
+
+Orthocal itself says its purpose is convenient access to daily devotional material for lay people, not to be an authoritative or comprehensive guide to the feasts and fasts of the Church.
+
+**What that means here.**
+
+- **The bundled calendar is the Slavic tradition.** Choosing a church in Settings sets the reckoning, Old or New, the Akathist Fridays and the practice notes, but it does not switch the calendar to that church's own typikon. Someone in a Greek or Antiochian parish will see the Slavic fasting marks and readings, and should expect them to differ from their parish on some days.
+- **A church calendar is more than the lectionary.** Local feasts, patronal days, and a parish's or bishop's own arrangements are not in Orthocal and are not in Chotki.
+- **Where Orthocal is silent, so is Chotki.** Chotki reports what the calendar marks. It does not tell anyone what to do, and it never issues dietary instruction. For what your church asks of you, ask your priest.
+
+**Reckoning.** Both the Old and the New calendar are supported and the setting is yours to change. With no church named, the app follows the OCA: New Calendar, Slavic tradition, without showing the OCA as your church. See [church-practice.md](church-practice.md).
+
+Julian and Gregorian reckoning do not affect days of the week; the Wednesday and Friday fast rhythm is identical under both. Only fixed feasts differ, by 13 days. The movable cycle, Pascha included, is the same for both, because nearly every Orthodox church computes Pascha on the Julian reckoning. The app always displays civil Gregorian dates.
 
 ## Architecture
 
@@ -106,13 +91,19 @@ Core tests run on Linux in CI from the first phase, so portability fails loudly 
 
 ## Data
 
-The church calendar — fasts, feasts, tones, commemorations and the appointed readings — comes from [orthocal.info](https://orthocal.info), whose author, Brian Glass, has welcomed its use here. From build 30 on macOS, iOS and Android, and from Windows alpha-rc3-build35, the apps carry five years of it (2026–2031) inside the app, generated from Orthocal's open-source code and checked against the live service, so those days need no network at all; the apps ask orthocal.info only for dates beyond that. The scripture is the King James Version with the Apocrypha, public domain, from [eBible.org](https://ebible.org); Orthocal's own saints' lives and Composite readings are not used. orthocal.info is the only network call any version of the app makes: no key, no account, no analytics, no telemetry, no sync. Practice records are stored locally in SQLite and backed up by JSON export. The bundled saint readings are the Prologue from Ochrid, recorded unchanged under CC BY-SA 4.0, with source and license links beneath each reading. There are 365 church-date entries; the source has no February 29 reading. Fetching this collection is a development tool, not an app network request. The daily artwork uses a shared 365-image rotation.
+**The church calendar.** Fasts, feasts, tones, commemorations and the appointed readings come from [Orthocal.info](https://orthocal.info) and its open-source code (MIT licence). Chotki ships with five years of that calendar (2026–2031), under both the Old and the New reckoning, generated from Orthocal's own code and carried inside the app, so those days need no network at all.
 
-## A note on tone
+Our sincere thanks to the Orthocal project and everyone who has contributed to it. Chotki's calendar rests on their work, and it is theirs. Any errors in how it is presented here are ours, not theirs.
 
-The app is deliberately encouraging and never shaming. There is no red anywhere in the progress view, no "failed", no broken-streak language, and no comparison against a target or a better past self. Pausing a rule removes those days from the record rather than counting them against you, and the consistency figure can be hidden entirely, leaving only the prose.
+**What is not carried over.** Where Orthocal's content is not in the public domain, it is not used; a public-domain equivalent is substituted in its place. That covers Orthocal's saints' lives, and the Composite readings, whose translation is under copyright: those readings now show the King James text of the chapters they cite.
 
-That is a fixed constraint rather than a style choice, and it is enforced by tests.
+**Scripture** is the King James Version with the Apocrypha, public domain, from [eBible.org](https://ebible.org). **The passages from the Fathers** are from translations published between 1885 and 1900, public domain. **The prayers** are older public-domain liturgical English, chiefly the Hapgood Service Book of 1906. **The glossary** and the other explanatory text are the author's own.
+
+**Network and privacy.** For dates after 2031 the app asks orthocal.info, the only network call any version makes. No key, no account, no analytics, no telemetry, no sync. Your record is stored locally in SQLite and backed up by JSON export.
+
+**Lives of the saints.** The daily life of the saint is from the *Prologue from Ochrid* by St. Nikolai Velimirović, taken from [app.ochrid.com](https://app.ochrid.com) and used under the [Creative Commons Attribution-ShareAlike 4.0 licence (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/). The text is shown unchanged, and each reading carries a link to its source page and to the licence. These texts remain under CC BY-SA 4.0; that licence applies to them, not to the rest of the software. There are 365 church-date entries; the source has no February 29 reading.
+
+**Artwork.** The daily picture comes from a shared rotation of 365 images.
 
 ## Getting it
 
@@ -148,7 +139,7 @@ You do **not** need developer mode, USB debugging, or Android Studio. Those are
 for building the app, not for running it, and turning them on is what upsets
 banking apps — installing an apk does not.
 
-1. Download `Chotki-1.0-beta.29.apk` onto the phone from the
+1. Download `Chotki-1.0-beta.30.apk` onto the phone from the
    [releases page](../../releases).
 2. Open it — from the notification, or from Files › Downloads.
 3. Android will say it cannot install apps from this source. Tap **Settings**
@@ -186,8 +177,8 @@ it will start empty.
 
 ## Licence
 
-Not open source. The source is published so it can be read and audited, not reused.
+Chotki is free, and will stay free. It is not, and is not intended to become, a paid application.
 
-During the alpha you may build, install and run it freely for your own use. You may not sell it, redistribute it, or reuse its source in another project. Chotki is intended to become a paid application, with the proceeds going to the author's church or to causes chosen by it.
+The source is published so that it can be read, audited, reused and built upon. What it may not be is commercialised: you may not sell it, or charge for it or for anything derived from it. See [LICENSE](LICENSE) for the full terms.
 
-See [LICENSE](LICENSE) for the full terms.
+Copyright © 2026 Ryan Macfarlane.
