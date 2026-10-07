@@ -50,10 +50,9 @@ A NOTE ON THE CONTENT
 
 The church calendar shown in this application (fasts, feasts, tones,
 commemorations and the appointed readings) comes from orthocal.info and its
-open-source code (MIT licence), and belongs to its authors. The calendar
-bundled with the application was generated from that code. Any content
-generated from Orthocal that is not in the public domain was replaced with
-public-domain equivalents.
+open-source code. The calendar bundled with the application was generated 
+from that code. Any content generated from Orthocal that is not in the public 
+domain was replaced with public-domain equivalents.
 
 The scripture is the King James Version with the Apocrypha, which is in the
 public domain, from eBible.org. Orthocal's saints' lives, and the Composite
