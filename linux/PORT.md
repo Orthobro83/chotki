@@ -1,6 +1,6 @@
 # Chotki for Linux — phased port plan
 
-**Status:** Phase 0 is complete. Phase 1 foundation is in progress. The shell and helper build on ARM64 Ubuntu 26.04 and `amd64` Ubuntu 24.04 CI. No `.deb` or Linux release exists yet.
+**Status:** Phase 0 is complete. Phase 1 foundation is in progress. The shell and helper build on ARM64 Ubuntu 26.04 and `amd64` Ubuntu 24.04 CI. An early `arm64` alpha `.deb` built, installed, and launched on the development VM; an `amd64` package and clean-install CI check are pending. No Linux release exists yet.
 
 ## Decision and scope
 

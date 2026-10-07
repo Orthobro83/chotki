@@ -51,3 +51,41 @@ jobs:
           set -e
           cat /tmp/chotki-ui.log
           test "$result" -eq 124
+      - name: Build release binaries and alpha package
+        run: |
+          swift build --package-path linux/app/bridge -c release -j 2
+          cmake -S linux/app/ui -B linux/app/ui/release -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build linux/app/ui/release -j 2
+          bridge=$(swift build --show-bin-path --package-path linux/app/bridge -c release)/ChotkiLinuxBridge
+          linux/tools/package-deb.sh linux/app/ui/release/chotki-linux "$bridge" linux/dist
+          dpkg-deb --contents linux/dist/*.deb | head -40
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chotki-linux-amd64-alpha
+          path: linux/dist/*.deb
+          if-no-files-found: error
+
+  amd64-deb-install:
+    name: Install alpha .deb on Ubuntu 24.04 — amd64
+    needs: amd64-shell
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: chotki-linux-amd64-alpha
+          path: linux-dist
+      - name: Install without development packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ./linux-dist/*.deb
+          dpkg-query -W -f='${Package} ${Version} ${Architecture}\n' chotki
+          file /usr/lib/chotki/chotki-linux /usr/lib/chotki/ChotkiLinuxBridge
+      - name: Launch installed review shell headlessly
+        run: |
+          set +e
+          QT_QPA_PLATFORM=offscreen timeout 8s chotki --review > /tmp/chotki-installed.log 2>&1
+          result=$?
+          set -e
+          cat /tmp/chotki-installed.log
+          test "$result" -eq 124
+          test -f "$HOME/.cache/chotki-linux-review/chotki.sqlite"
