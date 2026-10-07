@@ -107,9 +107,17 @@ struct SettingsViewContent: View {
                 isOn: model.settings.showConsistencyNumber,
                 set: { new in model.update { $0.showConsistencyNumber = new } }
             )
+            HStack(spacing: 18) {
+                Link("About Chotki", destination: URL(string: "https://chotki.app/about")!)
+                Link("Privacy", destination: URL(string: "https://chotki.app/privacy")!)
+            }
+            .font(.system(size: 12)).foregroundStyle(Theme.faint)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 14)
             if let version = Bundle.main.object(forInfoDictionaryKey: "ChotkiDevelopmentVersion") as? String {
                 Text("Version \(version)").font(.system(size: 12)).foregroundStyle(Theme.faint)
-                    .padding(.horizontal, 14).padding(.top, 14)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 14).padding(.top, 8)
             }
         }
         .padding(.bottom, 14)

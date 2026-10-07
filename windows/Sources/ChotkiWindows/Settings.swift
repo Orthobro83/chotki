@@ -8,7 +8,7 @@ extension WindowsApp {
         let width=min(720,contentWidth)-44
         let notes=([settings.calendarDifferenceNote].compactMap { $0 }+settings.jurisdiction.practice.notes).joined(separator:"\n\n")
         let notesHeight=max(20,notes.withCString { ch_measure_text($0,width,0) })
-        ch_home_begin(contentLeft,124,contentWidth,max(120,ch_height()-164),1320+notesHeight)
+        ch_home_begin(contentLeft,124,contentWidth,max(120,ch_height()-164),1380+notesHeight)
         var y:Int32=0, labelID:Int32=22000
         func label(_ text:String,muted:Bool=true) {
             let h=max(20,text.withCString { ch_measure_text($0,width,0) })
@@ -58,6 +58,11 @@ extension WindowsApp {
         toggle(609,"Show in the taskbar",settings.showInDock,"With this off, Chotki lives in the notification area. The tray icon is there either way.")
         toggle(625,"Open at login",settings.launchAtLogin)
         toggle(604,"Show the consistency figure",settings.showConsistencyNumber,"With this off, progress is reported in words only.")
+        y += 20
+        let linkWidth:Int32=112, linkGap:Int32=12
+        let linkLeft=14+(width-(2*linkWidth+linkGap))/2
+        control(626,18,"About Chotki",linkLeft,y,linkWidth,26)
+        control(627,18,"Privacy",linkLeft+linkWidth+linkGap,y,linkWidth,26)
         ch_home_end()
     }
 
@@ -108,7 +113,7 @@ extension WindowsApp {
             return true
         }
         let choices: [Int32] = [603,606,611,613,615,617]
-        let buttons: [Int32] = [430,431,604,605,607,608,609,618,621,622,625]
+        let buttons: [Int32] = [430,431,604,605,607,608,609,618,621,622,625,626,627]
         guard event == 1 && choices.contains(id) || event == 0 && buttons.contains(id) else { return false }
         do {
             // Commit typed names before a choice redraw, so draft names are never lost.
@@ -117,6 +122,10 @@ extension WindowsApp {
                 try saveSettings { $0.displayName = name; $0.spiritualFatherName = father }
             }
             switch id {
+            case 626,627:
+                let address = id == 626 ? "https://chotki.app/about" : "https://chotki.app/privacy"
+                guard address.withCString({ ch_open_url($0) }) != 0 else { throw RuleInputError(message: "The page could not be opened in your browser.") }
+                return true
             case 430:
                 let name = text(311), father = text(313)
                 try saveSettings { $0.displayName = name; $0.spiritualFatherName = father }

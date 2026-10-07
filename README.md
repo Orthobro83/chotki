@@ -14,7 +14,7 @@ You can add items of your own, whether or not they are Church canon, so that a r
 
 ## Status
 
-**1.0 beta, build 30.**
+**1.0 beta, build 31.**
 
 - **Android** — Android 8 / API 26 or later. Sideload for now; see [Getting it](#android). In daily use by its author.
 - **macOS** — macOS 13 or later, Apple Silicon and Intel in one universal download. The Intel half is built but has never been run on an Intel Mac. Signed by its author rather than notarised by Apple, so macOS will refuse to open it until you allow it in Privacy and Security. See [Getting it](#getting-it).

@@ -162,6 +162,15 @@ struct SettingsView_: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Glossary")
                 }
+
+                HStack(spacing: 18) {
+                    Link("About Chotki", destination: URL(string: "https://chotki.app/about")!)
+                    Link("Privacy", destination: URL(string: "https://chotki.app/privacy")!)
+                }
+                .font(.system(size: 12))
+                .foregroundStyle(Chotki.faint)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 18)
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 18)

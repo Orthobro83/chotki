@@ -32,8 +32,8 @@ android {
         targetSdk = 37
         // 1.0 beta, build 29. versionCode must stay above every apk already
         // handed out, including the local build 28.
-        versionCode = 30
-        versionName = "1.0 beta, build 30"
+        versionCode = 31
+        versionName = "1.0 beta, build 31"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

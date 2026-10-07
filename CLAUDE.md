@@ -15,7 +15,7 @@ Kotlin reimplementation is written against.
 An app for keeping an Orthodox prayer rule and honestly measuring whether
 it is kept, on macOS, Android, and iOS. macOS has a menu bar popover **and** a
 full window with a Dock icon. Written for Ryan; Android and macOS are published
-as 1.0 beta, build 30 at
+as 1.0 beta, build 31 at
 `github.com/rjmac83/chotki` for a private community to test.
 
 ## Where things are
@@ -176,9 +176,9 @@ Three platforms, all in daily testing by Ryan.
 
 | | |
 |---|---|
-| macOS | 1.0 beta, build 30; universal (arm64 + x86_64), ad-hoc signed, not notarised; Intel slice never run |
-| Android | 1.0 beta, build 30; sideload, signed with his own key; ships the calendar |
-| iOS | 1.0 beta, build 30; redesigned phone interface, free provisioning for seven days, no public download |
+| macOS | 1.0 beta, build 31; universal (arm64 + x86_64), ad-hoc signed, not notarised; Intel slice never run |
+| Android | 1.0 beta, build 31; sideload, signed with his own key; ships the calendar |
+| iOS | 1.0 beta, build 31; redesigned phone interface, free provisioning for seven days, no public download |
 
 **Published is not delivered.** The author hands builds to people himself.
 Do not infer that a named person has a build from its publication.

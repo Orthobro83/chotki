@@ -85,11 +85,11 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: info.chotki.app
-        # 1.0 beta, build 30. The short version stays numeric, as on the Mac.
+        # 1.0 beta, build 31. The short version stays numeric, as on the Mac.
         # The build number is the one Android and the Mac already ship. It
         # was not raised: this does not hand out a new apk or Mac build.
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "30"
+        CURRENT_PROJECT_VERSION: "31"
         SWIFT_VERSION: "6.0"
         # Xcode writes the Info.plist from the keys below rather than the
         # project carrying one as a file. Setting the keys without this says
