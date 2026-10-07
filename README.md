@@ -67,9 +67,9 @@ Chotki does not compute the church calendar itself. Every fast, feast, tone, com
 **What Orthocal provides.** Orthocal.info is an Eastern Orthodox calendar service giving commemorations, fasting, scripture readings and other information for each day of the liturgical year. It supports two traditions, each on either the New (Revised Julian) or the Old (Julian) calendar:
 
 - **Slavic**, reflecting the practice of the Orthodox Church in America (OCA) and the Russian Orthodox Church Outside of Russia (ROCOR). Its fasting indications follow the OCA's *Fasting & Fast-Free Seasons of the Church*.
-- **Greek**, reflecting the practice of the Antiochian Archdiocese and the Greek Orthodox Archdiocese. Orthocal describes this option as still in beta while its data is verified. The two traditions keep the same fasting seasons, but differ on a handful of days a year, on a more lenient first phase of the Nativity Fast, and on a few additional wine-and-oil allowances in Great Lent.
+- **Greek**, reflecting the practice of the Antiochian Archdiocese and the Greek Orthodox Archdiocese. The two traditions keep the same fasting seasons, but differ on a handful of days a year, on a more lenient first phase of the Nativity Fast, and on a few additional wine-and-oil allowances in Great Lent.
 
-Orthocal itself says its purpose is convenient access to daily devotional material for lay people, not to be an authoritative or comprehensive guide to the feasts and fasts of the Church.
+Orthocal itself says its purpose is convenient access to daily devotional material for lay people, not to be an authoritative or comprehensive guide to the feasts and fasts of the Church. Chotki presents this data with the same spirit and intent.
 
 **What that means here.**
 
@@ -77,7 +77,7 @@ Orthocal itself says its purpose is convenient access to daily devotional materi
 - **A church calendar is more than the lectionary.** Local feasts, patronal days, and a parish's or bishop's own arrangements are not in Orthocal and are not in Chotki.
 - **Where Orthocal is silent, so is Chotki.** Chotki reports what the calendar marks. It does not tell anyone what to do, and it never issues dietary instruction. For what your church asks of you, ask your priest.
 
-**Reckoning.** Both the Old and the New calendar are supported and the setting is yours to change. With no church named, the app follows the OCA: New Calendar, Slavic tradition, without showing the OCA as your church. See [church-practice.md](church-practice.md).
+**Reckoning.** Both the Old and the New calendar are supported and the setting is yours to change. With no church named, the app follows the OCA: New Calendar, Slavic tradition, without showing the OCA as your church.
 
 Julian and Gregorian reckoning do not affect days of the week; the Wednesday and Friday fast rhythm is identical under both. Only fixed feasts differ, by 13 days. The movable cycle, Pascha included, is the same for both, because nearly every Orthodox church computes Pascha on the Julian reckoning. The app always displays civil Gregorian dates.
 
@@ -93,17 +93,17 @@ Core tests run on Linux in CI from the first phase, so portability fails loudly 
 
 **The church calendar.** Fasts, feasts, tones, commemorations and the appointed readings come from [Orthocal.info](https://orthocal.info) and its open-source code (MIT licence). Chotki ships with five years of that calendar (2026–2031), under both the Old and the New reckoning, generated from Orthocal's own code and carried inside the app, so those days need no network at all.
 
-Our sincere thanks to the Orthocal project and everyone who has contributed to it. Chotki's calendar rests on their work, and it is theirs. Any errors in how it is presented here are ours, not theirs.
+Our sincere thanks to the Orthocal project and everyone who has contributed to it. Chotki's calendar rests on their work.
 
 **What is not carried over.** Where Orthocal's content is not in the public domain, it is not used; a public-domain equivalent is substituted in its place. That covers Orthocal's saints' lives, and the Composite readings, whose translation is under copyright: those readings now show the King James text of the chapters they cite.
 
 **Scripture** is the King James Version with the Apocrypha, public domain, from [eBible.org](https://ebible.org). **The passages from the Fathers** are from translations published between 1885 and 1900, public domain. **The prayers** are older public-domain liturgical English, chiefly the Hapgood Service Book of 1906. **The glossary** and the other explanatory text are the author's own.
 
-**Network and privacy.** For dates after 2031 the app asks orthocal.info, the only network call any version makes. No key, no account, no analytics, no telemetry, no sync. Your record is stored locally in SQLite and backed up by JSON export.
+**Network and privacy.** For dates after 2031 the app asks orthocal.info, the only network call any version makes. No key, no account, no analytics, no telemetry, no sync. Your record is stored locally in SQLite and backed up by JSON export. We will push updated bundles with future releases, in order that Chotki's calendar can extend beyond 2031 without API dependency.
 
 **Lives of the saints.** The daily life of the saint is from the *Prologue from Ochrid* by St. Nikolai Velimirović, taken from [app.ochrid.com](https://app.ochrid.com) and used under the [Creative Commons Attribution-ShareAlike 4.0 licence (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/). The text is shown unchanged, and each reading carries a link to its source page and to the licence. These texts remain under CC BY-SA 4.0; that licence applies to them, not to the rest of the software. There are 365 church-date entries; the source has no February 29 reading.
 
-**Artwork.** The daily picture comes from a shared rotation of 365 images.
+**Artwork.** The daily picture comes from a shared rotation of 365 public-domain images.
 
 ## Getting it
 
@@ -119,13 +119,11 @@ Our sincere thanks to the Orthocal project and everyone who has contributed to i
 4. Go to **System Settings › Privacy & Security**, scroll down, and next to the message about Chotki click **Open Anyway**. Confirm.
 5. It will ask permission to send notifications. Allow it if you want reminders; the app works either way.
 
-A cross appears in your menu bar, and a window opens. Nothing is switched on until you choose something from the library.
-
 To check which half you are running: `lipo -archs /Applications/Chotki.app/Contents/MacOS/Chotki` lists both, and `uname -m` says which one your Mac will use — `arm64` for Apple Silicon, `x86_64` for Intel.
 
 #### Why macOS blocks it
 
-Because this build is signed by its author rather than notarised by Apple, which costs a hundred dollars a year and is not worth it for a beta. macOS cannot tell an unnotarised app from a harmful one, so it refuses both. The source is here to read if you would rather check it yourself, and the whole app is built by the script in `macos/build-app.sh` if you would rather build it than trust a download.
+This build is signed by its author rather than notarised by Apple. MacOS cannot tell an unnotarised app from a harmful one, so it refuses both. The source is here to read if you would rather check it yourself, and the whole app is built by the script in `macos/build-app.sh` if you would rather build it than trust a download.
 
 #### Removing it
 
