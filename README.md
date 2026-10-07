@@ -135,7 +135,7 @@ You do **not** need developer mode, USB debugging, or Android Studio. Those are
 for building the app, not for running it, and turning them on is what upsets
 banking apps — installing an apk does not.
 
-1. Download `Chotki-1.0-beta.30.apk` onto the phone from the
+1. Download `Chotki-1.0-beta.31.apk` onto the phone from the
    [releases page](../../releases).
 2. Open it — from the notification, or from Files › Downloads.
 3. Android will say it cannot install apps from this source. Tap **Settings**

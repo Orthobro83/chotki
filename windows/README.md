@@ -1,6 +1,6 @@
 # Chotki for Windows
 
-Windows **alpha-rc3-build35** (candidate; rc2-build34 is the published prerelease) targets x86_64 Windows 11. The current macOS app
+Windows **alpha-rc3-build35** (the published prerelease) targets x86_64 Windows 11. The current macOS app
 is the visual and functional specification. Full parity remains the goal for a
 stable release; ARM64 is deferred.
 
@@ -120,7 +120,7 @@ desktop, physical input/accessibility, native notification, assembled-payload
 and installed lifecycle gates passed under Prism. Synthetic visual checks cover
 Library scrolling, editor state, and Home resizing. User acceptance and physical
 x86_64 hardware validation follow; native ARM64 remains deferred. This build is
-published as the [Windows alpha-rc2-build34 prerelease](https://github.com/Orthobro83/chotki/releases/tag/windows-alpha-rc2-build34)
+published as the [Windows alpha-rc3-build35 prerelease](https://github.com/rjmac83/chotki/releases/tag/windows-alpha-rc3-build35)
 for testing. It is not a beta or stable Windows release.
 
 ## About `verify-vm.ps1`
