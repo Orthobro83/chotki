@@ -87,8 +87,6 @@ Julian and Gregorian reckoning do not affect days of the week; the Wednesday and
 
 `macos/` is the SwiftUI main-window and menu-bar app. `ios/` is the SwiftUI iPhone app and uses the same core. `android/` contains the Kotlin core reimplementation and Jetpack Compose interface. Shared-content checks keep their bundled texts in step. Platform services sit behind core protocols.
 
-Core tests run on Linux in CI from the first phase, so portability fails loudly rather than rotting quietly.
-
 ## Data
 
 **The church calendar.** Fasts, feasts, tones, commemorations and the appointed readings come from [Orthocal.info](https://orthocal.info) and its open-source code (MIT licence). Chotki ships with five years of that calendar (2026–2031), under both the Old and the New reckoning, generated from Orthocal's own code and carried inside the app, so those days need no network at all.
