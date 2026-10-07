@@ -45,7 +45,7 @@ The glossary and the passages from the Fathers are introductory and await a prie
   <img src="screenshots/chotki-desktop-home.png" width="720" alt="The macOS window: a sidebar, the week and the day's commitments.">
 </p>
 
-**On the Mac**, the same screens sit in a window with a sidebar, and a cross in the menu bar opens a smaller companion. The screenshots use a fictional practice record.
+**On the Desktop**, the same screens sit in a window with a sidebar, and a cross in the menu bar opens a smaller companion.
 
 ## What it does
 
