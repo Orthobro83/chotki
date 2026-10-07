@@ -35,9 +35,11 @@ automated tests.
 - A duplicate launch exits and keeps a single window and helper.
 - Killing the helper starts a new helper and reconnects the shell.
 - Closing the window also closes the helper.
+- A Qt input test clicks the Prayers entry and observes the route change.
 
-The GitHub Actions job is intended to prove `amd64` compilation and a
-headless launch on Ubuntu 24.04. It must pass before an `amd64` claim is made.
-The VM's forwarded mouse clicks have not yet provided a reliable physical
-navigation check. The review loop must establish that before Phase 1 closes.
+GitHub Actions [run 37696472735](https://github.com/rjmac83/chotki/actions/runs/37696472735)
+passed `amd64` compilation, bridge/core checks, and a headless shell launch
+on Ubuntu 24.04. The VM's forwarded mouse clicks have not yet provided a
+reliable physical navigation check. The automated Qt input test covers the
+click path, but a real guest pointer check remains before Phase 1 closes.
 No `.deb` exists yet.

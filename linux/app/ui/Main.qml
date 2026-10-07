@@ -92,6 +92,7 @@ ApplicationWindow {
                             model: modelData.items
                             delegate: Rectangle {
                                 required property string modelData
+                                objectName: "nav-" + modelData
                                 width: 168
                                 height: 36
                                 color: window.section === modelData ? "#171920" : "transparent"
