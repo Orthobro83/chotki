@@ -2,6 +2,8 @@ package org.chotki.app
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -42,7 +44,10 @@ class WelcomeTest {
      */
     private fun showFresh(state: AppState = freshState()): AppState {
         compose.mainClock.autoAdvance = false
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        // One content for the whole test (the rule allows `setContent` once); a new `generation` is a
+        // fresh composition of the shell in the same process, which is what a return looks like.
+        var generation by androidx.compose.runtime.mutableIntStateOf(0)
+        compose.setContent { ChotkiTheme { androidx.compose.runtime.key(generation) { Shell(state) } } }
         compose.waitForIdle()
         val opening = compose.onAllNodesWithContentDescription("The opening")
             .fetchSemanticsNodes().isNotEmpty()
@@ -57,7 +62,10 @@ class WelcomeTest {
     @Test fun itIsTheFirstThingShown() {
         val state = freshState()
         compose.mainClock.autoAdvance = false
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        // One content for the whole test (the rule allows `setContent` once); a new `generation` is a
+        // fresh composition of the shell in the same process, which is what a return looks like.
+        var generation by androidx.compose.runtime.mutableIntStateOf(0)
+        compose.setContent { ChotkiTheme { androidx.compose.runtime.key(generation) { Shell(state) } } }
         compose.waitForIdle()
 
         val opening = compose.onAllNodesWithContentDescription("The opening")
@@ -104,7 +112,10 @@ class WelcomeTest {
         val state = freshState()
         state.updateSettings { it.copy(hasCompletedFirstRun = true) }
         compose.mainClock.autoAdvance = false
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        // One content for the whole test (the rule allows `setContent` once); a new `generation` is a
+        // fresh composition of the shell in the same process, which is what a return looks like.
+        var generation by androidx.compose.runtime.mutableIntStateOf(0)
+        compose.setContent { ChotkiTheme { androidx.compose.runtime.key(generation) { Shell(state) } } }
         compose.waitForIdle()
 
         val opening = compose.onAllNodesWithContentDescription("The opening")
@@ -120,7 +131,7 @@ class WelcomeTest {
         compose.onNodeWithContentDescription("The welcome").assertDoesNotExist()
         compose.onNodeWithContentDescription("Go to Settings").assertIsDisplayed()
 
-        compose.setContent { ChotkiTheme { Shell(state) } }
+        generation += 1
         compose.waitForIdle()
         compose.onNodeWithContentDescription("The opening").assertDoesNotExist()
         compose.onNodeWithContentDescription("Go to Settings").assertIsDisplayed()

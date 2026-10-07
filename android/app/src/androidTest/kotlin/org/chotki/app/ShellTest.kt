@@ -173,7 +173,8 @@ class ShellTest {
         compose.onNodeWithText(
             "Turning these off silences the app. It does not change what is due, or how anything is counted.",
         ).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Old calendar").performScrollTo().assertIsDisplayed()
+        // Someone who has named no church follows the OCA, on the New Calendar.
+        compose.onNodeWithText("New calendar").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("24-hour").performScrollTo().assertIsDisplayed()
     }
 

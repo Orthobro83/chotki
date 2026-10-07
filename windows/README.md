@@ -122,3 +122,11 @@ Library scrolling, editor state, and Home resizing. User acceptance and physical
 x86_64 hardware validation follow; native ARM64 remains deferred. This build is
 published as the [Windows alpha-rc2-build34 prerelease](https://github.com/Orthobro83/chotki/releases/tag/windows-alpha-rc2-build34)
 for testing. It is not a beta or stable Windows release.
+
+## About `verify-vm.ps1`
+
+`tools/verify-vm.ps1` runs the whole UI suite from SSH's session 0, which has no real desktop and cannot
+size or scroll windows like one. Its "Narrow editor title is reachable" assertion therefore fails there,
+although the same assertion passes in the interactive-desktop suite (`tools/verify-ui-desktop-vm.ps1`),
+which is the authoritative run for window geometry. Judge layout by the interactive suite and the review
+captures, not by `verify-vm.ps1`.

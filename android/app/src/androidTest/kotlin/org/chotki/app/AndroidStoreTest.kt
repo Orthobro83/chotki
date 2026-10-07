@@ -148,7 +148,7 @@ class AndroidStoreTest {
     fun theBundledContentLoadsFromTheApk() {
         assertEquals(159, Content.glossary.size)
         assertEquals(20, Content.prayers.size)
-        assertEquals(23, Content.ruleLibrary.size)
+        assertEquals(22, Content.ruleLibrary.size)
         assertNotNull(Content.prayers.first { it.id == "jesus-prayer" })
     }
 }

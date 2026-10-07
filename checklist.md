@@ -175,3 +175,7 @@ dropped from the test without also being dropped from here.
 - **Apostolic** — the other half of that phrase.
 - **Church** — capital-C, as distinct from a building.
 - **Abba** — the monastic title, in the passages from the desert fathers.
+
+## Calendar refresh (added 6 October 2026)
+- [ ] **By 31 December 2030:** ship a build whose bundled calendar runs past 2031 (the shipped one ends
+      2031-12-31). See `core/Tools/CALENDAR.md`. Run `core/Tools/accuracy-check.py` before every release.
