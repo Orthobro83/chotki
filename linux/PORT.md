@@ -1,6 +1,6 @@
 # Chotki for Linux — phased port plan
 
-**Status:** Phase 0 feasibility spike completed on an ARM64 Ubuntu VM. Phases 1–5 have not begun. No `.deb` or Linux release exists.
+**Status:** Phase 0 is complete. Phase 1 foundation is in progress on an ARM64 Ubuntu VM. No verified `amd64` build, `.deb`, or Linux release exists yet.
 
 ## Decision and scope
 
@@ -21,6 +21,8 @@
 **Gate:** The window works in the Linux guest; Swift calls and error handling work in both directions; resources and synthetic persistence survive relaunch; the bridge and package baseline are recorded. Stop and revise the approach if this cannot be demonstrated without an unmaintainable bridge.
 
 ## Phase 1 — Foundation and delivery loop
+
+**Progress (2026-10-07):** The versioned Swift helper and Qt/QML shell build and launch on Ubuntu 26.04.1 ARM64. Review storage is separate from the normal XDG data path. The shell shows the Chotki sidebar, palette, bundled XCharter font, greeting, and core date. A second launch activates the existing instance, a killed helper restarts and reconnects, and closing the window leaves no helper behind. GitHub Actions now has an `amd64` shell build and headless launch job; its first run still needs to pass. Physical sidebar clicks are not yet verified because input through the UTM session did not produce click events even with a full-window tracing area. The shell body is a placeholder pending Phase 2. See [app/README.md](app/README.md).
 
 **Work:** Create `linux/` sources and build definitions without copying canonical core. Put app orchestration and Linux adapters behind the existing core protocols. Set up XDG-appropriate data, config, and cache paths, single-instance behavior, and explicit review/test storage that cannot open a live record. Build CI for the Linux app and retain the existing core portability guard and Linux tests. Add a repeatable guest build, launch, screenshot, and input loop.
 

@@ -1,0 +1,51 @@
+name: Linux desktop
+
+on:
+  push:
+    branches: [main, codex/linux-port]
+    paths:
+      - 'linux/**'
+      - 'core/**'
+      - '.github/workflows/linux.yml'
+  pull_request:
+    paths:
+      - 'linux/**'
+      - 'core/**'
+      - '.github/workflows/linux.yml'
+
+jobs:
+  amd64-shell:
+    name: Qt shell and Swift bridge — amd64
+    runs-on: ubuntu-24.04
+    container: swift:6.4
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Qt, SQLite and X11 build tools
+        run: |
+          apt-get update
+          apt-get install -y libsqlite3-dev cmake ninja-build g++ file \
+            qt6-base-dev qt6-declarative-dev \
+            qml6-module-qtquick qml6-module-qtquick-controls \
+            qml6-module-qtquick-layouts qt6-qpa-plugins
+      - name: Build Swift bridge
+        run: swift build --package-path linux/app/bridge -j 2
+      - name: Build Qt shell
+        run: |
+          cmake -S linux/app/ui -B linux/app/ui/build -G Ninja
+          cmake --build linux/app/ui/build -j 2
+      - name: Check bridge and bundled core on amd64
+        run: |
+          bridge=$(swift build --show-bin-path --package-path linux/app/bridge)/ChotkiLinuxBridge
+          printf '{"v":1,"id":1,"op":"hello"}\n{"v":1,"id":2,"op":"snapshot"}\n' | "$bridge" --review > /tmp/chotki-bridge.jsonl
+          grep -q '"mode":"review"' /tmp/chotki-bridge.jsonl
+          grep -q '"psalmOneVerses":6' /tmp/chotki-bridge.jsonl
+          file "$bridge" linux/app/ui/build/chotki-linux
+      - name: Load the Qt window without a display server
+        run: |
+          bridge=$(swift build --show-bin-path --package-path linux/app/bridge)/ChotkiLinuxBridge
+          set +e
+          QT_QPA_PLATFORM=offscreen timeout 8s linux/app/ui/build/chotki-linux --review "$bridge" > /tmp/chotki-ui.log 2>&1
+          result=$?
+          set -e
+          cat /tmp/chotki-ui.log
+          test "$result" -eq 124
