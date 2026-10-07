@@ -50,7 +50,7 @@ public enum Welcome {
 
     public static let paragraphs: [WelcomeParagraph] = [
         WelcomeParagraph([WelcomeSpan("Chotki is an independent project. It is not affiliated with or sanctioned by any church authority. The intention is to give new and existing Christians a way to build an initial daily routine in an Orthodox context.")]),
-        WelcomeParagraph([WelcomeSpan("All content contained in this app is gathered from the public domain. Prayers, readings, and disciplines vary from church to church. Chotki is not a substitute for a priest or spiritual father.")]),
+        WelcomeParagraph([WelcomeSpan("Chotki draws on public-domain texts and other credited sources. Prayers, readings, and disciplines vary from church to church. Chotki is not a substitute for a priest or spiritual father.")]),
         WelcomeParagraph([WelcomeSpan("Chotki is best used in cooperation with a spiritual father, and we encourage you to find one as soon as possible.")]),
     ]
 }
