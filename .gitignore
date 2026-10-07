@@ -63,3 +63,7 @@ windows/SQLITE-SMOKE-TEST.md
 windows/VERIFICATION.md
 windows/toolchain-probe/
 windows/sqlite/
+
+# The marketing site is drafted locally and does not go to GitHub
+website/
+website.zip
