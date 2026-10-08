@@ -52,9 +52,11 @@ def main():
     assert restored_entry["kept"] == entry["kept"]
     calendar_day = ask("selectDate", date="2026-10-06")
     assert calendar_day["dayTitle"] and calendar_day["observedDate"]
-    assert all("fast" in day and "feast" in day for day in calendar_day["week"])
+    assert all("fast" in day and "feast" in day and "settled" in day
+               for day in calendar_day["week"])
     shifted = ask("shiftWeek", direction=1)
-    assert shifted["selectedDate"] != calendar_day["selectedDate"]
+    assert shifted["selectedDate"] == calendar_day["selectedDate"]
+    assert shifted["week"][0]["date"] != calendar_day["week"][0]["date"]
     assert not ask("selectDate", date="not-a-date")["ok"]
     close(review)
 

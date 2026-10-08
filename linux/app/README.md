@@ -41,16 +41,18 @@ rejected in normal mode. The image remains outside Git.
 - Closing the window also closes the helper.
 - A Qt input test clicks the Prayers entry and observes the route change.
 - The first Phase 2 Home slice reads actual core practice entries and saying
-  text, selects dates and weeks, and toggles rule completion through the Swift
-  helper. An isolated protocol test checks that a completion can be toggled
-  and restored and that the normal XDG record is never seeded with review data.
+  text, selects dates, scrolls the visible week independently, and toggles rule
+  completion through the Swift helper. An isolated protocol test checks that
+  a completion can be toggled and restored and that the normal XDG record is
+  never seeded with review data.
 - The synthetic ARM64 Home screenshot was inspected against the macOS
   reference. The original daily artwork now loads from the existing macOS
   library, with the same 365-day selection order. The package includes the
   artwork and its source metadata. The bundled core calendar supplies the
   day heading and feast/fast cues. Vector navigation and category icons now
   replace the temporary text symbols. The image is rendered with rounded
-  corners and a fading overlay. Further card polish, artwork motion,
+  corners and a fading overlay. A core-derived dot marks a settled day in the
+  week, and a Today link returns to the current week. Further card polish and artwork motion
   and the remaining routes still need Phase 2 work.
 
 GitHub Actions [run 37708377872](https://github.com/rjmac83/chotki/actions/runs/37708377872)

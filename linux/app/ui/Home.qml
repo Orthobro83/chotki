@@ -24,6 +24,12 @@ Item {
     function dateLabel() {
         return bridge.selectedDate.length ? Qt.formatDate(localDate(bridge.selectedDate), "dddd d MMMM") : ""
     }
+    function todayLinkSide() {
+        if (!bridge.today.length || bridge.week.length === 0) return 0
+        const first = bridge.week[0].date
+        const last = bridge.week[bridge.week.length - 1].date
+        return bridge.today < first ? -1 : bridge.today > last ? 1 : 0
+    }
 
     Flickable {
         anchors.fill: parent
@@ -37,19 +43,33 @@ Item {
             spacing: 0
 
             Item { width: 1; height: 18 }
-            Label {
+            Item {
                 width: parent.width
-                text: home.monthLabel()
-                horizontalAlignment: Text.AlignHCenter
-                color: home.parchment
-                font.pixelSize: 13
-                font.weight: Font.DemiBold
+                height: 20
+                Label {
+                    anchors.centerIn: parent
+                    text: home.monthLabel()
+                    color: home.parchment
+                    font.pixelSize: 13
+                    font.weight: Font.DemiBold
+                }
+                Label {
+                    objectName: "today-link"
+                    visible: home.todayLinkSide() !== 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: home.todayLinkSide() < 0 ? 8 : parent.width - width - 8
+                    text: "Today"
+                    color: home.gold
+                    font.pixelSize: 12
+                    MouseArea { anchors.fill: parent; onClicked: bridge.selectDate(bridge.today) }
+                }
             }
             Item { width: 1; height: 8 }
             Row {
                 x: (parent.width - width) / 2
                 spacing: 6
                 Label {
+                    objectName: "week-previous"
                     text: "‹"
                     width: 18
                     height: 53
@@ -88,11 +108,18 @@ Item {
                                 horizontalAlignment: Text.AlignHCenter
                                 width: 30
                             }
+                            Rectangle {
+                                visible: modelData.settled
+                                width: 3; height: 3; radius: 2
+                                color: home.gold
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
                         }
                         MouseArea { anchors.fill: parent; onClicked: bridge.selectDate(modelData.date) }
                     }
                 }
                 Label {
+                    objectName: "week-next"
                     text: "›"
                     width: 18
                     height: 53

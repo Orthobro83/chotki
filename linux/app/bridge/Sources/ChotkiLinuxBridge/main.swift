@@ -67,7 +67,8 @@ private func fail(id: Int, _ error: Error) {
     respond(["v": protocolVersion, "id": id, "ok": false, "error": String(describing: error)])
 }
 
-private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate) throws -> [String: Any] {
+private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate,
+                          weekCenter: CalendarDate) throws -> [String: Any] {
     let settings = try store.loadSettings() ?? .default
     let rules = try store.rules(includeArchived: false)
     let activations = try store.activations(ruleID: nil)
@@ -91,12 +92,19 @@ private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate) thr
             "dispensation": entry.dispensation ?? ""
         ]
     }
+    let weekStart = weekCenter.adding(days: -3)
+    let weekEnd = weekCenter.adding(days: 3)
+    let weekOccurrences = try store.occurrences(ruleID: nil, from: weekStart, through: weekEnd)
+    let weekPractice = Practice(rules: rules, activations: activations,
+                                occurrences: weekOccurrences, settings: settings,
+                                liturgical: liturgical)
     let week: [[String: Any]] = (-3...3).map { offset in
-        let date = selectedDate.adding(days: offset)
+        let date = weekCenter.adding(days: offset)
         let day = liturgical.cachedDay(for: date)
         return ["date": date.iso, "day": date.day, "weekday": date.weekday.rawValue,
                 "selected": date == selectedDate, "fast": day?.isFast ?? false,
-                "feast": day?.isGreatFeast ?? false]
+                "feast": day?.isGreatFeast ?? false,
+                "settled": weekPractice.isSettled(on: date)]
     }
     let saying = PatristicReadings.shared.reading(for: selectedDate)
     let liturgicalDay = liturgical.cachedDay(for: selectedDate)
@@ -152,6 +160,7 @@ do {
     }
 
     var selectedDate = CalendarDate(Date(), in: .current)
+    var weekCenter = selectedDate
 
     while let line = readLine() {
         let request = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any]
@@ -169,7 +178,8 @@ do {
                 reply(id: id, fields: ["mode": mode.isReview ? "review" : "normal"])
 
             case "snapshot":
-                var fields = try homeSnapshot(store: store, on: selectedDate)
+                var fields = try homeSnapshot(store: store, on: selectedDate,
+                                              weekCenter: weekCenter)
                 fields["today"] = CalendarDate(Date(), in: .current).iso
                 reply(id: id, fields: fields)
 
@@ -177,13 +187,16 @@ do {
                 guard let raw = request["date"] as? String,
                       let date = CalendarDate(iso: raw) else { throw BridgeError.invalidRequest }
                 selectedDate = date
-                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate))
+                weekCenter = date
+                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate,
+                                                       weekCenter: weekCenter))
 
             case "shiftWeek":
                 guard let direction = request["direction"] as? Int,
                       direction == -1 || direction == 1 else { throw BridgeError.invalidRequest }
-                selectedDate = selectedDate.adding(days: direction * 7)
-                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate))
+                weekCenter = weekCenter.adding(days: direction * 7)
+                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate,
+                                                       weekCenter: weekCenter))
 
             case "toggleKept":
                 guard let raw = request["ruleID"] as? String,
@@ -204,7 +217,8 @@ do {
                 } else {
                     try store.save(Occurrence(ruleID: ruleID, date: selectedDate, status: .completed))
                 }
-                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate))
+                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate,
+                                                       weekCenter: weekCenter))
 
             case "setReviewName":
                 guard mode.isReview else { throw BridgeError.reviewOnly }

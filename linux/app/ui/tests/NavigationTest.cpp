@@ -24,7 +24,7 @@ class SampleBridge final : public QObject {
     Q_PROPERTY(QString sayingSource MEMBER sayingSource CONSTANT)
     Q_PROPERTY(QString artworkUrl MEMBER artworkUrl CONSTANT)
     Q_PROPERTY(QVariantList entries MEMBER entries CONSTANT)
-    Q_PROPERTY(QVariantList week MEMBER week CONSTANT)
+    Q_PROPERTY(QVariantList week MEMBER week NOTIFY changed)
 
 public:
     SampleBridge() {
@@ -32,7 +32,7 @@ public:
             {"category", "Prayer"}, {"summary", "A morning prayer"},
             {"time", "06:30"}, {"kept", false}, {"dispensed", false}});
         week.push_back(QVariantMap{{"date", "2026-10-07"}, {"day", 7},
-            {"weekday", 4}, {"selected", true}});
+            {"weekday", 4}, {"selected", true}, {"settled", false}});
     }
     bool connected = true;
     bool review = true;
@@ -52,9 +52,18 @@ public:
     QVariantList week;
     QString selectedDay;
     QString toggledRule;
+    int shiftedDirection = 0;
     Q_INVOKABLE void selectDate(const QString &date) { selectedDay = date; }
     Q_INVOKABLE void toggleKept(const QString &id) { toggledRule = id; }
-    Q_INVOKABLE void shiftWeek(int) {}
+    Q_INVOKABLE void shiftWeek(int direction) {
+        shiftedDirection = direction;
+        week[0] = QVariantMap{{"date", "2026-10-14"}, {"day", 14},
+            {"weekday", 4}, {"selected", false}, {"settled", false}};
+        emit changed();
+    }
+
+signals:
+    void changed();
 };
 
 class NavigationTest final : public QObject {
@@ -115,6 +124,21 @@ private slots:
         const QPointF dayCenter = day->mapToScene(QPointF(day->width() / 2, day->height() / 2));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, dayCenter.toPoint());
         QTRY_COMPARE(bridge.selectedDay, QString("2026-10-07"));
+
+        QQuickItem *next = nullptr;
+        QTRY_VERIFY_WITH_TIMEOUT((next = findItem(window->contentItem(), "week-next")), 3000);
+        const QPointF nextCenter = next->mapToScene(QPointF(next->width() / 2, next->height() / 2));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, nextCenter.toPoint());
+        QTRY_COMPARE(bridge.shiftedDirection, 1);
+
+        QQuickItem *todayLink = nullptr;
+        QTRY_VERIFY_WITH_TIMEOUT((todayLink = findItem(window->contentItem(), "today-link"))
+                                 && todayLink->isVisible(), 3000);
+        const QPointF todayCenter = todayLink->mapToScene(
+            QPointF(todayLink->width() / 2, todayLink->height() / 2));
+        bridge.selectedDay.clear();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, todayCenter.toPoint());
+        QTRY_COMPARE(bridge.selectedDay, bridge.today);
     }
 };
 
