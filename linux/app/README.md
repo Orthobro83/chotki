@@ -37,17 +37,17 @@ automated tests.
 - Closing the window also closes the helper.
 - A Qt input test clicks the Prayers entry and observes the route change.
 
-GitHub Actions [run 37696472735](https://github.com/rjmac83/chotki/actions/runs/37696472735)
-passed `amd64` compilation, bridge/core checks, and a headless shell launch
-on Ubuntu 24.04. [Run 37696984959](https://github.com/rjmac83/chotki/actions/runs/37696984959)
-also passed the Qt navigation test on `amd64`. The VM's forwarded mouse clicks have not yet provided a
-reliable physical navigation check. The automated Qt input test covers the
-click path. After reestablishing UTM's guest input capture, a real mouse click
-and a `Ctrl+2` key press both changed routes in GNOME.
+GitHub Actions [run 37708377872](https://github.com/rjmac83/chotki/actions/runs/37708377872)
+passed `amd64` compilation, the bridge/core check, Qt mouse and keyboard
+navigation, and a headless shell launch on Ubuntu 24.04. After reestablishing
+UTM's guest input capture, a real mouse click and a `Ctrl+2` key press also
+changed routes in GNOME.
 
 An early `arm64` alpha `.deb` built and installed on the Ubuntu 26.04 guest;
 its installed review window and Swift helper launched. The package script
 bundles the Swift runtime libraries used by the helper and declares system
-Qt/QML packages. A GitHub build and fresh Ubuntu 24.04 install job for the
-`amd64` `.deb` is pending a passing clean-install check. This package is a technical proof with a placeholder
-UI, not a release candidate.
+Qt/QML packages. The same GitHub run built an `amd64` `.deb`, installed it on
+a separate Ubuntu 24.04 runner, and launched the installed review shell. The
+package is available as that run's `chotki-linux-amd64-alpha` artifact and
+is also copied into the local gitignored `linux/dist/` folder. This is a
+technical proof with a placeholder UI, not a release candidate.

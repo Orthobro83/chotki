@@ -1,6 +1,6 @@
 # Chotki for Linux — phased port plan
 
-**Status:** Phase 0 is complete. Phase 1 foundation is in progress. The shell and helper build on ARM64 Ubuntu 26.04 and `amd64` Ubuntu 24.04 CI. An early `arm64` alpha `.deb` built, installed, and launched on the development VM; an `amd64` package and clean-install CI check are pending. No Linux release exists yet.
+**Status:** Phases 0 and 1 are complete. The foundation builds on ARM64 Ubuntu 26.04 and `amd64` Ubuntu 24.04. An early `amd64` alpha `.deb` built, installed, and launched in GitHub CI, with the package retained as a workflow artifact. The main interface and behavior remain Phase 2 work; no Linux release exists yet.
 
 ## Decision and scope
 
@@ -22,7 +22,7 @@
 
 ## Phase 1 — Foundation and delivery loop
 
-**Progress (2026-10-07):** The versioned Swift helper and Qt/QML shell build and launch on Ubuntu 26.04.1 ARM64. Review storage is separate from the normal XDG data path. The shell shows the Chotki sidebar, palette, bundled XCharter font, greeting, and core date. A second launch activates the existing instance, a killed helper restarts and reconnects, and closing the window leaves no helper behind. GitHub Actions [run 37696472735](https://github.com/rjmac83/chotki/actions/runs/37696472735) passed an `amd64` shell build, bridge/core check, and headless launch on Ubuntu 24.04; [run 37696984959](https://github.com/rjmac83/chotki/actions/runs/37696984959) passed the Qt navigation input test on `amd64`. A real GNOME mouse click and `Ctrl+2` key press changed routes in the ARM64 VM after reestablishing UTM input capture. The shell body is a placeholder pending Phase 2. See [app/README.md](app/README.md).
+**Result (2026-10-07):** The versioned Swift helper and Qt/QML shell build and launch on Ubuntu 26.04.1 ARM64. Review storage is separate from the normal XDG data path. The shell shows the Chotki sidebar, palette, bundled XCharter font, greeting, and core date. A second launch activates the existing instance, a killed helper restarts and reconnects, and closing the window leaves no helper behind. GitHub Actions [run 37708377872](https://github.com/rjmac83/chotki/actions/runs/37708377872) passed the `amd64` Swift and Qt builds, core bridge check, Qt pointer and keyboard navigation test, headless launch, alpha `.deb` build, and installed-package headless launch on a separate Ubuntu 24.04 runner. A real GNOME mouse click and `Ctrl+2` key press changed routes in the ARM64 VM. The canonical core suite passed 453 tests on the VM in Phase 0. The shell body is a placeholder pending Phase 2. See [app/README.md](app/README.md).
 
 **Work:** Create `linux/` sources and build definitions without copying canonical core. Put app orchestration and Linux adapters behind the existing core protocols. Set up XDG-appropriate data, config, and cache paths, single-instance behavior, and explicit review/test storage that cannot open a live record. Build CI for the Linux app and retain the existing core portability guard and Linux tests. Add a repeatable guest build, launch, screenshot, and input loop.
 
