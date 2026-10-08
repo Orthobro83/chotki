@@ -185,60 +185,57 @@ ApplicationWindow {
                     }
                 }
 
-                Item { height: 42 }
-
-                Label {
-                    text: window.section === "Home" ? window.dayLabel() : window.section
-                    color: window.parchment
-                    font.pixelSize: 16
-                    font.weight: Font.DemiBold
-                }
-
-                Item { height: 18 }
-                Rectangle { Layout.fillWidth: true; height: 1; color: window.lineSoft }
-                Item { height: 24 }
-
-                Label {
-                    text: window.section === "Home" ? "Today's Commitments" : window.section
-                    color: window.muted
-                    font.pixelSize: 13
-                }
-                Item { height: 14 }
-
-                Rectangle {
+                Loader {
+                    id: homeLoader
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 196
-                    color: window.panel
-                    radius: 18
-                    border.color: "#343237"
-                    border.width: 1
+                    Layout.fillHeight: true
+                    active: window.section === "Home"
+                    source: "Home.qml"
+                }
+                Connections {
+                    target: homeLoader.item
+                    function onLibraryRequested() { window.section = "Library" }
+                }
 
-                    Column {
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width - 60, 570)
-                        spacing: 9
-                        Label {
-                            text: window.section === "Home" ? "The day begins here" : window.section
-                            width: parent.width
-                            horizontalAlignment: Text.AlignHCenter
-                            color: window.parchment
-                            font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
-                            font.pixelSize: 24
-                        }
-                        Label {
-                            text: window.section === "Home"
-                                ? "The Linux window is connected to the same prayer record and calendar core."
-                                : "This section is part of the desktop layout."
-                            width: parent.width
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.Wrap
-                            color: window.muted
-                            font.pixelSize: 13
+                ColumnLayout {
+                    visible: window.section !== "Home"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: visible
+                    Item { height: 46 }
+                    Label {
+                        text: window.section
+                        color: window.parchment
+                        font.pixelSize: 16
+                        font.weight: Font.DemiBold
+                    }
+                    Item { height: 18 }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: window.lineSoft }
+                    Item { height: 24 }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 196
+                        color: window.panel
+                        radius: 18
+                        border.color: "#343237"
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 9
+                            Label {
+                                text: window.section
+                                color: window.parchment
+                                font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
+                                font.pixelSize: 24
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                            Label {
+                                text: "This section is part of the desktop layout."
+                                color: window.muted
+                                font.pixelSize: 13
+                            }
                         }
                     }
+                    Item { Layout.fillHeight: true }
                 }
-
-                Item { Layout.fillHeight: true }
 
                 Label {
                     text: bridge.connected

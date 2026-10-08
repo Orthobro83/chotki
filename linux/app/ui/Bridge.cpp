@@ -1,5 +1,6 @@
 #include "Bridge.h"
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
@@ -57,11 +58,17 @@ void Bridge::send(const QString &operation, const QString &name) {
     if (m_process.state() != QProcess::Running) return;
     QJsonObject request{{"v", protocolVersion}, {"id", m_nextId++}, {"op", operation}};
     if (operation == "setReviewName") request.insert("name", name);
+    if (operation == "selectDate") request.insert("date", name);
+    if (operation == "toggleKept") request.insert("ruleID", name);
+    if (operation == "shiftWeek") request.insert("direction", name.toInt());
     m_process.write(QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n');
 }
 
 void Bridge::refresh() { send("snapshot"); }
 void Bridge::setReviewName(const QString &name) { if (m_review) send("setReviewName", name); }
+void Bridge::selectDate(const QString &date) { send("selectDate", date); }
+void Bridge::toggleKept(const QString &ruleID) { send("toggleKept", ruleID); }
+void Bridge::shiftWeek(int direction) { if (direction == -1 || direction == 1) send("shiftWeek", QString::number(direction)); }
 
 void Bridge::readResponses() {
     m_pending += m_process.readAllStandardOutput();
@@ -92,6 +99,13 @@ void Bridge::readResponses() {
         }
         if (response.contains("displayName")) m_displayName = response.value("displayName").toString();
         if (response.contains("today")) m_today = response.value("today").toString();
+        if (response.contains("selectedDate")) m_selectedDate = response.value("selectedDate").toString();
+        if (response.contains("dayTitle")) m_dayTitle = response.value("dayTitle").toString();
+        if (response.contains("sayingText")) m_sayingText = response.value("sayingText").toString();
+        if (response.contains("sayingAuthor")) m_sayingAuthor = response.value("sayingAuthor").toString();
+        if (response.contains("sayingSource")) m_sayingSource = response.value("sayingSource").toString();
+        if (response.contains("entries")) m_entries = response.value("entries").toArray().toVariantList();
+        if (response.contains("week")) m_week = response.value("week").toArray().toVariantList();
         if (response.contains("psalmOneVerses")) m_psalmOneVerses = response.value("psalmOneVerses").toInt();
         m_error.clear();
         emit changed();

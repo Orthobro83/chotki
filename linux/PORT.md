@@ -1,6 +1,6 @@
 # Chotki for Linux — phased port plan
 
-**Status:** Phases 0 and 1 are complete. The foundation builds on ARM64 Ubuntu 26.04 and `amd64` Ubuntu 24.04. An early `amd64` alpha `.deb` built, installed, and launched in GitHub CI, with the package retained as a workflow artifact. The main interface and behavior remain Phase 2 work; no Linux release exists yet.
+**Status:** Phases 0 and 1 are complete. The foundation builds on ARM64 Ubuntu 26.04 and `amd64` Ubuntu 24.04. An early `amd64` alpha `.deb` built, installed, and launched in GitHub CI, with the package retained as a workflow artifact. Phase 2 now has a first Home slice backed by real core practice entries and completion, with visual and functional parity still in progress. No Linux release exists yet.
 
 ## Decision and scope
 
@@ -29,6 +29,8 @@
 **Gate:** A clean Linux build launches a branded empty shell; core tests pass; a synthetic record is isolated; a fresh reviewer can reproduce both a screenshot and a real keyboard/mouse interaction.
 
 ## Phase 2 — Main interface and core actions
+
+**First slice (2026-10-07):** The Home view displays a week selector, selected date, commitments from `Practice.entries`, and the canonical patristic saying. A click changes the selected day or completion through the Swift helper and SQLite record. The isolated review record supplies sample rules for screenshot and input review; normal mode does not seed them. ARM64 compilation, protocol checks, and Qt input tests pass. A synthetic screenshot was inspected beside the macOS reference. Its missing artwork, liturgical line, some card details, and unfinished routes are open Phase 2 work. The `amd64` CI result for this slice will be recorded after its milestone push.
 
 **Work:** Recreate the macOS window structure and Chotki palette, typography, artwork, spacing, and motion in QML. Implement Home, calendar navigation, Prayers and rope, Rule and editor, Reading and Psalter, Library, Progress, Glossary, onboarding, and Settings. Wire every visible action to core operations, including scoped edits, pause/resume, completion, stand-down, search, and backup export/merge restore. Inventory the macOS controls and routes deliberately; a screen that renders but cannot be reached or acted on is incomplete.
 

@@ -35,6 +35,10 @@ jobs:
             qt6-qpa-plugins
       - name: Build Swift bridge
         run: swift build --package-path linux/app/bridge -j 2
+      - name: Exercise core-backed day actions and record isolation
+        run: |
+          bridge=$(swift build --show-bin-path --package-path linux/app/bridge)/ChotkiLinuxBridge
+          python3 linux/app/bridge/tests/check_bridge.py "$bridge"
       - name: Build Qt shell
         run: |
           cmake -S linux/app/ui -B linux/app/ui/build -G Ninja

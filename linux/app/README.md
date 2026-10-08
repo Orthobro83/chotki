@@ -1,10 +1,10 @@
-# Linux desktop foundation
+# Linux desktop port
 
 The Phase 1 Qt/QML shell talks to a persistent Swift process that imports the
 canonical `core/` package. One line of versioned JSON is sent per request and
 response. The UI process owns the window and Linux behavior; the Swift helper
-owns record access and existing Chotki decisions. This is a foundation, not
-yet a usable Linux edition. The main card is intentionally a placeholder.
+owns record access and existing Chotki decisions. Phase 1 proved the shell
+and package loop. Phase 2 is in progress; this is not yet a usable Linux edition.
 
 ## Build and review in the Ubuntu guest
 
@@ -23,10 +23,14 @@ locations with `CHOTKI_SOURCE_ROOT` and `CHOTKI_STAGE_ROOT`. No compiler
 output is written to the shared source tree.
 
 The review helper uses `~/.cache/chotki-linux-review/chotki.sqlite`, seeded
-with a sample name. Normal mode uses `XDG_DATA_HOME/Chotki/chotki.sqlite`,
+with a sample name and five sample rules. Normal mode uses `XDG_DATA_HOME/Chotki/chotki.sqlite`,
 falling back to `~/.local/share/Chotki/chotki.sqlite`. The two modes also use
 different single-instance sockets. Do not use normal mode for screenshots or
 automated tests.
+
+For a synthetic Home screenshot, run the built window with `--review`, the
+helper path, then `--screenshot /tmp/chotki-home.png`. Screenshot capture is
+rejected in normal mode. The image remains outside Git.
 
 ## What has been checked
 
@@ -36,6 +40,13 @@ automated tests.
 - Killing the helper starts a new helper and reconnects the shell.
 - Closing the window also closes the helper.
 - A Qt input test clicks the Prayers entry and observes the route change.
+- The first Phase 2 Home slice reads actual core practice entries and saying
+  text, selects dates and weeks, and toggles rule completion through the Swift
+  helper. An isolated protocol test checks that a completion can be toggled
+  and restored and that the normal XDG record is never seeded with review data.
+- The synthetic ARM64 Home screenshot was inspected against the macOS
+  reference. Artwork, liturgical day metadata, card icon/detail polish, and
+  the remaining routes still need Phase 2 work.
 
 GitHub Actions [run 37708377872](https://github.com/rjmac83/chotki/actions/runs/37708377872)
 passed `amd64` compilation, the bridge/core check, Qt mouse and keyboard
@@ -50,4 +61,5 @@ Qt/QML packages. The same GitHub run built an `amd64` `.deb`, installed it on
 a separate Ubuntu 24.04 runner, and launched the installed review shell. The
 package is available as that run's `chotki-linux-amd64-alpha` artifact and
 is also copied into the local gitignored `linux/dist/` folder. This is a
-technical proof with a placeholder UI, not a release candidate.
+technical proof of the earlier shell, not a release candidate. The Phase 2
+changes still require a new `amd64` CI run.

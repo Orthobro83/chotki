@@ -9,6 +9,7 @@
 #include <QQmlContext>
 #include <QQuickWindow>
 #include <QStandardPaths>
+#include <QTimer>
 
 #include <unistd.h>
 
@@ -18,8 +19,11 @@ int main(int argc, char *argv[]) {
     application.setDesktopFileName("org.chotki.Chotki");
 
     const QStringList arguments = application.arguments();
-    if (arguments.size() != 3 || (arguments.at(1) != "--review" && arguments.at(1) != "--normal")) {
-        qCritical("Usage: chotki-linux --review|--normal /path/to/ChotkiLinuxBridge");
+    const bool screenshot = arguments.size() == 5 && arguments.at(3) == "--screenshot";
+    if (arguments.size() < 3 || (!screenshot && arguments.size() != 3) ||
+        (arguments.at(1) != "--review" && arguments.at(1) != "--normal") ||
+        (screenshot && arguments.at(1) != "--review")) {
+        qCritical("Usage: chotki-linux --review|--normal /path/to/ChotkiLinuxBridge [--screenshot /path/to/review.png]");
         return 2;
     }
     const bool review = arguments.at(1) == "--review";
@@ -63,6 +67,14 @@ int main(int argc, char *argv[]) {
     if (engine.rootObjects().isEmpty()) return 4;
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
     if (!window) return 5;
+    if (screenshot) {
+        const QString path = arguments.at(4);
+        QTimer::singleShot(1500, window, [window, path, &application] {
+            const bool saved = window->grabWindow().save(path);
+            if (!saved) qCritical("Could not save the review screenshot");
+            application.exit(saved ? 0 : 6);
+        });
+    }
     QObject::connect(&server, &QLocalServer::newConnection, window, [&server, window] {
         while (QLocalSocket *socket = server.nextPendingConnection()) {
             QObject::connect(socket, &QLocalSocket::disconnected, socket, &QObject::deleteLater);

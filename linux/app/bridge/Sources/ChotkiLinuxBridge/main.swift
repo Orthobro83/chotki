@@ -26,6 +26,7 @@ private enum BridgeError: Error, CustomStringConvertible {
     case incompatibleProtocol
     case unsupportedOperation(String)
     case reviewOnly
+    case unknownRule
 
     var description: String {
         switch self {
@@ -33,6 +34,7 @@ private enum BridgeError: Error, CustomStringConvertible {
         case .incompatibleProtocol: "The Linux interface and Swift helper use different protocol versions."
         case .unsupportedOperation(let name): "Unsupported operation: \(name)"
         case .reviewOnly: "This command is available only in the isolated review record."
+        case .unknownRule: "That rule is not on the selected day."
         }
     }
 }
@@ -65,6 +67,50 @@ private func fail(id: Int, _ error: Error) {
     respond(["v": protocolVersion, "id": id, "ok": false, "error": String(describing: error)])
 }
 
+private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate) throws -> [String: Any] {
+    let settings = try store.loadSettings() ?? .default
+    let rules = try store.rules(includeArchived: false)
+    let activations = try store.activations(ruleID: nil)
+    let occurrences = try store.occurrences(ruleID: nil, from: selectedDate, through: selectedDate)
+    let practice = Practice(rules: rules, activations: activations,
+                            occurrences: occurrences, settings: settings)
+    let entries: [[String: Any]] = practice.entries(on: selectedDate).map { entry in
+        let summary = RuleLibrary.shared.templates.first { $0.title == entry.rule.title }?.summary
+            ?? entry.rule.note ?? "A rule of your own."
+        let time = entry.rule.timeOfDay.map { String(format: "%02d:%02d", $0.hour, $0.minute) }
+        return [
+            "id": entry.rule.id.uuidString,
+            "title": entry.rule.title,
+            "category": RuleCategory(rawValue: entry.rule.category ?? "")?.displayName ?? "Rule",
+            "summary": summary,
+            "time": time ?? "All Day",
+            "kept": entry.isKept,
+            "dispensed": entry.isDispensed,
+            "dispensation": entry.dispensation ?? ""
+        ]
+    }
+    let week: [[String: Any]] = (-3...3).map { offset in
+        let date = selectedDate.adding(days: offset)
+        return ["date": date.iso, "day": date.day, "weekday": date.weekday.rawValue,
+                "selected": date == selectedDate]
+    }
+    let saying = PatristicReadings.shared.reading(for: selectedDate)
+    let liturgical = try store.liturgicalDay(civilDate: selectedDate,
+                                            reckoning: settings.jurisdiction.reckoning)
+    return [
+        "selectedDate": selectedDate.iso,
+        "displayName": settings.displayName,
+        "hasCompletedFirstRun": settings.hasCompletedFirstRun,
+        "psalmOneVerses": Psalter.psalm(1)?.verses.count ?? 0,
+        "entries": entries,
+        "week": week,
+        "dayTitle": liturgical?.title ?? "",
+        "sayingText": saying?.text ?? "",
+        "sayingAuthor": saying?.author ?? "",
+        "sayingSource": saying?.source ?? ""
+    ]
+}
+
 guard CommandLine.arguments.count == 2,
       let mode = LaunchMode(CommandLine.arguments[1]) else {
     FileHandle.standardError.write(Data("Usage: ChotkiLinuxBridge --review|--normal\n".utf8))
@@ -83,7 +129,24 @@ do {
             sample.hasCompletedFirstRun = true
             try store.saveSettings(sample)
         }
+        if try store.rules(includeArchived: false).isEmpty {
+            let today = CalendarDate(Date(), in: .current)
+            for title in ["Morning prayers", "The day's Gospel", "Evening prayers",
+                          "The Jesus Prayer", "The life of the day's saint"] {
+                guard let template = RuleLibrary.shared.templates.first(where: { $0.title == title }) else {
+                    continue
+                }
+                let rule = template.makeRule(source: "the library")
+                try store.save(rule)
+                try store.save(Activation(ruleID: rule.id, from: today.adding(days: -40)))
+                if title == "Morning prayers" {
+                    try store.save(Occurrence(ruleID: rule.id, date: today, status: .completed))
+                }
+            }
+        }
     }
+
+    var selectedDate = CalendarDate(Date(), in: .current)
 
     while let line = readLine() {
         let request = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any]
@@ -101,15 +164,39 @@ do {
                 reply(id: id, fields: ["mode": mode.isReview ? "review" : "normal"])
 
             case "snapshot":
-                let today = CalendarDate(Date(), in: .current)
+                var fields = try homeSnapshot(store: store, on: selectedDate)
+                fields["today"] = CalendarDate(Date(), in: .current).iso
+                reply(id: id, fields: fields)
+
+            case "selectDate":
+                guard let raw = request["date"] as? String,
+                      let date = CalendarDate(iso: raw) else { throw BridgeError.invalidRequest }
+                selectedDate = date
+                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate))
+
+            case "shiftWeek":
+                guard let direction = request["direction"] as? Int,
+                      direction == -1 || direction == 1 else { throw BridgeError.invalidRequest }
+                selectedDate = selectedDate.adding(days: direction * 7)
+                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate))
+
+            case "toggleKept":
+                guard let raw = request["ruleID"] as? String,
+                      let ruleID = UUID(uuidString: raw) else { throw BridgeError.invalidRequest }
+                let rules = try store.rules(includeArchived: false)
+                let activations = try store.activations(ruleID: nil)
+                let occurrences = try store.occurrences(ruleID: nil, from: selectedDate, through: selectedDate)
                 let settings = try store.loadSettings() ?? .default
-                let psalm = Psalter.psalm(1)
-                reply(id: id, fields: [
-                    "today": today.iso,
-                    "displayName": settings.displayName,
-                    "hasCompletedFirstRun": settings.hasCompletedFirstRun,
-                    "psalmOneVerses": psalm?.verses.count ?? 0
-                ])
+                let practice = Practice(rules: rules, activations: activations,
+                                        occurrences: occurrences, settings: settings)
+                guard let entry = practice.entries(on: selectedDate).first(where: { $0.rule.id == ruleID }),
+                      !entry.isDispensed else { throw BridgeError.unknownRule }
+                if entry.isKept {
+                    try store.removeOccurrence(ruleID: ruleID, date: selectedDate)
+                } else {
+                    try store.save(Occurrence(ruleID: ruleID, date: selectedDate, status: .completed))
+                }
+                reply(id: id, fields: try homeSnapshot(store: store, on: selectedDate))
 
             case "setReviewName":
                 guard mode.isReview else { throw BridgeError.reviewOnly }

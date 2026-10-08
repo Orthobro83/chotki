@@ -4,6 +4,7 @@
 #include <QProcess>
 #include <QString>
 #include <QTimer>
+#include <QVariantList>
 
 class Bridge final : public QObject {
     Q_OBJECT
@@ -13,6 +14,13 @@ class Bridge final : public QObject {
     Q_PROPERTY(QString error READ error NOTIFY changed)
     Q_PROPERTY(QString displayName READ displayName NOTIFY changed)
     Q_PROPERTY(QString today READ today NOTIFY changed)
+    Q_PROPERTY(QString selectedDate READ selectedDate NOTIFY changed)
+    Q_PROPERTY(QString dayTitle READ dayTitle NOTIFY changed)
+    Q_PROPERTY(QString sayingText READ sayingText NOTIFY changed)
+    Q_PROPERTY(QString sayingAuthor READ sayingAuthor NOTIFY changed)
+    Q_PROPERTY(QString sayingSource READ sayingSource NOTIFY changed)
+    Q_PROPERTY(QVariantList entries READ entries NOTIFY changed)
+    Q_PROPERTY(QVariantList week READ week NOTIFY changed)
     Q_PROPERTY(int psalmOneVerses READ psalmOneVerses NOTIFY changed)
 
 public:
@@ -25,10 +33,20 @@ public:
     QString error() const { return m_error; }
     QString displayName() const { return m_displayName; }
     QString today() const { return m_today; }
+    QString selectedDate() const { return m_selectedDate; }
+    QString dayTitle() const { return m_dayTitle; }
+    QString sayingText() const { return m_sayingText; }
+    QString sayingAuthor() const { return m_sayingAuthor; }
+    QString sayingSource() const { return m_sayingSource; }
+    QVariantList entries() const { return m_entries; }
+    QVariantList week() const { return m_week; }
     int psalmOneVerses() const { return m_psalmOneVerses; }
 
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void setReviewName(const QString &name);
+    Q_INVOKABLE void selectDate(const QString &date);
+    Q_INVOKABLE void toggleKept(const QString &ruleID);
+    Q_INVOKABLE void shiftWeek(int direction);
 
 signals:
     void changed();
@@ -52,5 +70,12 @@ private:
     QString m_error;
     QString m_displayName;
     QString m_today;
+    QString m_selectedDate;
+    QString m_dayTitle;
+    QString m_sayingText;
+    QString m_sayingAuthor;
+    QString m_sayingSource;
+    QVariantList m_entries;
+    QVariantList m_week;
     int m_psalmOneVerses = 0;
 };

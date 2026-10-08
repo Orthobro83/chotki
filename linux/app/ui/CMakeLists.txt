@@ -15,7 +15,7 @@ qt_add_qml_module(chotki-linux
     URI ChotkiLinux
     VERSION 1.0
     RESOURCE_PREFIX "/qt/qml"
-    QML_FILES Main.qml
+    QML_FILES Main.qml Home.qml
     RESOURCES fonts/XCharter-Roman.otf fonts/XCharter-Bold.otf
 )
 target_link_libraries(chotki-linux PRIVATE Qt6::Quick Qt6::Network)
