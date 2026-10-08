@@ -51,6 +51,8 @@ private slots:
         const QPointF center = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
         QTRY_COMPARE(window->property("section").toString(), QString("Prayers"));
+        QTest::keyClick(window, Qt::Key_1, Qt::ControlModifier);
+        QTRY_COMPARE(window->property("section").toString(), QString("Home"));
     }
 };
 

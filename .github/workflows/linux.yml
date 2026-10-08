@@ -28,7 +28,9 @@ jobs:
           apt-get install -y libsqlite3-dev cmake ninja-build g++ file \
             qt6-base-dev qt6-declarative-dev \
             qml6-module-qtquick qml6-module-qtquick-controls \
-            qml6-module-qtquick-layouts qt6-qpa-plugins
+            qml6-module-qtquick-layouts qml6-module-qtqml-models \
+            qml6-module-qtqml-workerscript \
+            qt6-qpa-plugins
       - name: Build Swift bridge
         run: swift build --package-path linux/app/bridge -j 2
       - name: Build Qt shell

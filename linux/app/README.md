@@ -42,11 +42,12 @@ passed `amd64` compilation, bridge/core checks, and a headless shell launch
 on Ubuntu 24.04. [Run 37696984959](https://github.com/rjmac83/chotki/actions/runs/37696984959)
 also passed the Qt navigation test on `amd64`. The VM's forwarded mouse clicks have not yet provided a
 reliable physical navigation check. The automated Qt input test covers the
-click path, but a real guest pointer check remains before Phase 1 closes.
+click path. After reestablishing UTM's guest input capture, a real mouse click
+and a `Ctrl+2` key press both changed routes in GNOME.
 
 An early `arm64` alpha `.deb` built and installed on the Ubuntu 26.04 guest;
 its installed review window and Swift helper launched. The package script
 bundles the Swift runtime libraries used by the helper and declares system
 Qt/QML packages. A GitHub build and fresh Ubuntu 24.04 install job for the
-`amd64` `.deb` is pending. This package is a technical proof with a placeholder
+`amd64` `.deb` is pending a passing clean-install check. This package is a technical proof with a placeholder
 UI, not a release candidate.

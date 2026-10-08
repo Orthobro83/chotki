@@ -30,6 +30,14 @@ ApplicationWindow {
         "Library": "▦", "Glossary": "▤", "Settings": "⚙"
     })
 
+    Shortcut { sequence: "Ctrl+1"; onActivated: window.section = "Home" }
+    Shortcut { sequence: "Ctrl+2"; onActivated: window.section = "Prayers" }
+    Shortcut { sequence: "Ctrl+3"; onActivated: window.section = "Reading" }
+    Shortcut { sequence: "Ctrl+4"; onActivated: window.section = "Progress" }
+    Shortcut { sequence: "Ctrl+5"; onActivated: window.section = "Library" }
+    Shortcut { sequence: "Ctrl+6"; onActivated: window.section = "Glossary" }
+    Shortcut { sequence: "Ctrl+7"; onActivated: window.section = "Settings" }
+
     FontLoader { id: charter; source: "fonts/XCharter-Roman.otf" }
     FontLoader { id: charterBold; source: "fonts/XCharter-Bold.otf" }
 
