@@ -78,7 +78,8 @@ done
 }
 install -m644 "$swift_license" "$stage/usr/share/doc/chotki/Swift-LICENSE.txt"
 dependencies+=(qt6-qpa-plugins qml6-module-qtquick qml6-module-qtquick-controls \
-    qml6-module-qtquick-layouts qml6-module-qtqml-models \
+    qml6-module-qtquick-layouts qml6-module-qtquick-templates \
+    qml6-module-qtqml-models \
     qml6-module-qtqml-workerscript)
 depends=$(printf '%s\n' "${dependencies[@]}" | sort -u | paste -sd, -)
 
