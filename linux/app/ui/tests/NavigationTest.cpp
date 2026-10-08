@@ -1,9 +1,11 @@
+#include "ArtworkImage.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QtTest>
+#include <qqml.h>
 
 class SampleBridge final : public QObject {
     Q_OBJECT
@@ -67,6 +69,10 @@ class NavigationTest final : public QObject {
     }
 
 private slots:
+    void initTestCase() {
+        qmlRegisterType<ArtworkImage>("ChotkiArtwork", 1, 0, "ArtworkImage");
+    }
+
     void clickSidebarItem() {
         SampleBridge bridge;
         QQmlApplicationEngine engine;

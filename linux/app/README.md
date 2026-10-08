@@ -48,7 +48,9 @@ rejected in normal mode. The image remains outside Git.
   reference. The original daily artwork now loads from the existing macOS
   library, with the same 365-day selection order. The package includes the
   artwork and its source metadata. The bundled core calendar supplies the
-  day heading and feast/fast cues. Card icon/detail polish, artwork motion,
+  day heading and feast/fast cues. Vector navigation and category icons now
+  replace the temporary text symbols. The image is rendered with rounded
+  corners and a fading overlay. Further card polish, artwork motion,
   and the remaining routes still need Phase 2 work.
 
 GitHub Actions [run 37708377872](https://github.com/rjmac83/chotki/actions/runs/37708377872)
@@ -69,4 +71,6 @@ Home slice passed [amd64 CI run 37709648812](https://github.com/rjmac83/chotki/a
 Its installed-window smoke test missed a gap found during later ARM review:
 the `.deb` omitted the Swift core resource bundle. The package now includes
 that bundle, and the clean-install CI gate asks the installed helper for a
-real Psalm-backed snapshot. This revised package still needs amd64 CI proof.
+real Psalm-backed snapshot. [Run 37710245451](https://github.com/rjmac83/chotki/actions/runs/37710245451)
+passed that stronger amd64 gate. The installed ARM64 package was also
+reviewed in a synthetic screenshot with its artwork and commitments visible.

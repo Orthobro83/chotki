@@ -1,4 +1,5 @@
 #include "Bridge.h"
+#include "ArtworkImage.h"
 
 #include <QGuiApplication>
 #include <QDir>
@@ -7,6 +8,7 @@
 #include <QLocalSocket>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <qqml.h>
 #include <QQuickWindow>
 #include <QStandardPaths>
 #include <QTimer>
@@ -61,6 +63,7 @@ int main(int argc, char *argv[]) {
     }
 
     Bridge bridge(arguments.at(2), review);
+    qmlRegisterType<ArtworkImage>("ChotkiArtwork", 1, 0, "ArtworkImage");
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("bridge", &bridge);
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/ChotkiLinux/Main.qml")));

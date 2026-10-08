@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import ChotkiArtwork 1.0
 
 Item {
     id: home
@@ -161,8 +162,14 @@ Item {
                             radius: 21
                             color: "#e7decb"
 
+                            Icon {
+                                x: 14; y: 14
+                                kind: modelData.category
+                                tint: home.gold
+                                width: 17; height: 17
+                            }
                             Label {
-                                x: 14; y: 15
+                                x: 14; y: 42
                                 text: modelData.category
                                 color: "#726e5f"
                                 font.pixelSize: 11
@@ -189,7 +196,7 @@ Item {
                                 }
                             }
                             Label {
-                                x: 14; y: 43
+                                x: 14; y: 68
                                 width: parent.width - 28
                                 text: modelData.title
                                 wrapMode: Text.Wrap
@@ -242,22 +249,9 @@ Item {
                 height: 270
                 radius: 20
                 color: "#27252a"
-                clip: true
-                Image {
+                ArtworkImage {
                     anchors.fill: parent
                     source: bridge.artworkUrl
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: 1500
-                    asynchronous: true
-                    visible: status === Image.Ready
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: "#00000000" }
-                        GradientStop { position: 0.58; color: "#42000000" }
-                        GradientStop { position: 1; color: "#e0000000" }
-                    }
                 }
                 Column {
                     anchors.left: parent.left

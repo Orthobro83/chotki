@@ -25,10 +25,6 @@ ApplicationWindow {
         { heading: "The Record", items: ["Progress", "Library"] },
         { heading: "Reference", items: ["Glossary", "Settings"] }
     ]
-    readonly property var symbols: ({
-        "Home": "▦", "Prayers": "❀", "Reading": "♧", "Progress": "⌁",
-        "Library": "▦", "Glossary": "▤", "Settings": "⚙"
-    })
 
     Shortcut { sequence: "Ctrl+1"; onActivated: window.section = "Home" }
     Shortcut { sequence: "Ctrl+2"; onActivated: window.section = "Prayers" }
@@ -111,11 +107,11 @@ ApplicationWindow {
                                     anchors.leftMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 10
-                                    Label {
-                                        text: window.symbols[modelData]
+                                    Icon {
+                                        kind: modelData
                                         width: 18
-                                        color: window.section === modelData ? window.parchment : window.muted
-                                        font.pixelSize: 15
+                                        height: 18
+                                        tint: window.section === modelData ? window.parchment : window.muted
                                     }
                                     Label {
                                         text: modelData
@@ -238,10 +234,9 @@ ApplicationWindow {
                 }
 
                 Label {
-                    text: bridge.connected
-                        ? (bridge.review ? "Review record · " : "") + "Chotki core ready"
-                        : bridge.status
-                    color: bridge.connected ? window.muted : window.gold
+                    visible: !bridge.connected
+                    text: bridge.status
+                    color: window.gold
                     font.pixelSize: 12
                 }
                 Label {
