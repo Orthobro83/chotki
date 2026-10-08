@@ -4,10 +4,23 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QDate>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QUrl>
 #include <utility>
 
 Bridge::Bridge(QString program, bool review, QObject *parent)
     : QObject(parent), m_program(std::move(program)), m_review(review) {
+    m_artworkRoot = qEnvironmentVariable("CHOTKI_ARTWORK_ROOT");
+    QFile orderFile(QDir(m_artworkRoot).filePath("sayings/order.txt"));
+    if (!m_artworkRoot.isEmpty() && orderFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        for (const QByteArray &line : orderFile.readAll().split('\n')) {
+            const QString name = QString::fromUtf8(line).trimmed();
+            if (!name.isEmpty()) m_artworkOrder.push_back(name);
+        }
+    }
     connect(&m_process, &QProcess::started, this, [this] {
         m_status = "Loading your record…";
         m_error.clear();
@@ -99,7 +112,16 @@ void Bridge::readResponses() {
         }
         if (response.contains("displayName")) m_displayName = response.value("displayName").toString();
         if (response.contains("today")) m_today = response.value("today").toString();
-        if (response.contains("selectedDate")) m_selectedDate = response.value("selectedDate").toString();
+        if (response.contains("selectedDate")) {
+            m_selectedDate = response.value("selectedDate").toString();
+            const QDate date = QDate::fromString(m_selectedDate, Qt::ISODate);
+            m_artworkUrl.clear();
+            if (date.isValid() && !m_artworkOrder.isEmpty()) {
+                const QString name = m_artworkOrder.at(date.dayOfYear() % m_artworkOrder.size());
+                const QString path = QDir(m_artworkRoot).filePath(name);
+                if (QFileInfo::exists(path)) m_artworkUrl = QUrl::fromLocalFile(path).toString();
+            }
+        }
         if (response.contains("dayTitle")) m_dayTitle = response.value("dayTitle").toString();
         if (response.contains("sayingText")) m_sayingText = response.value("sayingText").toString();
         if (response.contains("sayingAuthor")) m_sayingAuthor = response.value("sayingAuthor").toString();

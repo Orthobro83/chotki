@@ -18,6 +18,7 @@ class SampleBridge final : public QObject {
     Q_PROPERTY(QString sayingText MEMBER sayingText CONSTANT)
     Q_PROPERTY(QString sayingAuthor MEMBER sayingAuthor CONSTANT)
     Q_PROPERTY(QString sayingSource MEMBER sayingSource CONSTANT)
+    Q_PROPERTY(QString artworkUrl MEMBER artworkUrl CONSTANT)
     Q_PROPERTY(QVariantList entries MEMBER entries CONSTANT)
     Q_PROPERTY(QVariantList week MEMBER week CONSTANT)
 
@@ -40,6 +41,7 @@ public:
     QString sayingText = "A saying";
     QString sayingAuthor = "A father";
     QString sayingSource = "A source";
+    QString artworkUrl;
     QVariantList entries;
     QVariantList week;
     QString selectedDay;

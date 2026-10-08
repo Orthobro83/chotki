@@ -45,8 +45,10 @@ rejected in normal mode. The image remains outside Git.
   helper. An isolated protocol test checks that a completion can be toggled
   and restored and that the normal XDG record is never seeded with review data.
 - The synthetic ARM64 Home screenshot was inspected against the macOS
-  reference. Artwork, liturgical day metadata, card icon/detail polish, and
-  the remaining routes still need Phase 2 work.
+  reference. The original daily artwork now loads from the existing macOS
+  library, with the same 365-day selection order. The package includes the
+  artwork and its source metadata. Liturgical day metadata, card icon/detail
+  polish, artwork motion, and the remaining routes still need Phase 2 work.
 
 GitHub Actions [run 37708377872](https://github.com/rjmac83/chotki/actions/runs/37708377872)
 passed `amd64` compilation, the bridge/core check, Qt mouse and keyboard
@@ -55,11 +57,15 @@ UTM's guest input capture, a real mouse click and a `Ctrl+2` key press also
 changed routes in GNOME.
 
 An early `arm64` alpha `.deb` built and installed on the Ubuntu 26.04 guest;
-its installed review window and Swift helper launched. The package script
+its installed review window launched. The package script
 bundles the Swift runtime libraries used by the helper and declares system
 Qt/QML packages. The same GitHub run built an `amd64` `.deb`, installed it on
-a separate Ubuntu 24.04 runner, and launched the installed review shell. The
+a separate Ubuntu 24.04 runner, and launched the installed review window. The
 package is available as that run's `chotki-linux-amd64-alpha` artifact and
 is also copied into the local gitignored `linux/dist/` folder. This is a
-technical proof of the earlier shell, not a release candidate. The Phase 2
-changes still require a new `amd64` CI run.
+technical proof of packaging and window startup, not a release candidate. The Phase 2
+Home slice passed [amd64 CI run 37709648812](https://github.com/rjmac83/chotki/actions/runs/37709648812).
+Its installed-window smoke test missed a gap found during later ARM review:
+the `.deb` omitted the Swift core resource bundle. The package now includes
+that bundle, and the clean-install CI gate asks the installed helper for a
+real Psalm-backed snapshot. This revised package still needs amd64 CI proof.

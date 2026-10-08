@@ -101,16 +101,16 @@ Item {
                     MouseArea { anchors.fill: parent; onClicked: bridge.shiftWeek(1) }
                 }
             }
-            Item { width: 1; height: 23 }
+            Item { width: 1; height: 50 }
             Label {
-                visible: bridge.dayTitle.length > 0
                 width: parent.width
+                height: 18
                 text: bridge.dayTitle
                 color: home.muted
                 font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
                 font.pixelSize: 15
             }
-            Item { width: 1; height: bridge.dayTitle.length > 0 ? 12 : 0 }
+            Item { width: 1; height: 12 }
             Label {
                 width: parent.width
                 text: home.dateLabel()
@@ -230,10 +230,22 @@ Item {
                 height: 270
                 radius: 20
                 color: "#27252a"
-                gradient: Gradient {
-                    GradientStop { position: 0; color: "#484039" }
-                    GradientStop { position: 0.55; color: "#2f2d31" }
-                    GradientStop { position: 1; color: "#17181d" }
+                clip: true
+                Image {
+                    anchors.fill: parent
+                    source: bridge.artworkUrl
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize.width: 1500
+                    asynchronous: true
+                    visible: status === Image.Ready
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: "#00000000" }
+                        GradientStop { position: 0.58; color: "#42000000" }
+                        GradientStop { position: 1; color: "#e0000000" }
+                    }
                 }
                 Column {
                     anchors.left: parent.left

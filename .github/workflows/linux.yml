@@ -68,7 +68,8 @@ jobs:
           cmake --build linux/app/ui/release -j 2
           bridge=$(swift build --show-bin-path --package-path linux/app/bridge -c release)/ChotkiLinuxBridge
           linux/tools/package-deb.sh linux/app/ui/release/chotki-linux "$bridge" linux/dist
-          dpkg-deb --contents linux/dist/*.deb | head -40
+          dpkg-deb --contents linux/dist/*.deb > /tmp/chotki-package-contents.txt
+          sed -n '1,20p' /tmp/chotki-package-contents.txt
       - uses: actions/upload-artifact@v4
         with:
           name: chotki-linux-amd64-alpha
@@ -92,6 +93,13 @@ jobs:
           file /usr/lib/chotki/chotki-linux /usr/lib/chotki/ChotkiLinuxBridge
       - name: Launch installed review shell headlessly
         run: |
+          test -d /usr/lib/chotki/ChotkiCore_ChotkiCore.bundle
+          test -f /usr/share/chotki/Resources/sayings/order.txt
+          test -f /usr/share/chotki/Resources/sayings/281.jpg
+          printf '{"v":1,"id":1,"op":"snapshot"}\n' | \
+            LD_LIBRARY_PATH=/usr/lib/chotki/swift \
+            /usr/lib/chotki/ChotkiLinuxBridge --review > /tmp/chotki-installed-bridge.jsonl
+          grep -q '"psalmOneVerses":6' /tmp/chotki-installed-bridge.jsonl
           set +e
           QT_QPA_PLATFORM=offscreen timeout 8s chotki --review > /tmp/chotki-installed.log 2>&1
           result=$?

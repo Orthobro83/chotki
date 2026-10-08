@@ -22,23 +22,30 @@ command -v dpkg-deb >/dev/null
 command -v dpkg-query >/dev/null
 command -v ldd >/dev/null
 [[ -x "$window" && -x "$helper" ]] || { echo "Release binaries are missing" >&2; exit 1; }
+core_bundle="$(dirname "$helper")/ChotkiCore_ChotkiCore.bundle"
+[[ -d "$core_bundle" ]] || { echo "Swift core resource bundle is missing: $core_bundle" >&2; exit 1; }
 
 install -d "$stage/DEBIAN" "$stage/usr/bin" "$stage/usr/lib/chotki/swift" \
     "$stage/usr/share/applications" \
     "$stage/usr/share/icons/hicolor/1024x1024/apps" \
-    "$stage/usr/share/doc/chotki"
+    "$stage/usr/share/doc/chotki" \
+    "$stage/usr/share/chotki/Resources/sayings"
 install -m755 "$window" "$stage/usr/lib/chotki/chotki-linux"
 install -m755 "$helper" "$stage/usr/lib/chotki/ChotkiLinuxBridge"
+cp -a "$core_bundle" "$stage/usr/lib/chotki/"
 install -m644 "$repo_root/ios/Chotki/Assets.xcassets/AppIcon.appiconset/icon-1024.png" \
     "$stage/usr/share/icons/hicolor/1024x1024/apps/org.chotki.Chotki.png"
 install -m644 "$repo_root/LICENSE" "$stage/usr/share/doc/chotki/LICENSE"
 install -m644 "$repo_root/linux/app/ui/fonts/LICENSE.txt" \
     "$stage/usr/share/doc/chotki/XCharter-LICENSE.txt"
+cp -a "$repo_root/macos/Sources/Chotki/Resources/sayings/." \
+    "$stage/usr/share/chotki/Resources/sayings/"
 
 cat > "$stage/usr/bin/chotki" <<'SH'
 #!/bin/sh
 set -eu
 export LD_LIBRARY_PATH="/usr/lib/chotki/swift${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export CHOTKI_ARTWORK_ROOT=/usr/share/chotki/Resources
 mode=--normal
 if [ "${1:-}" = --review ]; then mode=--review; shift; fi
 exec /usr/lib/chotki/chotki-linux "$mode" /usr/lib/chotki/ChotkiLinuxBridge "$@"

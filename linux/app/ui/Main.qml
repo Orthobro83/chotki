@@ -161,7 +161,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 anchors.leftMargin: 24
                 anchors.rightMargin: 24
-                anchors.topMargin: 23
+                anchors.topMargin: 58
                 anchors.bottomMargin: 18
                 spacing: 0
 

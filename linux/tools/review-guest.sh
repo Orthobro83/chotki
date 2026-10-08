@@ -22,4 +22,7 @@ if [[ -n ${XDG_RUNTIME_DIR:-} && -z ${DBUS_SESSION_BUS_ADDRESS:-} && -S "$XDG_RU
     export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 fi
 
+source_root=${CHOTKI_SOURCE_ROOT:-/mnt/utm/chotki-1}
+export CHOTKI_ARTWORK_ROOT="$source_root/macos/Sources/Chotki/Resources"
+
 exec "$window" --review "$helper"
