@@ -17,9 +17,11 @@ jobs:
   amd64-shell:
     name: Qt shell and Swift bridge — amd64
     runs-on: ubuntu-24.04
-    container: swift:6.4
+    container: swift:6.4.0-noble
     steps:
       - uses: actions/checkout@v5
+      - name: Confirm Ubuntu 24.04 package baseline
+        run: grep -q '^VERSION_ID="24.04"$' /etc/os-release
       - name: Install Qt, SQLite and X11 build tools
         run: |
           apt-get update
