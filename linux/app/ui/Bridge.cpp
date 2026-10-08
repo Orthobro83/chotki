@@ -123,6 +123,8 @@ void Bridge::readResponses() {
             }
         }
         if (response.contains("dayTitle")) m_dayTitle = response.value("dayTitle").toString();
+        if (response.contains("observedDate")) m_observedDate = response.value("observedDate").toString();
+        if (response.contains("showOldStyleDates")) m_showOldStyleDates = response.value("showOldStyleDates").toBool();
         if (response.contains("sayingText")) m_sayingText = response.value("sayingText").toString();
         if (response.contains("sayingAuthor")) m_sayingAuthor = response.value("sayingAuthor").toString();
         if (response.contains("sayingSource")) m_sayingSource = response.value("sayingSource").toString();

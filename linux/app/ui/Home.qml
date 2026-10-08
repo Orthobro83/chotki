@@ -65,7 +65,7 @@ Item {
                         width: 42
                         height: 53
                         radius: 13
-                        color: modelData.selected ? "#16181e" : "#1e2029"
+                        color: modelData.selected ? "#16181e" : modelData.fast ? "#3b344f" : "#1e2029"
                         border.width: modelData.selected ? 1 : 0
                         border.color: home.gold
 
@@ -81,7 +81,7 @@ Item {
                             }
                             Label {
                                 text: modelData.day
-                                color: home.parchment
+                                color: modelData.feast ? home.gold : home.parchment
                                 font.pixelSize: 16
                                 font.weight: Font.Medium
                                 horizontalAlignment: Text.AlignHCenter
@@ -111,12 +111,24 @@ Item {
                 font.pixelSize: 15
             }
             Item { width: 1; height: 12 }
-            Label {
+            Row {
                 width: parent.width
-                text: home.dateLabel()
-                color: home.parchment
-                font.pixelSize: 16
-                font.weight: Font.DemiBold
+                Label {
+                    id: dateHeading
+                    text: home.dateLabel()
+                    color: home.parchment
+                    font.pixelSize: 16
+                    font.weight: Font.DemiBold
+                }
+                Item { width: Math.max(0, content.width - dateHeading.implicitWidth - oldStyleHeading.implicitWidth); height: 1 }
+                Label {
+                    id: oldStyleHeading
+                    visible: bridge.showOldStyleDates && bridge.observedDate.length > 0
+                             && bridge.observedDate !== bridge.selectedDate
+                    text: visible ? Qt.formatDate(home.localDate(bridge.observedDate), "d MMM") + " o.s." : ""
+                    color: home.muted
+                    font.pixelSize: 12
+                }
             }
             Item { width: 1; height: 17 }
             Row {

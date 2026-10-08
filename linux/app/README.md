@@ -47,8 +47,9 @@ rejected in normal mode. The image remains outside Git.
 - The synthetic ARM64 Home screenshot was inspected against the macOS
   reference. The original daily artwork now loads from the existing macOS
   library, with the same 365-day selection order. The package includes the
-  artwork and its source metadata. Liturgical day metadata, card icon/detail
-  polish, artwork motion, and the remaining routes still need Phase 2 work.
+  artwork and its source metadata. The bundled core calendar supplies the
+  day heading and feast/fast cues. Card icon/detail polish, artwork motion,
+  and the remaining routes still need Phase 2 work.
 
 GitHub Actions [run 37708377872](https://github.com/rjmac83/chotki/actions/runs/37708377872)
 passed `amd64` compilation, the bridge/core check, Qt mouse and keyboard

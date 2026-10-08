@@ -50,8 +50,11 @@ def main():
     restored = ask("toggleKept", ruleID=entry["id"])
     restored_entry = next(item for item in restored["entries"] if item["id"] == entry["id"])
     assert restored_entry["kept"] == entry["kept"]
+    calendar_day = ask("selectDate", date="2026-10-06")
+    assert calendar_day["dayTitle"] and calendar_day["observedDate"]
+    assert all("fast" in day and "feast" in day for day in calendar_day["week"])
     shifted = ask("shiftWeek", direction=1)
-    assert shifted["selectedDate"] != first["selectedDate"]
+    assert shifted["selectedDate"] != calendar_day["selectedDate"]
     assert not ask("selectDate", date="not-a-date")["ok"]
     close(review)
 

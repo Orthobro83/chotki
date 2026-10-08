@@ -16,6 +16,8 @@ class Bridge final : public QObject {
     Q_PROPERTY(QString today READ today NOTIFY changed)
     Q_PROPERTY(QString selectedDate READ selectedDate NOTIFY changed)
     Q_PROPERTY(QString dayTitle READ dayTitle NOTIFY changed)
+    Q_PROPERTY(QString observedDate READ observedDate NOTIFY changed)
+    Q_PROPERTY(bool showOldStyleDates READ showOldStyleDates NOTIFY changed)
     Q_PROPERTY(QString sayingText READ sayingText NOTIFY changed)
     Q_PROPERTY(QString sayingAuthor READ sayingAuthor NOTIFY changed)
     Q_PROPERTY(QString sayingSource READ sayingSource NOTIFY changed)
@@ -36,6 +38,8 @@ public:
     QString today() const { return m_today; }
     QString selectedDate() const { return m_selectedDate; }
     QString dayTitle() const { return m_dayTitle; }
+    QString observedDate() const { return m_observedDate; }
+    bool showOldStyleDates() const { return m_showOldStyleDates; }
     QString sayingText() const { return m_sayingText; }
     QString sayingAuthor() const { return m_sayingAuthor; }
     QString sayingSource() const { return m_sayingSource; }
@@ -74,6 +78,8 @@ private:
     QString m_today;
     QString m_selectedDate;
     QString m_dayTitle;
+    QString m_observedDate;
+    bool m_showOldStyleDates = false;
     QString m_sayingText;
     QString m_sayingAuthor;
     QString m_sayingSource;

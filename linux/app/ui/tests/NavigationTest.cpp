@@ -15,6 +15,8 @@ class SampleBridge final : public QObject {
     Q_PROPERTY(QString today MEMBER today CONSTANT)
     Q_PROPERTY(QString selectedDate MEMBER selectedDate CONSTANT)
     Q_PROPERTY(QString dayTitle MEMBER dayTitle CONSTANT)
+    Q_PROPERTY(QString observedDate MEMBER observedDate CONSTANT)
+    Q_PROPERTY(bool showOldStyleDates MEMBER showOldStyleDates CONSTANT)
     Q_PROPERTY(QString sayingText MEMBER sayingText CONSTANT)
     Q_PROPERTY(QString sayingAuthor MEMBER sayingAuthor CONSTANT)
     Q_PROPERTY(QString sayingSource MEMBER sayingSource CONSTANT)
@@ -38,6 +40,8 @@ public:
     QString today = "2026-10-07";
     QString selectedDate = "2026-10-07";
     QString dayTitle;
+    QString observedDate;
+    bool showOldStyleDates = false;
     QString sayingText = "A saying";
     QString sayingAuthor = "A father";
     QString sayingSource = "A source";

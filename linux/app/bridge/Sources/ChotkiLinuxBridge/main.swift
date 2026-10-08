@@ -72,8 +72,10 @@ private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate) thr
     let rules = try store.rules(includeArchived: false)
     let activations = try store.activations(ruleID: nil)
     let occurrences = try store.occurrences(ruleID: nil, from: selectedDate, through: selectedDate)
+    let liturgical = LiturgicalService(store: store, jurisdiction: settings.jurisdiction,
+                                      networkPolicy: .never)
     let practice = Practice(rules: rules, activations: activations,
-                            occurrences: occurrences, settings: settings)
+                            occurrences: occurrences, settings: settings, liturgical: liturgical)
     let entries: [[String: Any]] = practice.entries(on: selectedDate).map { entry in
         let summary = RuleLibrary.shared.templates.first { $0.title == entry.rule.title }?.summary
             ?? entry.rule.note ?? "A rule of your own."
@@ -91,12 +93,13 @@ private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate) thr
     }
     let week: [[String: Any]] = (-3...3).map { offset in
         let date = selectedDate.adding(days: offset)
+        let day = liturgical.cachedDay(for: date)
         return ["date": date.iso, "day": date.day, "weekday": date.weekday.rawValue,
-                "selected": date == selectedDate]
+                "selected": date == selectedDate, "fast": day?.isFast ?? false,
+                "feast": day?.isGreatFeast ?? false]
     }
     let saying = PatristicReadings.shared.reading(for: selectedDate)
-    let liturgical = try store.liturgicalDay(civilDate: selectedDate,
-                                            reckoning: settings.jurisdiction.reckoning)
+    let liturgicalDay = liturgical.cachedDay(for: selectedDate)
     return [
         "selectedDate": selectedDate.iso,
         "displayName": settings.displayName,
@@ -104,7 +107,9 @@ private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate) thr
         "psalmOneVerses": Psalter.psalm(1)?.verses.count ?? 0,
         "entries": entries,
         "week": week,
-        "dayTitle": liturgical?.title ?? "",
+        "dayTitle": liturgicalDay?.title ?? "",
+        "observedDate": liturgicalDay?.observedDate.iso ?? "",
+        "showOldStyleDates": settings.showOldStyleDates,
         "sayingText": saying?.text ?? "",
         "sayingAuthor": saying?.author ?? "",
         "sayingSource": saying?.source ?? ""
@@ -187,8 +192,11 @@ do {
                 let activations = try store.activations(ruleID: nil)
                 let occurrences = try store.occurrences(ruleID: nil, from: selectedDate, through: selectedDate)
                 let settings = try store.loadSettings() ?? .default
+                let liturgical = LiturgicalService(store: store, jurisdiction: settings.jurisdiction,
+                                                  networkPolicy: .never)
                 let practice = Practice(rules: rules, activations: activations,
-                                        occurrences: occurrences, settings: settings)
+                                        occurrences: occurrences, settings: settings,
+                                        liturgical: liturgical)
                 guard let entry = practice.entries(on: selectedDate).first(where: { $0.rule.id == ruleID }),
                       !entry.isDispensed else { throw BridgeError.unknownRule }
                 if entry.isKept {
