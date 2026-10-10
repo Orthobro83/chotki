@@ -211,9 +211,9 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT((week = findItem(window->contentItem(), "week-scroll"))
                                  && (otherDay = findItem(window->contentItem(), "day-" + other))
                                  && otherDay->width() > 20 && otherDay->height() > 20, 3000);
-        const QPointF inWeek = otherDay->mapToItem(week, QPointF(otherDay->width() / 2.0,
-                                                                  otherDay->height() / 2.0));
-        const QPoint center = sceneCenter(otherDay);
+        const QPointF localCenter(otherDay->width() / 2.0, otherDay->height() / 2.0);
+        const QPointF inWeek = otherDay->mapToItem(week, localCenter);
+        const QPoint center = otherDay->mapToScene(localCenter).toPoint();
         const QString where = QString("scene %1,%2 inWeek %3,%4 size %5x%6")
                                   .arg(center.x()).arg(center.y())
                                   .arg(inWeek.x()).arg(inWeek.y())

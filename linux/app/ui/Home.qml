@@ -176,13 +176,21 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }
                             }
-                            MouseArea {
-                                anchors.fill: parent
-                                z: 1
-                                preventStealing: true
-                                property string date: modelData.date
-                                onClicked: function(mouse) { bridge.selectDate(date) }
-                            }
+                        }
+                    }
+                    // One area over the strip. Per-chip areas reported the
+                    // right chip and then selected no new day on Qt 6.4.
+                    MouseArea {
+                        anchors.fill: parent
+                        z: 2
+                        preventStealing: true
+                        onClicked: function(mouse) {
+                            const days = bridge.week
+                            if (!days) return
+                            const index = Math.floor((mouse.x + weekStrip.contentX) / 48)
+                            if (index < 0 || index >= days.length) return
+                            const day = days[index]
+                            if (day && day.date) bridge.selectDate(day.date)
                         }
                     }
                     WheelHandler {
