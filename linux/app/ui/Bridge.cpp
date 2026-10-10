@@ -121,6 +121,10 @@ struct BridgeResponse {
     QJsonObject library;
     bool hasEditor = false;
     QJsonObject editor;
+    bool hasTodayLink = false;
+    QString todayLink;
+    bool hasThanksgiving = false;
+    QString thanksgiving;
     bool home = false;
 };
 
@@ -169,6 +173,13 @@ BridgeResponse decodeResponse(const QJsonObject &object) {
     response.library = object.value("library").toObject();
     response.hasEditor = object.contains("editor");
     response.editor = object.value("editor").toObject();
+    response.hasTodayLink = object.contains("todayLink");
+    response.todayLink = object.value("todayLink").toString();
+    response.hasThanksgiving = object.contains("thanksgiving");
+    response.thanksgiving = object.value("thanksgiving").toString();
+    // todayLink and thanksgiving are not home by themselves. A prayer reply
+    // must not be treated as a day snapshot, and a missing thanksgiving must
+    // not count as a new one.
     response.home = response.hasDisplayName || response.hasToday || response.hasSelectedDate
         || response.hasDayTitle || response.hasObservedDate || response.hasShowOldStyleDates
         || response.hasSayingText || response.hasSayingAuthor || response.hasSayingSource
@@ -189,6 +200,14 @@ void Bridge::refresh() { send("snapshot"); }
 void Bridge::setReviewName(const QString &name) { if (m_review) send("setReviewName", QJsonObject{{"name", name}}); }
 void Bridge::selectDate(const QString &date) { send("selectDate", QJsonObject{{"date", date}}); }
 void Bridge::toggleKept(const QString &ruleID) { send("toggleKept", QJsonObject{{"ruleID", ruleID}}); }
+
+void Bridge::markKeptLate(const QString &ruleID) {
+    send("markKeptLate", QJsonObject{{"ruleID", ruleID}});
+}
+
+void Bridge::standDownDay(const QString &ruleID) {
+    send("standDownDay", QJsonObject{{"ruleID", ruleID}});
+}
 void Bridge::shiftWeek(int direction) {
     if (direction == -1 || direction == 1) send("shiftWeek", QJsonObject{{"direction", direction}});
 }
@@ -210,6 +229,11 @@ void Bridge::showRope(bool shown) { send("showRope", QJsonObject{{"shown", shown
 void Bridge::startAgain() { send("startAgain"); }
 
 void Bridge::showReading() { send("openReading", QJsonObject{{"band", QJsonValue(QJsonValue::Null)}}); }
+
+void Bridge::openReading(int band) {
+    if (band < 0) showReading();
+    else send("openReading", QJsonObject{{"band", band}});
+}
 
 void Bridge::toggleReading(int band) { send("toggleReading", QJsonObject{{"band", band}}); }
 
@@ -468,6 +492,16 @@ void Bridge::readResponses() {
         if (response.hasEntries) m_entries = response.entries;
         if (response.hasWeek) m_week = response.week;
         if (response.hasPsalmOneVerses) m_psalmOneVerses = response.psalmOneVerses;
+        // A day snapshot omits todayLink when the selected day is today.
+        // Thanksgiving is a single event: a later snapshot that leaves the key
+        // out must not wipe the line already on screen.
+        if (response.hasWeek || response.hasEntries) {
+            m_todayLink = response.hasTodayLink ? response.todayLink : QString();
+        }
+        if (response.hasThanksgiving) {
+            m_thanksgiving = response.thanksgiving;
+            ++m_thanksEvent;
+        }
         emit changed();
     }
 }

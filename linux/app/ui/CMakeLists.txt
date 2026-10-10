@@ -42,6 +42,13 @@ target_compile_definitions(chotki-reading-test PRIVATE CHOTKI_QML_SOURCE="${CMAK
 add_test(NAME reading COMMAND chotki-reading-test)
 set_tests_properties(reading PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+add_executable(chotki-home-actions-test tests/HomeActionsTest.cpp Bridge.cpp Bridge.h ArtworkImage.cpp ArtworkImage.h)
+target_link_libraries(chotki-home-actions-test PRIVATE Qt6::Quick Qt6::Test)
+target_include_directories(chotki-home-actions-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(chotki-home-actions-test PRIVATE CHOTKI_QML_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Main.qml")
+add_test(NAME home-actions COMMAND chotki-home-actions-test)
+set_tests_properties(home-actions PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 add_executable(chotki-library-test tests/LibraryTest.cpp Bridge.cpp Bridge.h ArtworkImage.cpp ArtworkImage.h)
 target_link_libraries(chotki-library-test PRIVATE Qt6::Quick Qt6::Test)
 target_include_directories(chotki-library-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -22,6 +22,10 @@ ApplicationWindow {
     property bool openingPlayed: false
     property int openingStarts: 0
     property int heardEvent: -1
+    property bool openPsalter: false
+    property string watchedDate: bridge.selectedDate || ""
+    property int heardThanks: -1
+    onWatchedDateChanged: window.dismissThanks()
 
     function notePrayer() {
         if (bridge.prayerEvent > heardEvent && bridge.prayerSound.length > 0) {
@@ -29,6 +33,66 @@ ApplicationWindow {
             bridge.playSound(bridge.prayerSound)
         } else if (bridge.prayerEvent < heardEvent) {
             heardEvent = bridge.prayerEvent
+        }
+    }
+
+    function noteThanks() {
+        const event = bridge.thanksEvent
+        if (event === undefined || event === null || event === heardThanks) return
+        heardThanks = event
+        const line = bridge.thanksgiving || ""
+        if (!line.length) return
+        thanksLabel.text = line
+        thanksLabel.opacity = 1
+        thanksFade.restart()
+    }
+
+    function dismissThanks() {
+        thanksFade.stop()
+        thanksLabel.opacity = 0
+    }
+
+    function showSection(name) {
+        if (name === "Prayers") {
+            openPsalter = false
+            section = "Prayers"
+            if (prayersLoader.item) prayersLoader.item.psalterOpen = false
+            return
+        }
+        if (name === "Reading") {
+            openPsalter = false
+            section = "Reading"
+            bridge.showReading()
+            return
+        }
+        section = name
+    }
+
+    function openCard(destination, selection, band, ruleID) {
+        if (!destination || destination === "fast") return
+        if (destination === "rope" || destination === "prayers") {
+            openPsalter = false
+            bridge.choosePrayer(selection || "")
+            section = "Prayers"
+            if (prayersLoader.item) prayersLoader.item.psalterOpen = false
+            return
+        }
+        if (destination === "reading") {
+            openPsalter = false
+            section = "Reading"
+            const named = band === undefined || band === null ? -1 : band
+            bridge.openReading(named)
+            return
+        }
+        if (destination === "psalter") {
+            openPsalter = true
+            section = "Prayers"
+            if (prayersLoader.item) prayersLoader.item.psalterOpen = true
+            return
+        }
+        if (destination === "editor") {
+            bridge.openEditor(ruleID || "")
+            section = "Library"
         }
     }
 
@@ -46,8 +110,8 @@ ApplicationWindow {
     ]
 
     Shortcut { sequence: "Ctrl+1"; onActivated: window.section = "Home" }
-    Shortcut { sequence: "Ctrl+2"; onActivated: window.section = "Prayers" }
-    Shortcut { sequence: "Ctrl+3"; onActivated: window.section = "Reading" }
+    Shortcut { sequence: "Ctrl+2"; onActivated: window.showSection("Prayers") }
+    Shortcut { sequence: "Ctrl+3"; onActivated: window.showSection("Reading") }
     Shortcut { sequence: "Ctrl+4"; onActivated: window.section = "Progress" }
     Shortcut { sequence: "Ctrl+5"; onActivated: window.section = "Library" }
     Shortcut { sequence: "Ctrl+6"; onActivated: window.section = "Glossary" }
@@ -141,7 +205,7 @@ ApplicationWindow {
                                 }
                                 MouseArea {
                                     anchors.fill: parent
-                                    onClicked: window.section = modelData
+                                    onClicked: window.showSection(modelData)
                                 }
                             }
                         }
@@ -211,9 +275,13 @@ ApplicationWindow {
                 Connections {
                     target: homeLoader.item
                     function onLibraryRequested() { window.section = "Library" }
+                    function onCardRequested(destination, selection, band, ruleID) {
+                        window.openCard(destination, selection, band, ruleID)
+                    }
                 }
 
                 Loader {
+                    id: prayersLoader
                     Layout.fillWidth: true
                     Layout.fillHeight: active
                     active: window.section === "Prayers"
@@ -299,6 +367,26 @@ ApplicationWindow {
         function onChanged() {
             window.notePrayer()
             window.maybeOpen()
+            window.noteThanks()
+        }
+    }
+
+    Label {
+        id: thanksLabel
+        objectName: "thanksgiving"
+        z: 30
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: 72
+        opacity: 0
+        visible: opacity > 0
+        text: ""
+        color: window.parchment
+        font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
+        font.pixelSize: 18
+        SequentialAnimation {
+            id: thanksFade
+            PauseAnimation { duration: 6000 }
+            NumberAnimation { target: thanksLabel; property: "opacity"; to: 0; duration: 700 }
         }
     }
 

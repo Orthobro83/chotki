@@ -25,6 +25,9 @@ class SampleBridge final : public QObject {
     Q_PROPERTY(QString artworkUrl MEMBER artworkUrl CONSTANT)
     Q_PROPERTY(QVariantList entries MEMBER entries CONSTANT)
     Q_PROPERTY(QVariantList week MEMBER week NOTIFY changed)
+    Q_PROPERTY(QString todayLink MEMBER todayLink NOTIFY changed)
+    Q_PROPERTY(QString thanksgiving MEMBER thanksgiving NOTIFY changed)
+    Q_PROPERTY(int thanksEvent MEMBER thanksEvent NOTIFY changed)
     Q_PROPERTY(QString prayerSelection MEMBER prayerSelection CONSTANT)
     Q_PROPERTY(bool prayerRopeAlone MEMBER prayerRopeAlone CONSTANT)
     Q_PROPERTY(int prayerCount MEMBER prayerCount CONSTANT)
@@ -68,6 +71,9 @@ public:
     QString artworkUrl;
     QVariantList entries;
     QVariantList week;
+    QString todayLink;
+    QString thanksgiving;
+    int thanksEvent = 0;
     QString prayerSelection = "jesus-prayer";
     bool prayerRopeAlone = false;
     int prayerCount = 0;
@@ -100,6 +106,11 @@ public:
     Q_INVOKABLE void startAgain() {}
     Q_INVOKABLE void layoutRope(double) {}
     Q_INVOKABLE void playSound(const QString &) {}
+    Q_INVOKABLE void showReading() {}
+    Q_INVOKABLE void openReading(int) {}
+    Q_INVOKABLE void markKeptLate(const QString &) {}
+    Q_INVOKABLE void standDownDay(const QString &) {}
+    Q_INVOKABLE void openEditor(const QString &) {}
     Q_INVOKABLE void shiftWeek(int direction) {
         shiftedDirection = direction;
         week[0] = QVariantMap{{"date", "2026-10-14"}, {"day", 14},
@@ -178,14 +189,10 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, nextCenter.toPoint());
         QTRY_COMPARE(bridge.shiftedDirection, 1);
 
+        // The week moved, and the selected day is still today, so TodayLink stays hidden.
         QQuickItem *todayLink = nullptr;
         QTRY_VERIFY_WITH_TIMEOUT((todayLink = findItem(window->contentItem(), "today-link"))
-                                 && todayLink->isVisible(), 3000);
-        const QPointF todayCenter = todayLink->mapToScene(
-            QPointF(todayLink->width() / 2, todayLink->height() / 2));
-        bridge.selectedDay.clear();
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, todayCenter.toPoint());
-        QTRY_COMPARE(bridge.selectedDay, bridge.today);
+                                 && !todayLink->isVisible(), 3000);
     }
 };
 

@@ -81,6 +81,9 @@ class Bridge final : public QObject {
     Q_PROPERTY(bool libraryReady READ libraryReady NOTIFY changed)
     Q_PROPERTY(QVariantMap libraryPage READ libraryPage NOTIFY changed)
     Q_PROPERTY(QVariantMap editorPage READ editorPage NOTIFY changed)
+    Q_PROPERTY(QString todayLink READ todayLink NOTIFY changed)
+    Q_PROPERTY(QString thanksgiving READ thanksgiving NOTIFY changed)
+    Q_PROPERTY(int thanksEvent READ thanksEvent NOTIFY changed)
 
 public:
     Bridge(QString program, bool review, QObject *parent = nullptr);
@@ -157,6 +160,9 @@ public:
     bool libraryReady() const { return m_libraryReady; }
     QVariantMap libraryPage() const { return m_libraryPage; }
     QVariantMap editorPage() const { return m_editorPage; }
+    QString todayLink() const { return m_todayLink; }
+    QString thanksgiving() const { return m_thanksgiving; }
+    int thanksEvent() const { return m_thanksEvent; }
 
     bool snapshotReady() const { return m_snapshotReady; }
     qint64 helperProcessId() const { return m_process.processId(); }
@@ -165,6 +171,8 @@ public:
     Q_INVOKABLE void setReviewName(const QString &name);
     Q_INVOKABLE void selectDate(const QString &date);
     Q_INVOKABLE void toggleKept(const QString &ruleID);
+    Q_INVOKABLE void markKeptLate(const QString &ruleID);
+    Q_INVOKABLE void standDownDay(const QString &ruleID);
     Q_INVOKABLE void shiftWeek(int direction);
     Q_INVOKABLE void refreshPrayer();
     Q_INVOKABLE void choosePrayer(const QString &selection);
@@ -176,6 +184,7 @@ public:
     Q_INVOKABLE void layoutRope(double diameter);
     Q_INVOKABLE void playSound(const QString &name);
     Q_INVOKABLE void showReading();
+    Q_INVOKABLE void openReading(int band);
     Q_INVOKABLE void toggleReading(int band);
     Q_INVOKABLE void finishReading(int band);
     Q_INVOKABLE void refreshPsalter();
@@ -304,4 +313,7 @@ private:
     bool m_libraryReady = false;
     QVariantMap m_libraryPage;
     QVariantMap m_editorPage;
+    QString m_todayLink;
+    QString m_thanksgiving;
+    int m_thanksEvent = 0;
 };

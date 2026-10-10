@@ -40,6 +40,7 @@ Item {
     }
 
     Component.onCompleted: {
+        if (window.openPsalter) prayers.psalterOpen = true
         bridge.refreshPrayer()
         syncChooser()
     }

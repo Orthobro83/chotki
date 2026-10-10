@@ -77,6 +77,52 @@ private func fail(id: Int, _ error: Error) {
     respond(BridgeFailure(v: bridgeProtocolVersion, id: id, error: String(describing: error)))
 }
 
+private struct CardFace {
+    var destination: String
+    var selection: String?
+    var band: Int?
+    var action: String
+    var back: String
+}
+
+/// The same choice the Mac makes when a card is opened. Fasting turns the card
+/// over. A counted prayer opens the rope. A sequence opens that sequence.
+private func cardFace(_ entry: DayEntry, summary: String, tradition: Tradition) -> CardFace {
+    let rule = entry.rule
+    var back = summary
+    if let reason = entry.dispensation, !reason.isEmpty {
+        back = "Not observed during \(reason)."
+    } else if rule.isFastingRule, let slug = rule.glossarySlug,
+              let term = Glossary.shared(for: tradition).entry(slug: slug) {
+        back = term.short
+    }
+    if rule.isFastingRule {
+        return CardFace(destination: "fast", selection: nil, band: nil, action: "Open", back: back)
+    }
+    if let id = rule.ropePrayerID {
+        return CardFace(destination: "rope", selection: id, band: nil, action: "Go to the Rope", back: back)
+    }
+    if let id = rule.sequenceID {
+        return CardFace(destination: "prayers", selection: id, band: nil, action: "Read the Prayers", back: back)
+    }
+    switch rule.reference {
+    case .reading:
+        let life = rule.title.lowercased().contains("life of the day")
+        return CardFace(
+            destination: "reading", selection: nil, band: ReadingOrder.band(ofTitle: rule.title),
+            action: life ? "Read the Saint\u{2019}s Life" : "Read the Day\u{2019}s Readings", back: back
+        )
+    case .psalter:
+        return CardFace(destination: "psalter", selection: nil, band: nil,
+                        action: "Read Today\u{2019}s Kathisma", back: back)
+    case .prayers:
+        return CardFace(destination: "prayers", selection: rule.sequenceID, band: nil,
+                        action: "Read the Prayers", back: back)
+    default:
+        return CardFace(destination: "editor", selection: nil, band: nil, action: "Open", back: back)
+    }
+}
+
 func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate,
                           weekCenter: CalendarDate) throws -> HomeSnapshot {
     let settings = try store.loadSettings() ?? .default
@@ -91,11 +137,14 @@ func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate,
         let summary = RuleLibrary.shared.templates.first { $0.title == entry.rule.title }?.summary
             ?? entry.rule.note ?? "A rule of your own."
         let time = entry.rule.timeOfDay.map { String(format: "%02d:%02d", $0.hour, $0.minute) }
+        let face = cardFace(entry, summary: summary, tradition: settings.jurisdiction.tradition)
         return EntryPayload(
             id: entry.rule.id.uuidString, title: entry.rule.title,
             category: RuleCategory(rawValue: entry.rule.category ?? "")?.displayName ?? "Rule",
             summary: summary, time: time ?? "All Day", kept: entry.isKept,
-            dispensed: entry.isDispensed, dispensation: entry.dispensation ?? ""
+            dispensed: entry.isDispensed, dispensation: entry.dispensation ?? "",
+            stoodDown: entry.isStoodDown, destination: face.destination, selection: face.selection,
+            band: face.band, action: face.action, back: face.back
         )
     }
     let weekStart = weekCenter.adding(days: -3)
@@ -115,13 +164,29 @@ func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate,
     }
     let saying = PatristicReadings.shared.reading(for: selectedDate)
     let liturgicalDay = liturgical.cachedDay(for: selectedDate)
+    let today = CalendarDate(Date(), in: .current)
+    let link = TodayLink.needed(selected: selectedDate, today: today,
+                                visibleMonth: selectedDate, monthOpen: false)
     return HomeSnapshot(
         selectedDate: selectedDate.iso, displayName: settings.displayName,
         hasCompletedFirstRun: settings.hasCompletedFirstRun,
         psalmOneVerses: Psalter.psalm(1)?.verses.count ?? 0, entries: entries, week: week,
         dayTitle: liturgicalDay?.title ?? "", observedDate: liturgicalDay?.observedDate.iso ?? "",
         showOldStyleDates: settings.showOldStyleDates, sayingText: saying?.text ?? "",
-        sayingAuthor: saying?.author ?? "", sayingSource: saying?.source ?? ""
+        sayingAuthor: saying?.author ?? "", sayingSource: saying?.source ?? "",
+        todayLink: link?.text
+    )
+}
+
+private func dayPractice(_ store: SQLiteStore, on date: CalendarDate) throws -> Practice {
+    let settings = try store.loadSettings() ?? .default
+    let liturgical = LiturgicalService(store: store, jurisdiction: settings.jurisdiction,
+                                      networkPolicy: .never)
+    return Practice(
+        rules: try store.rules(includeArchived: false),
+        activations: try store.activations(ruleID: nil),
+        occurrences: try store.occurrences(ruleID: nil, from: date, through: date),
+        settings: settings, liturgical: liturgical
     )
 }
 
@@ -212,32 +277,45 @@ do {
                 try reply(id: id, snapshot: homeSnapshot(store: store, on: selectedDate,
                                                          weekCenter: weekCenter))
 
-            case "toggleKept":
+            case "toggleKept", "markKeptLate", "standDownDay":
                 guard let raw = request.ruleID, let ruleID = UUID(uuidString: raw) else {
                     throw BridgeError.invalidRequest
                 }
-                let rules = try store.rules(includeArchived: false)
-                let activations = try store.activations(ruleID: nil)
-                let occurrences = try store.occurrences(ruleID: nil, from: selectedDate, through: selectedDate)
-                let settings = try store.loadSettings() ?? .default
-                let liturgical = LiturgicalService(store: store, jurisdiction: settings.jurisdiction,
-                                                  networkPolicy: .never)
-                let practice = Practice(rules: rules, activations: activations,
-                                        occurrences: occurrences, settings: settings,
-                                        liturgical: liturgical)
+                let practice = try dayPractice(store, on: selectedDate)
                 guard let entry = practice.entries(on: selectedDate).first(where: { $0.rule.id == ruleID }) else {
                     throw BridgeError.unknownRule
                 }
                 if entry.isDispensed { throw BridgeError.notAsked }
-                if entry.isKept {
-                    try store.removeOccurrence(ruleID: ruleID, date: selectedDate)
-                } else {
+                let wasSettled = practice.isSettled(on: selectedDate)
+                var markedKept = false
+                switch request.op {
+                case "toggleKept":
+                    if entry.isKept {
+                        try store.removeOccurrence(ruleID: ruleID, date: selectedDate)
+                    } else {
+                        try store.save(Occurrence(
+                            ruleID: ruleID, date: selectedDate, status: .completed, completedAt: Date()
+                        ))
+                        markedKept = true
+                    }
+                case "markKeptLate":
                     try store.save(Occurrence(
-                        ruleID: ruleID, date: selectedDate, status: .completed, completedAt: Date()
+                        ruleID: ruleID, date: selectedDate, status: .completedLate, completedAt: Date()
                     ))
+                case "standDownDay":
+                    try store.save(Occurrence(
+                        ruleID: ruleID, date: selectedDate, status: .skipped, completedAt: nil
+                    ))
+                default:
+                    break
                 }
-                try reply(id: id, snapshot: homeSnapshot(store: store, on: selectedDate,
-                                                         weekCenter: weekCenter))
+                let snapshot = try homeSnapshot(store: store, on: selectedDate, weekCenter: weekCenter)
+                var success = snapshot.success(id: id, today: CalendarDate(Date(), in: .current).iso)
+                let settledNow = snapshot.week.first { $0.date == selectedDate.iso }?.settled ?? false
+                if markedKept, !wasSettled, settledNow {
+                    success.thanksgiving = "Glory to God for all things."
+                }
+                respond(success)
 
             case "setReviewName":
                 guard mode.isReview else { throw BridgeError.reviewOnly }

@@ -263,6 +263,15 @@ struct EntryPayload: Encodable {
     var kept: Bool
     var dispensed: Bool
     var dispensation: String
+    var stoodDown: Bool
+    /// Where the first click goes: rope, prayers, reading, psalter, fast, or editor.
+    var destination: String
+    var selection: String?
+    var band: Int?
+    /// The menu's name for that destination.
+    var action: String
+    /// The fasting card's other face. Other cards repeat the summary.
+    var back: String
 }
 
 struct WeekDayPayload: Encodable {
@@ -301,6 +310,10 @@ struct BridgeSuccess: Encodable {
     var psalter: PsalterPayload? = nil
     var library: LibraryPayload? = nil
     var editor: EditorPayload? = nil
+    /// "← Today" or "Today →", from core `TodayLink`. Omitted on today itself.
+    var todayLink: String? = nil
+    /// Set only on the reply that settles a day. The window shows it, then lets it go.
+    var thanksgiving: String? = nil
 }
 
 struct BridgeFailure: Encodable {
@@ -323,6 +336,7 @@ struct HomeSnapshot {
     var sayingText: String
     var sayingAuthor: String
     var sayingSource: String
+    var todayLink: String?
 
     func success(id: Int, today: String) -> BridgeSuccess {
         BridgeSuccess(
@@ -331,7 +345,8 @@ struct HomeSnapshot {
             psalmOneVerses: psalmOneVerses, entries: entries, week: week,
             dayTitle: dayTitle, observedDate: observedDate,
             showOldStyleDates: showOldStyleDates, sayingText: sayingText,
-            sayingAuthor: sayingAuthor, sayingSource: sayingSource
+            sayingAuthor: sayingAuthor, sayingSource: sayingSource,
+            todayLink: todayLink
         )
     }
 }

@@ -107,6 +107,8 @@ This is the slice that makes the Phase 2 gate possible. Until it exists, the onl
 
 **Gate.** The Qt navigation test, against the real helper and a temporary review record, marks a rule kept, stands one down, opens Prayers from a card, and returns to Home with the settled state the core reports.
 
+**Checked on the ARM64 guest (2026-10-10):** the Qt test, against the real helper and a temporary review record, marked Evening prayers kept and stood the Gospel down. The gold dot matched the settled state core reported, and that day was not settled. Evening prayers opened Prayers on the evening sequence with the rope hidden. The Jesus Prayer opened the rope. The Gospel opened Reading at band 0. The Today link follows core `TodayLink` for the selected day: it appeared only after a non-today day was selected, read ← Today or Today →, and hid again once today was selected. The Wednesday fast on 2026-10-07 flipped in place, and its back face contained "ordinary weekly fast." Edit Rule… opened the morning editor. On Bright Week, 2027-05-05, the fast offered "Lifted by the Church Today" and hid mark kept and mark kept late. The sidebar test, the rope, reading, the library, four helper restarts, an offscreen window, and a 1100×860 review screenshot of 124684 bytes still passed. The Ubuntu 24.04 `amd64` half of this gate is the GitHub workflow.
+
 ### 2.6 Progress
 
 - The report is `Practice.report`. Today is outside it. The window shows the same prose the Mac shows, including a paused rule removed from both sides of the count.
@@ -203,4 +205,4 @@ Linux on mobile is the same `aarch64` application with a layout that fits a phon
 
 ## Next slice
 
-Slice 2.5, when that work is asked for. Slices 2.1 through 2.4 are recorded above.
+Slice 2.6, when that work is asked for. Slices 2.1 through 2.5 are recorded above.

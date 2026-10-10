@@ -32,8 +32,6 @@ Item {
         return html
     }
 
-    Component.onCompleted: bridge.showReading()
-
     Flickable {
         id: reader
         objectName: "reading-scroll"

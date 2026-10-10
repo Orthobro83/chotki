@@ -6,6 +6,7 @@ Item {
     id: home
     objectName: "home"
     signal libraryRequested()
+    signal cardRequested(string destination, string selection, int band, string ruleID)
     width: parent ? parent.width : 850
     height: parent ? parent.height : 700
 
@@ -24,14 +25,57 @@ Item {
     function dateLabel() {
         return bridge.selectedDate.length ? Qt.formatDate(localDate(bridge.selectedDate), "dddd d MMMM") : ""
     }
-    function todayLinkSide() {
-        if (!bridge.today.length || bridge.week.length === 0) return 0
-        const first = bridge.week[0].date
-        const last = bridge.week[bridge.week.length - 1].date
-        return bridge.today < first ? -1 : bridge.today > last ? 1 : 0
+    function bandOf(entry) {
+        if (!entry || entry.band === undefined || entry.band === null) return -1
+        return entry.band
+    }
+    function roll(strip, event) {
+        const pixels = event.pixelDelta ? event.pixelDelta.y : 0
+        const angle = event.angleDelta ? event.angleDelta.y : 0
+        const delta = pixels !== 0 ? pixels : angle
+        if (!delta) return
+        const limit = Math.max(0, strip.contentWidth - strip.width)
+        strip.contentX = Math.max(0, Math.min(limit, strip.contentX - delta))
+        event.accepted = true
+    }
+    function hideMenu() {
+        cardMenu.visible = false
+        cardMenu.cardItem = null
+    }
+    function openMenu(entry, card) {
+        cardMenu.ruleId = entry.id
+        cardMenu.destination = entry.destination || ""
+        cardMenu.selection = entry.selection || ""
+        cardMenu.band = bandOf(entry)
+        cardMenu.kept = !!entry.kept
+        cardMenu.dispensed = !!entry.dispensed
+        cardMenu.action = entry.action || "Open"
+        cardMenu.cardItem = card
+        cardMenu.visible = true
+        const point = card.mapToItem(home, 0, card.height + 6)
+        cardMenu.x = Math.max(8, Math.min(point.x, Math.max(8, home.width - cardMenu.width - 8)))
+        cardMenu.y = Math.max(8, Math.min(point.y, Math.max(8, home.height - cardMenu.height - 8)))
+    }
+    function openFromMenu() {
+        const destination = cardMenu.destination
+        const selection = cardMenu.selection
+        const band = cardMenu.band
+        const ruleId = cardMenu.ruleId
+        const card = cardMenu.cardItem
+        hideMenu()
+        if (destination === "fast") {
+            if (card) card.flipped = !card.flipped
+            return
+        }
+        cardRequested(destination, selection, band, ruleId)
     }
 
+    readonly property string todayLinkText: bridge.todayLink || ""
+    property string watchedDate: bridge.selectedDate || ""
+    onWatchedDateChanged: home.hideMenu()
+
     Flickable {
+        id: page
         anchors.fill: parent
         contentHeight: content.implicitHeight
         clip: true
@@ -55,10 +99,10 @@ Item {
                 }
                 Label {
                     objectName: "today-link"
-                    visible: home.todayLinkSide() !== 0
+                    visible: home.todayLinkText.length > 0
                     anchors.verticalCenter: parent.verticalCenter
-                    x: home.todayLinkSide() < 0 ? 8 : parent.width - width - 8
-                    text: "Today"
+                    x: home.todayLinkText.indexOf("Today") === 0 ? parent.width - width - 8 : 8
+                    text: home.todayLinkText
                     color: home.gold
                     font.pixelSize: 12
                     MouseArea { anchors.fill: parent; onClicked: bridge.selectDate(bridge.today) }
@@ -66,7 +110,7 @@ Item {
             }
             Item { width: 1; height: 8 }
             Row {
-                x: (parent.width - width) / 2
+                x: Math.max(0, (parent.width - implicitWidth) / 2)
                 spacing: 6
                 Label {
                     objectName: "week-previous"
@@ -78,7 +122,18 @@ Item {
                     font.pixelSize: 18
                     MouseArea { anchors.fill: parent; onClicked: bridge.shiftWeek(-1) }
                 }
-                Repeater {
+                ListView {
+                    id: weekStrip
+                    objectName: "week-scroll"
+                    // A row inside this flickable corrupted delegate parents.
+                    // The view positions the seven chips itself.
+                    width: 330
+                    height: 53
+                    orientation: ListView.Horizontal
+                    spacing: 6
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    cacheBuffer: 800
                     model: bridge.week
                     delegate: Rectangle {
                         required property var modelData
@@ -109,6 +164,7 @@ Item {
                                 width: 30
                             }
                             Rectangle {
+                                objectName: "settled-" + modelData.date
                                 visible: modelData.settled
                                 width: 3; height: 3; radius: 2
                                 color: home.gold
@@ -116,6 +172,13 @@ Item {
                             }
                         }
                         MouseArea { anchors.fill: parent; onClicked: bridge.selectDate(modelData.date) }
+                    }
+                    WheelHandler {
+                        // A laptop touchpad synthesizes the wheel. The default
+                        // is a mouse only, so an ordinary Linux wheel would miss.
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        blocking: true
+                        onWheel: function(event) { home.roll(weekStrip, event) }
                     }
                 }
                 Label {
@@ -172,24 +235,62 @@ Item {
             }
             Item { width: 1; height: 17 }
 
-            Flickable {
+            ListView {
+                id: cardStrip
+                objectName: "card-scroll"
+                // The row that used to live here left delegate parents unusable,
+                // so a click could not be mapped back to the card.
                 width: parent.width
                 height: 236
-                contentWidth: cards.width
+                property int expandedCards: 0
+                orientation: ListView.Horizontal
+                spacing: 12
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                Row {
-                    id: cards
-                    spacing: 12
-                    Repeater {
-                        model: bridge.entries
-                        delegate: Rectangle {
+                cacheBuffer: 4000
+                model: bridge.entries
+                delegate: Rectangle {
+                            id: card
                             required property var modelData
+                            objectName: "card-" + modelData.id
+                            property bool expanded: false
+                            property bool flipped: false
                             width: 132
                             height: 232
                             radius: 21
                             color: "#e7decb"
 
+                            MouseArea {
+                                anchors.fill: parent
+                                z: 1
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: function(mouse) {
+                                    if (mouse.button === Qt.RightButton) {
+                                        home.openMenu(modelData, card)
+                                        return
+                                    }
+                                    // Expanding is its own control. A click on an
+                                    // expanded card only puts it back.
+                                    if (card.expanded) {
+                                        card.expanded = false
+                                        card.width = 132
+                                        card.height = 232
+                                        cardStrip.expandedCards = Math.max(0, cardStrip.expandedCards - 1)
+                                        if (cardStrip.expandedCards === 0)
+                                            cardStrip.height = 236
+                                        return
+                                    }
+                                    if (modelData.destination === "fast") {
+                                        card.flipped = !card.flipped
+                                        return
+                                    }
+                                    home.cardRequested(
+                                        modelData.destination || "",
+                                        modelData.selection || "",
+                                        home.bandOf(modelData),
+                                        modelData.id)
+                                }
+                            }
                             Icon {
                                 x: 14; y: 14
                                 kind: modelData.category
@@ -204,6 +305,7 @@ Item {
                             }
                             Rectangle {
                                 objectName: "completion-" + modelData.id
+                                z: 2
                                 x: parent.width - 31; y: 10
                                 width: 21; height: 21; radius: 11
                                 color: modelData.kept || modelData.dispensed ? home.gold : "transparent"
@@ -228,48 +330,80 @@ Item {
                                 width: parent.width - 28
                                 text: modelData.title
                                 wrapMode: Text.Wrap
-                                maximumLineCount: 3
+                                maximumLineCount: card.expanded ? 8 : 3
                                 elide: Text.ElideRight
                                 color: home.ink
                                 font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
                                 font.pixelSize: 18
                             }
                             Label {
+                                id: summaryLabel
+                                objectName: "card-summary-" + modelData.id
                                 x: 14; y: 120
                                 width: parent.width - 28
-                                height: 72
-                                text: modelData.summary
+                                height: card.expanded ? implicitHeight : 72
+                                text: card.flipped ? (modelData.back || modelData.summary) : modelData.summary
                                 wrapMode: Text.Wrap
-                                maximumLineCount: 4
-                                elide: Text.ElideRight
+                                maximumLineCount: card.expanded ? 24 : (card.flipped ? 5 : 4)
+                                elide: card.expanded ? Text.ElideNone : Text.ElideRight
                                 color: "#5f5b50"
                                 font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
                                 font.pixelSize: 13
                             }
                             Label {
-                                x: 14; y: 207
-                                text: modelData.time
+                                x: 14
+                                y: card.expanded ? parent.height - 24 : 207
+                                visible: !card.flipped
+                                text: modelData.dispensed ? "Lifted Today"
+                                     : modelData.stoodDown ? "Stood Down"
+                                     : modelData.time
                                 color: "#5f5b50"
                                 font.pixelSize: 11
                             }
+                            Label {
+                                objectName: "expand-" + modelData.id
+                                z: 3
+                                visible: summaryLabel.truncated && !card.expanded && !card.flipped
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                anchors.margins: 12
+                                text: "Expand"
+                                color: "#8a6d1f"
+                                font.pixelSize: 11
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -8
+                                    onClicked: {
+                                        card.expanded = true
+                                        card.width = 280
+                                        const grown = Math.max(280, summaryLabel.y + summaryLabel.implicitHeight + 46)
+                                        card.height = grown
+                                        cardStrip.expandedCards += 1
+                                        cardStrip.height = Math.max(cardStrip.height, grown)
+                                    }
+                                }
+                            }
                         }
+                footer: Rectangle {
+                    objectName: "home-add-placard"
+                    width: 120
+                    height: 232
+                    radius: 21
+                    color: "transparent"
+                    border.color: "#7d671f"
+                    border.width: 1
+                    Label {
+                        anchors.centerIn: parent
+                        text: "+  Add"
+                        color: home.gold
+                        font.pixelSize: 14
                     }
-                    Rectangle {
-                        objectName: "home-add-placard"
-                        width: 120
-                        height: 232
-                        radius: 21
-                        color: "transparent"
-                        border.color: "#7d671f"
-                        border.width: 1
-                        Label {
-                            anchors.centerIn: parent
-                            text: "+  Add"
-                            color: home.gold
-                            font.pixelSize: 14
-                        }
-                        MouseArea { anchors.fill: parent; onClicked: home.libraryRequested() }
-                    }
+                    MouseArea { anchors.fill: parent; onClicked: home.libraryRequested() }
+                }
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    blocking: true
+                    onWheel: function(event) { home.roll(cardStrip, event) }
                 }
             }
             Item { width: 1; height: 17 }
@@ -312,4 +446,178 @@ Item {
             Item { width: 1; height: 24 }
         }
     }
+
+    MouseArea {
+        anchors.fill: parent
+        z: 20
+        visible: cardMenu.visible
+        onClicked: home.hideMenu()
+    }
+
+    Rectangle {
+        id: cardMenu
+        objectName: "card-menu"
+        visible: false
+        z: 30
+        // A Label's implicitHeight ignores an explicit height, so the old
+        // menuColumn.implicitHeight binding collapsed this rectangle to one
+        // row and clicks below it hit the dismiss layer.
+        readonly property int menuRows: dispensed ? 2 : (kept ? 4 : 5)
+        width: 248
+        height: menuRows * 32 + 12
+        radius: 10
+        color: "#1c1e26"
+        border.color: "#343237"
+        property string ruleId: ""
+        property string destination: ""
+        property string selection: ""
+        property int band: -1
+        property bool kept: false
+        property bool dispensed: false
+        property string action: ""
+        property var cardItem: null
+
+        MouseArea { anchors.fill: parent }
+
+        // Rows are placed by hand. A Column reports the right offsets and
+        // then delivers every click to the last row.
+        Item {
+            id: menuColumn
+            z: 1
+            x: 6
+            y: 6
+            width: parent.width - 12
+            height: cardMenu.menuRows * 32
+
+            Item {
+                id: liftedRow
+                objectName: "card-menu-lifted"
+                visible: cardMenu.dispensed
+                y: 0
+                width: parent.width
+                height: visible ? 32 : 0
+                Label {
+                    anchors.fill: parent
+                    leftPadding: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Lifted by the Church Today"
+                    color: home.muted
+                    font.pixelSize: 13
+                }
+            }
+            Item {
+                id: actionRow
+                objectName: "card-menu-action"
+                visible: !cardMenu.dispensed
+                y: liftedRow.y + liftedRow.height
+                width: parent.width
+                height: visible ? 32 : 0
+                Label {
+                    anchors.fill: parent
+                    leftPadding: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: cardMenu.action
+                    color: home.parchment
+                    font.pixelSize: 13
+                }
+                MouseArea { anchors.fill: parent; onClicked: home.openFromMenu() }
+            }
+            Item {
+                id: keptRow
+                objectName: "card-menu-kept"
+                visible: !cardMenu.dispensed
+                y: actionRow.y + actionRow.height
+                width: parent.width
+                height: visible ? 32 : 0
+                Label {
+                    anchors.fill: parent
+                    leftPadding: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: cardMenu.kept ? "Clear This Day" : "Mark as Kept"
+                    color: home.parchment
+                    font.pixelSize: 13
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: function(mouse) {
+                        const id = cardMenu.ruleId
+                        home.hideMenu()
+                        bridge.toggleKept(id)
+                    }
+                }
+            }
+            Item {
+                id: lateRow
+                objectName: "card-menu-late"
+                visible: !cardMenu.dispensed && !cardMenu.kept
+                y: keptRow.y + keptRow.height
+                width: parent.width
+                height: visible ? 32 : 0
+                Label {
+                    anchors.fill: parent
+                    leftPadding: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Mark as Kept, Late"
+                    color: home.parchment
+                    font.pixelSize: 13
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        const id = cardMenu.ruleId
+                        home.hideMenu()
+                        bridge.markKeptLate(id)
+                    }
+                }
+            }
+            Item {
+                id: standRow
+                objectName: "card-menu-stand"
+                visible: !cardMenu.dispensed
+                y: lateRow.y + lateRow.height
+                width: parent.width
+                height: visible ? 32 : 0
+                Label {
+                    anchors.fill: parent
+                    leftPadding: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Stand Down for This Day"
+                    color: home.parchment
+                    font.pixelSize: 13
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: function(mouse) {
+                        const id = cardMenu.ruleId
+                        home.hideMenu()
+                        bridge.standDownDay(id)
+                    }
+                }
+            }
+            Item {
+                id: editRow
+                objectName: "card-menu-edit"
+                y: standRow.y + standRow.height
+                width: parent.width
+                height: 32
+                Label {
+                    anchors.fill: parent
+                    leftPadding: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Edit Rule…"
+                    color: home.parchment
+                    font.pixelSize: 13
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        const id = cardMenu.ruleId
+                        home.hideMenu()
+                        home.cardRequested("editor", "", -1, id)
+                    }
+                }
+            }
+        }
+    }
+
 }

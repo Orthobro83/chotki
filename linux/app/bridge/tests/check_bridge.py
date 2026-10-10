@@ -91,6 +91,30 @@ def main():
         first = ask("snapshot")
         assert first["ok"] and first["psalmOneVerses"] == 6
         assert first["entries"] and len(first["week"]) == 7
+        assert first["selectedDate"] == first["today"]
+        assert "todayLink" not in first
+        by_title = {item["title"]: item for item in first["entries"]}
+        assert by_title["Morning prayers"]["destination"] == "prayers"
+        assert by_title["Morning prayers"]["selection"] == "morning"
+        assert by_title["Morning prayers"]["action"] == "Read the Prayers"
+        assert by_title["Morning prayers"]["stoodDown"] is False
+        assert by_title["Evening prayers"]["destination"] == "prayers"
+        assert by_title["Evening prayers"]["selection"] == "evening"
+        assert by_title["The Jesus Prayer"]["destination"] == "rope"
+        assert by_title["The Jesus Prayer"]["selection"] == "jesus-prayer"
+        assert by_title["The Jesus Prayer"]["action"] == "Go to the Rope"
+        assert by_title["The day's Gospel"]["destination"] == "reading"
+        assert by_title["The day's Gospel"]["band"] == 0
+        assert by_title["The day's Gospel"]["action"] == "Read the Day\u2019s Readings"
+        assert by_title["The life of the day's saint"]["destination"] == "reading"
+        assert by_title["The life of the day's saint"]["band"] == 4
+        assert by_title["The life of the day's saint"]["action"] == "Read the Saint\u2019s Life"
+        assert by_title["A kathisma of the Psalter"]["destination"] == "psalter"
+        assert by_title["A kathisma of the Psalter"]["action"] == "Read Today\u2019s Kathisma"
+        paged = ask("shiftWeek", direction=1)
+        assert paged["selectedDate"] == first["today"]
+        assert "todayLink" not in paged
+        ask("shiftWeek", direction=-1)
         entry = next(item for item in first["entries"] if not item["dispensed"])
         changed = ask("toggleKept", ruleID=entry["id"])
         changed_entry = next(item for item in changed["entries"] if item["id"] == entry["id"])
@@ -102,6 +126,41 @@ def main():
         assert restored_entry["kept"] == entry["kept"]
         if restored_entry["kept"]:
             assert completed_at(review_dir, entry["id"])
+        wednesday = ask("selectDate", date="2026-10-07")
+        fasting = next(item for item in wednesday["entries"]
+                       if item["title"] == "The Wednesday and Friday fast")
+        assert fasting["destination"] == "fast" and fasting["dispensed"] is False
+        assert fasting["back"] == (
+            "The ordinary weekly fast, kept most Wednesdays and Fridays of the year."
+        )
+        if wednesday["today"] == "2026-10-07":
+            assert "todayLink" not in wednesday
+        elif "2026-10-07" > wednesday["today"]:
+            assert wednesday["todayLink"] == "\u2190 Today"
+        else:
+            assert wednesday["todayLink"] == "Today \u2192"
+        thursday = ask("selectDate", date="2026-10-08")
+        evening = next(item for item in thursday["entries"] if item["title"] == "Evening prayers")
+        late = ask("markKeptLate", ruleID=evening["id"])
+        assert late["ok"] and "thanksgiving" not in late
+        late_row = next(item for item in late["entries"] if item["id"] == evening["id"])
+        assert late_row["kept"] is True and late_row["stoodDown"] is False
+        late_status, late_at = occurrence_status(review_dir, evening["id"], "2026-10-08")
+        assert late_status == "completedLate" and late_at
+        stood_down = ask("standDownDay", ruleID=evening["id"])
+        assert "thanksgiving" not in stood_down
+        stood_row = next(item for item in stood_down["entries"] if item["id"] == evening["id"])
+        assert stood_row["kept"] is False and stood_row["stoodDown"] is True
+        stood_status, stood_at = occurrence_status(review_dir, evening["id"], "2026-10-08")
+        assert stood_status == "skipped" and stood_at is None
+        ask("toggleKept", ruleID=evening["id"])
+        cleared = ask("toggleKept", ruleID=evening["id"])
+        assert cleared["ok"]
+        assert occurrence_status(review_dir, evening["id"], "2026-10-08") is None
+        cleared_row = next(item for item in cleared["entries"] if item["id"] == evening["id"])
+        assert cleared_row["kept"] is False and cleared_row["stoodDown"] is False
+        unknown_day = ask("standDownDay", ruleID="00000000-0000-0000-0000-000000000000")
+        assert not unknown_day["ok"] and "not on the selected day" in unknown_day["error"]
         calendar_day = ask("selectDate", date="2026-10-06")
         assert calendar_day["dayTitle"] and calendar_day["observedDate"]
         assert all("fast" in day and "feast" in day and "settled" in day
@@ -113,12 +172,24 @@ def main():
         refused = ask("toggleKept", ruleID=fast["id"])
         assert not refused["ok"]
         assert "asked" in refused["error"]
+        refused_late = ask("markKeptLate", ruleID=fast["id"])
+        assert not refused_late["ok"] and "asked" in refused_late["error"]
+        refused_down = ask("standDownDay", ruleID=fast["id"])
+        assert not refused_down["ok"] and "asked" in refused_down["error"]
+        assert fast["destination"] == "fast"
+        assert fast["back"] == "Not observed during Bright Week."
         missing = ask("toggleKept", ruleID="00000000-0000-0000-0000-000000000000")
         assert not missing["ok"]
         assert "not on the selected day" in missing["error"]
         shifted = ask("shiftWeek", direction=1)
         assert shifted["selectedDate"] == bright_week["selectedDate"]
         assert shifted["week"][0]["date"] != bright_week["week"][0]["date"]
+        if shifted["selectedDate"] == shifted["today"]:
+            assert "todayLink" not in shifted
+        else:
+            expected_link = ("\u2190 Today" if shifted["selectedDate"] > shifted["today"]
+                             else "Today \u2192")
+            assert shifted["todayLink"] == expected_link
         assert not ask("selectDate", date="not-a-date")["ok"]
 
         before_prayer = occurrence_count(review_dir)
@@ -406,6 +477,38 @@ def main():
 
         close(normal)
         assert (Path(directory) / "Chotki" / "chotki.sqlite").is_file()
+
+    with tempfile.TemporaryDirectory(prefix="chotki-thanks-") as directory:
+        environment = os.environ.copy()
+        environment["XDG_DATA_HOME"] = directory
+        thanked, ask = conversation(helper, "--normal", environment)
+        assert ask("hello")["mode"] == "normal"
+        ask("prepareTemplate", template="morning-prayers")
+        ask("saveRule")
+        ask("prepareTemplate", template="evening-prayers")
+        saved = ask("saveRule")
+        morning_id = next(item["id"] for item in saved["entries"] if item["title"] == "Morning prayers")
+        evening_id = next(item["id"] for item in saved["entries"] if item["title"] == "Evening prayers")
+        one = ask("toggleKept", ruleID=morning_id)
+        assert "thanksgiving" not in one
+        selected = one["selectedDate"]
+        assert not next(day["settled"] for day in one["week"] if day["date"] == selected)
+        two = ask("toggleKept", ruleID=evening_id)
+        assert two["thanksgiving"] == "Glory to God for all things."
+        assert next(day["settled"] for day in two["week"] if day["date"] == selected)
+        quiet = ask("snapshot")
+        assert "thanksgiving" not in quiet
+        assert next(day["settled"] for day in quiet["week"] if day["date"] == selected)
+        down_morning = ask("standDownDay", ruleID=morning_id)
+        assert "thanksgiving" not in down_morning
+        assert next(day["settled"] for day in down_morning["week"] if day["date"] == selected)
+        down_evening = ask("standDownDay", ruleID=evening_id)
+        assert "thanksgiving" not in down_evening
+        assert not next(day["settled"] for day in down_evening["week"] if day["date"] == selected)
+        late_only = ask("markKeptLate", ruleID=morning_id)
+        assert "thanksgiving" not in late_only
+        assert next(day["settled"] for day in late_only["week"] if day["date"] == selected)
+        close(thanked)
 
     print("Swift bridge review actions and normal-data isolation passed")
 
