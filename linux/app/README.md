@@ -76,3 +76,5 @@ that bundle, and the clean-install CI gate asks the installed helper for a
 real Psalm-backed snapshot. [Run 37710245451](https://github.com/rjmac83/chotki/actions/runs/37710245451)
 passed that stronger amd64 gate. The installed ARM64 package was also
 reviewed in a synthetic screenshot with its artwork and commitments visible.
+The next CI gate renders a screenshot from the installed `amd64` package and
+requires the helper to connect before capture.

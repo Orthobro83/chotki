@@ -72,7 +72,12 @@ int main(int argc, char *argv[]) {
     if (!window) return 5;
     if (screenshot) {
         const QString path = arguments.at(4);
-        QTimer::singleShot(1500, window, [window, path, &application] {
+        QTimer::singleShot(2500, window, [window, path, &application, &bridge] {
+            if (!bridge.connected()) {
+                qCritical("The Swift record did not connect before the review screenshot");
+                application.exit(7);
+                return;
+            }
             const bool saved = window->grabWindow().save(path);
             if (!saved) qCritical("Could not save the review screenshot");
             application.exit(saved ? 0 : 6);

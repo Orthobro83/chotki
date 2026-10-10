@@ -91,7 +91,7 @@ jobs:
           sudo apt-get install -y ./linux-dist/*.deb
           dpkg-query -W -f='${Package} ${Version} ${Architecture}\n' chotki
           file /usr/lib/chotki/chotki-linux /usr/lib/chotki/ChotkiLinuxBridge
-      - name: Launch installed review shell headlessly
+      - name: Render installed review screen headlessly
         run: |
           test -d /usr/lib/chotki/ChotkiCore_ChotkiCore.bundle
           test -f /usr/share/chotki/Resources/sayings/order.txt
@@ -100,10 +100,9 @@ jobs:
             LD_LIBRARY_PATH=/usr/lib/chotki/swift \
             /usr/lib/chotki/ChotkiLinuxBridge --review > /tmp/chotki-installed-bridge.jsonl
           grep -q '"psalmOneVerses":6' /tmp/chotki-installed-bridge.jsonl
-          set +e
-          QT_QPA_PLATFORM=offscreen timeout 8s chotki --review > /tmp/chotki-installed.log 2>&1
-          result=$?
-          set -e
+          QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+            chotki --review --screenshot /tmp/chotki-installed.png > /tmp/chotki-installed.log 2>&1
           cat /tmp/chotki-installed.log
-          test "$result" -eq 124
+          file /tmp/chotki-installed.png | grep -q 'PNG image data, 1100 x 860'
+          test "$(stat -c%s /tmp/chotki-installed.png)" -gt 100000
           test -f "$HOME/.cache/chotki-linux-review/chotki.sqlite"
