@@ -345,6 +345,9 @@ do {
                 try performLibrary(request, store: store, on: selectedDate,
                                    weekCenter: weekCenter, session: &library)
 
+            case "progress":
+                try performProgress(request, store: store)
+
             case "opening":
                 respond(openingSuccess(id: id))
 

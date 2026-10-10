@@ -117,6 +117,8 @@ This is the slice that makes the Phase 2 gate possible. Until it exists, the onl
 
 **Gate.** A fixture with one kept day and one missed day renders the core report's counts, and the missed day is not colored as a failure.
 
+**Checked on the ARM64 guest (2026-10-10):** the report is `Practice.report` over 30 days, and today is outside it. A morning rule active from three days ago, kept on that day, missed the day after, and stood down yesterday, rendered "Morning prayers slipped once." and "One day was stood down and is not counted either way." The count was "1 of 2", in the same muted colour as any other count. The page did not say "failed" and did not show a streak. The figure was 50%, with "Kept, over the 30 days to then". The quotation of Saint John Climacus and the icon caption sat inside the progress pane, and the artwork did not pan. The bridge check, the sidebar test, the rope, reading, home actions, the library, four helper restarts, an offscreen window, and a 1100×860 review screenshot of 523486 bytes still passed. The Ubuntu 24.04 `amd64` half of this gate is the GitHub workflow.
+
 ### 2.7 Glossary
 
 - Entries come from the bundled glossary. A term in a prayer, a reading, or a rule opens the entry, and Back returns to the section that sent it.
@@ -205,4 +207,4 @@ Linux on mobile is the same `aarch64` application with a layout that fits a phon
 
 ## Next slice
 
-Slice 2.6, when that work is asked for. Slices 2.1 through 2.5 are recorded above.
+Slice 2.7, when that work is asked for. Slices 2.1 through 2.6 are recorded above.

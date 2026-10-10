@@ -13,6 +13,13 @@ import tempfile
 import uuid
 
 
+def long_date(day: date) -> str:
+    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    months = ["January", "February", "March", "April", "May", "June",
+              "July", "August", "September", "October", "November", "December"]
+    return f"{weekdays[day.weekday()]} {day.day} {months[day.month - 1]}"
+
+
 def conversation(helper: str, mode: str, environment=None):
     process = subprocess.Popen(
         [helper, mode], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -509,6 +516,41 @@ def main():
         assert "thanksgiving" not in late_only
         assert next(day["settled"] for day in late_only["week"] if day["date"] == selected)
         close(thanked)
+
+    with tempfile.TemporaryDirectory(prefix="chotki-progress-") as directory:
+        environment = os.environ.copy()
+        environment["XDG_DATA_HOME"] = directory
+        progress, ask = conversation(helper, "--normal", environment)
+        assert ask("hello")["mode"] == "normal"
+        today = date.fromisoformat(ask("snapshot")["today"])
+        kept_day = (today - timedelta(days=3)).isoformat()
+        stood_day = (today - timedelta(days=1)).isoformat()
+        ask("prepareTemplate", template="morning-prayers")
+        saved = ask("saveRule", **{"from": kept_day})
+        rule_id = next(item["id"] for item in saved["entries"] if item["title"] == "Morning prayers")
+        ask("selectDate", date=kept_day)
+        kept = ask("toggleKept", ruleID=rule_id)
+        assert next(item["kept"] for item in kept["entries"] if item["id"] == rule_id) is True
+        ask("selectDate", date=stood_day)
+        down = ask("standDownDay", ruleID=rule_id)
+        assert next(item["stoodDown"] for item in down["entries"] if item["id"] == rule_id) is True
+        report = ask("progress")
+        assert report["ok"] is True
+        for home_key in ("entries", "week", "selectedDate", "displayName", "today", "thanksgiving"):
+            assert home_key not in report, report
+        body = report["progress"]
+        assert body["through"] == stood_day
+        assert body["heading"] == f"Your progress up to {long_date(today - timedelta(days=1))}"
+        assert "Morning prayers slipped once." in body["summary"]
+        assert "One day was stood down and is not counted either way." in body["summary"]
+        assert all("failed" not in line.lower() for line in body["summary"])
+        assert body["rules"] == [{
+            "id": rule_id, "title": "Morning prayers", "count": "1 of 2",
+        }]
+        assert "streak" not in body["rules"][0]
+        assert body["figure"] == 50
+        assert body["figureNote"] == "Kept, over the 30 days to then"
+        close(progress)
 
     print("Swift bridge review actions and normal-data isolation passed")
 

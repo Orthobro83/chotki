@@ -84,6 +84,14 @@ class Bridge final : public QObject {
     Q_PROPERTY(QString todayLink READ todayLink NOTIFY changed)
     Q_PROPERTY(QString thanksgiving READ thanksgiving NOTIFY changed)
     Q_PROPERTY(int thanksEvent READ thanksEvent NOTIFY changed)
+    Q_PROPERTY(bool progressReady READ progressReady NOTIFY changed)
+    Q_PROPERTY(QString progressHeading READ progressHeading NOTIFY changed)
+    Q_PROPERTY(QString progressThrough READ progressThrough NOTIFY changed)
+    Q_PROPERTY(QVariantList progressSummary READ progressSummary NOTIFY changed)
+    Q_PROPERTY(QVariantList progressRules READ progressRules NOTIFY changed)
+    Q_PROPERTY(QString progressFigure READ progressFigure NOTIFY changed)
+    Q_PROPERTY(QString progressFigureNote READ progressFigureNote NOTIFY changed)
+    Q_PROPERTY(QString progressArtworkUrl READ progressArtworkUrl NOTIFY changed)
 
 public:
     Bridge(QString program, bool review, QObject *parent = nullptr);
@@ -163,6 +171,14 @@ public:
     QString todayLink() const { return m_todayLink; }
     QString thanksgiving() const { return m_thanksgiving; }
     int thanksEvent() const { return m_thanksEvent; }
+    bool progressReady() const { return m_progressReady; }
+    QString progressHeading() const { return m_progressHeading; }
+    QString progressThrough() const { return m_progressThrough; }
+    QVariantList progressSummary() const { return m_progressSummary; }
+    QVariantList progressRules() const { return m_progressRules; }
+    QString progressFigure() const { return m_progressFigure; }
+    QString progressFigureNote() const { return m_progressFigureNote; }
+    QString progressArtworkUrl() const { return m_progressArtworkUrl; }
 
     bool snapshotReady() const { return m_snapshotReady; }
     qint64 helperProcessId() const { return m_process.processId(); }
@@ -184,6 +200,7 @@ public:
     Q_INVOKABLE void layoutRope(double diameter);
     Q_INVOKABLE void playSound(const QString &name);
     Q_INVOKABLE void showReading();
+    Q_INVOKABLE void showProgress();
     Q_INVOKABLE void openReading(int band);
     Q_INVOKABLE void toggleReading(int band);
     Q_INVOKABLE void finishReading(int band);
@@ -217,6 +234,7 @@ private:
     void applyPsalter(const QJsonObject &psalter);
     void applyLibrary(const QJsonObject &library);
     void applyEditor(const QJsonObject &editor);
+    void applyProgress(const QJsonObject &progress);
     QString soundPlayer() const;
     int newestAcceptedId() const;
 
@@ -232,6 +250,7 @@ private:
     int m_newestReadingId = -1;
     int m_newestPsalterId = -1;
     int m_newestLibraryId = -1;
+    int m_newestProgressId = -1;
     double m_ropeDiameter = 240;
     int m_restarts = 0;
     bool m_snapshotReady = false;
@@ -316,4 +335,12 @@ private:
     QString m_todayLink;
     QString m_thanksgiving;
     int m_thanksEvent = 0;
+    bool m_progressReady = false;
+    QString m_progressHeading;
+    QString m_progressThrough;
+    QVariantList m_progressSummary;
+    QVariantList m_progressRules;
+    QString m_progressFigure;
+    QString m_progressFigureNote;
+    QString m_progressArtworkUrl;
 };

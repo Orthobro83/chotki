@@ -43,7 +43,7 @@ jobs:
         run: |
           cmake -S linux/app/ui -B linux/app/ui/build -G Ninja
           cmake --build linux/app/ui/build -j 2
-      - name: Exercise sidebar, prayer rope, reading, library, home actions, and helper restart
+      - name: Exercise sidebar, prayer rope, reading, library, home actions, progress, and helper restart
         run: |
           bridge=$(swift build --show-bin-path --package-path linux/app/bridge)/ChotkiLinuxBridge
           CHOTKI_LINUX_BRIDGE="$bridge" ctest --test-dir linux/app/ui/build --output-on-failure
@@ -97,6 +97,7 @@ jobs:
         run: |
           test -d /usr/lib/chotki/ChotkiCore_ChotkiCore.bundle
           test -f /usr/share/chotki/Resources/sayings/order.txt
+          test -f /usr/share/chotki/Resources/progress.jpg
           test -f /usr/share/chotki/Resources/sayings/281.jpg
           printf '{"v":1,"id":1,"op":"snapshot"}\n' | \
             LD_LIBRARY_PATH=/usr/lib/chotki/swift \

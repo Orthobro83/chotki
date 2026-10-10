@@ -40,6 +40,8 @@ install -m644 "$repo_root/linux/app/ui/fonts/LICENSE.txt" \
     "$stage/usr/share/doc/chotki/XCharter-LICENSE.txt"
 cp -a "$repo_root/macos/Sources/Chotki/Resources/sayings/." \
     "$stage/usr/share/chotki/Resources/sayings/"
+install -m644 "$repo_root/macos/Sources/Chotki/Resources/progress.jpg" \
+    "$stage/usr/share/chotki/Resources/progress.jpg"
 
 cat > "$stage/usr/bin/chotki" <<'SH'
 #!/bin/sh

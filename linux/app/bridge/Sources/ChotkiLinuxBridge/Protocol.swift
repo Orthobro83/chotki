@@ -53,6 +53,11 @@ struct BridgeRequest: Decodable {
     var scope: String?
     /// True when "Don't Show Again" was checked on the custom-rule caution.
     var hideCaution: Bool?
+    /// Start of a new rule's activation. Omitted, the rule starts today.
+    /// The editor does not send this. A progress fixture needs a day already past.
+    var from: String?
+    /// Length of a `progress` report. Omitted, the window is the Mac's 30 days.
+    var days: Int?
 }
 
 struct PrayerKnotPayload: Encodable {
@@ -314,6 +319,25 @@ struct BridgeSuccess: Encodable {
     var todayLink: String? = nil
     /// Set only on the reply that settles a day. The window shows it, then lets it go.
     var thanksgiving: String? = nil
+    /// The progress report. Not a home snapshot: today is already outside it.
+    var progress: ProgressPayload? = nil
+}
+
+struct ProgressRulePayload: Encodable {
+    var id: String
+    var title: String
+    /// "1 of 2". Kept, out of what came round. Stood-down days are already out of both.
+    var count: String
+}
+
+struct ProgressPayload: Encodable {
+    var heading: String
+    var through: String
+    var summary: [String]
+    var rules: [ProgressRulePayload]
+    /// Rounded percent. Omitted when the figure is hidden or nothing has come due.
+    var figure: Int? = nil
+    var figureNote: String? = nil
 }
 
 struct BridgeFailure: Encodable {

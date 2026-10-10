@@ -24,6 +24,9 @@ Bridge::Bridge(QString program, bool review, QObject *parent)
             if (!name.isEmpty()) m_artworkOrder.push_back(name);
         }
     }
+    const QString progressImage = QDir(m_artworkRoot).filePath("progress.jpg");
+    if (!m_artworkRoot.isEmpty() && QFileInfo::exists(progressImage))
+        m_progressArtworkUrl = QUrl::fromLocalFile(progressImage).toString();
     connect(&m_process, &QProcess::started, this, [this] {
         m_status = "Loading your record…";
         m_error.clear();
@@ -121,6 +124,8 @@ struct BridgeResponse {
     QJsonObject library;
     bool hasEditor = false;
     QJsonObject editor;
+    bool hasProgress = false;
+    QJsonObject progress;
     bool hasTodayLink = false;
     QString todayLink;
     bool hasThanksgiving = false;
@@ -173,6 +178,8 @@ BridgeResponse decodeResponse(const QJsonObject &object) {
     response.library = object.value("library").toObject();
     response.hasEditor = object.contains("editor");
     response.editor = object.value("editor").toObject();
+    response.hasProgress = object.contains("progress");
+    response.progress = object.value("progress").toObject();
     response.hasTodayLink = object.contains("todayLink");
     response.todayLink = object.value("todayLink").toString();
     response.hasThanksgiving = object.contains("thanksgiving");
@@ -248,6 +255,8 @@ void Bridge::openKathisma(int number, bool manual) {
 void Bridge::finishPsalter() { send("finishPsalter"); }
 
 void Bridge::showLibrary(const QString &query) { send("library", QJsonObject{{"query", query}}); }
+
+void Bridge::showProgress() { send("progress"); }
 
 void Bridge::prepareTemplate(const QString &templateID) {
     send("prepareTemplate", QJsonObject{{"template", templateID}});
@@ -384,6 +393,21 @@ void Bridge::applyEditor(const QJsonObject &editor) {
     m_editorPage = editor.toVariantMap();
 }
 
+void Bridge::applyProgress(const QJsonObject &progress) {
+    m_progressHeading = progress.value("heading").toString();
+    m_progressThrough = progress.value("through").toString();
+    m_progressSummary = progress.value("summary").toArray().toVariantList();
+    m_progressRules = progress.value("rules").toArray().toVariantList();
+    if (progress.contains("figure")) {
+        m_progressFigure = QString::number(progress.value("figure").toInt());
+        m_progressFigureNote = progress.value("figureNote").toString();
+    } else {
+        m_progressFigure.clear();
+        m_progressFigureNote.clear();
+    }
+    m_progressReady = true;
+}
+
 void Bridge::applyTones(const QJsonObject &tones) {
     m_tickWav = tones.value("tick").toString();
     m_tockWav = tones.value("tock").toString();
@@ -392,7 +416,7 @@ void Bridge::applyTones(const QJsonObject &tones) {
 
 int Bridge::newestAcceptedId() const {
     return std::max({m_newestSuccessId, m_newestPrayerId, m_newestOpeningId, m_newestToneId,
-                     m_newestReadingId, m_newestPsalterId, m_newestLibraryId});
+                     m_newestReadingId, m_newestPsalterId, m_newestLibraryId, m_newestProgressId});
 }
 
 void Bridge::readResponses() {
@@ -462,6 +486,11 @@ void Bridge::readResponses() {
             m_newestLibraryId = response.id;
             if (response.hasLibrary) applyLibrary(response.library);
             if (response.hasEditor) applyEditor(response.editor);
+            m_error.clear();
+        }
+        if (response.hasProgress && response.id >= m_newestProgressId) {
+            m_newestProgressId = response.id;
+            applyProgress(response.progress);
             m_error.clear();
         }
         if (!response.home || response.id < m_newestSuccessId) {

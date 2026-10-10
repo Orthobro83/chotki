@@ -112,7 +112,7 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+1"; onActivated: window.section = "Home" }
     Shortcut { sequence: "Ctrl+2"; onActivated: window.showSection("Prayers") }
     Shortcut { sequence: "Ctrl+3"; onActivated: window.showSection("Reading") }
-    Shortcut { sequence: "Ctrl+4"; onActivated: window.section = "Progress" }
+    Shortcut { sequence: "Ctrl+4"; onActivated: window.showSection("Progress") }
     Shortcut { sequence: "Ctrl+5"; onActivated: window.section = "Library" }
     Shortcut { sequence: "Ctrl+6"; onActivated: window.section = "Glossary" }
     Shortcut { sequence: "Ctrl+7"; onActivated: window.section = "Settings" }
@@ -302,10 +302,18 @@ ApplicationWindow {
                     visible: active
                     source: "Library.qml"
                 }
+                Loader {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: active
+                    active: window.section === "Progress"
+                    visible: active
+                    source: "Progress.qml"
+                }
 
                 ColumnLayout {
                     visible: window.section !== "Home" && window.section !== "Prayers"
                             && window.section !== "Reading" && window.section !== "Library"
+                            && window.section !== "Progress"
                     Layout.fillWidth: true
                     Layout.fillHeight: visible
                     Item { height: 46 }

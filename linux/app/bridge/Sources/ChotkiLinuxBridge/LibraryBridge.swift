@@ -410,7 +410,14 @@ func performLibrary(_ request: BridgeRequest, store: SQLiteStore, on date: Calen
         } else {
             var plan = EditPlan()
             plan.newRules = [draft]
-            plan.newActivations = [Activation(ruleID: draft.id, from: today)]
+            let started: CalendarDate
+            if let raw = request.from {
+                guard let day = CalendarDate(iso: raw) else { throw BridgeError.invalidRequest }
+                started = day
+            } else {
+                started = today
+            }
+            plan.newActivations = [Activation(ruleID: draft.id, from: started)]
             try store.apply(plan)
         }
         try reconcileObservances(store)
