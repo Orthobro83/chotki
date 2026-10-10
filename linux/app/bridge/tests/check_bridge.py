@@ -9,6 +9,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import uuid
 
 
 def conversation(helper: str, mode: str, environment=None):
@@ -43,6 +44,27 @@ def occurrence_count(directory):
     count = connection.execute("select count(*) from occurrence").fetchone()[0]
     connection.close()
     return count
+
+
+def occurrence_status(directory, rule_id, date):
+    connection = sqlite3.connect(Path(directory) / "chotki.sqlite")
+    row = connection.execute(
+        "select status, completed_at from occurrence where rule_id = ? and date = ?",
+        (rule_id, date),
+    ).fetchone()
+    connection.close()
+    return None if row is None else row
+
+
+def insert_skipped(directory, rule_id, date):
+    connection = sqlite3.connect(Path(directory) / "chotki.sqlite")
+    connection.execute(
+        "insert into occurrence (id, rule_id, date, status, completed_at, moved_to) "
+        "values (?, ?, ?, 'skipped', null, null)",
+        (str(uuid.uuid4()), rule_id, date),
+    )
+    connection.commit()
+    connection.close()
 
 
 def completed_at(directory, rule_id):
@@ -179,6 +201,91 @@ def main():
             assert Path(tones[name]).read_bytes()[:4] == b"RIFF"
         assert ask("tones")["tones"] == tones
         assert occurrence_count(review_dir) == before_prayer
+
+        day = ask("selectDate", date="2026-10-06")
+        gospel = next(item for item in day["entries"] if item["title"] == "The day's Gospel")
+        epistle = next(item for item in day["entries"] if item["title"] == "The day's Epistle")
+        life_rule = next(item for item in day["entries"] if item["title"] == "The life of the day's saint")
+        psalter_rule = next(item for item in day["entries"] if item["title"] == "A kathisma of the Psalter")
+        assert not gospel["kept"] and not epistle["kept"] and not life_rule["kept"]
+        closed = ask("reading")["reading"]
+        assert closed["marked"] == []
+        assert all(not section["open"] for section in closed["sections"])
+        titles = [section["title"] for section in closed["sections"]]
+        for title in ("The day's Gospel", "The day's Epistle", "Vespers", "Matins",
+                      "The life of the day's saint"):
+            assert title in titles, titles
+        assert "¶" not in json.dumps(closed)
+        before_reading = occurrence_count(review_dir)
+        texts = []
+        for band in (0, 1, 2, 3, 4):
+            opened = ask("openReading", band=band)["reading"]
+            assert opened["marked"] == []
+            assert [section["band"] for section in opened["sections"] if section["open"]] == [band]
+            section = next(item for item in opened["sections"] if item["band"] == band)
+            if band == 4:
+                life = section["life"]
+                assert life["available"] is True
+                assert "/" in life["dates"]
+                assert life["license"] == "CC BY-SA 4.0"
+                assert "unchanged" in life["licenseNote"]
+                assert life["sections"]
+            else:
+                assert section["passages"]
+                for passage in section["passages"]:
+                    assert passage["text"] and "¶" not in passage["text"]
+                    texts.append(passage["text"])
+        assert any("\n\n" in text for text in texts)
+        assert occurrence_count(review_dir) == before_reading
+        both = ask("toggleReading", band=0)["reading"]
+        assert sorted(section["band"] for section in both["sections"] if section["open"]) == [0, 4]
+
+        finished = ask("finishReading", band=0)
+        assert gospel["id"] in finished["reading"]["marked"]
+        assert epistle["id"] not in finished["reading"]["marked"]
+        assert next(item for item in finished["entries"] if item["id"] == gospel["id"])["kept"]
+        assert not next(item for item in finished["entries"] if item["id"] == epistle["id"])["kept"]
+        assert completed_at(review_dir, gospel["id"])
+        insert_skipped(review_dir, epistle["id"], "2026-10-06")
+        stood = ask("finishReading", band=1)
+        assert epistle["id"] not in stood["reading"]["marked"]
+        assert occurrence_status(review_dir, epistle["id"], "2026-10-06") == ("skipped", None)
+        kept_life = ask("finishReading", band=4)
+        assert life_rule["id"] in kept_life["reading"]["marked"]
+        assert next(item for item in kept_life["entries"] if item["id"] == life_rule["id"])["kept"]
+
+        bright = ask("selectDate", date="2027-05-05")
+        fast = next(item for item in bright["entries"] if item["title"] == "The Wednesday and Friday fast")
+        assert fast["dispensed"] and not fast["kept"]
+        dispensed = ask("finishReading", band=0)
+        assert fast["id"] not in dispensed["reading"]["marked"]
+        fast_after = next(item for item in dispensed["entries"] if item["id"] == fast["id"])
+        assert fast_after["dispensed"] and not fast_after["kept"]
+        assert occurrence_status(review_dir, fast["id"], "2027-05-05") is None
+        assert next(item for item in dispensed["entries"] if item["title"] == "The day's Gospel")["kept"]
+        bright_psalter = ask("psalter")["psalter"]
+        assert bright_psalter["season"] == "brightWeek" and bright_psalter["appointed"] == []
+        assert "Bright Week" in bright_psalter["note"]
+        manual = ask("openKathisma", kathisma=20, manual=True)["psalter"]
+        assert manual["marked"] == [] and manual["manual"] == 20
+        numbers = [psalm["number"] for psalm in manual["manualKathisma"]["psalms"]]
+        assert numbers[0] == 143 and numbers[-1] == 150 and 151 not in numbers
+
+        ask("selectDate", date="2026-10-06")
+        kathisma = ask("openKathisma", kathisma=1, manual=True)["psalter"]
+        assert kathisma["marked"] == []
+        assert [psalm["number"] for psalm in kathisma["manualKathisma"]["psalms"]] == list(range(1, 9))
+        assert occurrence_status(review_dir, psalter_rule["id"], "2026-10-06") is None
+        kept_psalter = ask("finishPsalter")
+        assert psalter_rule["id"] in kept_psalter["psalter"]["marked"]
+        assert next(item for item in kept_psalter["entries"] if item["id"] == psalter_rule["id"])["kept"]
+
+        leap = ask("selectDate", date="2028-02-29")
+        missing_life = ask("openReading", band=4)["reading"]
+        leap_life = next(item for item in missing_life["sections"] if item["band"] == 4)["life"]
+        assert leap_life["available"] is False
+        assert leap_life["unavailable"] == "No life is stored for this day."
+        assert missing_life["marked"] == []
         close(review)
         assert (Path(review_dir) / "chotki.sqlite").is_file()
 

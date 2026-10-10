@@ -220,9 +220,17 @@ ApplicationWindow {
                     visible: active
                     source: "Prayers.qml"
                 }
+                Loader {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: active
+                    active: window.section === "Reading"
+                    visible: active
+                    source: "Reading.qml"
+                }
 
                 ColumnLayout {
                     visible: window.section !== "Home" && window.section !== "Prayers"
+                            && window.section !== "Reading"
                     Layout.fillWidth: true
                     Layout.fillHeight: visible
                     Item { height: 46 }

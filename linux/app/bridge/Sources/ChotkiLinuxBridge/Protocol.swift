@@ -23,6 +23,12 @@ struct BridgeRequest: Decodable {
     var diameter: Double?
     /// Unix seconds for `advancePrayer`. Omitted, the helper uses the clock.
     var now: Double?
+    /// A Reading section. Null on `openReading` is the sidebar, every section closed.
+    var band: Int?
+    /// A kathisma number, 1 through 20, for `openKathisma`.
+    var kathisma: Int?
+    /// True when `openKathisma` is the reader's own choice rather than the day's appointment.
+    var manual: Bool?
 }
 
 struct PrayerKnotPayload: Encodable {
@@ -115,6 +121,115 @@ struct TonePayload: Encodable {
     var bell: String
 }
 
+struct ReadingPassagePayload: Encodable {
+    var citation: String
+    /// The bundled King James text, already broken into paragraphs. Shown as it is.
+    var text: String
+}
+
+struct LifeSpanPayload: Encodable {
+    var text: String
+    var italic: Bool
+    var bold: Bool
+}
+
+struct LifeBlockPayload: Encodable {
+    var kind: String
+    var text: String
+    var spans: [LifeSpanPayload]
+    var rows: [[LifeSpanPayload]]
+}
+
+struct LifeSectionPayload: Encodable {
+    var heading: String
+    var blocks: [LifeBlockPayload]
+}
+
+struct LifePayload: Encodable {
+    var available: Bool
+    var dates: String
+    var preface: String
+    var sections: [LifeSectionPayload]
+    var saints: String
+    var unavailable: String
+    var source: String
+    var sourceURL: String
+    var license: String
+    var licenseURL: String
+    var licenseNote: String
+}
+
+struct AppointedPayload: Encodable {
+    var heading: String
+    var note: String
+    var paragraphs: [String]
+    var source: String
+    var sourceURL: String
+}
+
+struct ReadingSectionPayload: Encodable {
+    var band: Int
+    var title: String
+    var open: Bool
+    var kept: Bool
+    var dispensed: Bool
+    var stoodDown: Bool
+    var asked: Bool
+    var passages: [ReadingPassagePayload]
+    var life: LifePayload?
+    var appointed: AppointedPayload?
+}
+
+struct ReadingPayload: Encodable {
+    var title: String
+    var summary: String
+    var fastNote: String
+    var abstentionNote: String
+    var fathersText: String
+    var fathersBy: String
+    var footer: String
+    var waiting: String
+    var waitingDetail: String
+    var sections: [ReadingSectionPayload]
+    /// Rule ids this call wrote as kept. Opening a section leaves this empty.
+    var marked: [String]
+}
+
+struct PsalmVersePayload: Encodable {
+    var number: String
+    var text: String
+}
+
+struct PsalmPayload: Encodable {
+    var number: Int
+    var superscription: String?
+    var verses: [PsalmVersePayload]
+}
+
+struct KathismaPayload: Encodable {
+    var number: Int
+    var label: String
+    var range: String
+    var open: Bool
+    var psalms: [PsalmPayload]
+}
+
+struct PsalterGroupPayload: Encodable {
+    var service: String
+    var kathismata: [KathismaPayload]
+}
+
+struct PsalterPayload: Encodable {
+    var season: String
+    var note: String
+    var empty: String
+    var appointed: [PsalterGroupPayload]
+    var manual: Int?
+    var manualKathisma: KathismaPayload?
+    var source: String
+    var marked: [String]
+}
+
 struct EntryPayload: Encodable {
     var id: String
     var title: String
@@ -158,6 +273,8 @@ struct BridgeSuccess: Encodable {
     var prayer: PrayerPayload? = nil
     var opening: OpeningPayload? = nil
     var tones: TonePayload? = nil
+    var reading: ReadingPayload? = nil
+    var psalter: PsalterPayload? = nil
 }
 
 struct BridgeFailure: Encodable {

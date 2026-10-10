@@ -6,7 +6,7 @@ Written 2026-10-10, at the handoff from Codex. `linux/PORT.md` remains the recor
 
 - Working tree: `/Volumes/2TB/grok-vault/chotki-linux`
 - Branch: local `linux`, created from `origin/codex/linux-port` at `0879899`
-- Upstream: none yet. The branch was left without an upstream so a plain push cannot move `codex/linux-port`.
+- Upstream: `origin/linux`. A plain push of this branch does not move `codex/linux-port`.
 - Remote: `https://github.com/rjmac83/chotki.git`
 - The `chotki-alpha` checkout stays on `main`. Its untracked design notes and mockups stay there.
 - `codex/linux-port` stays at `0879899` until `linux` has been pushed and its Linux workflow is green. After that, the Codex branch is only a historical pointer.
@@ -80,6 +80,8 @@ Mac route: sidebar Reading, plus the Psalter reached from Prayers.
 - The Psalter reads from `Psalter` in core, and a psalter rule completes through the same occurrence path as any other kept rule.
 
 **Gate.** The review record can open each reading section, reach its end, and see that rule kept. A protocol test covers one scripture completion and proves a dispensed reading is not marked.
+
+**Checked on the ARM64 guest (2026-10-10):** the bridge test opened Gospel, Epistle, Vespers, Matins, and the life, each by itself, and wrote no occurrence until a section was finished. Finishing the Gospel kept that rule and left the Epistle unmarked. A stood-down Epistle stayed stood down. The life carried the CC BY-SA 4.0 note and its calendar dates, and February 29 offered no life. On Bright Week the Wednesday and Friday fast stayed dispensed and unmarked, and the Psalter appointed nothing. Finishing a kathisma kept that rule. The Qt test opened each section, ignored a programmatic scroll, and kept the Gospel only after a wheel reached its end, leaving the Epistle and the life unmarked. The same scroll kept a kathisma. The sidebar test, the rope, four helper restarts, an offscreen window, and a 1100×860 review screenshot still passed. The Ubuntu 24.04 `amd64` half of this gate is the GitHub workflow.
 
 ### 2.4 Library and the editor
 
@@ -197,6 +199,6 @@ Linux on mobile is the same `aarch64` application with a layout that fits a phon
 - New artwork. The existing library and its focal metadata are the set. Additions need a separate approval.
 - The retired reflections journal.
 
-## First slice, when work begins
+## Next slice
 
-Slice 2.1 only. No new room of the app until that gate is green.
+Slice 2.4, when that work is asked for. Slices 2.1 through 2.3 are recorded above.

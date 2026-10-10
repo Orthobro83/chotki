@@ -57,6 +57,27 @@ class Bridge final : public QObject {
     Q_PROPERTY(double openingKnotFade READ openingKnotFade NOTIFY changed)
     Q_PROPERTY(double openingStaggerLead READ openingStaggerLead NOTIFY changed)
     Q_PROPERTY(QString lastPlayed READ lastPlayed NOTIFY changed)
+    Q_PROPERTY(bool readingReady READ readingReady NOTIFY changed)
+    Q_PROPERTY(QString readingTitle READ readingTitle NOTIFY changed)
+    Q_PROPERTY(QString readingSummary READ readingSummary NOTIFY changed)
+    Q_PROPERTY(QString readingFastNote READ readingFastNote NOTIFY changed)
+    Q_PROPERTY(QString readingAbstentionNote READ readingAbstentionNote NOTIFY changed)
+    Q_PROPERTY(QString readingFathers READ readingFathers NOTIFY changed)
+    Q_PROPERTY(QString readingFathersBy READ readingFathersBy NOTIFY changed)
+    Q_PROPERTY(QString readingFooter READ readingFooter NOTIFY changed)
+    Q_PROPERTY(QString readingWaiting READ readingWaiting NOTIFY changed)
+    Q_PROPERTY(QString readingWaitingDetail READ readingWaitingDetail NOTIFY changed)
+    Q_PROPERTY(QVariantList readingSections READ readingSections NOTIFY changed)
+    Q_PROPERTY(QVariantList readingMarked READ readingMarked NOTIFY changed)
+    Q_PROPERTY(bool psalterReady READ psalterReady NOTIFY changed)
+    Q_PROPERTY(QString psalterSeason READ psalterSeason NOTIFY changed)
+    Q_PROPERTY(QString psalterNote READ psalterNote NOTIFY changed)
+    Q_PROPERTY(QString psalterEmpty READ psalterEmpty NOTIFY changed)
+    Q_PROPERTY(QVariantList psalterAppointed READ psalterAppointed NOTIFY changed)
+    Q_PROPERTY(int psalterManual READ psalterManual NOTIFY changed)
+    Q_PROPERTY(QVariantMap psalterManualKathisma READ psalterManualKathisma NOTIFY changed)
+    Q_PROPERTY(QString psalterSource READ psalterSource NOTIFY changed)
+    Q_PROPERTY(QVariantList psalterMarked READ psalterMarked NOTIFY changed)
 
 public:
     Bridge(QString program, bool review, QObject *parent = nullptr);
@@ -109,6 +130,27 @@ public:
     double openingKnotFade() const { return m_openingKnotFade; }
     double openingStaggerLead() const { return m_openingStaggerLead; }
     QString lastPlayed() const { return m_lastPlayed; }
+    bool readingReady() const { return m_readingReady; }
+    QString readingTitle() const { return m_readingTitle; }
+    QString readingSummary() const { return m_readingSummary; }
+    QString readingFastNote() const { return m_readingFastNote; }
+    QString readingAbstentionNote() const { return m_readingAbstentionNote; }
+    QString readingFathers() const { return m_readingFathers; }
+    QString readingFathersBy() const { return m_readingFathersBy; }
+    QString readingFooter() const { return m_readingFooter; }
+    QString readingWaiting() const { return m_readingWaiting; }
+    QString readingWaitingDetail() const { return m_readingWaitingDetail; }
+    QVariantList readingSections() const { return m_readingSections; }
+    QVariantList readingMarked() const { return m_readingMarked; }
+    bool psalterReady() const { return m_psalterReady; }
+    QString psalterSeason() const { return m_psalterSeason; }
+    QString psalterNote() const { return m_psalterNote; }
+    QString psalterEmpty() const { return m_psalterEmpty; }
+    QVariantList psalterAppointed() const { return m_psalterAppointed; }
+    int psalterManual() const { return m_psalterManual; }
+    QVariantMap psalterManualKathisma() const { return m_psalterManualKathisma; }
+    QString psalterSource() const { return m_psalterSource; }
+    QVariantList psalterMarked() const { return m_psalterMarked; }
 
     bool snapshotReady() const { return m_snapshotReady; }
     qint64 helperProcessId() const { return m_process.processId(); }
@@ -127,6 +169,12 @@ public:
     Q_INVOKABLE void startAgain();
     Q_INVOKABLE void layoutRope(double diameter);
     Q_INVOKABLE void playSound(const QString &name);
+    Q_INVOKABLE void showReading();
+    Q_INVOKABLE void toggleReading(int band);
+    Q_INVOKABLE void finishReading(int band);
+    Q_INVOKABLE void refreshPsalter();
+    Q_INVOKABLE void openKathisma(int number, bool manual);
+    Q_INVOKABLE void finishPsalter();
 
 signals:
     void changed();
@@ -139,6 +187,8 @@ private:
     void applyPrayer(const QJsonObject &prayer);
     void applyOpening(const QJsonObject &opening);
     void applyTones(const QJsonObject &tones);
+    void applyReading(const QJsonObject &reading);
+    void applyPsalter(const QJsonObject &psalter);
     QString soundPlayer() const;
     int newestAcceptedId() const;
 
@@ -151,6 +201,8 @@ private:
     int m_newestPrayerId = -1;
     int m_newestOpeningId = -1;
     int m_newestToneId = -1;
+    int m_newestReadingId = -1;
+    int m_newestPsalterId = -1;
     double m_ropeDiameter = 240;
     int m_restarts = 0;
     bool m_snapshotReady = false;
@@ -208,4 +260,25 @@ private:
     QString m_bellWav;
     QString m_lastPlayed;
     QString m_soundPlayer;
+    bool m_readingReady = false;
+    QString m_readingTitle;
+    QString m_readingSummary;
+    QString m_readingFastNote;
+    QString m_readingAbstentionNote;
+    QString m_readingFathers;
+    QString m_readingFathersBy;
+    QString m_readingFooter;
+    QString m_readingWaiting;
+    QString m_readingWaitingDetail;
+    QVariantList m_readingSections;
+    QVariantList m_readingMarked;
+    bool m_psalterReady = false;
+    QString m_psalterSeason;
+    QString m_psalterNote;
+    QString m_psalterEmpty;
+    QVariantList m_psalterAppointed;
+    int m_psalterManual = -1;
+    QVariantMap m_psalterManualKathisma;
+    QString m_psalterSource;
+    QVariantList m_psalterMarked;
 };

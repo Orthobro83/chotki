@@ -75,7 +75,7 @@ private func fail(id: Int, _ error: Error) {
     respond(BridgeFailure(v: bridgeProtocolVersion, id: id, error: String(describing: error)))
 }
 
-private func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate,
+func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate,
                           weekCenter: CalendarDate) throws -> HomeSnapshot {
     let settings = try store.loadSettings() ?? .default
     let rules = try store.rules(includeArchived: false)
@@ -148,9 +148,9 @@ do {
         }
         if try store.rules(includeArchived: false).isEmpty {
             let today = CalendarDate(Date(), in: .current)
-            for title in ["Morning prayers", "The day's Gospel", "Evening prayers",
-                          "The Jesus Prayer", "The life of the day's saint",
-                          "The Wednesday and Friday fast"] {
+            for title in ["Morning prayers", "The day's Gospel", "The day's Epistle",
+                          "Evening prayers", "The Jesus Prayer", "The life of the day's saint",
+                          "A kathisma of the Psalter", "The Wednesday and Friday fast"] {
                 guard let template = RuleLibrary.shared.templates.first(where: { $0.title == title }) else {
                     continue
                 }
@@ -171,6 +171,8 @@ do {
     // The rope count lives for this process, as it does on the Mac. Leaving the
     // page and coming back reads it again. A new process starts at the beginning.
     var prayers = PrayerSession()
+    var reading = ReadingSession()
+    var psalter = PsalterSession()
 
     while let line = readLine() {
         let decoded = try? JSONDecoder().decode(BridgeRequest.self, from: Data(line.utf8))
@@ -194,6 +196,8 @@ do {
                 }
                 selectedDate = date
                 weekCenter = date
+                reading.applyFocus()
+                psalter.clear()
                 try reply(id: id, snapshot: homeSnapshot(store: store, on: selectedDate,
                                                          weekCenter: weekCenter))
 
@@ -245,6 +249,14 @@ do {
 
             case "prayer", "advancePrayer", "choosePrayer", "aimPrayer", "showRope", "startAgain":
                 try performPrayer(request, store: store, session: &prayers)
+
+            case "reading", "openReading", "toggleReading", "finishReading":
+                try performReading(request, store: store, on: selectedDate,
+                                   weekCenter: weekCenter, session: &reading)
+
+            case "psalter", "openKathisma", "finishPsalter":
+                try performPsalter(request, store: store, on: selectedDate,
+                                   weekCenter: weekCenter, session: &psalter)
 
             case "opening":
                 respond(openingSuccess(id: id))

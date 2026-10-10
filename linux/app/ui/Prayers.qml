@@ -44,11 +44,23 @@ Item {
         syncChooser()
     }
 
+    property bool psalterOpen: false
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
+        Loader {
+            Layout.fillWidth: true
+            Layout.fillHeight: prayers.psalterOpen
+            active: prayers.psalterOpen
+            visible: prayers.psalterOpen
+            source: "Psalter.qml"
+            onLoaded: item.closeRequested.connect(function() { prayers.psalterOpen = false })
+        }
+
         ComboBox {
+            visible: !prayers.psalterOpen
             id: chooser
             objectName: "prayer-chooser"
             model: bridge.prayerChoices
@@ -66,7 +78,7 @@ Item {
 
         ColumnLayout {
             Layout.fillWidth: true
-            visible: bridge.showsRope
+            visible: bridge.showsRope && !prayers.psalterOpen
             spacing: 0
 
             Item {
@@ -200,7 +212,7 @@ Item {
         Flickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: !bridge.prayerRopeAlone
+            visible: !bridge.prayerRopeAlone && !prayers.psalterOpen
             contentHeight: words.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -265,9 +277,15 @@ Item {
             }
         }
 
-        Rectangle { Layout.fillWidth: true; height: 1; color: prayers.line }
+        Rectangle {
+            visible: !prayers.psalterOpen
+            Layout.fillWidth: true
+            height: 1
+            color: prayers.line
+        }
 
         RowLayout {
+            visible: !prayers.psalterOpen
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
@@ -298,6 +316,18 @@ Item {
             }
 
             Item { Layout.fillWidth: true }
+
+            Label {
+                objectName: "prayer-psalter"
+                text: "The Psalter"
+                color: prayers.gold
+                font.pixelSize: 15
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -6
+                    onClicked: prayers.psalterOpen = true
+                }
+            }
 
             Label {
                 objectName: "prayer-rope-toggle"

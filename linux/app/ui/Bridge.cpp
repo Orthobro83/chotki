@@ -113,6 +113,10 @@ struct BridgeResponse {
     QJsonObject opening;
     bool hasTones = false;
     QJsonObject tones;
+    bool hasReading = false;
+    QJsonObject reading;
+    bool hasPsalter = false;
+    QJsonObject psalter;
     bool home = false;
 };
 
@@ -153,6 +157,10 @@ BridgeResponse decodeResponse(const QJsonObject &object) {
     response.opening = object.value("opening").toObject();
     response.hasTones = object.contains("tones");
     response.tones = object.value("tones").toObject();
+    response.hasReading = object.contains("reading");
+    response.reading = object.value("reading").toObject();
+    response.hasPsalter = object.contains("psalter");
+    response.psalter = object.value("psalter").toObject();
     response.home = response.hasDisplayName || response.hasToday || response.hasSelectedDate
         || response.hasDayTitle || response.hasObservedDate || response.hasShowOldStyleDates
         || response.hasSayingText || response.hasSayingAuthor || response.hasSayingSource
@@ -192,6 +200,20 @@ void Bridge::aimPrayer(int target) { send("aimPrayer", QJsonObject{{"target", ta
 void Bridge::showRope(bool shown) { send("showRope", QJsonObject{{"shown", shown}}); }
 
 void Bridge::startAgain() { send("startAgain"); }
+
+void Bridge::showReading() { send("openReading", QJsonObject{{"band", QJsonValue(QJsonValue::Null)}}); }
+
+void Bridge::toggleReading(int band) { send("toggleReading", QJsonObject{{"band", band}}); }
+
+void Bridge::finishReading(int band) { send("finishReading", QJsonObject{{"band", band}}); }
+
+void Bridge::refreshPsalter() { send("psalter"); }
+
+void Bridge::openKathisma(int number, bool manual) {
+    send("openKathisma", QJsonObject{{"kathisma", number}, {"manual", manual}});
+}
+
+void Bridge::finishPsalter() { send("finishPsalter"); }
 
 void Bridge::layoutRope(double diameter) {
     if (!(diameter > 0) || diameter > 4096) return;
@@ -261,6 +283,33 @@ void Bridge::applyOpening(const QJsonObject &opening) {
     m_openingReady = !m_openingKnots.isEmpty();
 }
 
+void Bridge::applyReading(const QJsonObject &reading) {
+    m_readingTitle = reading.value("title").toString();
+    m_readingSummary = reading.value("summary").toString();
+    m_readingFastNote = reading.value("fastNote").toString();
+    m_readingAbstentionNote = reading.value("abstentionNote").toString();
+    m_readingFathers = reading.value("fathersText").toString();
+    m_readingFathersBy = reading.value("fathersBy").toString();
+    m_readingFooter = reading.value("footer").toString();
+    m_readingWaiting = reading.value("waiting").toString();
+    m_readingWaitingDetail = reading.value("waitingDetail").toString();
+    m_readingSections = reading.value("sections").toArray().toVariantList();
+    m_readingMarked = reading.value("marked").toArray().toVariantList();
+    m_readingReady = true;
+}
+
+void Bridge::applyPsalter(const QJsonObject &psalter) {
+    m_psalterSeason = psalter.value("season").toString();
+    m_psalterNote = psalter.value("note").toString();
+    m_psalterEmpty = psalter.value("empty").toString();
+    m_psalterAppointed = psalter.value("appointed").toArray().toVariantList();
+    m_psalterManual = psalter.contains("manual") ? psalter.value("manual").toInt() : -1;
+    m_psalterManualKathisma = psalter.value("manualKathisma").toObject().toVariantMap();
+    m_psalterSource = psalter.value("source").toString();
+    m_psalterMarked = psalter.value("marked").toArray().toVariantList();
+    m_psalterReady = true;
+}
+
 void Bridge::applyTones(const QJsonObject &tones) {
     m_tickWav = tones.value("tick").toString();
     m_tockWav = tones.value("tock").toString();
@@ -268,7 +317,8 @@ void Bridge::applyTones(const QJsonObject &tones) {
 }
 
 int Bridge::newestAcceptedId() const {
-    return std::max({m_newestSuccessId, m_newestPrayerId, m_newestOpeningId, m_newestToneId});
+    return std::max({m_newestSuccessId, m_newestPrayerId, m_newestOpeningId, m_newestToneId,
+                     m_newestReadingId, m_newestPsalterId});
 }
 
 void Bridge::readResponses() {
@@ -322,6 +372,16 @@ void Bridge::readResponses() {
         if (response.hasTones && response.id >= m_newestToneId) {
             m_newestToneId = response.id;
             applyTones(response.tones);
+            m_error.clear();
+        }
+        if (response.hasReading && response.id >= m_newestReadingId) {
+            m_newestReadingId = response.id;
+            applyReading(response.reading);
+            m_error.clear();
+        }
+        if (response.hasPsalter && response.id >= m_newestPsalterId) {
+            m_newestPsalterId = response.id;
+            applyPsalter(response.psalter);
             m_error.clear();
         }
         if (!response.home || response.id < m_newestSuccessId) {
