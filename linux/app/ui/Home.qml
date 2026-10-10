@@ -86,7 +86,7 @@ Item {
                         width: 42
                         height: 53
                         radius: 13
-                        color: modelData.selected ? "#16181e" : modelData.fast ? "#3b344f" : "#1e2029"
+                        color: modelData.fast ? "#3b344f" : modelData.selected ? "#16181e" : "#1e2029"
                         border.width: modelData.selected ? 1 : 0
                         border.color: home.gold
 
@@ -272,8 +272,9 @@ Item {
             }
             Item { width: 1; height: 17 }
             Rectangle {
+                id: sayingCard
                 width: parent.width
-                height: 270
+                height: Math.max(270, sayingQuote.implicitHeight + sayingCredit.implicitHeight + 78)
                 radius: 20
                 color: "#27252a"
                 ArtworkImage {
@@ -288,17 +289,19 @@ Item {
                     spacing: 5
                     Label { text: "Sayings of the Church Fathers"; color: home.parchment; font.pixelSize: 11 }
                     Label {
+                        id: sayingQuote
                         width: parent.width
                         text: bridge.sayingText
                         wrapMode: Text.Wrap
-                        maximumLineCount: 2
-                        elide: Text.ElideRight
                         color: home.parchment
                         font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
                         font.pixelSize: 18
                     }
                     Label {
+                        id: sayingCredit
+                        width: parent.width
                         text: bridge.sayingAuthor + " · " + bridge.sayingSource
+                        wrapMode: Text.Wrap
                         color: home.parchment
                         font.pixelSize: 12
                     }

@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonValue>
 #include <QProcess>
 #include <QDate>
 #include <QDir>
@@ -49,11 +50,13 @@ Bridge::~Bridge() {
 
 void Bridge::start() {
     m_pending.clear();
+    m_snapshotReady = false;
     m_process.start(m_program, {m_review ? "--review" : "--normal"});
 }
 
 void Bridge::stopped() {
     m_connected = false;
+    m_snapshotReady = false;
     if (m_closing) return;
     if (m_restarts >= 3) {
         m_status = "The record could not be opened";
@@ -67,21 +70,90 @@ void Bridge::stopped() {
     QTimer::singleShot(500 * m_restarts, this, [this] { if (!m_closing) start(); });
 }
 
-void Bridge::send(const QString &operation, const QString &name) {
+namespace {
+
+struct BridgeResponse {
+    int version = 0;
+    int id = 0;
+    bool ok = false;
+    QString error;
+    bool hasMode = false;
+    bool hasDisplayName = false;
+    QString displayName;
+    bool hasToday = false;
+    QString today;
+    bool hasSelectedDate = false;
+    QString selectedDate;
+    bool hasDayTitle = false;
+    QString dayTitle;
+    bool hasObservedDate = false;
+    QString observedDate;
+    bool hasShowOldStyleDates = false;
+    bool showOldStyleDates = false;
+    bool hasSayingText = false;
+    QString sayingText;
+    bool hasSayingAuthor = false;
+    QString sayingAuthor;
+    bool hasSayingSource = false;
+    QString sayingSource;
+    bool hasEntries = false;
+    QVariantList entries;
+    bool hasWeek = false;
+    QVariantList week;
+    bool hasPsalmOneVerses = false;
+    int psalmOneVerses = 0;
+};
+
+BridgeResponse decodeResponse(const QJsonObject &object) {
+    BridgeResponse response;
+    response.version = object.value("v").toInt();
+    response.id = object.value("id").toInt();
+    response.ok = object.value("ok").toBool();
+    response.error = object.value("error").toString();
+    response.hasMode = object.contains("mode");
+    response.hasDisplayName = object.contains("displayName");
+    response.displayName = object.value("displayName").toString();
+    response.hasToday = object.contains("today");
+    response.today = object.value("today").toString();
+    response.hasSelectedDate = object.contains("selectedDate");
+    response.selectedDate = object.value("selectedDate").toString();
+    response.hasDayTitle = object.contains("dayTitle");
+    response.dayTitle = object.value("dayTitle").toString();
+    response.hasObservedDate = object.contains("observedDate");
+    response.observedDate = object.value("observedDate").toString();
+    response.hasShowOldStyleDates = object.contains("showOldStyleDates");
+    response.showOldStyleDates = object.value("showOldStyleDates").toBool();
+    response.hasSayingText = object.contains("sayingText");
+    response.sayingText = object.value("sayingText").toString();
+    response.hasSayingAuthor = object.contains("sayingAuthor");
+    response.sayingAuthor = object.value("sayingAuthor").toString();
+    response.hasSayingSource = object.contains("sayingSource");
+    response.sayingSource = object.value("sayingSource").toString();
+    response.hasEntries = object.contains("entries");
+    response.entries = object.value("entries").toArray().toVariantList();
+    response.hasWeek = object.contains("week");
+    response.week = object.value("week").toArray().toVariantList();
+    response.hasPsalmOneVerses = object.contains("psalmOneVerses");
+    response.psalmOneVerses = object.value("psalmOneVerses").toInt();
+    return response;
+}
+
+}
+
+void Bridge::send(const QString &operation, const QJsonObject &fields) {
     if (m_process.state() != QProcess::Running) return;
     QJsonObject request{{"v", protocolVersion}, {"id", m_nextId++}, {"op", operation}};
-    if (operation == "setReviewName") request.insert("name", name);
-    if (operation == "selectDate") request.insert("date", name);
-    if (operation == "toggleKept") request.insert("ruleID", name);
-    if (operation == "shiftWeek") request.insert("direction", name.toInt());
+    for (auto it = fields.begin(); it != fields.end(); ++it) request.insert(it.key(), it.value());
     m_process.write(QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n');
 }
 
 void Bridge::refresh() { send("snapshot"); }
-void Bridge::setReviewName(const QString &name) { if (m_review) send("setReviewName", name); }
-void Bridge::selectDate(const QString &date) { send("selectDate", date); }
-void Bridge::toggleKept(const QString &ruleID) { send("toggleKept", ruleID); }
-void Bridge::shiftWeek(int direction) { if (direction == -1 || direction == 1) send("shiftWeek", QString::number(direction)); }
+void Bridge::setReviewName(const QString &name) { if (m_review) send("setReviewName", QJsonObject{{"name", name}}); }
+void Bridge::selectDate(const QString &date) { send("selectDate", QJsonObject{{"date", date}}); }
+void Bridge::toggleKept(const QString &ruleID) { send("toggleKept", QJsonObject{{"ruleID", ruleID}}); }
+void Bridge::shiftWeek(int direction) {
+    if (direction == -1 || direction == 1) send("shiftWeek", QJsonObject{{"direction", direction}});
+}
 
 void Bridge::readResponses() {
     m_pending += m_process.readAllStandardOutput();
@@ -95,25 +167,37 @@ void Bridge::readResponses() {
             emit changed();
             continue;
         }
-        const QJsonObject response = document.object();
-        if (response.value("v").toInt() != protocolVersion) {
+        const BridgeResponse response = decodeResponse(document.object());
+        if (response.version != protocolVersion) {
             m_error = "The Linux interface and Swift helper use different protocol versions.";
             emit changed();
             continue;
         }
-        if (!response.value("ok").toBool()) {
-            m_error = response.value("error").toString();
+        // A reply for an earlier request must not wipe a newer success, and an
+        // error must not blank the snapshot the newer success already showed.
+        if (!response.ok) {
+            if (response.id > m_newestSuccessId) {
+                m_error = response.error;
+                emit changed();
+            }
+            continue;
+        }
+        if (response.hasMode) {
+            m_connected = true;
+            m_status = "Ready";
+            m_restarts = 0;
+        }
+        if (response.id < m_newestSuccessId) {
             emit changed();
             continue;
         }
-        if (response.contains("mode")) {
-            m_connected = true;
-            m_status = "Ready";
-        }
-        if (response.contains("displayName")) m_displayName = response.value("displayName").toString();
-        if (response.contains("today")) m_today = response.value("today").toString();
-        if (response.contains("selectedDate")) {
-            m_selectedDate = response.value("selectedDate").toString();
+        m_newestSuccessId = response.id;
+        m_error.clear();
+        if (response.hasDisplayName) m_displayName = response.displayName;
+        if (response.hasToday) m_today = response.today;
+        if (response.hasSelectedDate) {
+            m_snapshotReady = true;
+            m_selectedDate = response.selectedDate;
             const QDate date = QDate::fromString(m_selectedDate, Qt::ISODate);
             m_artworkUrl.clear();
             if (date.isValid() && !m_artworkOrder.isEmpty()) {
@@ -122,16 +206,15 @@ void Bridge::readResponses() {
                 if (QFileInfo::exists(path)) m_artworkUrl = QUrl::fromLocalFile(path).toString();
             }
         }
-        if (response.contains("dayTitle")) m_dayTitle = response.value("dayTitle").toString();
-        if (response.contains("observedDate")) m_observedDate = response.value("observedDate").toString();
-        if (response.contains("showOldStyleDates")) m_showOldStyleDates = response.value("showOldStyleDates").toBool();
-        if (response.contains("sayingText")) m_sayingText = response.value("sayingText").toString();
-        if (response.contains("sayingAuthor")) m_sayingAuthor = response.value("sayingAuthor").toString();
-        if (response.contains("sayingSource")) m_sayingSource = response.value("sayingSource").toString();
-        if (response.contains("entries")) m_entries = response.value("entries").toArray().toVariantList();
-        if (response.contains("week")) m_week = response.value("week").toArray().toVariantList();
-        if (response.contains("psalmOneVerses")) m_psalmOneVerses = response.value("psalmOneVerses").toInt();
-        m_error.clear();
+        if (response.hasDayTitle) m_dayTitle = response.dayTitle;
+        if (response.hasObservedDate) m_observedDate = response.observedDate;
+        if (response.hasShowOldStyleDates) m_showOldStyleDates = response.showOldStyleDates;
+        if (response.hasSayingText) m_sayingText = response.sayingText;
+        if (response.hasSayingAuthor) m_sayingAuthor = response.sayingAuthor;
+        if (response.hasSayingSource) m_sayingSource = response.sayingSource;
+        if (response.hasEntries) m_entries = response.entries;
+        if (response.hasWeek) m_week = response.week;
+        if (response.hasPsalmOneVerses) m_psalmOneVerses = response.psalmOneVerses;
         emit changed();
     }
 }

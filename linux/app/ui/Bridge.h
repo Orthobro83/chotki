@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QObject>
 #include <QProcess>
 #include <QString>
@@ -48,6 +49,9 @@ public:
     QVariantList week() const { return m_week; }
     int psalmOneVerses() const { return m_psalmOneVerses; }
 
+    bool snapshotReady() const { return m_snapshotReady; }
+    qint64 helperProcessId() const { return m_process.processId(); }
+
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void setReviewName(const QString &name);
     Q_INVOKABLE void selectDate(const QString &date);
@@ -59,7 +63,7 @@ signals:
 
 private:
     void start();
-    void send(const QString &operation, const QString &name = {});
+    void send(const QString &operation, const QJsonObject &fields = {});
     void readResponses();
     void stopped();
 
@@ -68,7 +72,9 @@ private:
     QString m_program;
     QByteArray m_pending;
     int m_nextId = 1;
+    int m_newestSuccessId = -1;
     int m_restarts = 0;
+    bool m_snapshotReady = false;
     bool m_review;
     bool m_closing = false;
     bool m_connected = false;

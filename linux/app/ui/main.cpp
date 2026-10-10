@@ -13,6 +13,8 @@
 #include <QStandardPaths>
 #include <QTimer>
 
+#include <memory>
+
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
@@ -32,13 +34,19 @@ int main(int argc, char *argv[]) {
     const QString serverName = QString("org.chotki.linux.%1.%2")
         .arg(getuid()).arg(review ? "review" : "normal");
 
+    const auto activateExisting = [&](QLocalSocket &socket) {
+        if (screenshot) {
+            qCritical("A review window is already open, so the screenshot was not taken");
+            return 8;
+        }
+        socket.write("activate\n");
+        socket.waitForBytesWritten(250);
+        return 0;
+    };
+
     QLocalSocket existing;
     existing.connectToServer(serverName);
-    if (existing.waitForConnected(250)) {
-        existing.write("activate\n");
-        existing.waitForBytesWritten(250);
-        return 0;
-    }
+    if (existing.waitForConnected(250)) return activateExisting(existing);
 
     // Only the process holding this lock may remove a stale socket. A second
     // launch must never unlink the first launch's live socket.
@@ -47,11 +55,7 @@ int main(int argc, char *argv[]) {
     QLockFile lock(lockPath);
     if (!lock.tryLock(0)) {
         existing.connectToServer(serverName);
-        if (existing.waitForConnected(1000)) {
-            existing.write("activate\n");
-            existing.waitForBytesWritten(250);
-            return 0;
-        }
+        if (existing.waitForConnected(1000)) return activateExisting(existing);
         qCritical("Another Chotki instance is starting but cannot be reached");
         return 3;
     }
@@ -72,16 +76,22 @@ int main(int argc, char *argv[]) {
     if (!window) return 5;
     if (screenshot) {
         const QString path = arguments.at(4);
-        QTimer::singleShot(2500, window, [window, path, &application, &bridge] {
-            if (!bridge.connected()) {
-                qCritical("The Swift record did not connect before the review screenshot");
+        auto *timer = new QTimer(window);
+        auto attempts = std::make_shared<int>(0);
+        timer->setInterval(100);
+        QObject::connect(timer, &QTimer::timeout, window, [window, path, timer, attempts, &application, &bridge] {
+            if (!bridge.snapshotReady()) {
+                if (++(*attempts) < 80) return;
+                qCritical("The Swift record did not load before the review screenshot");
                 application.exit(7);
                 return;
             }
+            timer->stop();
             const bool saved = window->grabWindow().save(path);
             if (!saved) qCritical("Could not save the review screenshot");
             application.exit(saved ? 0 : 6);
         });
+        timer->start();
     }
     QObject::connect(&server, &QLocalServer::newConnection, window, [&server, window] {
         while (QLocalSocket *socket = server.nextPendingConnection()) {

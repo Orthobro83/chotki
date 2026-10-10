@@ -23,7 +23,7 @@ locations with `CHOTKI_SOURCE_ROOT` and `CHOTKI_STAGE_ROOT`. No compiler
 output is written to the shared source tree.
 
 The review helper uses `~/.cache/chotki-linux-review/chotki.sqlite`, seeded
-with a sample name and five sample rules. Normal mode uses `XDG_DATA_HOME/Chotki/chotki.sqlite`,
+with a sample name and six sample rules. Normal mode uses `XDG_DATA_HOME/Chotki/chotki.sqlite`,
 falling back to `~/.local/share/Chotki/chotki.sqlite`. The two modes also use
 different single-instance sockets. Do not use normal mode for screenshots or
 automated tests.

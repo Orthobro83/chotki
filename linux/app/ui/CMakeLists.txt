@@ -27,3 +27,8 @@ target_include_directories(chotki-navigation-test PRIVATE ${CMAKE_CURRENT_SOURCE
 target_compile_definitions(chotki-navigation-test PRIVATE CHOTKI_QML_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Main.qml")
 add_test(NAME sidebar-navigation COMMAND chotki-navigation-test)
 set_tests_properties(sidebar-navigation PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_executable(chotki-bridge-restart-test tests/BridgeRestartTest.cpp Bridge.cpp Bridge.h)
+target_link_libraries(chotki-bridge-restart-test PRIVATE Qt6::Core Qt6::Test)
+target_include_directories(chotki-bridge-restart-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME bridge-restart COMMAND chotki-bridge-restart-test)

@@ -2,7 +2,7 @@ name: Linux desktop
 
 on:
   push:
-    branches: [main, codex/linux-port]
+    branches: [main, linux, codex/linux-port]
     paths:
       - 'linux/**'
       - 'core/**'
@@ -43,8 +43,10 @@ jobs:
         run: |
           cmake -S linux/app/ui -B linux/app/ui/build -G Ninja
           cmake --build linux/app/ui/build -j 2
-      - name: Exercise sidebar navigation
-        run: ctest --test-dir linux/app/ui/build --output-on-failure
+      - name: Exercise sidebar navigation and helper restart
+        run: |
+          bridge=$(swift build --show-bin-path --package-path linux/app/bridge)/ChotkiLinuxBridge
+          CHOTKI_LINUX_BRIDGE="$bridge" ctest --test-dir linux/app/ui/build --output-on-failure
       - name: Check bridge and bundled core on amd64
         run: |
           bridge=$(swift build --show-bin-path --package-path linux/app/bridge)/ChotkiLinuxBridge

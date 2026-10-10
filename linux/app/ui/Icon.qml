@@ -46,6 +46,24 @@ Canvas {
             }
             circle(9, 9, 1.15)
             break
+        case "Fasting":
+            p.beginPath()
+            p.arc(9, 8.2, 5.4, 0.15 * Math.PI, 0.85 * Math.PI)
+            p.stroke()
+            line([4.2, 8.6, 13.8, 8.6])
+            break
+        case "Services":
+            line([4.2, 15, 4.2, 8.4, 9, 4.4, 13.8, 8.4, 13.8, 15])
+            line([9, 2.2, 9, 5.4])
+            line([7.5, 3.5, 10.5, 3.5])
+            break
+        case "Life":
+            circle(9, 4.4, 1.7)
+            line([9, 6.3, 9, 11])
+            line([5.4, 8.2, 12.6, 8.2])
+            line([9, 11, 6.3, 15.2])
+            line([9, 11, 11.7, 15.2])
+            break
         case "Reading":
             line([9, 4.3, 9, 15.1])
             line([9, 5.3, 6.5, 3.7, 2.3, 3.5, 2.3, 13.5, 6.4, 13.7, 9, 15.1])
