@@ -131,6 +131,7 @@ Item {
                     height: 53
                     clip: true
                     property real contentX: 0
+                    property string picked: ""
                     readonly property real contentWidth: {
                         const count = bridge.week ? bridge.week.length : 0
                         return count > 0 ? count * 48 - 6 : 0
@@ -178,19 +179,26 @@ Item {
                             }
                         }
                     }
-                    // One area over the strip. Per-chip areas reported the
-                    // right chip and then selected no new day on Qt 6.4.
+                    // One area over the strip. The press reads the chip's own
+                    // name, because a per-chip click on Qt 6.4 left the day unchanged.
                     MouseArea {
                         anchors.fill: parent
                         z: 2
                         preventStealing: true
-                        onClicked: function(mouse) {
-                            const days = bridge.week
-                            if (!days) return
-                            const index = Math.floor((mouse.x + weekStrip.contentX) / 48)
-                            if (index < 0 || index >= days.length) return
-                            const day = days[index]
-                            if (day && day.date) bridge.selectDate(day.date)
+                        onPressed: function(mouse) {
+                            const x = mouse.x + weekStrip.contentX
+                            let date = ""
+                            const kids = weekStrip.children
+                            for (let i = 0; i < kids.length; ++i) {
+                                const kid = kids[i]
+                                const name = kid.objectName || ""
+                                if (name.indexOf("day-") !== 0) continue
+                                if (x >= kid.x && x < kid.x + kid.width
+                                        && mouse.y >= kid.y && mouse.y < kid.y + kid.height)
+                                    date = name.substring(4)
+                            }
+                            weekStrip.picked = Math.round(mouse.x) + "," + Math.round(mouse.y) + "=" + date
+                            if (date.length) bridge.selectDate(date)
                         }
                     }
                     WheelHandler {
@@ -471,6 +479,7 @@ Item {
         anchors.fill: parent
         z: 20
         visible: cardMenu.visible
+        enabled: cardMenu.visible
         onClicked: home.hideMenu()
     }
 

@@ -395,6 +395,7 @@ ApplicationWindow {
         anchors.fill: parent
         z: 40
         active: false
+        visible: active
         source: "OpeningMark.qml"
         onLoaded: item.finished.connect(function() {
             Qt.callLater(function() { openingLoader.active = false })

@@ -79,6 +79,16 @@ class HomeActionsTest final : public QObject {
         QTest::mouseClick(window, button, Qt::NoModifier, sceneCenter(item));
     }
 
+    static void collectHits(QQuickItem *item, const QPointF &scene, QStringList *hits, int depth) {
+        if (!item || !item->isVisible() || depth > 12 || hits->size() > 16) return;
+        const auto kids = item->childItems();
+        for (int i = kids.size() - 1; i >= 0; --i) collectHits(kids.at(i), scene, hits, depth + 1);
+        if (!item->contains(item->mapFromScene(scene))) return;
+        QString name = item->objectName();
+        if (name.isEmpty()) name = QString::fromLatin1(item->metaObject()->className());
+        hits->append(name);
+    }
+
     static bool weekSettled(const Bridge *bridge, const QString &date) {
         for (const QVariant &day : bridge->week()) {
             const QVariantMap map = day.toMap();
@@ -223,8 +233,13 @@ private slots:
                  qPrintable(where));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, center);
         QVERIFY2(QTest::qWaitFor([&] { return bridge->selectedDate() == other; }, 8000),
-                 qPrintable(QString("selected %1 wanted %2 %3")
-                            .arg(bridge->selectedDate(), other, where)));
+                 qPrintable([&] {
+                     QStringList hits;
+                     collectHits(window->contentItem(), center, &hits, 0);
+                     return QString("selected %1 wanted %2 %3 picked %4 error %5 hits %6")
+                         .arg(bridge->selectedDate(), other, where, week->property("picked").toString(),
+                              bridge->error(), hits.join(QStringLiteral(" > ")));
+                 }()));
         QQuickItem *link = nullptr;
         QTRY_VERIFY_WITH_TIMEOUT((link = findItem(window->contentItem(), "today-link"))
                                  && link->isVisible(), 3000);
