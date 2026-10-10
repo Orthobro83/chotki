@@ -122,56 +122,68 @@ Item {
                     font.pixelSize: 18
                     MouseArea { anchors.fill: parent; onClicked: bridge.shiftWeek(-1) }
                 }
-                ListView {
+                Item {
                     id: weekStrip
                     objectName: "week-scroll"
-                    // A row inside this flickable corrupted delegate parents.
-                    // The view positions the seven chips itself.
+                    // Chips are placed by hand. A horizontal ListView on Qt 6.4
+                    // reported a chip's place and then gave the click to no day.
                     width: 330
                     height: 53
-                    orientation: ListView.Horizontal
-                    spacing: 6
                     clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    cacheBuffer: 800
-                    model: bridge.week
-                    delegate: Rectangle {
-                        required property var modelData
-                        objectName: "day-" + modelData.date
-                        width: 42
-                        height: 53
-                        radius: 13
-                        color: modelData.fast ? "#3b344f" : modelData.selected ? "#16181e" : "#1e2029"
-                        border.width: modelData.selected ? 1 : 0
-                        border.color: home.gold
+                    property real contentX: 0
+                    readonly property real contentWidth: {
+                        const count = bridge.week ? bridge.week.length : 0
+                        return count > 0 ? count * 48 - 6 : 0
+                    }
+                    Repeater {
+                        model: bridge.week
+                        delegate: Rectangle {
+                            required property var modelData
+                            required property int index
+                            objectName: "day-" + modelData.date
+                            x: index * 48 - weekStrip.contentX
+                            y: 0
+                            width: 42
+                            height: 53
+                            radius: 13
+                            color: modelData.fast ? "#3b344f" : modelData.selected ? "#16181e" : "#1e2029"
+                            border.width: modelData.selected ? 1 : 0
+                            border.color: home.gold
 
-                        Column {
-                            anchors.centerIn: parent
-                            spacing: 2
-                            Label {
-                                text: ["", "S", "M", "T", "W", "T", "F", "S"][modelData.weekday]
-                                color: home.muted
-                                font.pixelSize: 10
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 30
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 2
+                                Label {
+                                    text: ["", "S", "M", "T", "W", "T", "F", "S"][modelData.weekday]
+                                    color: home.muted
+                                    font.pixelSize: 10
+                                    horizontalAlignment: Text.AlignHCenter
+                                    width: 30
+                                }
+                                Label {
+                                    text: modelData.day
+                                    color: modelData.feast ? home.gold : home.parchment
+                                    font.pixelSize: 16
+                                    font.weight: Font.Medium
+                                    horizontalAlignment: Text.AlignHCenter
+                                    width: 30
+                                }
+                                Rectangle {
+                                    objectName: "settled-" + modelData.date
+                                    visible: modelData.settled
+                                    width: 3; height: 3; radius: 2
+                                    color: home.gold
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                }
                             }
-                            Label {
-                                text: modelData.day
-                                color: modelData.feast ? home.gold : home.parchment
-                                font.pixelSize: 16
-                                font.weight: Font.Medium
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 30
-                            }
-                            Rectangle {
-                                objectName: "settled-" + modelData.date
-                                visible: modelData.settled
-                                width: 3; height: 3; radius: 2
-                                color: home.gold
-                                anchors.horizontalCenter: parent.horizontalCenter
+                            MouseArea {
+                                anchors.fill: parent
+                                z: 1
+                                preventStealing: true
+                                property string date: modelData.date
+                                onClicked: function(mouse) { bridge.selectDate(date) }
                             }
                         }
-                        MouseArea { anchors.fill: parent; onClicked: bridge.selectDate(modelData.date) }
                     }
                     WheelHandler {
                         // A laptop touchpad synthesizes the wheel. The default

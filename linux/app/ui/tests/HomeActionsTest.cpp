@@ -206,11 +206,25 @@ private slots:
             }
         }
         QVERIFY(!other.isEmpty());
+        QQuickItem *week = nullptr;
         QQuickItem *otherDay = nullptr;
-        QTRY_VERIFY_WITH_TIMEOUT((otherDay = findItem(window->contentItem(), "day-" + other))
-                                 && otherDay->isVisible(), 3000);
-        click(window, otherDay);
-        QTRY_COMPARE_WITH_TIMEOUT(bridge->selectedDate(), other, 8000);
+        QTRY_VERIFY_WITH_TIMEOUT((week = findItem(window->contentItem(), "week-scroll"))
+                                 && (otherDay = findItem(window->contentItem(), "day-" + other))
+                                 && otherDay->width() > 20 && otherDay->height() > 20, 3000);
+        const QPointF inWeek = otherDay->mapToItem(week, QPointF(otherDay->width() / 2.0,
+                                                                  otherDay->height() / 2.0));
+        const QPoint center = sceneCenter(otherDay);
+        const QString where = QString("scene %1,%2 inWeek %3,%4 size %5x%6")
+                                  .arg(center.x()).arg(center.y())
+                                  .arg(inWeek.x()).arg(inWeek.y())
+                                  .arg(otherDay->width()).arg(otherDay->height());
+        QVERIFY2(inWeek.x() >= 0 && inWeek.x() < week->width()
+                 && inWeek.y() >= 0 && inWeek.y() < week->height(),
+                 qPrintable(where));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, center);
+        QVERIFY2(QTest::qWaitFor([&] { return bridge->selectedDate() == other; }, 8000),
+                 qPrintable(QString("selected %1 wanted %2 %3")
+                            .arg(bridge->selectedDate(), other, where)));
         QQuickItem *link = nullptr;
         QTRY_VERIFY_WITH_TIMEOUT((link = findItem(window->contentItem(), "today-link"))
                                  && link->isVisible(), 3000);
