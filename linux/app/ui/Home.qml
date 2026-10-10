@@ -74,19 +74,12 @@ Item {
     property string watchedDate: bridge.selectedDate || ""
     onWatchedDateChanged: home.hideMenu()
 
-    Flickable {
-        id: page
-        anchors.fill: parent
-        contentHeight: content.implicitHeight
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
+    Column {
+        id: mast
+        width: parent.width
+        spacing: 0
 
-        Column {
-            id: content
-            width: parent.width
-            spacing: 0
-
-            Item { width: 1; height: 18 }
+        Item { width: 1; height: 18 }
             Item {
                 width: parent.width
                 height: 20
@@ -179,25 +172,17 @@ Item {
                             }
                         }
                     }
-                    // One area over the strip. The press reads the chip's own
-                    // name, because a per-chip click on Qt 6.4 left the day unchanged.
+                    // Outside the scrolling page, so the page cannot take the press.
+                    // The chip under the pointer is chosen from its place in the week.
                     MouseArea {
                         anchors.fill: parent
                         z: 2
-                        preventStealing: true
                         onPressed: function(mouse) {
-                            const x = mouse.x + weekStrip.contentX
-                            let date = ""
-                            const kids = weekStrip.children
-                            for (let i = 0; i < kids.length; ++i) {
-                                const kid = kids[i]
-                                const name = kid.objectName || ""
-                                if (name.indexOf("day-") !== 0) continue
-                                if (x >= kid.x && x < kid.x + kid.width
-                                        && mouse.y >= kid.y && mouse.y < kid.y + kid.height)
-                                    date = name.substring(4)
-                            }
-                            weekStrip.picked = Math.round(mouse.x) + "," + Math.round(mouse.y) + "=" + date
+                            const index = Math.floor((mouse.x + weekStrip.contentX) / 48)
+                            const days = bridge.week || []
+                            const day = index >= 0 && index < days.length ? days[index] : null
+                            const date = day && day.date ? day.date : ""
+                            weekStrip.picked = Math.round(mouse.x) + "=" + date
                             if (date.length) bridge.selectDate(date)
                         }
                     }
@@ -220,6 +205,22 @@ Item {
                     MouseArea { anchors.fill: parent; onClicked: bridge.shiftWeek(1) }
                 }
             }
+    }
+    Flickable {
+        id: page
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: mast.bottom
+        anchors.bottom: parent.bottom
+        contentHeight: content.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+
+        Column {
+            id: content
+            width: parent.width
+            spacing: 0
+
             Item { width: 1; height: 50 }
             Label {
                 width: parent.width
