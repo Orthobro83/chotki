@@ -78,6 +78,9 @@ class Bridge final : public QObject {
     Q_PROPERTY(QVariantMap psalterManualKathisma READ psalterManualKathisma NOTIFY changed)
     Q_PROPERTY(QString psalterSource READ psalterSource NOTIFY changed)
     Q_PROPERTY(QVariantList psalterMarked READ psalterMarked NOTIFY changed)
+    Q_PROPERTY(bool libraryReady READ libraryReady NOTIFY changed)
+    Q_PROPERTY(QVariantMap libraryPage READ libraryPage NOTIFY changed)
+    Q_PROPERTY(QVariantMap editorPage READ editorPage NOTIFY changed)
 
 public:
     Bridge(QString program, bool review, QObject *parent = nullptr);
@@ -151,6 +154,9 @@ public:
     QVariantMap psalterManualKathisma() const { return m_psalterManualKathisma; }
     QString psalterSource() const { return m_psalterSource; }
     QVariantList psalterMarked() const { return m_psalterMarked; }
+    bool libraryReady() const { return m_libraryReady; }
+    QVariantMap libraryPage() const { return m_libraryPage; }
+    QVariantMap editorPage() const { return m_editorPage; }
 
     bool snapshotReady() const { return m_snapshotReady; }
     qint64 helperProcessId() const { return m_process.processId(); }
@@ -175,6 +181,17 @@ public:
     Q_INVOKABLE void refreshPsalter();
     Q_INVOKABLE void openKathisma(int number, bool manual);
     Q_INVOKABLE void finishPsalter();
+    Q_INVOKABLE void showLibrary(const QString &query);
+    Q_INVOKABLE void prepareTemplate(const QString &templateID);
+    Q_INVOKABLE void openEditor(const QString &ruleID);
+    Q_INVOKABLE void acknowledgeCaution(bool hide);
+    Q_INVOKABLE void saveRule(const QVariantMap &fields);
+    Q_INVOKABLE void pauseRule(const QString &ruleID);
+    Q_INVOKABLE void resumeRule(const QString &ruleID);
+    Q_INVOKABLE void removeRule(const QString &ruleID, const QString &scope);
+    Q_INVOKABLE void takeUp(const QString &ruleID);
+    Q_INVOKABLE void setAside(const QString &ruleID);
+    Q_INVOKABLE void setSpiritualFather(const QString &name);
 
 signals:
     void changed();
@@ -189,6 +206,8 @@ private:
     void applyTones(const QJsonObject &tones);
     void applyReading(const QJsonObject &reading);
     void applyPsalter(const QJsonObject &psalter);
+    void applyLibrary(const QJsonObject &library);
+    void applyEditor(const QJsonObject &editor);
     QString soundPlayer() const;
     int newestAcceptedId() const;
 
@@ -203,6 +222,7 @@ private:
     int m_newestToneId = -1;
     int m_newestReadingId = -1;
     int m_newestPsalterId = -1;
+    int m_newestLibraryId = -1;
     double m_ropeDiameter = 240;
     int m_restarts = 0;
     bool m_snapshotReady = false;
@@ -281,4 +301,7 @@ private:
     QVariantMap m_psalterManualKathisma;
     QString m_psalterSource;
     QVariantList m_psalterMarked;
+    bool m_libraryReady = false;
+    QVariantMap m_libraryPage;
+    QVariantMap m_editorPage;
 };

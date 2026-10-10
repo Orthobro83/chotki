@@ -96,6 +96,8 @@ This is the slice that makes the Phase 2 gate possible. Until it exists, the onl
 
 **Gate.** From an empty normal record in a temporary `XDG_DATA_HOME`, the window can take on two library rules, edit one, pause one, and see only the active rule on Home. The bridge test performs the same steps without Qt.
 
+**Checked on the ARM64 guest (2026-10-10):** from an empty normal record, the bridge test listed the library in core's order, found Morning prayers by title, and opened the editor before anything was saved. Saving morning prayers at 07:00 and evening prayers at 21:30 put both on Home. Editing the morning rule to 08:00 kept its id. Pausing it left both rules on that day, because a pause still counts the day it is made, and the next day showed only Evening prayers. Preparing the paused morning rule resumed it without opening the editor. A stored spiritual father's name was copied onto the evening rule and stayed there after the setting was cleared. A scoped edit started a new rule from that day on. Removing the morning rule took it off the library's taken list. Writing a custom rule showed the caution first, and setting it aside hid it from the library while leaving it on Home. The Qt test opened Library from Add a New Rule and from the dotted placard, took on both prayers, edited the morning time to 08:00, paused the evening rule, and on the next day showed only Morning prayers at 08:00. The sidebar test, the rope, reading, four helper restarts, an offscreen window, and a 1100×860 review screenshot still passed. The Ubuntu 24.04 `amd64` half of this gate is the GitHub workflow.
+
 ### 2.5 Home actions that need the other rooms
 
 - The first click on a card opens its destination. Morning and evening prayers select their sequence. The Jesus Prayer opens the rope. A reading card opens the named section. Expansion, when the summary overflows, is a separate control and does not swallow that click.
@@ -201,4 +203,4 @@ Linux on mobile is the same `aarch64` application with a layout that fits a phon
 
 ## Next slice
 
-Slice 2.4, when that work is asked for. Slices 2.1 through 2.3 are recorded above.
+Slice 2.5, when that work is asked for. Slices 2.1 through 2.4 are recorded above.

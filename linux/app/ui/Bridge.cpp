@@ -117,6 +117,10 @@ struct BridgeResponse {
     QJsonObject reading;
     bool hasPsalter = false;
     QJsonObject psalter;
+    bool hasLibrary = false;
+    QJsonObject library;
+    bool hasEditor = false;
+    QJsonObject editor;
     bool home = false;
 };
 
@@ -161,6 +165,10 @@ BridgeResponse decodeResponse(const QJsonObject &object) {
     response.reading = object.value("reading").toObject();
     response.hasPsalter = object.contains("psalter");
     response.psalter = object.value("psalter").toObject();
+    response.hasLibrary = object.contains("library");
+    response.library = object.value("library").toObject();
+    response.hasEditor = object.contains("editor");
+    response.editor = object.value("editor").toObject();
     response.home = response.hasDisplayName || response.hasToday || response.hasSelectedDate
         || response.hasDayTitle || response.hasObservedDate || response.hasShowOldStyleDates
         || response.hasSayingText || response.hasSayingAuthor || response.hasSayingSource
@@ -214,6 +222,39 @@ void Bridge::openKathisma(int number, bool manual) {
 }
 
 void Bridge::finishPsalter() { send("finishPsalter"); }
+
+void Bridge::showLibrary(const QString &query) { send("library", QJsonObject{{"query", query}}); }
+
+void Bridge::prepareTemplate(const QString &templateID) {
+    send("prepareTemplate", QJsonObject{{"template", templateID}});
+}
+
+void Bridge::openEditor(const QString &ruleID) {
+    if (ruleID.isEmpty()) send("openEditor");
+    else send("openEditor", QJsonObject{{"ruleID", ruleID}});
+}
+
+void Bridge::acknowledgeCaution(bool hide) {
+    send("acknowledgeCaution", QJsonObject{{"hideCaution", hide}});
+}
+
+void Bridge::saveRule(const QVariantMap &fields) { send("saveRule", QJsonObject::fromVariantMap(fields)); }
+
+void Bridge::pauseRule(const QString &ruleID) { send("pauseRule", QJsonObject{{"ruleID", ruleID}}); }
+
+void Bridge::resumeRule(const QString &ruleID) { send("resumeRule", QJsonObject{{"ruleID", ruleID}}); }
+
+void Bridge::removeRule(const QString &ruleID, const QString &scope) {
+    send("removeRule", QJsonObject{{"ruleID", ruleID}, {"scope", scope}});
+}
+
+void Bridge::takeUp(const QString &ruleID) { send("takeUp", QJsonObject{{"ruleID", ruleID}}); }
+
+void Bridge::setAside(const QString &ruleID) { send("setAside", QJsonObject{{"ruleID", ruleID}}); }
+
+void Bridge::setSpiritualFather(const QString &name) {
+    send("setSpiritualFather", QJsonObject{{"name", name}});
+}
 
 void Bridge::layoutRope(double diameter) {
     if (!(diameter > 0) || diameter > 4096) return;
@@ -310,6 +351,15 @@ void Bridge::applyPsalter(const QJsonObject &psalter) {
     m_psalterReady = true;
 }
 
+void Bridge::applyLibrary(const QJsonObject &library) {
+    m_libraryPage = library.toVariantMap();
+    m_libraryReady = true;
+}
+
+void Bridge::applyEditor(const QJsonObject &editor) {
+    m_editorPage = editor.toVariantMap();
+}
+
 void Bridge::applyTones(const QJsonObject &tones) {
     m_tickWav = tones.value("tick").toString();
     m_tockWav = tones.value("tock").toString();
@@ -318,7 +368,7 @@ void Bridge::applyTones(const QJsonObject &tones) {
 
 int Bridge::newestAcceptedId() const {
     return std::max({m_newestSuccessId, m_newestPrayerId, m_newestOpeningId, m_newestToneId,
-                     m_newestReadingId, m_newestPsalterId});
+                     m_newestReadingId, m_newestPsalterId, m_newestLibraryId});
 }
 
 void Bridge::readResponses() {
@@ -382,6 +432,12 @@ void Bridge::readResponses() {
         if (response.hasPsalter && response.id >= m_newestPsalterId) {
             m_newestPsalterId = response.id;
             applyPsalter(response.psalter);
+            m_error.clear();
+        }
+        if ((response.hasLibrary || response.hasEditor) && response.id >= m_newestLibraryId) {
+            m_newestLibraryId = response.id;
+            if (response.hasLibrary) applyLibrary(response.library);
+            if (response.hasEditor) applyEditor(response.editor);
             m_error.clear();
         }
         if (!response.home || response.id < m_newestSuccessId) {

@@ -29,6 +29,30 @@ struct BridgeRequest: Decodable {
     var kathisma: Int?
     /// True when `openKathisma` is the reader's own choice rather than the day's appointment.
     var manual: Bool?
+    /// A library template id for `prepareTemplate`.
+    var template: String?
+    /// The library search. Empty shows every template.
+    var query: String?
+    /// Editor fields. Omitted keys keep what the draft already has.
+    var title: String?
+    var note: String?
+    var source: String?
+    var kind: String?
+    var weekdays: [Int]?
+    var monthDay: Int?
+    var shortMonth: String?
+    var season: String?
+    var onceDate: String?
+    var hasTime: Bool?
+    var hour: Int?
+    var minute: Int?
+    var reminders: Bool?
+    var leads: [Int]?
+    var givenByPriest: Bool?
+    /// `thisDay`, `thisAndFuture`, or `wholeSeries`.
+    var scope: String?
+    /// True when "Don't Show Again" was checked on the custom-rule caution.
+    var hideCaution: Bool?
 }
 
 struct PrayerKnotPayload: Encodable {
@@ -275,6 +299,8 @@ struct BridgeSuccess: Encodable {
     var tones: TonePayload? = nil
     var reading: ReadingPayload? = nil
     var psalter: PsalterPayload? = nil
+    var library: LibraryPayload? = nil
+    var editor: EditorPayload? = nil
 }
 
 struct BridgeFailure: Encodable {

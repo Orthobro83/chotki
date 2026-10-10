@@ -163,6 +163,7 @@ Item {
                 spacing: 8
                 Label { text: "Today's Commitments"; color: home.muted; font.pixelSize: 12 }
                 Label {
+                    objectName: "home-add-rule"
                     text: "Add a New Rule"
                     color: home.gold
                     font.pixelSize: 12
@@ -254,6 +255,7 @@ Item {
                         }
                     }
                     Rectangle {
+                        objectName: "home-add-placard"
                         width: 120
                         height: 232
                         radius: 21

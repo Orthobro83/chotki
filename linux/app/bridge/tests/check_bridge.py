@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise the real Swift core boundary without writing the human review record."""
 
+from datetime import date, timedelta
 import json
 import math
 import os
@@ -309,6 +310,100 @@ def main():
         snapshot = ask("snapshot")
         assert snapshot["entries"] == []
         assert not ask("setReviewName", name="Must fail")["ok"]
+
+        catalog = ask("library", query="")["library"]
+        order = ["Services", "Prayer", "Reading", "Fasting", "Life"]
+        names = [group["category"] for group in catalog["groups"]]
+        assert names == [name for name in order if name in names]
+        assert names.index("Services") < names.index("Prayer") < names.index("Fasting")
+        morning_row = next(
+            row for group in catalog["groups"] for row in group["templates"]
+            if row["title"] == "Morning prayers"
+        )
+        assert morning_row["taken"] is False
+
+        found = ask("library", query="Morning")["library"]
+        found_titles = [row["title"] for group in found["groups"] for row in group["templates"]]
+        assert "Morning prayers" in found_titles
+        assert "Evening prayers" not in found_titles
+        assert all("morning" in title.lower() for title in found_titles)
+
+        prepared = ask("prepareTemplate", template="morning-prayers")
+        assert prepared["editor"]["open"] is True
+        assert prepared["editor"]["isNew"] is True
+        assert "entries" not in prepared
+        assert ask("snapshot")["entries"] == []
+
+        saved = ask("saveRule", hasTime=True, hour=7, minute=0)
+        assert saved["editor"]["open"] is False
+        morning = next(item for item in saved["entries"] if item["title"] == "Morning prayers")
+        assert morning["time"] == "07:00"
+        morning_id = morning["id"]
+
+        ask("prepareTemplate", template="evening-prayers")
+        both = ask("saveRule")
+        assert {item["title"] for item in both["entries"]} == {"Morning prayers", "Evening prayers"}
+        evening_id = next(item["id"] for item in both["entries"] if item["title"] == "Evening prayers")
+
+        ask("openEditor", ruleID=morning_id)
+        edited = ask("saveRule", hasTime=True, hour=8, minute=0, scope="wholeSeries")
+        morning = next(item for item in edited["entries"] if item["id"] == morning_id)
+        assert morning["time"] == "08:00"
+        assert next(item["id"] for item in edited["entries"] if item["title"] == "Evening prayers") == evening_id
+
+        paused = ask("pauseRule", ruleID=morning_id)
+        # The day a rule is paused still counts. The next day shows only what is left running.
+        today = paused["today"]
+        assert {item["title"] for item in paused["entries"]} == {"Morning prayers", "Evening prayers"}
+        tomorrow = (date.fromisoformat(today) + timedelta(days=1)).isoformat()
+        later = ask("selectDate", date=tomorrow)
+        assert [item["title"] for item in later["entries"]] == ["Evening prayers"], later["entries"]
+        ask("selectDate", date=today)
+        resumed = ask("prepareTemplate", template="morning-prayers")
+        assert resumed["editor"]["open"] is False
+        assert next(item["id"] for item in resumed["entries"] if item["title"] == "Morning prayers") == morning_id
+        ask("pauseRule", ruleID=morning_id)
+
+        ask("setSpiritualFather", name="Father Seraphim")
+        ask("openEditor", ruleID=evening_id)
+        attributed = ask("saveRule", givenByPriest=True)
+        evening_id = next(item["id"] for item in attributed["entries"] if item["title"] == "Evening prayers")
+        recorded = ask("openEditor", ruleID=evening_id)["editor"]
+        assert recorded["givenByPriest"] is True
+        assert recorded["source"] == "Father Seraphim"
+        ask("saveRule", givenByPriest=True, source="Father Seraphim")
+        cleared = ask("setSpiritualFather", name="")
+        assert cleared["library"]["fatherName"] == ""
+        preserved = ask("openEditor", ruleID=evening_id)["editor"]
+        assert preserved["fatherName"] == ""
+        assert preserved["source"] == "Father Seraphim"
+        assert preserved["givenByPriest"] is True
+
+        scoped = ask("saveRule", scope="thisAndFuture", note="Quietly")
+        successor = next(item["id"] for item in scoped["entries"] if item["title"] == "Evening prayers")
+        assert successor != evening_id
+
+        removed = ask("removeRule", ruleID=morning_id, scope="wholeSeries")
+        assert all(item["title"] != "Morning prayers" for item in removed["entries"])
+        listed = ask("library", query="Morning")["library"]
+        morning_row = next(
+            row for group in listed["groups"] for row in group["templates"]
+            if row["id"] == "morning-prayers"
+        )
+        assert morning_row["taken"] is False
+
+        caution = ask("openEditor")
+        assert caution["editor"]["caution"] is True
+        assert caution["editor"]["open"] is False
+        assert "manufacture your own Orthodoxy" in caution["editor"]["cautionText"]
+        ask("acknowledgeCaution", hideCaution=True)
+        own = ask("saveRule", title="A walk", kind="Every day", hasTime=False)
+        assert any(item["title"] == "A walk" for item in own["entries"])
+        walk_id = next(item["id"] for item in own["entries"] if item["title"] == "A walk")
+        aside = ask("setAside", ruleID=walk_id)
+        assert all(item["id"] != walk_id for item in aside["library"]["custom"])
+        assert any(item["title"] == "A walk" for item in aside["entries"])
+
         close(normal)
         assert (Path(directory) / "Chotki" / "chotki.sqlite").is_file()
 

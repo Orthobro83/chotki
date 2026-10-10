@@ -28,6 +28,7 @@ enum BridgeError: Error, CustomStringConvertible {
     case notAsked
     case invalidReviewDirectory
     case unknownPrayer
+    case unnamedRule
 
     var description: String {
         switch self {
@@ -39,6 +40,7 @@ enum BridgeError: Error, CustomStringConvertible {
         case .notAsked: "Nothing was asked on this day."
         case .invalidReviewDirectory: "The review record directory must be an absolute path."
         case .unknownPrayer: "That prayer is not in the book."
+        case .unnamedRule: "Give the rule a name before saving."
         }
     }
 }
@@ -173,6 +175,7 @@ do {
     var prayers = PrayerSession()
     var reading = ReadingSession()
     var psalter = PsalterSession()
+    var library = LibrarySession()
 
     while let line = readLine() {
         let decoded = try? JSONDecoder().decode(BridgeRequest.self, from: Data(line.utf8))
@@ -257,6 +260,12 @@ do {
             case "psalter", "openKathisma", "finishPsalter":
                 try performPsalter(request, store: store, on: selectedDate,
                                    weekCenter: weekCenter, session: &psalter)
+
+            case "library", "prepareTemplate", "openEditor", "acknowledgeCaution",
+                 "saveRule", "pauseRule", "resumeRule", "removeRule", "takeUp",
+                 "setAside", "setSpiritualFather":
+                try performLibrary(request, store: store, on: selectedDate,
+                                   weekCenter: weekCenter, session: &library)
 
             case "opening":
                 respond(openingSuccess(id: id))
