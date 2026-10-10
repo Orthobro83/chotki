@@ -25,6 +25,24 @@ class SampleBridge final : public QObject {
     Q_PROPERTY(QString artworkUrl MEMBER artworkUrl CONSTANT)
     Q_PROPERTY(QVariantList entries MEMBER entries CONSTANT)
     Q_PROPERTY(QVariantList week MEMBER week NOTIFY changed)
+    Q_PROPERTY(QString prayerSelection MEMBER prayerSelection CONSTANT)
+    Q_PROPERTY(bool prayerRopeAlone MEMBER prayerRopeAlone CONSTANT)
+    Q_PROPERTY(int prayerCount MEMBER prayerCount CONSTANT)
+    Q_PROPERTY(int prayerTarget MEMBER prayerTarget CONSTANT)
+    Q_PROPERTY(QVariantList prayerTargets MEMBER prayerTargets CONSTANT)
+    Q_PROPERTY(bool prayerComplete MEMBER prayerComplete CONSTANT)
+    Q_PROPERTY(bool showsRope MEMBER showsRope CONSTANT)
+    Q_PROPERTY(QString prayerCue MEMBER prayerCue CONSTANT)
+    Q_PROPERTY(QString prayerSound MEMBER prayerSound CONSTANT)
+    Q_PROPERTY(int prayerEvent MEMBER prayerEvent CONSTANT)
+    Q_PROPERTY(double prayerDiameter MEMBER prayerDiameter CONSTANT)
+    Q_PROPERTY(double prayerDot MEMBER prayerDot CONSTANT)
+    Q_PROPERTY(double prayerBead MEMBER prayerBead CONSTANT)
+    Q_PROPERTY(QVariantList prayerKnots MEMBER prayerKnots CONSTANT)
+    Q_PROPERTY(QVariantList prayerBeads MEMBER prayerBeads CONSTANT)
+    Q_PROPERTY(QVariantList prayerChoices MEMBER prayerChoices CONSTANT)
+    Q_PROPERTY(QVariantList prayerWords MEMBER prayerWords CONSTANT)
+    Q_PROPERTY(bool openingReady MEMBER openingReady CONSTANT)
 
 public:
     SampleBridge() {
@@ -50,11 +68,38 @@ public:
     QString artworkUrl;
     QVariantList entries;
     QVariantList week;
+    QString prayerSelection = "jesus-prayer";
+    bool prayerRopeAlone = false;
+    int prayerCount = 0;
+    int prayerTarget = 33;
+    QVariantList prayerTargets;
+    bool prayerComplete = false;
+    bool showsRope = true;
+    QString prayerCue;
+    QString prayerSound;
+    int prayerEvent = 0;
+    double prayerDiameter = 240;
+    double prayerDot = 11;
+    double prayerBead = 15.4;
+    QVariantList prayerKnots;
+    QVariantList prayerBeads;
+    QVariantList prayerChoices;
+    QVariantList prayerWords;
+    bool openingReady = false;
     QString selectedDay;
     QString toggledRule;
     int shiftedDirection = 0;
     Q_INVOKABLE void selectDate(const QString &date) { selectedDay = date; }
     Q_INVOKABLE void toggleKept(const QString &id) { toggledRule = id; }
+    Q_INVOKABLE void refreshPrayer() {}
+    Q_INVOKABLE void choosePrayer(const QString &) {}
+    Q_INVOKABLE void advancePrayer() {}
+    Q_INVOKABLE void advancePrayerAt(double) {}
+    Q_INVOKABLE void aimPrayer(int) {}
+    Q_INVOKABLE void showRope(bool) {}
+    Q_INVOKABLE void startAgain() {}
+    Q_INVOKABLE void layoutRope(double) {}
+    Q_INVOKABLE void playSound(const QString &) {}
     Q_INVOKABLE void shiftWeek(int direction) {
         shiftedDirection = direction;
         week[0] = QVariantMap{{"date", "2026-10-14"}, {"day", 14},
@@ -86,6 +131,7 @@ private slots:
         SampleBridge bridge;
         QQmlApplicationEngine engine;
         engine.rootContext()->setContextProperty("bridge", &bridge);
+        engine.rootContext()->setContextProperty("playOpening", false);
         engine.load(QUrl::fromLocalFile(CHOTKI_QML_SOURCE));
         QCOMPARE(engine.rootObjects().size(), 1);
         auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
@@ -106,6 +152,7 @@ private slots:
         SampleBridge bridge;
         QQmlApplicationEngine engine;
         engine.rootContext()->setContextProperty("bridge", &bridge);
+        engine.rootContext()->setContextProperty("playOpening", false);
         engine.load(QUrl::fromLocalFile(CHOTKI_QML_SOURCE));
         QCOMPARE(engine.rootObjects().size(), 1);
         auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());

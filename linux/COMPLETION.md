@@ -67,6 +67,8 @@ Mac route: sidebar Prayers. With no prayer selected, the rope. A prayer rule ope
 
 **Gate.** A review record can count a prayer to its target, hear the bead cue, leave, and return to the same count. A Qt test clicks the rope and reads the new count back from the helper. Restarting the process plays the opening mark once.
 
+**Checked on the ARM64 guest (2026-10-10):** the bridge test counted a prayer to 33, heard a tock on each bead and a bell on the last knot, refused a second knot inside the same second, and read the same count back after another request. Choosing the rope alone and the morning rule did not reset the count, and none of this wrote an occurrence. The Qt test clicked the rope, read 1 back from the helper, left for Home, returned to the same count, then heard the tock and the bell. The status line at the end is "the knot is complete". A new process showed the opening mark once; killing the helper did not play it again, and reduced motion did not play it. The sidebar test, four helper restarts, an offscreen window, and a 1100×860 review screenshot still passed. The Ubuntu 24.04 `amd64` half of this gate is the GitHub workflow.
+
 ### 2.3 Reading and the Psalter
 
 Mac route: sidebar Reading, plus the Psalter reached from Prayers.

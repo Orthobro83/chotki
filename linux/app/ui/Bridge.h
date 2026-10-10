@@ -6,6 +6,7 @@
 #include <QString>
 #include <QTimer>
 #include <QVariantList>
+#include <QVariantMap>
 
 class Bridge final : public QObject {
     Q_OBJECT
@@ -26,6 +27,36 @@ class Bridge final : public QObject {
     Q_PROPERTY(QVariantList entries READ entries NOTIFY changed)
     Q_PROPERTY(QVariantList week READ week NOTIFY changed)
     Q_PROPERTY(int psalmOneVerses READ psalmOneVerses NOTIFY changed)
+    Q_PROPERTY(QString prayerSelection READ prayerSelection NOTIFY changed)
+    Q_PROPERTY(bool prayerRopeAlone READ prayerRopeAlone NOTIFY changed)
+    Q_PROPERTY(int prayerCount READ prayerCount NOTIFY changed)
+    Q_PROPERTY(int prayerTarget READ prayerTarget NOTIFY changed)
+    Q_PROPERTY(QVariantList prayerTargets READ prayerTargets NOTIFY changed)
+    Q_PROPERTY(bool prayerComplete READ prayerComplete NOTIFY changed)
+    Q_PROPERTY(bool showsRope READ showsRope NOTIFY changed)
+    Q_PROPERTY(QString prayerCue READ prayerCue NOTIFY changed)
+    Q_PROPERTY(QString prayerSound READ prayerSound NOTIFY changed)
+    Q_PROPERTY(int prayerEvent READ prayerEvent NOTIFY changed)
+    Q_PROPERTY(double prayerDiameter READ prayerDiameter NOTIFY changed)
+    Q_PROPERTY(double prayerDot READ prayerDot NOTIFY changed)
+    Q_PROPERTY(double prayerBead READ prayerBead NOTIFY changed)
+    Q_PROPERTY(QVariantList prayerKnots READ prayerKnots NOTIFY changed)
+    Q_PROPERTY(QVariantList prayerBeads READ prayerBeads NOTIFY changed)
+    Q_PROPERTY(QVariantList prayerChoices READ prayerChoices NOTIFY changed)
+    Q_PROPERTY(QVariantList prayerWords READ prayerWords NOTIFY changed)
+    Q_PROPERTY(bool openingReady READ openingReady NOTIFY changed)
+    Q_PROPERTY(QVariantList openingKnots READ openingKnots NOTIFY changed)
+    Q_PROPERTY(double openingKnotRadius READ openingKnotRadius NOTIFY changed)
+    Q_PROPERTY(int openingKnotSlots READ openingKnotSlots NOTIFY changed)
+    Q_PROPERTY(QVariantMap openingBox READ openingBox NOTIFY changed)
+    Q_PROPERTY(QVariantList openingBars READ openingBars NOTIFY changed)
+    Q_PROPERTY(QVariantMap openingFootrest READ openingFootrest NOTIFY changed)
+    Q_PROPERTY(double openingBuild READ openingBuild NOTIFY changed)
+    Q_PROPERTY(double openingHold READ openingHold NOTIFY changed)
+    Q_PROPERTY(double openingFade READ openingFade NOTIFY changed)
+    Q_PROPERTY(double openingKnotFade READ openingKnotFade NOTIFY changed)
+    Q_PROPERTY(double openingStaggerLead READ openingStaggerLead NOTIFY changed)
+    Q_PROPERTY(QString lastPlayed READ lastPlayed NOTIFY changed)
 
 public:
     Bridge(QString program, bool review, QObject *parent = nullptr);
@@ -48,6 +79,36 @@ public:
     QVariantList entries() const { return m_entries; }
     QVariantList week() const { return m_week; }
     int psalmOneVerses() const { return m_psalmOneVerses; }
+    QString prayerSelection() const { return m_prayerSelection; }
+    bool prayerRopeAlone() const { return m_prayerRopeAlone; }
+    int prayerCount() const { return m_prayerCount; }
+    int prayerTarget() const { return m_prayerTarget; }
+    QVariantList prayerTargets() const { return m_prayerTargets; }
+    bool prayerComplete() const { return m_prayerComplete; }
+    bool showsRope() const { return m_showsRope; }
+    QString prayerCue() const { return m_prayerCue; }
+    QString prayerSound() const { return m_prayerSound; }
+    int prayerEvent() const { return m_prayerEvent; }
+    double prayerDiameter() const { return m_prayerDiameter; }
+    double prayerDot() const { return m_prayerDot; }
+    double prayerBead() const { return m_prayerBead; }
+    QVariantList prayerKnots() const { return m_prayerKnots; }
+    QVariantList prayerBeads() const { return m_prayerBeads; }
+    QVariantList prayerChoices() const { return m_prayerChoices; }
+    QVariantList prayerWords() const { return m_prayerWords; }
+    bool openingReady() const { return m_openingReady; }
+    QVariantList openingKnots() const { return m_openingKnots; }
+    double openingKnotRadius() const { return m_openingKnotRadius; }
+    int openingKnotSlots() const { return m_openingKnotSlots; }
+    QVariantMap openingBox() const { return m_openingBox; }
+    QVariantList openingBars() const { return m_openingBars; }
+    QVariantMap openingFootrest() const { return m_openingFootrest; }
+    double openingBuild() const { return m_openingBuild; }
+    double openingHold() const { return m_openingHold; }
+    double openingFade() const { return m_openingFade; }
+    double openingKnotFade() const { return m_openingKnotFade; }
+    double openingStaggerLead() const { return m_openingStaggerLead; }
+    QString lastPlayed() const { return m_lastPlayed; }
 
     bool snapshotReady() const { return m_snapshotReady; }
     qint64 helperProcessId() const { return m_process.processId(); }
@@ -57,6 +118,15 @@ public:
     Q_INVOKABLE void selectDate(const QString &date);
     Q_INVOKABLE void toggleKept(const QString &ruleID);
     Q_INVOKABLE void shiftWeek(int direction);
+    Q_INVOKABLE void refreshPrayer();
+    Q_INVOKABLE void choosePrayer(const QString &selection);
+    Q_INVOKABLE void advancePrayer();
+    Q_INVOKABLE void advancePrayerAt(double now);
+    Q_INVOKABLE void aimPrayer(int target);
+    Q_INVOKABLE void showRope(bool shown);
+    Q_INVOKABLE void startAgain();
+    Q_INVOKABLE void layoutRope(double diameter);
+    Q_INVOKABLE void playSound(const QString &name);
 
 signals:
     void changed();
@@ -66,6 +136,11 @@ private:
     void send(const QString &operation, const QJsonObject &fields = {});
     void readResponses();
     void stopped();
+    void applyPrayer(const QJsonObject &prayer);
+    void applyOpening(const QJsonObject &opening);
+    void applyTones(const QJsonObject &tones);
+    QString soundPlayer() const;
+    int newestAcceptedId() const;
 
     static constexpr int protocolVersion = 1;
     QProcess m_process;
@@ -73,6 +148,10 @@ private:
     QByteArray m_pending;
     int m_nextId = 1;
     int m_newestSuccessId = -1;
+    int m_newestPrayerId = -1;
+    int m_newestOpeningId = -1;
+    int m_newestToneId = -1;
+    double m_ropeDiameter = 240;
     int m_restarts = 0;
     bool m_snapshotReady = false;
     bool m_review;
@@ -95,4 +174,38 @@ private:
     QVariantList m_entries;
     QVariantList m_week;
     int m_psalmOneVerses = 0;
+    QString m_prayerSelection = "jesus-prayer";
+    bool m_prayerRopeAlone = false;
+    int m_prayerCount = 0;
+    int m_prayerTarget = 33;
+    QVariantList m_prayerTargets;
+    bool m_prayerComplete = false;
+    bool m_showsRope = true;
+    QString m_prayerCue;
+    QString m_prayerSound;
+    int m_prayerEvent = 0;
+    double m_prayerDiameter = 240;
+    double m_prayerDot = 11;
+    double m_prayerBead = 15.4;
+    QVariantList m_prayerKnots;
+    QVariantList m_prayerBeads;
+    QVariantList m_prayerChoices;
+    QVariantList m_prayerWords;
+    bool m_openingReady = false;
+    QVariantList m_openingKnots;
+    double m_openingKnotRadius = 0;
+    int m_openingKnotSlots = 12;
+    QVariantMap m_openingBox;
+    QVariantList m_openingBars;
+    QVariantMap m_openingFootrest;
+    double m_openingBuild = 1.8;
+    double m_openingHold = 1.5;
+    double m_openingFade = 0.4;
+    double m_openingKnotFade = 0.16;
+    double m_openingStaggerLead = 0.2;
+    QString m_tickWav;
+    QString m_tockWav;
+    QString m_bellWav;
+    QString m_lastPlayed;
+    QString m_soundPlayer;
 };

@@ -19,7 +19,7 @@ private enum LaunchMode {
     var isReview: Bool { self == .review }
 }
 
-private enum BridgeError: Error, CustomStringConvertible {
+enum BridgeError: Error, CustomStringConvertible {
     case invalidRequest
     case incompatibleProtocol
     case unsupportedOperation(String)
@@ -27,6 +27,7 @@ private enum BridgeError: Error, CustomStringConvertible {
     case unknownRule
     case notAsked
     case invalidReviewDirectory
+    case unknownPrayer
 
     var description: String {
         switch self {
@@ -37,6 +38,7 @@ private enum BridgeError: Error, CustomStringConvertible {
         case .unknownRule: "That rule is not on the selected day."
         case .notAsked: "Nothing was asked on this day."
         case .invalidReviewDirectory: "The review record directory must be an absolute path."
+        case .unknownPrayer: "That prayer is not in the book."
         }
     }
 }
@@ -60,7 +62,7 @@ private func dataDirectory(for mode: LaunchMode) throws -> URL {
     return base.appendingPathComponent("Chotki", isDirectory: true)
 }
 
-private func respond<T: Encodable>(_ value: T) {
+func respond<T: Encodable>(_ value: T) {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys]
     guard let encoded = try? encoder.encode(value) else { return }
@@ -166,6 +168,9 @@ do {
 
     var selectedDate = CalendarDate(Date(), in: .current)
     var weekCenter = selectedDate
+    // The rope count lives for this process, as it does on the Mac. Leaving the
+    // page and coming back reads it again. A new process starts at the beginning.
+    var prayers = PrayerSession()
 
     while let line = readLine() {
         let decoded = try? JSONDecoder().decode(BridgeRequest.self, from: Data(line.utf8))
@@ -237,6 +242,15 @@ do {
                     v: bridgeProtocolVersion, id: id,
                     displayName: try store.loadSettings()?.displayName ?? ""
                 ))
+
+            case "prayer", "advancePrayer", "choosePrayer", "aimPrayer", "showRope", "startAgain":
+                try performPrayer(request, store: store, session: &prayers)
+
+            case "opening":
+                respond(openingSuccess(id: id))
+
+            case "tones":
+                respond(try tonesSuccess(id: id, session: &prayers))
 
             default:
                 throw BridgeError.unsupportedOperation(request.op)

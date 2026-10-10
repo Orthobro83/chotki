@@ -1,5 +1,6 @@
 #include "Bridge.h"
 #include "ArtworkImage.h"
+#include "Opening.h"
 
 #include <QGuiApplication>
 #include <QDir>
@@ -9,6 +10,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <qqml.h>
+#include <QProcess>
 #include <QQuickWindow>
 #include <QStandardPaths>
 #include <QTimer>
@@ -68,8 +70,18 @@ int main(int argc, char *argv[]) {
 
     Bridge bridge(arguments.at(2), review);
     qmlRegisterType<ArtworkImage>("ChotkiArtwork", 1, 0, "ArtworkImage");
+    QString animations;
+    if (!screenshot && qEnvironmentVariable("CHOTKI_REDUCE_MOTION").isEmpty()) {
+        QProcess desktop;
+        desktop.start("gsettings", {"get", "org.gnome.desktop.interface", "enable-animations"});
+        if (desktop.waitForFinished(200))
+            animations = QString::fromUtf8(desktop.readAllStandardOutput());
+    }
+    const bool playOpening = chotkiPlaysOpening(
+        chotkiReducedMotion(qEnvironmentVariable("CHOTKI_REDUCE_MOTION"), animations), screenshot);
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("bridge", &bridge);
+    engine.rootContext()->setContextProperty("playOpening", playOpening);
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/ChotkiLinux/Main.qml")));
     if (engine.rootObjects().isEmpty()) return 4;
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());

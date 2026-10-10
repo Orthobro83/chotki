@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "ChotkiLinuxBridge",
+    platforms: [.macOS(.v13)],
     dependencies: [.package(name: "ChotkiCore", path: "../../../core")],
     targets: [
         .executableTarget(

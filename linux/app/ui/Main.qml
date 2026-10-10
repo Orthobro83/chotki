@@ -19,6 +19,25 @@ ApplicationWindow {
     readonly property color gold: "#c9a227"
     readonly property color lineSoft: "#23252c"
     property string section: "Home"
+    property bool openingPlayed: false
+    property int openingStarts: 0
+    property int heardEvent: -1
+
+    function notePrayer() {
+        if (bridge.prayerEvent > heardEvent && bridge.prayerSound.length > 0) {
+            heardEvent = bridge.prayerEvent
+            bridge.playSound(bridge.prayerSound)
+        } else if (bridge.prayerEvent < heardEvent) {
+            heardEvent = bridge.prayerEvent
+        }
+    }
+
+    function maybeOpen() {
+        if (!playOpening || openingPlayed || !bridge.openingReady) return
+        openingPlayed = true
+        openingStarts += 1
+        openingLoader.active = true
+    }
     readonly property var groups: [
         { heading: "The Day", items: ["Home"] },
         { heading: "To Read", items: ["Prayers", "Reading"] },
@@ -184,8 +203,9 @@ ApplicationWindow {
                 Loader {
                     id: homeLoader
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.fillHeight: active
                     active: window.section === "Home"
+                    visible: active
                     source: "Home.qml"
                 }
                 Connections {
@@ -193,8 +213,16 @@ ApplicationWindow {
                     function onLibraryRequested() { window.section = "Library" }
                 }
 
+                Loader {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: active
+                    active: window.section === "Prayers"
+                    visible: active
+                    source: "Prayers.qml"
+                }
+
                 ColumnLayout {
-                    visible: window.section !== "Home"
+                    visible: window.section !== "Home" && window.section !== "Prayers"
                     Layout.fillWidth: true
                     Layout.fillHeight: visible
                     Item { height: 46 }
@@ -250,4 +278,25 @@ ApplicationWindow {
             }
         }
     }
+
+    Connections {
+        target: bridge
+        function onChanged() {
+            window.notePrayer()
+            window.maybeOpen()
+        }
+    }
+
+    Loader {
+        id: openingLoader
+        anchors.fill: parent
+        z: 40
+        active: false
+        source: "OpeningMark.qml"
+        onLoaded: item.finished.connect(function() {
+            Qt.callLater(function() { openingLoader.active = false })
+        })
+    }
+
+    Component.onCompleted: maybeOpen()
 }

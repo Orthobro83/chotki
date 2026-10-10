@@ -9,7 +9,9 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QStandardPaths>
 #include <QUrl>
+#include <algorithm>
 #include <utility>
 
 Bridge::Bridge(QString program, bool review, QObject *parent)
@@ -28,6 +30,9 @@ Bridge::Bridge(QString program, bool review, QObject *parent)
         emit changed();
         send("hello");
         refresh();
+        refreshPrayer();
+        send("opening");
+        send("tones");
     });
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &Bridge::readResponses);
     connect(&m_process, &QProcess::finished, this, &Bridge::stopped);
@@ -102,6 +107,13 @@ struct BridgeResponse {
     QVariantList week;
     bool hasPsalmOneVerses = false;
     int psalmOneVerses = 0;
+    bool hasPrayer = false;
+    QJsonObject prayer;
+    bool hasOpening = false;
+    QJsonObject opening;
+    bool hasTones = false;
+    QJsonObject tones;
+    bool home = false;
 };
 
 BridgeResponse decodeResponse(const QJsonObject &object) {
@@ -135,6 +147,16 @@ BridgeResponse decodeResponse(const QJsonObject &object) {
     response.week = object.value("week").toArray().toVariantList();
     response.hasPsalmOneVerses = object.contains("psalmOneVerses");
     response.psalmOneVerses = object.value("psalmOneVerses").toInt();
+    response.hasPrayer = object.contains("prayer");
+    response.prayer = object.value("prayer").toObject();
+    response.hasOpening = object.contains("opening");
+    response.opening = object.value("opening").toObject();
+    response.hasTones = object.contains("tones");
+    response.tones = object.value("tones").toObject();
+    response.home = response.hasDisplayName || response.hasToday || response.hasSelectedDate
+        || response.hasDayTitle || response.hasObservedDate || response.hasShowOldStyleDates
+        || response.hasSayingText || response.hasSayingAuthor || response.hasSayingSource
+        || response.hasEntries || response.hasWeek || response.hasPsalmOneVerses;
     return response;
 }
 
@@ -153,6 +175,100 @@ void Bridge::selectDate(const QString &date) { send("selectDate", QJsonObject{{"
 void Bridge::toggleKept(const QString &ruleID) { send("toggleKept", QJsonObject{{"ruleID", ruleID}}); }
 void Bridge::shiftWeek(int direction) {
     if (direction == -1 || direction == 1) send("shiftWeek", QJsonObject{{"direction", direction}});
+}
+
+void Bridge::refreshPrayer() { send("prayer", QJsonObject{{"diameter", m_ropeDiameter}}); }
+
+void Bridge::choosePrayer(const QString &selection) {
+    send("choosePrayer", QJsonObject{{"selection", selection.isEmpty() ? QJsonValue(QJsonValue::Null) : QJsonValue(selection)}});
+}
+
+void Bridge::advancePrayer() { send("advancePrayer"); }
+
+void Bridge::advancePrayerAt(double now) { send("advancePrayer", QJsonObject{{"now", now}}); }
+
+void Bridge::aimPrayer(int target) { send("aimPrayer", QJsonObject{{"target", target}}); }
+
+void Bridge::showRope(bool shown) { send("showRope", QJsonObject{{"shown", shown}}); }
+
+void Bridge::startAgain() { send("startAgain"); }
+
+void Bridge::layoutRope(double diameter) {
+    if (!(diameter > 0) || diameter > 4096) return;
+    m_ropeDiameter = diameter;
+    refreshPrayer();
+}
+
+QString Bridge::soundPlayer() const {
+    if (!m_soundPlayer.isEmpty()) return m_soundPlayer;
+    for (const char *name : {"pw-play", "paplay", "aplay"}) {
+        const QString path = QStandardPaths::findExecutable(QString::fromLatin1(name));
+        if (!path.isEmpty()) return path;
+    }
+    return {};
+}
+
+void Bridge::playSound(const QString &name) {
+    QString file;
+    if (name == "tick") file = m_tickWav;
+    else if (name == "tock") file = m_tockWav;
+    else if (name == "bell") file = m_bellWav;
+    else return;
+    m_lastPlayed = name;
+    emit changed();
+    if (file.isEmpty() || !QFileInfo::exists(file)) return;
+    if (m_soundPlayer.isEmpty()) m_soundPlayer = soundPlayer();
+    if (m_soundPlayer.isEmpty()) return;
+    auto *playback = new QProcess(this);
+    connect(playback, &QProcess::finished, playback, &QObject::deleteLater);
+    if (m_soundPlayer.endsWith("aplay")) playback->start(m_soundPlayer, {"-q", file});
+    else playback->start(m_soundPlayer, {file});
+}
+
+void Bridge::applyPrayer(const QJsonObject &prayer) {
+    m_prayerSelection = prayer.value("selection").toString();
+    m_prayerRopeAlone = prayer.value("ropeAlone").toBool();
+    m_prayerCount = prayer.value("count").toInt();
+    m_prayerTarget = prayer.value("target").toInt();
+    m_prayerTargets = prayer.value("targets").toArray().toVariantList();
+    m_prayerComplete = prayer.value("complete").toBool();
+    m_showsRope = prayer.value("showsRope").toBool();
+    m_prayerCue = prayer.value("cue").toString();
+    m_prayerSound = prayer.contains("sound") ? prayer.value("sound").toString() : QString();
+    m_prayerEvent = prayer.value("event").toInt();
+    m_prayerDiameter = prayer.value("diameter").toDouble();
+    m_prayerDot = prayer.value("dot").toDouble();
+    m_prayerBead = prayer.value("bead").toDouble();
+    m_prayerKnots = prayer.value("knots").toArray().toVariantList();
+    m_prayerBeads = prayer.value("beads").toArray().toVariantList();
+    m_prayerChoices = prayer.value("choices").toArray().toVariantList();
+    m_prayerWords = prayer.value("words").toArray().toVariantList();
+    if (m_prayerDiameter > 0) m_ropeDiameter = m_prayerDiameter;
+}
+
+void Bridge::applyOpening(const QJsonObject &opening) {
+    m_openingKnots = opening.value("knots").toArray().toVariantList();
+    m_openingKnotRadius = opening.value("knotRadius").toDouble();
+    m_openingKnotSlots = opening.value("knotSlots").toInt();
+    m_openingBox = opening.value("box").toObject().toVariantMap();
+    m_openingBars = opening.value("bars").toArray().toVariantList();
+    m_openingFootrest = opening.value("footrest").toObject().toVariantMap();
+    m_openingBuild = opening.value("build").toDouble();
+    m_openingHold = opening.value("hold").toDouble();
+    m_openingFade = opening.value("fade").toDouble();
+    m_openingKnotFade = opening.value("knotFade").toDouble();
+    m_openingStaggerLead = opening.value("staggerLead").toDouble();
+    m_openingReady = !m_openingKnots.isEmpty();
+}
+
+void Bridge::applyTones(const QJsonObject &tones) {
+    m_tickWav = tones.value("tick").toString();
+    m_tockWav = tones.value("tock").toString();
+    m_bellWav = tones.value("bell").toString();
+}
+
+int Bridge::newestAcceptedId() const {
+    return std::max({m_newestSuccessId, m_newestPrayerId, m_newestOpeningId, m_newestToneId});
 }
 
 void Bridge::readResponses() {
@@ -176,7 +292,9 @@ void Bridge::readResponses() {
         // A reply for an earlier request must not wipe a newer success, and an
         // error must not blank the snapshot the newer success already showed.
         if (!response.ok) {
-            if (response.id > m_newestSuccessId) {
+            // A late error must not replace a success that was already shown,
+            // whether that success was the day or the rope.
+            if (response.id > newestAcceptedId()) {
                 m_error = response.error;
                 emit changed();
             }
@@ -186,8 +304,27 @@ void Bridge::readResponses() {
             m_connected = true;
             m_status = "Ready";
             m_restarts = 0;
+            if (response.id >= m_newestSuccessId) m_error.clear();
         }
-        if (response.id < m_newestSuccessId) {
+        // Prayer replies and day snapshots travel on one socket but they are
+        // different documents. A rope count that returns first must not throw
+        // away the day's snapshot, and a snapshot must not throw away the count.
+        if (response.hasPrayer && response.id >= m_newestPrayerId) {
+            m_newestPrayerId = response.id;
+            applyPrayer(response.prayer);
+            m_error.clear();
+        }
+        if (response.hasOpening && response.id >= m_newestOpeningId) {
+            m_newestOpeningId = response.id;
+            applyOpening(response.opening);
+            m_error.clear();
+        }
+        if (response.hasTones && response.id >= m_newestToneId) {
+            m_newestToneId = response.id;
+            applyTones(response.tones);
+            m_error.clear();
+        }
+        if (!response.home || response.id < m_newestSuccessId) {
             emit changed();
             continue;
         }

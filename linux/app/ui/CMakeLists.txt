@@ -15,7 +15,7 @@ qt_add_qml_module(chotki-linux
     URI ChotkiLinux
     VERSION 1.0
     RESOURCE_PREFIX "/qt/qml"
-    QML_FILES Main.qml Home.qml Icon.qml
+    QML_FILES Main.qml Home.qml Prayers.qml OpeningMark.qml Icon.qml
     RESOURCES fonts/XCharter-Roman.otf fonts/XCharter-Bold.otf
 )
 target_link_libraries(chotki-linux PRIVATE Qt6::Quick Qt6::Network)
@@ -27,6 +27,13 @@ target_include_directories(chotki-navigation-test PRIVATE ${CMAKE_CURRENT_SOURCE
 target_compile_definitions(chotki-navigation-test PRIVATE CHOTKI_QML_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Main.qml")
 add_test(NAME sidebar-navigation COMMAND chotki-navigation-test)
 set_tests_properties(sidebar-navigation PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_executable(chotki-prayer-rope-test tests/PrayerRopeTest.cpp Bridge.cpp Bridge.h ArtworkImage.cpp ArtworkImage.h)
+target_link_libraries(chotki-prayer-rope-test PRIVATE Qt6::Quick Qt6::Test)
+target_include_directories(chotki-prayer-rope-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(chotki-prayer-rope-test PRIVATE CHOTKI_QML_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Main.qml")
+add_test(NAME prayer-rope COMMAND chotki-prayer-rope-test)
+set_tests_properties(prayer-rope PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 add_executable(chotki-bridge-restart-test tests/BridgeRestartTest.cpp Bridge.cpp Bridge.h)
 target_link_libraries(chotki-bridge-restart-test PRIVATE Qt6::Core Qt6::Test)
