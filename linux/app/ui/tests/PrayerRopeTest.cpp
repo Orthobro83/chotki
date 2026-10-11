@@ -85,7 +85,7 @@ private slots:
 
         QQuickItem *line = nullptr;
         QTRY_VERIFY_WITH_TIMEOUT((line = findItem(session->window->contentItem(), "prayer-line")), 3000);
-        QVERIFY(line->property("text").toString().contains(
+        QVERIFY(line->property("plain").toString().contains(
             "Lord Jesus Christ, Son of God, have mercy on me, a sinner."));
 
         QQuickItem *rope = nullptr;

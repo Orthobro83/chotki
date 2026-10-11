@@ -50,6 +50,7 @@ Item {
         cardMenu.kept = !!entry.kept
         cardMenu.dispensed = !!entry.dispensed
         cardMenu.action = entry.action || "Open"
+        cardMenu.glossarySlug = entry.glossarySlug || ""
         cardMenu.cardItem = card
         cardMenu.visible = true
         const point = card.mapToItem(home, 0, card.height + 6)
@@ -390,6 +391,21 @@ Item {
                                 font.pixelSize: 11
                             }
                             Label {
+                                objectName: "card-learn-" + modelData.id
+                                z: 4
+                                visible: card.flipped && (modelData.glossarySlug || "").length > 0
+                                x: 14
+                                y: parent.height - 28
+                                text: "Learn More"
+                                color: "#8a6d1f"
+                                font.pixelSize: 11
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -8
+                                    onClicked: window.openGlossary(modelData.glossarySlug)
+                                }
+                            }
+                            Label {
                                 objectName: "expand-" + modelData.id
                                 z: 3
                                 visible: summaryLabel.truncated && !card.expanded && !card.flipped
@@ -492,7 +508,10 @@ Item {
         // A Label's implicitHeight ignores an explicit height, so the old
         // menuColumn.implicitHeight binding collapsed this rectangle to one
         // row and clicks below it hit the dismiss layer.
-        readonly property int menuRows: dispensed ? 2 : (kept ? 4 : 5)
+        // Lifted or the day actions, then About This Rule when the rule has a
+        // term, then Edit. Pause is not on this menu.
+        readonly property int menuRows: (dispensed ? 1 : (kept ? 3 : 4))
+                + (glossarySlug.length > 0 ? 1 : 0) + 1
         width: 248
         height: menuRows * 32 + 12
         radius: 10
@@ -505,6 +524,7 @@ Item {
         property bool kept: false
         property bool dispensed: false
         property string action: ""
+        property string glossarySlug: ""
         property var cardItem: null
 
         MouseArea { anchors.fill: parent }
@@ -625,9 +645,33 @@ Item {
                 }
             }
             Item {
+                id: aboutRow
+                objectName: "card-menu-about"
+                visible: cardMenu.glossarySlug.length > 0
+                y: standRow.y + standRow.height
+                width: parent.width
+                height: visible ? 32 : 0
+                Label {
+                    anchors.fill: parent
+                    leftPadding: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: "About This Rule"
+                    color: home.parchment
+                    font.pixelSize: 13
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        const slug = cardMenu.glossarySlug
+                        home.hideMenu()
+                        window.openGlossary(slug)
+                    }
+                }
+            }
+            Item {
                 id: editRow
                 objectName: "card-menu-edit"
-                y: standRow.y + standRow.height
+                y: aboutRow.y + aboutRow.height
                 width: parent.width
                 height: 32
                 Label {

@@ -49,6 +49,11 @@ private let scopeChoices: [(EditScope, String)] = [
 
 private let weekdayLabels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
+struct LibraryTermPayload: Encodable {
+    var slug: String
+    var term: String
+}
+
 struct LibraryTemplatePayload: Encodable {
     var id: String
     var title: String
@@ -57,6 +62,8 @@ struct LibraryTemplatePayload: Encodable {
     var observanceNote: String?
     var taken: Bool
     var ruleID: String?
+    /// The first few terms the template names. The window opens these; it does not scan.
+    var terms: [LibraryTermPayload] = []
 }
 
 struct LibraryGroupPayload: Encodable {
@@ -167,6 +174,7 @@ private func suggestedBy(_ rule: Rule, father: String) -> String? {
 private func libraryPayload(_ store: SQLiteStore, session: LibrarySession) throws -> LibraryPayload {
     let held = try shelf(store)
     let library = RuleLibrary.shared.scoped(to: held.settings.jurisdiction.tradition)
+    let glossary = Glossary.shared(for: held.settings.jurisdiction.tradition)
     let query = session.query.trimmingCharacters(in: .whitespacesAndNewlines)
     let groups: [LibraryGroupPayload] = library.byCategory().compactMap { category, templates in
         let rows: [LibraryTemplatePayload] = templates.compactMap { template in
@@ -182,10 +190,13 @@ private func libraryPayload(_ store: SQLiteStore, session: LibrarySession) throw
                active == nil {
                 note = "Taking this on will start observing \(ObservanceSettings.name(for: trigger))."
             }
+            let terms = template.glossarySlugs.prefix(3).compactMap { slug in
+                glossary.entry(slug: slug).map { LibraryTermPayload(slug: slug, term: $0.term) }
+            }
             return LibraryTemplatePayload(
                 id: template.id, title: template.title, summary: template.summary,
                 note: template.note, observanceNote: note, taken: active != nil,
-                ruleID: active?.id.uuidString
+                ruleID: active?.id.uuidString, terms: terms
             )
         }
         return rows.isEmpty ? nil : LibraryGroupPayload(category: category.displayName, templates: rows)

@@ -60,7 +60,9 @@ class Bridge final : public QObject {
     Q_PROPERTY(bool readingReady READ readingReady NOTIFY changed)
     Q_PROPERTY(QString readingTitle READ readingTitle NOTIFY changed)
     Q_PROPERTY(QString readingSummary READ readingSummary NOTIFY changed)
+    Q_PROPERTY(QString readingSummaryHtml READ readingSummaryHtml NOTIFY changed)
     Q_PROPERTY(QString readingFastNote READ readingFastNote NOTIFY changed)
+    Q_PROPERTY(QString readingFastNoteHtml READ readingFastNoteHtml NOTIFY changed)
     Q_PROPERTY(QString readingAbstentionNote READ readingAbstentionNote NOTIFY changed)
     Q_PROPERTY(QString readingFathers READ readingFathers NOTIFY changed)
     Q_PROPERTY(QString readingFathersBy READ readingFathersBy NOTIFY changed)
@@ -92,6 +94,11 @@ class Bridge final : public QObject {
     Q_PROPERTY(QString progressFigure READ progressFigure NOTIFY changed)
     Q_PROPERTY(QString progressFigureNote READ progressFigureNote NOTIFY changed)
     Q_PROPERTY(QString progressArtworkUrl READ progressArtworkUrl NOTIFY changed)
+    Q_PROPERTY(bool glossaryReady READ glossaryReady NOTIFY changed)
+    Q_PROPERTY(QString glossaryNote READ glossaryNote NOTIFY changed)
+    Q_PROPERTY(QString glossaryQuery READ glossaryQuery NOTIFY changed)
+    Q_PROPERTY(QVariantList glossaryCategories READ glossaryCategories NOTIFY changed)
+    Q_PROPERTY(QVariantMap glossaryEntry READ glossaryEntry NOTIFY changed)
 
 public:
     Bridge(QString program, bool review, QObject *parent = nullptr);
@@ -147,7 +154,9 @@ public:
     bool readingReady() const { return m_readingReady; }
     QString readingTitle() const { return m_readingTitle; }
     QString readingSummary() const { return m_readingSummary; }
+    QString readingSummaryHtml() const { return m_readingSummaryHtml; }
     QString readingFastNote() const { return m_readingFastNote; }
+    QString readingFastNoteHtml() const { return m_readingFastNoteHtml; }
     QString readingAbstentionNote() const { return m_readingAbstentionNote; }
     QString readingFathers() const { return m_readingFathers; }
     QString readingFathersBy() const { return m_readingFathersBy; }
@@ -179,6 +188,11 @@ public:
     QString progressFigure() const { return m_progressFigure; }
     QString progressFigureNote() const { return m_progressFigureNote; }
     QString progressArtworkUrl() const { return m_progressArtworkUrl; }
+    bool glossaryReady() const { return m_glossaryReady; }
+    QString glossaryNote() const { return m_glossaryNote; }
+    QString glossaryQuery() const { return m_glossaryQuery; }
+    QVariantList glossaryCategories() const { return m_glossaryCategories; }
+    QVariantMap glossaryEntry() const { return m_glossaryEntry; }
 
     bool snapshotReady() const { return m_snapshotReady; }
     qint64 helperProcessId() const { return m_process.processId(); }
@@ -201,6 +215,7 @@ public:
     Q_INVOKABLE void playSound(const QString &name);
     Q_INVOKABLE void showReading();
     Q_INVOKABLE void showProgress();
+    Q_INVOKABLE void showGlossary(const QString &slug, const QString &query);
     Q_INVOKABLE void openReading(int band);
     Q_INVOKABLE void toggleReading(int band);
     Q_INVOKABLE void finishReading(int band);
@@ -235,6 +250,7 @@ private:
     void applyLibrary(const QJsonObject &library);
     void applyEditor(const QJsonObject &editor);
     void applyProgress(const QJsonObject &progress);
+    void applyGlossary(const QJsonObject &glossary);
     QString soundPlayer() const;
     int newestAcceptedId() const;
 
@@ -251,6 +267,7 @@ private:
     int m_newestPsalterId = -1;
     int m_newestLibraryId = -1;
     int m_newestProgressId = -1;
+    int m_newestGlossaryId = -1;
     double m_ropeDiameter = 240;
     int m_restarts = 0;
     bool m_snapshotReady = false;
@@ -311,7 +328,9 @@ private:
     bool m_readingReady = false;
     QString m_readingTitle;
     QString m_readingSummary;
+    QString m_readingSummaryHtml;
     QString m_readingFastNote;
+    QString m_readingFastNoteHtml;
     QString m_readingAbstentionNote;
     QString m_readingFathers;
     QString m_readingFathersBy;
@@ -343,4 +362,9 @@ private:
     QString m_progressFigure;
     QString m_progressFigureNote;
     QString m_progressArtworkUrl;
+    bool m_glossaryReady = false;
+    QString m_glossaryNote;
+    QString m_glossaryQuery;
+    QVariantList m_glossaryCategories;
+    QVariantMap m_glossaryEntry;
 };

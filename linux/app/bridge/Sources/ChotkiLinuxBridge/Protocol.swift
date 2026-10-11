@@ -58,6 +58,8 @@ struct BridgeRequest: Decodable {
     var from: String?
     /// Length of a `progress` report. Omitted, the window is the Mac's 30 days.
     var days: Int?
+    /// A glossary slug for `glossary`. Omitted opens the index.
+    var slug: String?
 }
 
 struct PrayerKnotPayload: Encodable {
@@ -82,7 +84,11 @@ struct PrayerChoicePayload: Encodable {
 struct PrayerBlockPayload: Encodable {
     var title: String
     var rubric: String?
+    /// Plain paragraphs. Existing checks read these, not the links.
     var paragraphs: [String]
+    /// One HTML paragraph per plain paragraph. The first occurrence of a term
+    /// in a sitting is a link. Later occurrences stay plain.
+    var html: [String]
     var source: String
     var sourceURL: String?
     var centred: Bool
@@ -222,6 +228,10 @@ struct ReadingPayload: Encodable {
     var sections: [ReadingSectionPayload]
     /// Rule ids this call wrote as kept. Opening a section leaves this empty.
     var marked: [String]
+    /// The summary and the fast note, with every glossary match linked.
+    /// Scripture stays in `sections` as plain text.
+    var summaryHtml: String = ""
+    var fastNoteHtml: String = ""
 }
 
 struct PsalmVersePayload: Encodable {
@@ -277,6 +287,9 @@ struct EntryPayload: Encodable {
     var action: String
     /// The fasting card's other face. Other cards repeat the summary.
     var back: String
+    /// The library template's first glossary slug, or a term in the title.
+    /// Omitted when the rule is the person's own and names nothing explained.
+    var glossarySlug: String? = nil
 }
 
 struct WeekDayPayload: Encodable {
@@ -321,6 +334,8 @@ struct BridgeSuccess: Encodable {
     var thanksgiving: String? = nil
     /// The progress report. Not a home snapshot: today is already outside it.
     var progress: ProgressPayload? = nil
+    /// The glossary. Not a home snapshot, and not a ruling.
+    var glossary: GlossaryPayload? = nil
 }
 
 struct ProgressRulePayload: Encodable {

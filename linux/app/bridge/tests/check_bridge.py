@@ -110,6 +110,9 @@ def main():
         assert by_title["The Jesus Prayer"]["destination"] == "rope"
         assert by_title["The Jesus Prayer"]["selection"] == "jesus-prayer"
         assert by_title["The Jesus Prayer"]["action"] == "Go to the Rope"
+        assert by_title["Morning prayers"]["glossarySlug"] == "prayer-rule"
+        assert by_title["The Jesus Prayer"]["glossarySlug"] == "jesus-prayer"
+        assert by_title["The day's Gospel"]["glossarySlug"] == "gospel"
         assert by_title["The day's Gospel"]["destination"] == "reading"
         assert by_title["The day's Gospel"]["band"] == 0
         assert by_title["The day's Gospel"]["action"] == "Read the Day\u2019s Readings"
@@ -365,6 +368,57 @@ def main():
         assert leap_life["available"] is False
         assert leap_life["unavailable"] == "No life is stored for this day."
         assert missing_life["marked"] == []
+
+        glossary = ask("glossary")
+        assert glossary["ok"] is True
+        for key in ("entries", "week", "selectedDate", "displayName", "today",
+                    "thanksgiving", "prayer", "reading", "progress"):
+            assert key not in glossary, glossary
+        listed = glossary["glossary"]
+        assert "introductory" in listed["note"].lower()
+        assert "not a ruling" in listed["note"].lower()
+        assert "entry" not in listed
+        categories = {cat["name"]: cat["terms"] for cat in listed["categories"]}
+        assert "Prayer" in categories
+        amen = next(term for term in categories["Prayer"] if term["slug"] == "amen")
+        assert amen["term"] == "Amen" and "so be it" in amen["short"]
+
+        detail = ask("glossary", slug="amen")
+        assert "entries" not in detail
+        entry = detail["glossary"]["entry"]
+        assert entry["term"] == "Amen" and entry["pronunciation"] == "AH-meen"
+        assert "Amen is not punctuation" in entry["full"]
+        related = {item["slug"]: item["term"] for item in entry["related"]}
+        assert related["prayer-rule"] == "Prayer rule"
+        chained = ask("glossary", slug="prayer-rule")
+        assert "entries" not in chained
+        assert chained["glossary"]["entry"]["term"] == "Prayer rule"
+        missing = ask("glossary", slug="not-a-term")
+        assert missing["ok"] is False and "not in the glossary" in missing["error"]
+        searched = ask("glossary", query="Amen")["glossary"]
+        found = [term["slug"] for cat in searched["categories"] for term in cat["terms"]]
+        assert "amen" in found and searched["query"] == "Amen"
+        assert ask("glossary", query="zzzz-not-a-term")["glossary"]["categories"] == []
+
+        begun = ask("choosePrayer", selection="beginning")["prayer"]
+        assert begun["words"][0]["paragraphs"][0].startswith("In the name of the Father")
+        assert begun["words"][0]["html"][0].count('href="amen"') == 1
+        jesus = ask("choosePrayer", selection="jesus-prayer")["prayer"]
+        assert jesus["words"][0]["paragraphs"] == [
+            "Lord Jesus Christ, Son of God, have mercy on me, a sinner."
+        ]
+        assert "href=" not in jesus["words"][0]["html"][0]
+        morning = ask("choosePrayer", selection="morning")["prayer"]
+        amen_links = sum(
+            line.count('href="amen"') for block in morning["words"] for line in block["html"]
+        )
+        assert amen_links == 1
+        page = ask("reading")["reading"]
+        assert page["summary"] and page["summaryHtml"]
+        assert page["summary"].split()[0] in page["summaryHtml"]
+        for section in page["sections"]:
+            for passage in section.get("passages") or []:
+                assert "href=" not in passage["text"]
         close(review)
         assert (Path(review_dir) / "chotki.sqlite").is_file()
 
@@ -399,6 +453,7 @@ def main():
             if row["title"] == "Morning prayers"
         )
         assert morning_row["taken"] is False
+        assert morning_row["terms"][0] == {"slug": "prayer-rule", "term": "Prayer rule"}
 
         found = ask("library", query="Morning")["library"]
         found_titles = [row["title"] for group in found["groups"] for row in group["templates"]]

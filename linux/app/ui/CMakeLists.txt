@@ -15,7 +15,7 @@ qt_add_qml_module(chotki-linux
     URI ChotkiLinux
     VERSION 1.0
     RESOURCE_PREFIX "/qt/qml"
-    QML_FILES Main.qml Home.qml Prayers.qml Reading.qml Psalter.qml Library.qml Editor.qml Progress.qml OpeningMark.qml Icon.qml
+    QML_FILES Main.qml Home.qml Prayers.qml Reading.qml Psalter.qml Library.qml Editor.qml Progress.qml Glossary.qml OpeningMark.qml Icon.qml
     RESOURCES fonts/XCharter-Roman.otf fonts/XCharter-Bold.otf
 )
 target_link_libraries(chotki-linux PRIVATE Qt6::Quick Qt6::Network)
@@ -57,6 +57,13 @@ target_compile_definitions(chotki-progress-test PRIVATE
     CHOTKI_ARTWORK_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/../../../macos/Sources/Chotki/Resources")
 add_test(NAME progress COMMAND chotki-progress-test)
 set_tests_properties(progress PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_executable(chotki-glossary-test tests/GlossaryTest.cpp Bridge.cpp Bridge.h ArtworkImage.cpp ArtworkImage.h)
+target_link_libraries(chotki-glossary-test PRIVATE Qt6::Quick Qt6::Test)
+target_include_directories(chotki-glossary-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(chotki-glossary-test PRIVATE CHOTKI_QML_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Main.qml")
+add_test(NAME glossary COMMAND chotki-glossary-test)
+set_tests_properties(glossary PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 add_executable(chotki-library-test tests/LibraryTest.cpp Bridge.cpp Bridge.h ArtworkImage.cpp ArtworkImage.h)
 target_link_libraries(chotki-library-test PRIVATE Qt6::Quick Qt6::Test)

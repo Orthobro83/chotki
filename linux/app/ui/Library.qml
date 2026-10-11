@@ -114,6 +114,30 @@ Item {
                                     font.italic: true
                                     wrapMode: Text.WordWrap
                                 }
+                                Flow {
+                                    width: parent.width
+                                    spacing: 10
+                                    visible: (row.modelData.terms || []).length > 0
+                                    Repeater {
+                                        model: row.modelData.terms || []
+                                        delegate: Item {
+                                            required property var modelData
+                                            width: chipLabel.implicitWidth + 8
+                                            height: chipLabel.implicitHeight + 4
+                                            Label {
+                                                id: chipLabel
+                                                anchors.centerIn: parent
+                                                text: modelData.term
+                                                color: library.gold
+                                                font.pixelSize: 12
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: window.openGlossary(modelData.slug)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             Label {
                                 objectName: row.modelData.taken

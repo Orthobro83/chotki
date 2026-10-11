@@ -29,6 +29,7 @@ enum BridgeError: Error, CustomStringConvertible {
     case invalidReviewDirectory
     case unknownPrayer
     case unnamedRule
+    case unknownTerm
 
     var description: String {
         switch self {
@@ -41,6 +42,7 @@ enum BridgeError: Error, CustomStringConvertible {
         case .invalidReviewDirectory: "The review record directory must be an absolute path."
         case .unknownPrayer: "That prayer is not in the book."
         case .unnamedRule: "Give the rule a name before saving."
+        case .unknownTerm: "That term is not in the glossary."
         }
     }
 }
@@ -144,7 +146,8 @@ func homeSnapshot(store: SQLiteStore, on selectedDate: CalendarDate,
             summary: summary, time: time ?? "All Day", kept: entry.isKept,
             dispensed: entry.isDispensed, dispensation: entry.dispensation ?? "",
             stoodDown: entry.isStoodDown, destination: face.destination, selection: face.selection,
-            band: face.band, action: face.action, back: face.back
+            band: face.band, action: face.action, back: face.back,
+            glossarySlug: entry.rule.glossarySlug
         )
     }
     let weekStart = weekCenter.adding(days: -3)
@@ -347,6 +350,9 @@ do {
 
             case "progress":
                 try performProgress(request, store: store)
+
+            case "glossary":
+                try performGlossary(request, store: store)
 
             case "opening":
                 respond(openingSuccess(id: id))

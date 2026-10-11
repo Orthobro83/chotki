@@ -19,6 +19,8 @@ ApplicationWindow {
     readonly property color gold: "#c9a227"
     readonly property color lineSoft: "#23252c"
     property string section: "Home"
+    property string glossaryReturn: "Home"
+    property string glossaryPending: ""
     property bool openingPlayed: false
     property int openingStarts: 0
     property int heardEvent: -1
@@ -52,7 +54,22 @@ ApplicationWindow {
         thanksLabel.opacity = 0
     }
 
+    function openGlossary(slug) {
+        if (section !== "Glossary") glossaryReturn = section
+        glossaryPending = slug || ""
+        section = "Glossary"
+        if (glossaryLoader.item) glossaryLoader.item.present(glossaryPending)
+    }
+
+    function closeGlossary() {
+        section = glossaryReturn || "Home"
+    }
+
     function showSection(name) {
+        if (name === "Glossary") {
+            openGlossary("")
+            return
+        }
         if (name === "Prayers") {
             openPsalter = false
             section = "Prayers"
@@ -114,7 +131,7 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+3"; onActivated: window.showSection("Reading") }
     Shortcut { sequence: "Ctrl+4"; onActivated: window.showSection("Progress") }
     Shortcut { sequence: "Ctrl+5"; onActivated: window.section = "Library" }
-    Shortcut { sequence: "Ctrl+6"; onActivated: window.section = "Glossary" }
+    Shortcut { sequence: "Ctrl+6"; onActivated: window.showSection("Glossary") }
     Shortcut { sequence: "Ctrl+7"; onActivated: window.section = "Settings" }
 
     FontLoader { id: charter; source: "fonts/XCharter-Roman.otf" }
@@ -309,11 +326,19 @@ ApplicationWindow {
                     visible: active
                     source: "Progress.qml"
                 }
+                Loader {
+                    id: glossaryLoader
+                    Layout.fillWidth: true
+                    Layout.fillHeight: active
+                    active: window.section === "Glossary"
+                    visible: active
+                    source: "Glossary.qml"
+                }
 
                 ColumnLayout {
                     visible: window.section !== "Home" && window.section !== "Prayers"
                             && window.section !== "Reading" && window.section !== "Library"
-                            && window.section !== "Progress"
+                            && window.section !== "Progress" && window.section !== "Glossary"
                     Layout.fillWidth: true
                     Layout.fillHeight: visible
                     Item { height: 46 }

@@ -126,6 +126,8 @@ This is the slice that makes the Phase 2 gate possible. Until it exists, the onl
 
 **Gate.** A Qt test follows a term from a prayer to its entry and back to that prayer.
 
+**Checked on the ARM64 guest (2026-10-10):** Amen in The Beginning opened the bundled entry. The note read "Introductory, not a ruling." The pronunciation was AH-meen and the body began "Amen is not punctuation." See also opened Prayer rule and stayed in the glossary. Back returned to The Beginning. About This Rule on Morning prayers opened Prayer rule, and Back returned to Home. The glossary did not say "failed". The bridge check passed against the helper. The sidebar test, the rope, reading, home actions, progress, the library, four helper restarts, an offscreen window, and a 1100×860 review screenshot of 523486 bytes still passed. The Ubuntu 24.04 `amd64` half of this gate is the GitHub workflow.
+
 ### 2.8 Settings, onboarding, and the record
 
 Settings sections, in the Mac's order: You, Your Church, The Calendar, Reminders, Prayer Rope, Your Record, General.
@@ -207,4 +209,4 @@ Linux on mobile is the same `aarch64` application with a layout that fits a phon
 
 ## Next slice
 
-Slice 2.7, when that work is asked for. Slices 2.1 through 2.6 are recorded above.
+Slice 2.8, when that work is asked for. Slices 2.1 through 2.7 are recorded above.

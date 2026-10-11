@@ -101,22 +101,31 @@ func prayerPayload(session: PrayerSession, tradition: Tradition, advanced: Bool,
         complete: screen.isComplete, showsRope: screen.showsRope(),
         cue: cueName(screen.cue), advanced: advanced, event: session.event, sound: sound,
         diameter: session.diameter, dot: layout.dot, bead: layout.bead,
-        knots: knots, beads: beads, choices: choices, words: prayerWords(screen.selection)
+        knots: knots, beads: beads, choices: choices,
+        words: prayerWords(screen.selection, tradition: tradition)
     )
 }
 
-func prayerWords(_ selection: String?) -> [PrayerBlockPayload] {
+func prayerWords(_ selection: String?, tradition: Tradition) -> [PrayerBlockPayload] {
     guard let selection, !selection.isEmpty else { return [] }
+    let glossary = Glossary.shared(for: tradition)
     if let sequence = PrayerBook.shared.sequence(id: selection) {
-        return PrayerBook.shared.prayers(of: sequence).map { prayerBlock($0, centred: false) }
+        let prayers = PrayerBook.shared.prayers(of: sequence)
+        let matches = glossary.scanOnce(across: prayers.map(\.paragraphs))
+        return zip(prayers, matches).map { prayer, found in
+            prayerBlock(prayer, centred: false, matches: found)
+        }
     }
     guard let prayer = PrayerBook.shared.prayer(id: selection) else { return [] }
-    return [prayerBlock(prayer, centred: true)]
+    return [prayerBlock(prayer, centred: true, matches: glossary.scanOnce(prayer.paragraphs))]
 }
 
-func prayerBlock(_ prayer: Prayer, centred: Bool) -> PrayerBlockPayload {
-    PrayerBlockPayload(
-        title: prayer.title, rubric: prayer.rubric, paragraphs: prayer.paragraphs,
+func prayerBlock(_ prayer: Prayer, centred: Bool, matches: [[TermMatch]]) -> PrayerBlockPayload {
+    let html = prayer.paragraphs.enumerated().map { index, paragraph in
+        linkedMarkup(paragraph, matches: index < matches.count ? matches[index] : [])
+    }
+    return PrayerBlockPayload(
+        title: prayer.title, rubric: prayer.rubric, paragraphs: prayer.paragraphs, html: html,
         source: prayer.source, sourceURL: prayer.sourceURL, centred: centred
     )
 }

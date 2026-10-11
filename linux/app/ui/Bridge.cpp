@@ -126,6 +126,8 @@ struct BridgeResponse {
     QJsonObject editor;
     bool hasProgress = false;
     QJsonObject progress;
+    bool hasGlossary = false;
+    QJsonObject glossary;
     bool hasTodayLink = false;
     QString todayLink;
     bool hasThanksgiving = false;
@@ -180,6 +182,8 @@ BridgeResponse decodeResponse(const QJsonObject &object) {
     response.editor = object.value("editor").toObject();
     response.hasProgress = object.contains("progress");
     response.progress = object.value("progress").toObject();
+    response.hasGlossary = object.contains("glossary");
+    response.glossary = object.value("glossary").toObject();
     response.hasTodayLink = object.contains("todayLink");
     response.todayLink = object.value("todayLink").toString();
     response.hasThanksgiving = object.contains("thanksgiving");
@@ -257,6 +261,13 @@ void Bridge::finishPsalter() { send("finishPsalter"); }
 void Bridge::showLibrary(const QString &query) { send("library", QJsonObject{{"query", query}}); }
 
 void Bridge::showProgress() { send("progress"); }
+
+void Bridge::showGlossary(const QString &slug, const QString &query) {
+    QJsonObject fields;
+    if (!slug.isEmpty()) fields.insert(QStringLiteral("slug"), slug);
+    if (!query.isEmpty()) fields.insert(QStringLiteral("query"), query);
+    send(QStringLiteral("glossary"), fields);
+}
 
 void Bridge::prepareTemplate(const QString &templateID) {
     send("prepareTemplate", QJsonObject{{"template", templateID}});
@@ -360,7 +371,11 @@ void Bridge::applyOpening(const QJsonObject &opening) {
 void Bridge::applyReading(const QJsonObject &reading) {
     m_readingTitle = reading.value("title").toString();
     m_readingSummary = reading.value("summary").toString();
+    m_readingSummaryHtml = reading.contains("summaryHtml")
+        ? reading.value("summaryHtml").toString() : m_readingSummary;
     m_readingFastNote = reading.value("fastNote").toString();
+    m_readingFastNoteHtml = reading.contains("fastNoteHtml")
+        ? reading.value("fastNoteHtml").toString() : m_readingFastNote;
     m_readingAbstentionNote = reading.value("abstentionNote").toString();
     m_readingFathers = reading.value("fathersText").toString();
     m_readingFathersBy = reading.value("fathersBy").toString();
@@ -408,6 +423,17 @@ void Bridge::applyProgress(const QJsonObject &progress) {
     m_progressReady = true;
 }
 
+void Bridge::applyGlossary(const QJsonObject &glossary) {
+    m_glossaryNote = glossary.value("note").toString();
+    m_glossaryQuery = glossary.value("query").toString();
+    m_glossaryCategories = glossary.value("categories").toArray().toVariantList();
+    if (glossary.contains("entry"))
+        m_glossaryEntry = glossary.value("entry").toObject().toVariantMap();
+    else
+        m_glossaryEntry.clear();
+    m_glossaryReady = true;
+}
+
 void Bridge::applyTones(const QJsonObject &tones) {
     m_tickWav = tones.value("tick").toString();
     m_tockWav = tones.value("tock").toString();
@@ -416,7 +442,8 @@ void Bridge::applyTones(const QJsonObject &tones) {
 
 int Bridge::newestAcceptedId() const {
     return std::max({m_newestSuccessId, m_newestPrayerId, m_newestOpeningId, m_newestToneId,
-                     m_newestReadingId, m_newestPsalterId, m_newestLibraryId, m_newestProgressId});
+                     m_newestReadingId, m_newestPsalterId, m_newestLibraryId, m_newestProgressId,
+                     m_newestGlossaryId});
 }
 
 void Bridge::readResponses() {
@@ -491,6 +518,13 @@ void Bridge::readResponses() {
         if (response.hasProgress && response.id >= m_newestProgressId) {
             m_newestProgressId = response.id;
             applyProgress(response.progress);
+            m_error.clear();
+        }
+        // A glossary reply is a domain payload. It must not be treated as a day,
+        // and a missing entry must clear the one a previous term had open.
+        if (response.hasGlossary && response.id >= m_newestGlossaryId) {
+            m_newestGlossaryId = response.id;
+            applyGlossary(response.glossary);
             m_error.clear();
         }
         if (!response.home || response.id < m_newestSuccessId) {

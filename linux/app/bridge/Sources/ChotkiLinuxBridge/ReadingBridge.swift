@@ -205,13 +205,16 @@ private func readingPayload(record: DayRecord, session: ReadingSession, marked: 
         ? "The calendar marks this as \(day.fastDescription)." : ""
     let abstention = day.abstentions.isEmpty
         ? "" : "Customarily set aside: \(day.abstentions.joined(separator: ", "))."
+    let glossary = Glossary.shared(for: record.settings.jurisdiction.tradition)
     return ReadingPayload(
         title: day.title ?? "", summary: day.summaryTitle,
         fastNote: fastNote, abstentionNote: abstention,
         fathersText: patristic?.text ?? "",
         fathersBy: patristic.map { "\($0.author) · \($0.source)" } ?? "",
         footer: footer, waiting: "", waitingDetail: "",
-        sections: sections, marked: marked
+        sections: sections, marked: marked,
+        summaryHtml: linkedMarkup(day.summaryTitle, matches: glossary.scan(day.summaryTitle)),
+        fastNoteHtml: linkedMarkup(fastNote, matches: glossary.scan(fastNote))
     )
 }
 

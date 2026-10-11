@@ -211,12 +211,28 @@ Item {
         }
 
         Flickable {
+            id: prayerScroll
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: !bridge.prayerRopeAlone && !prayers.psalterOpen
             contentHeight: words.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+            // A parent Flickable can take the press, so a term link never fires.
+            // The wheel still moves a long rule.
+            interactive: false
+
+            WheelHandler {
+                onWheel: function(event) {
+                    const pixels = event.pixelDelta.y
+                    const angle = event.angleDelta.y
+                    const delta = pixels !== 0 ? pixels : angle
+                    if (!delta) return
+                    const limit = Math.max(0, prayerScroll.contentHeight - prayerScroll.height)
+                    prayerScroll.contentY = Math.max(0, Math.min(limit, prayerScroll.contentY - delta))
+                    event.accepted = true
+                }
+            }
 
             Column {
                 id: words
@@ -252,17 +268,28 @@ Item {
                         }
                         Repeater {
                             model: modelData.paragraphs
-                            delegate: Label {
+                            delegate: Text {
+                                required property int index
                                 required property string modelData
                                 objectName: "prayer-line"
+                                property string plain: modelData
                                 width: words.width
-                                text: modelData
+                                text: {
+                                    const block = parent.modelData
+                                    const lines = block ? block.html : null
+                                    if (lines && index < lines.length && lines[index]) return lines[index]
+                                    return plain
+                                }
+                                textFormat: Text.RichText
                                 color: prayers.parchment
                                 font.family: charter.status === FontLoader.Ready ? charter.name : "serif"
                                 font.pixelSize: 20
                                 wrapMode: Text.WordWrap
                                 horizontalAlignment: parent.modelData && parent.modelData.centred
                                                    ? Text.AlignHCenter : Text.AlignLeft
+                                onLinkActivated: function(link) {
+                                    if (link) window.openGlossary(link)
+                                }
                             }
                         }
                         Label {

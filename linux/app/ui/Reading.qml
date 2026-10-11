@@ -135,24 +135,35 @@ Item {
                     font.pixelSize: 13
                     wrapMode: Text.WordWrap
                 }
-                Label {
+                Text {
                     objectName: "reading-summary"
+                    property string plain: bridge.readingSummary
                     width: parent.width - 48
-                    text: bridge.readingSummary
+                    text: bridge.readingSummaryHtml || bridge.readingSummary
+                    textFormat: Text.RichText
                     color: reading.gold
                     font.family: reading.face()
                     font.pixelSize: 22
                     wrapMode: Text.WordWrap
                     topPadding: 6
                     bottomPadding: 10
+                    onLinkActivated: function(link) {
+                        if (link) window.openGlossary(link)
+                    }
                 }
-                Label {
+                Text {
+                    objectName: "reading-fast-note"
+                    property string plain: bridge.readingFastNote
                     width: parent.width - 48
-                    visible: text.length > 0
-                    text: bridge.readingFastNote
+                    visible: plain.length > 0
+                    text: bridge.readingFastNoteHtml || bridge.readingFastNote
+                    textFormat: Text.RichText
                     color: "#9a8fc4"
                     font.pixelSize: 13
                     wrapMode: Text.WordWrap
+                    onLinkActivated: function(link) {
+                        if (link) window.openGlossary(link)
+                    }
                 }
                 Label {
                     width: parent.width - 48
